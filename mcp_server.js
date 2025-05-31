@@ -333,10 +333,10 @@ class BusyboxNetworkMCPServer {
     const toolsList = Array.from(this.tools.values()).map(tool => ({
       name: tool.name,
       description: tool.description,
-      schema: tool.schema
+      inputSchema: tool.schema // Changed 'schema' to 'inputSchema'
     }));
     
-    console.log(`Returning ${toolsList.length} tools to client`);
+    console.log(`Returning ${toolsList.length} tools to client (using inputSchema)`);
     
     // MCP spec: only 'tools' property, no 'result'
     return {
@@ -376,12 +376,7 @@ class BusyboxNetworkMCPServer {
   
   async handleStatus() {
     return {
-      status: "ready",
-      serverName: "Busybox Network MCP Server",
-      capabilities: {
-        supportsToolCalls: true,
-        supportsStreaming: false
-      }
+      status: "ready"
     };
   }
   
@@ -447,21 +442,31 @@ class BusyboxNetworkMCPServer {
     const http = require('http');
     
     const server = http.createServer(async (req, res) => {
-      // Enable CORS
+      // Always set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-      
+
+      // Log all requests
+      console.log(`[MCP] ${req.method} ${req.url}`);
+
       if (req.method === 'OPTIONS') {
         res.writeHead(200);
         res.end();
         return;
       }
 
-      // Health check endpoint
-      if (req.url === '/health') {
+      // Health check endpoint (GET or POST)
+      if (req.url === '/health' && (req.method === 'GET' || req.method === 'POST')) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'healthy', tools: this.tools.size }));
+        return;
+      }
+
+      // Root endpoint for GET (Inspector/browser preflight)
+      if (req.url === '/' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'ok', message: 'Busybox Network MCP Server' }));
         return;
       }
 
@@ -512,47 +517,89 @@ class BusyboxNetworkMCPServer {
                   }};
                 } else {
                   const toolCallResponse = await this.handleCallTool(request.params.name, request.params.arguments || {});
-                  response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), ...toolCallResponse };
+                  // Nest the toolCallResponse within the main 'result' object
+                  response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: toolCallResponse }; 
                 }
                 break;
               case 'tools/config':
                 const toolsConfigResponse = await this.handleToolsConfig();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), ...toolsConfigResponse };
+                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: toolsConfigResponse };
                 break;
               case 'status':
                 const statusResponse = await this.handleStatus();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), ...statusResponse };
+                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: statusResponse };
                 break;
               case 'version':
                 const versionResponse = await this.handleVersion();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), ...versionResponse };
+                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: versionResponse };
                 break;
               case 'servers/list':
                 const serversResponse = await this.handleServersList();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), ...serversResponse };
+                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: serversResponse };
                 break;
               case 'servers/info':
                 const serverInfoResponse = await this.handleServerInfo();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), ...serverInfoResponse };
+                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: serverInfoResponse };
                 break;
               case 'roots/set':
                 const rootsSetResponse = await this.handleSetRoots(request.params?.roots);
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), ...rootsSetResponse };
+                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: rootsSetResponse };
                 break;
               case 'initialize':
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: {
-                  capabilities: {
-                    supportsToolCalls: true,
-                    supportsStreaming: false,
-                    toolsProvider: true
-                  },
-                  serverInfo: {
-                    name: "Busybox Network MCP Server",
-                    version: "1.0.0"
+                const clientOfferedProtocolVersion = request.params?.protocolVersion;
+                const selectedProtocolVersion = clientOfferedProtocolVersion || "1.0.0";
+
+                response = {
+                  jsonrpc: "2.0",
+                  ...(request.id !== undefined ? { id: request.id } : {}),
+                  result: {
+                    protocolVersion: selectedProtocolVersion,
+                    serverInfo: {
+                      name: "Busybox Network MCP Server",
+                      version: "1.0.0", // This is application version
+                      capabilities: { // General server capabilities
+                        supportsToolCalls: true, 
+                        supportsStreaming: false 
+                      }
+                    },
+                    capabilities: { // MCP-specific feature capabilities (aligned with SDK)
+                      tools: {
+                        list: true,        // For tools/list
+                        call: true,        // For tools/call
+                        config: true,      // For tools/config
+                        listChanged: false // No dynamic tool list change notifications
+                      },
+                      status: {
+                        read: true         // For the 'status' method
+                      },
+                      version: {
+                        read: true         // For the 'version' method
+                      },
+                      servers: {
+                        list: true,        // For servers/list
+                        info: true,        // For servers/info
+                        listChanged: false // No dynamic server list change notifications
+                      },
+                      roots: {
+                        set: true,         // For roots/set
+                        listChanged: false // No dynamic root change notifications
+                      }
+                      // resourcesProvider and promptsProvider are omitted as they are not implemented
+                    }
                   }
-                }};
-                console.log('Sent initialization response with toolsProvider capability');
+                };
+                console.log(`Client offered protocolVersion: ${clientOfferedProtocolVersion}, Server selected: ${selectedProtocolVersion}`);
+                console.log('Initialize response (capabilities simplified for diagnostics):', JSON.stringify(response, null, 2));
                 break;
+
+              case 'notifications/initialized':
+                console.log('Received notifications/initialized from client.');
+                // This is a notification. According to JSON-RPC, no JSON response body should be sent.
+                // We send a 204 No Content to acknowledge receipt at the HTTP level.
+                res.writeHead(204); // No Content
+                res.end();
+                return; // IMPORTANT: return to skip the default JSON response sending logic
+
               default:
                 console.log(`Unhandled method: ${request.method}`);
                 response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), error: { 
@@ -561,7 +608,11 @@ class BusyboxNetworkMCPServer {
                   data: { method: request.method }
                 }};
             }
-
+            // Final safety: Remove protocolVersion from all non-initialize responses
+            if (request.method !== 'initialize' && response.protocolVersion) {
+              delete response.protocolVersion;
+            }
+            console.log(`Outgoing response for method ${request.method}:`, JSON.stringify(response, null, 2));
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(response));
           } catch (error) {
