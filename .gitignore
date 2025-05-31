@@ -1,0 +1,23 @@
+# Dependency directories
+node_modules/
+npm-debug.log
+
+# Environment configuration
+.env
+
+# Build output
+dist/
+build/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Docker-related
+.docker/
+*.swp

@@ -5,6 +5,7 @@
   "main": "mcp-server.js",
   "scripts": {
     "start": "node mcp-server.js",
+    "test": "node test_mcp_client.js",
     "health": "wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1"
   },
   "keywords": [

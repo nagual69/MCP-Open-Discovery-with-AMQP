@@ -1,0 +1,15 @@
+VS Code MCP Test Results
+Test Time: 2025-05-31T17:26:15.857Z
+
+If VS Code is properly connected to the MCP server, you should be able to use
+the MCP network tools (ping, nslookup, etc.) from VS Code.
+
+To test the connection, try using the ping tool by running:
+1. Open VS Code Command Palette (Ctrl+Shift+P)
+2. Type "MCP: Execute Tool"
+3. Select "mcp-open-discovery-test" server
+4. Select "ping" tool
+5. Enter parameters: {"host": "example.com", "count": 3}
+
+If successful, you should see ping results from example.com.
+If you get a "Method not found" error, check VS Code's Developer Tools for details.

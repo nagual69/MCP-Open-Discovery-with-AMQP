@@ -1,0 +1,34 @@
+{
+  "name": "mcp-open-discovery",
+  "version": "1.0.0",
+  "description": "Busybox networking tools exposed via Model Context Protocol",
+  "main": "mcp_server.js",
+  "scripts": {
+    "start": "node mcp_server.js",
+    "test": "node test_mcp_client.js",
+    "health": "powershell -Command \"Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nagual69/mcp-open-discovery.git"
+  },
+  "keywords": [
+    "mcp",
+    "busybox",
+    "networking",
+    "tools",
+    "container"
+  ],
+  "author": "Toby Schmeling",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nagual69/mcp-open-discovery/issues"
+  },
+  "homepage": "https://github.com/nagual69/mcp-open-discovery#readme",  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^0.1.0"
+  }
+}
