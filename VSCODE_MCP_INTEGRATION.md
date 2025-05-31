@@ -1,78 +1,13 @@
-# VS Code MCP Integration Summary
+# VS Code MCP Integration
 
-## Changes Made to Fix MCP Server Integration
+This document provides a brief overview of integrating the MCP-Open-Discovery server with VS Code. For complete setup, usage, and troubleshooting, please refer to the main [README.md](../README.md) and the [TEST_README.md](./TEST_README.md) for testing procedures.
 
-We've identified and fixed the issue with VS Code's MCP client integration. The problem was that VS Code was expecting certain JSON-RPC methods that weren't implemented in our MCP server. Specifically, we've added support for:
+## Testing the Connection in VS Code
 
-1. The `initialize` method - A VS Code-specific method used during the initial connection
-2. The `tools/config` method - Used to configure tool behavior
-3. Additional MCP protocol methods for better client compatibility
+1.  Ensure the MCP server (Docker container) is running.
+2.  Verify server accessibility (e.g., via `curl http://localhost:3000/health`).
+3.  In VS Code:
+    - Use "MCP: List Servers" to find and connect to "mcp-open-discovery-test".
+    - Use "MCP: Execute Tool" to test tools like `ping` or Nmap scans.
 
-## How to Test the Connection
-
-1. Make sure the Docker container is running:
-
-   ```powershell
-   cd "c:\Users\nagua\OneDrive\Documents\development\mcp-open-discovery"
-   docker-compose ps
-   ```
-
-2. Verify the server is accessible by checking the health endpoint:
-
-   ```powershell
-   Invoke-RestMethod -Uri "http://localhost:3000/health" -Method Get
-   ```
-
-3. In VS Code:
-
-   - Open the Command Palette (Ctrl+Shift+P)
-   - Type "MCP: List Servers" and select the command
-   - You should see "mcp-open-discovery-test" in the list of servers
-   - Select it to connect to the server
-
-4. Test a network tool:
-   - Open the Command Palette again
-   - Type "MCP: Execute Tool" and select the command
-   - Select "mcp-open-discovery-test" server
-   - Select "ping" tool
-   - Enter parameters: `{"host": "example.com", "count": 3}`
-   - You should see ping results from example.com
-
-## Debugging Tips
-
-If you encounter issues, you can:
-
-1. Check the server logs:
-
-   ```powershell
-   docker-compose logs
-   ```
-
-2. Verify the VS Code settings in settings.json:
-
-   ```json
-   "mcp": {
-     "servers": {
-       "mcp-open-discovery-test": {
-         "url": "http://localhost:3000"
-       }
-     }
-   }
-   ```
-
-3. Run the test client to verify the server is working correctly:
-   ```powershell
-   cd "c:\Users\nagua\OneDrive\Documents\development\mcp-open-discovery"
-   node test_mcp_client.js
-   ```
-
-## Implementation Details
-
-The key changes made to `mcp_server.js` were:
-
-1. Added support for the `initialize` method with proper LSP-style initialization response
-2. Added support for the `tools/config` method to configure tool behavior
-3. Improved error handling and logging for better debugging
-4. Enhanced the server to handle VS Code's specific MCP protocol extensions
-
-These changes ensure compatibility with VS Code's MCP client implementation while maintaining the core functionality of the Busybox network tools.
+For detailed steps and debugging, see the [VS Code Integration section in the main README.md](../README.md).

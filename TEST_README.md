@@ -1,6 +1,6 @@
 # MCP-Open-Discovery Test Suite
 
-This directory contains a test suite for validating the Busybox Network MCP Server functionality and MCP protocol compliance.
+This directory contains a test suite for validating the Busybox and Nmap Network MCP Server functionality and MCP protocol compliance.
 
 ## Test Script
 
@@ -8,7 +8,7 @@ The `test_mcp_client.js` script acts as an MCP client and performs the following
 
 1. Checks the server health endpoint
 2. Validates the `tools/list` method response
-3. Tests each available tool with appropriate parameters
+3. Tests each available tool with appropriate parameters (including BusyBox and Nmap tools)
 4. Validates responses against the MCP specification
 5. Tests error handling with invalid tool requests
 

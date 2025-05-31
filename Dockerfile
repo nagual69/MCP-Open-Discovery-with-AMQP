@@ -3,6 +3,9 @@ FROM node:24-alpine
 # Install busybox
 RUN apk add --no-cache busybox
 
+# Install nmap
+RUN apk add --no-cache nmap
+
 # Create a non-root user to run the server
 RUN adduser -D -h /home/mcpuser mcpuser
 WORKDIR /home/mcpuser/app

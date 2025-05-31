@@ -192,6 +192,224 @@ class BusyboxNetworkMCPServer {
           if (args.numeric) cmd.push('-n');
           return cmd;
         }
+      },
+      {
+        name: 'nmap_ping_scan',
+        description: 'Nmap Ping Scan (-sn): Discovers online hosts without port scanning.',
+        schema: {
+          type: 'object',
+          properties: {
+            target: { type: 'string', description: "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)" }
+          },
+          required: ['target']
+        },
+        command: (args) => {
+          // Basic target sanitization (more robust validation might be needed)
+          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
+          if (!target) {
+            throw new Error('Invalid target specified for Nmap Ping Scan.');
+          }
+          return ['nmap', '-sn', target];
+        }
+      },
+      {
+        name: 'nmap_tcp_syn_scan',
+        description: 'Nmap TCP SYN Scan (-sS): Stealthy scan for open TCP ports. Requires root/administrator privileges.',
+        schema: {
+          type: 'object',
+          properties: {
+            target: { type: 'string', description: "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)" },
+            ports: { type: 'string', description: "Ports to scan (e.g., '80,443', '1-1024', 'U:53,T:21-25,80'). Default is Nmap's default (usually top 1000)." },
+            fast_scan: { type: 'boolean', default: false, description: "Fast mode (-F): Scan fewer ports than the default scan." },
+            timing_template: {
+              type: 'number',
+              enum: [0, 1, 2, 3, 4, 5],
+              default: 3,
+              description: "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            reason: { type: 'boolean', default: false, description: "Display the reason a port is in a particular state (--reason)." },
+            open_only: { type: 'boolean', default: false, description: "Only show open (or possibly open) ports (--open)." }
+          },
+          required: ['target']
+        },
+        command: (args) => {
+          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
+          if (!target) {
+            throw new Error('Invalid target specified for Nmap TCP SYN Scan.');
+          }
+          const cmd = ['nmap', '-sS', target];
+          if (args.ports) {
+            // Basic port sanitization (Nmap will validate more thoroughly)
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-U:T:S:]/g, '');
+            if (ports) cmd.push('-p', ports);
+          }
+          if (args.fast_scan) {
+            cmd.push('-F');
+          }
+          if (args.timing_template !== undefined && [0, 1, 2, 3, 4, 5].includes(args.timing_template)) {
+            cmd.push(`-T${args.timing_template}`);
+          }
+          if (args.reason) {
+            cmd.push('--reason');
+          }
+          if (args.open_only) {
+            cmd.push('--open');
+          }
+          return cmd;
+        }
+      },
+      {
+        name: 'nmap_tcp_connect_scan',
+        description: 'Nmap TCP Connect Scan (-sT): Scans for open TCP ports using the connect() system call. Does not require special privileges.',
+        schema: {
+          type: 'object',
+          properties: {
+            target: { type: 'string', description: "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)" },
+            ports: { type: 'string', description: "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000)." },
+            timing_template: {
+              type: 'number',
+              enum: [0, 1, 2, 3, 4, 5],
+              default: 3,
+              description: "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            reason: { type: 'boolean', default: false, description: "Display the reason a port is in a particular state (--reason)." },
+            open_only: { type: 'boolean', default: false, description: "Only show open (or possibly open) ports (--open)." }
+          },
+          required: ['target']
+        },
+        command: (args) => {
+          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
+          if (!target) {
+            throw new Error('Invalid target specified for Nmap TCP Connect Scan.');
+          }
+          const cmd = ['nmap', '-sT', target];
+          if (args.ports) {
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-]/g, ''); // Simpler regex for ports
+            if (ports) cmd.push('-p', ports);
+          }
+          if (args.timing_template !== undefined && [0, 1, 2, 3, 4, 5].includes(args.timing_template)) {
+            cmd.push(`-T${args.timing_template}`);
+          }
+          if (args.reason) {
+            cmd.push('--reason');
+          }
+          if (args.open_only) {
+            cmd.push('--open');
+          }
+          return cmd;
+        }
+      },
+      {
+        name: 'nmap_udp_scan',
+        description: 'Nmap UDP Scan (-sU): Scans for open UDP ports. Can be very slow as UDP is connectionless.',
+        schema: {
+          type: 'object',
+          properties: {
+            target: { type: 'string', description: "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)" },
+            ports: { type: 'string', description: "Ports to scan (e.g., 'U:53,161', '1-1024'). Default is Nmap's default for UDP (often common UDP ports)." },
+            top_ports: { type: 'number', description: "Scan the <number> most common UDP ports (--top-ports <number>). Cannot be used with 'ports'."},
+            timing_template: {
+              type: 'number',
+              enum: [0, 1, 2, 3, 4, 5],
+              default: 3,
+              description: "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            reason: { type: 'boolean', default: false, description: "Display the reason a port is in a particular state (--reason)." },
+            open_only: { type: 'boolean', default: false, description: "Only show open (or possibly open) ports (--open)." }
+          },
+          required: ['target']
+        },
+        command: (args) => {
+          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
+          if (!target) {
+            throw new Error('Invalid target specified for Nmap UDP Scan.');
+          }
+          const cmd = ['nmap', '-sU', target];
+          if (args.ports && args.top_ports) {
+            throw new Error("Cannot specify both 'ports' and 'top_ports' for Nmap UDP Scan.");
+          }
+          if (args.ports) {
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-U:]/g, ''); // Allow U: prefix for UDP ports
+            if (ports) cmd.push('-p', ports);
+          } else if (args.top_ports) {
+            const topPorts = parseInt(args.top_ports, 10);
+            if (Number.isInteger(topPorts) && topPorts > 0) {
+              cmd.push('--top-ports', String(topPorts));
+            } else {
+              throw new Error("Invalid 'top_ports' value. Must be a positive integer.");
+            }
+          }
+          if (args.timing_template !== undefined && [0, 1, 2, 3, 4, 5].includes(args.timing_template)) {
+            cmd.push(`-T${args.timing_template}`);
+          }
+          if (args.reason) {
+            cmd.push('--reason');
+          }
+          if (args.open_only) {
+            cmd.push('--open');
+          }
+          return cmd;
+        }
+      },
+      {
+        name: 'nmap_version_scan',
+        description: 'Nmap Version Detection (-sV): Probes open ports to determine service/version info.',
+        schema: {
+          type: 'object',
+          properties: {
+            target: { type: 'string', description: "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)" },
+            ports: { type: 'string', description: "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000 TCP and UDP)." },
+            intensity: {
+              type: 'number',
+              enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+              default: 7,
+              description: "Version scan intensity (--version-intensity <0-9>): Higher is more likely to identify services but takes longer. Default 7."
+            },
+            light_mode: { type: 'boolean', default: false, description: "Enable light mode (--version-light): Faster, less comprehensive version scan. Alias for --version-intensity 2." },
+            all_ports: { type: 'boolean', default: false, description: "Try all probes for every port (--version-all): Slower, more comprehensive. Alias for --version-intensity 9." },
+            timing_template: {
+              type: 'number',
+              enum: [0, 1, 2, 3, 4, 5],
+              default: 3,
+              description: "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            reason: { type: 'boolean', default: false, description: "Display the reason a port is in a particular state (--reason)." },
+            open_only: { type: 'boolean', default: false, description: "Only show open (or possibly open) ports (--open)." }
+          },
+          required: ['target']
+        },
+        command: (args) => {
+          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
+          if (!target) {
+            throw new Error('Invalid target specified for Nmap Version Scan.');
+          }
+          const cmd = ['nmap', '-sV', target];
+          if (args.ports) {
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-U:T:S:]/g, '');
+            if (ports) cmd.push('-p', ports);
+          }
+          if (args.light_mode && args.all_ports) {
+            throw new Error("Cannot specify both 'light_mode' and 'all_ports'. Choose one or set intensity directly.");
+          }
+          if (args.light_mode) {
+            cmd.push('--version-light');
+          } else if (args.all_ports) {
+            cmd.push('--version-all');
+          } else if (args.intensity !== undefined && args.intensity >= 0 && args.intensity <= 9) {
+            cmd.push('--version-intensity', String(args.intensity));
+          }
+
+          if (args.timing_template !== undefined && [0, 1, 2, 3, 4, 5].includes(args.timing_template)) {
+            cmd.push(`-T${args.timing_template}`);
+          }
+          if (args.reason) {
+            cmd.push('--reason');
+          }
+          if (args.open_only) {
+            cmd.push('--open');
+          }
+          return cmd;
+        }
       }
     ];
 
