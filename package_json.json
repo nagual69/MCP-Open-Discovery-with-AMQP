@@ -1,0 +1,24 @@
+{
+  "name": "busybox-network-mcp-server",
+  "version": "1.0.0",
+  "description": "Minimalized Busybox networking tools exposed via Model Context Protocol",
+  "main": "mcp-server.js",
+  "scripts": {
+    "start": "node mcp-server.js",
+    "health": "wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "busybox",
+    "networking",
+    "tools",
+    "container"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,37 @@
+# Multi-stage build for minimal networking container
+FROM node:18-alpine AS builder
+
+# Install dependencies for MCP server (minimal - no file system deps)
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+
+FROM busybox:1.36-musl AS runtime
+
+# Create non-root user with minimal permissions
+RUN adduser -D -s /bin/sh -h /tmp/mcp mcpuser
+
+# Copy minimal Node.js runtime
+COPY --from=builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy MCP server
+COPY mcp-server.js ./
+COPY package.json ./
+
+# Set ownership for MCP user (no persistent storage)
+RUN chown -R mcpuser:mcpuser /tmp/mcp
+
+# Switch to non-root user
+USER mcpuser
+WORKDIR /tmp/mcp
+
+# Expose MCP server port
+EXPOSE 3000
+
+# Health check using busybox wget
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+
+# Start MCP server
+CMD ["node", "mcp-server.js"]
