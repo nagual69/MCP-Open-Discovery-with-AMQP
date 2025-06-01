@@ -4,7 +4,17 @@ FROM node:24-alpine
 RUN apk add --no-cache busybox
 
 # Install nmap
-RUN apk add --no-cache nmap
+RUN apk add --no-cache nmap \
+    && wget -O /tmp/nmap.tar.bz2 https://nmap.org/dist/nmap-7.97.tar.bz2 \
+    && mkdir -p /tmp/nmap-src \
+    && tar -xjf /tmp/nmap.tar.bz2 -C /tmp/nmap-src --strip-components=1 \
+    && cp -r /tmp/nmap-src/scripts /usr/share/nmap/ \
+    && cp -r /tmp/nmap-src/nselib /usr/share/nmap/ \
+    && cp /tmp/nmap-src/nse_main.lua /usr/share/nmap/ \
+    && rm -rf /tmp/nmap.tar.bz2 /tmp/nmap-src
+
+# Set NMAPDIR so Nmap can find its scripts
+ENV NMAPDIR=/usr/share/nmap
 
 # Create a non-root user to run the server
 RUN adduser -D -h /home/mcpuser mcpuser

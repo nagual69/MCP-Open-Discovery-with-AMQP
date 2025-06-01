@@ -1,20 +1,19 @@
 #!/usr/bin/env node
-
 const { spawn } = require('child_process');
-const { promisify } = require('util');
+const http = require('http');
+const fs = require('fs');
 
 class BusyboxNetworkMCPServer {
   constructor() {
     this.tools = new Map();
     this.maxOutputSize = 1024 * 1024; // 1MB limit
-    this.commandTimeout = 30000; // 30 second timeout
-    this.roots = []; // Initialize empty roots array
-    
+    this.commandTimeout = 300000; // 5 minutes (300,000 ms)
+    this.roots = [];
+    this.activeCommands = new Map();
     this.initializeNetworkTools();
   }
 
   initializeNetworkTools() {
-    // Define available Busybox networking tools only
     const networkTools = [
       {
         name: 'ping',
@@ -30,23 +29,13 @@ class BusyboxNetworkMCPServer {
           required: ['host']
         },
         command: (args) => {
-          // Busybox ping format: ping [-c COUNT] [-s SIZE] [-w SEC] HOST
           const cmd = ['ping'];
-          
-          // Number of packets to send
           cmd.push('-c', String(Math.min(args.count || 4, 10)));
-          
-          // Timeout in seconds
           cmd.push('-w', String(Math.min(args.timeout || 5, 30)));
-          
-          // Optional packet size
           if (args.size) {
             cmd.push('-s', String(Math.min(Math.max(args.size, 56), 1024)));
           }
-          
-          // Target host (always last parameter)
           cmd.push(this.sanitizeHost(args.host));
-          
           return cmd;
         }
       },
@@ -204,12 +193,13 @@ class BusyboxNetworkMCPServer {
           required: ['target']
         },
         command: (args) => {
-          // Basic target sanitization (more robust validation might be needed)
-          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
-          if (!target) {
-            throw new Error('Invalid target specified for Nmap Ping Scan.');
+          let sanitizedTarget = String(args.target);
+          sanitizedTarget = sanitizedTarget.replace(/\\/g, '/');
+          sanitizedTarget = sanitizedTarget.replace(/[^\w.\-\/]/g, '');
+          if (!sanitizedTarget) {
+            throw new Error('Invalid target specified for Nmap Ping Scan after sanitization.');
           }
-          return ['nmap', '-sn', target];
+          return ['nmap', '-sn', sanitizedTarget];
         }
       },
       {
@@ -233,14 +223,15 @@ class BusyboxNetworkMCPServer {
           required: ['target']
         },
         command: (args) => {
-          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
-          if (!target) {
-            throw new Error('Invalid target specified for Nmap TCP SYN Scan.');
+          let sanitizedTarget = String(args.target);
+          sanitizedTarget = sanitizedTarget.replace(/\\/g, '/');
+          sanitizedTarget = sanitizedTarget.replace(/[^\w.\-\/]/g, '');
+          if (!sanitizedTarget) {
+            throw new Error('Invalid target specified for Nmap TCP SYN Scan after sanitization.');
           }
-          const cmd = ['nmap', '-sS', target];
+          const cmd = ['nmap', '-sS', sanitizedTarget];
           if (args.ports) {
-            // Basic port sanitization (Nmap will validate more thoroughly)
-            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-U:T:S:]/g, '');
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9,:-]/g, '');
             if (ports) cmd.push('-p', ports);
           }
           if (args.fast_scan) {
@@ -278,13 +269,15 @@ class BusyboxNetworkMCPServer {
           required: ['target']
         },
         command: (args) => {
-          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
-          if (!target) {
-            throw new Error('Invalid target specified for Nmap TCP Connect Scan.');
+          let sanitizedTarget = String(args.target);
+          sanitizedTarget = sanitizedTarget.replace(/\\/g, '/');
+          sanitizedTarget = sanitizedTarget.replace(/[^\w.\-\/]/g, '');
+          if (!sanitizedTarget) {
+            throw new Error('Invalid target specified for Nmap TCP Connect Scan after sanitization.');
           }
-          const cmd = ['nmap', '-sT', target];
+          const cmd = ['nmap', '-sT', sanitizedTarget];
           if (args.ports) {
-            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-]/g, ''); // Simpler regex for ports
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9,:-]/g, ''); 
             if (ports) cmd.push('-p', ports);
           }
           if (args.timing_template !== undefined && [0, 1, 2, 3, 4, 5].includes(args.timing_template)) {
@@ -320,16 +313,18 @@ class BusyboxNetworkMCPServer {
           required: ['target']
         },
         command: (args) => {
-          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
-          if (!target) {
-            throw new Error('Invalid target specified for Nmap UDP Scan.');
+          let sanitizedTarget = String(args.target);
+          sanitizedTarget = sanitizedTarget.replace(/\\/g, '/');
+          sanitizedTarget = sanitizedTarget.replace(/[^\w.\-\/]/g, '');
+          if (!sanitizedTarget) {
+            throw new Error('Invalid target specified for Nmap UDP Scan after sanitization.');
           }
-          const cmd = ['nmap', '-sU', target];
+          const cmd = ['nmap', '-sU', sanitizedTarget];
           if (args.ports && args.top_ports) {
             throw new Error("Cannot specify both 'ports' and 'top_ports' for Nmap UDP Scan.");
           }
           if (args.ports) {
-            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-U:]/g, ''); // Allow U: prefix for UDP ports
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9,:-]/g, ''); 
             if (ports) cmd.push('-p', ports);
           } else if (args.top_ports) {
             const topPorts = parseInt(args.top_ports, 10);
@@ -379,13 +374,15 @@ class BusyboxNetworkMCPServer {
           required: ['target']
         },
         command: (args) => {
-          const target = String(args.target).replace(/[^a-zA-Z0-9\\.\\-\\/\\_]/g, '');
-          if (!target) {
-            throw new Error('Invalid target specified for Nmap Version Scan.');
+          let sanitizedTarget = String(args.target);
+          sanitizedTarget = sanitizedTarget.replace(/\\/g, '/');
+          sanitizedTarget = sanitizedTarget.replace(/[^\w.\-\/]/g, '');
+          if (!sanitizedTarget) {
+            throw new Error('Invalid target specified for Nmap Version Scan after sanitization.');
           }
-          const cmd = ['nmap', '-sV', target];
+          const cmd = ['nmap', '-sV', sanitizedTarget];
           if (args.ports) {
-            const ports = String(args.ports).replace(/[^a-zA-Z0-9\\,\\-U:T:S:]/g, '');
+            const ports = String(args.ports).replace(/[^a-zA-Z0-9,:-]/g, '');
             if (ports) cmd.push('-p', ports);
           }
           if (args.light_mode && args.all_ports) {
@@ -417,19 +414,13 @@ class BusyboxNetworkMCPServer {
   }
 
   sanitizeHost(host) {
-    // Basic hostname/IP validation
     if (!host || typeof host !== 'string') {
       throw new Error('Invalid host parameter');
     }
-    
-    // Remove potentially dangerous characters
-    const sanitized = host.replace(/[^a-zA-Z0-9\.\-]/g, '');
-    
-    // Basic length check
+    const sanitized = host.replace(/[^a-zA-Z0-9.\-]/g, '');
     if (sanitized.length === 0 || sanitized.length > 253) {
       throw new Error('Invalid host format');
     }
-    
     return sanitized;
   }
 
@@ -448,143 +439,191 @@ class BusyboxNetworkMCPServer {
   }
 
   sanitizeInterface(iface) {
-    // Basic interface name validation
     if (!iface || typeof iface !== 'string') {
       throw new Error('Invalid interface parameter');
     }
-    
-    // Allow common interface patterns
-    if (!iface.match(/^[a-zA-Z0-9]+$/)) {
+    if (!iface.match(/^[a-zA-Z0-9\-]+$/)) {
       throw new Error('Invalid interface name format');
     }
-    
     return iface;
   }
 
-  async executeNetworkCommand(toolName, args) {
+  async executeNetworkCommand(toolName, args, requestId) {
     const tool = this.tools.get(toolName);
     if (!tool) {
-      throw new Error(`Unknown tool: ${toolName}`);
+      return {
+        success: false,
+        error: `Unknown tool: ${toolName}`,
+        isError: true,
+        exitCode: -1
+      };
     }
 
     try {
-      const command = tool.command(args);
-      const result = await this.runCommand(command);
-      
+      const commandArray = tool.command(args);
+      console.log(`[${requestId || 'NO_REQ_ID'}] Executing command: ${commandArray.join(' ')}`);
+      const result = await this.runCommand(commandArray, requestId);
       return {
         success: true,
-        output: result.stdout,
-        error: result.stderr,
-        exitCode: result.code
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.code,
+        isError: false
       };
     } catch (error) {
+      console.error(`[${requestId || 'NO_REQ_ID'}] Error executing ${toolName}:`, error.message);
       return {
         success: false,
         error: error.message,
-        exitCode: error.code || 1
+        stdout: error.stdout || '',
+        stderr: error.stderr || error.message,
+        exitCode: error.code !== undefined ? error.code : 1,
+        isError: true
       };
     }
   }
 
-  runCommand(args) {
+  runCommand(commandArray, requestId) {
     return new Promise((resolve, reject) => {
-      const child = spawn(args[0], args.slice(1), {
-        stdio: 'pipe',
-        // Not using built-in timeout to manage it ourselves
-      });
+      const commandName = commandArray[0];
+      const commandArgs = commandArray.slice(1);
+      const child = spawn(commandName, commandArgs, { stdio: 'pipe' });
+      let timeoutId;
+
+      if (requestId) {
+        timeoutId = setTimeout(() => {
+          if (this.activeCommands.has(requestId)) {
+            console.log(`[${requestId}] Command timed out. Killing process.`);
+            child.kill('SIGTERM');
+            setTimeout(() => { if (!child.killed) child.kill('SIGKILL'); }, 2000);
+          }
+        }, this.commandTimeout);
+        this.activeCommands.set(requestId, { process: child, timeoutId });
+      }
 
       let stdout = '';
       let stderr = '';
-      let killed = false;
-      
-      // Set up the timeout
-      const timeoutId = setTimeout(() => {
-        if (!child.killed) {
-          killed = true;
-          child.kill('SIGTERM');
-          reject(new Error('Command execution timed out after ' + (this.commandTimeout/1000) + ' seconds'));
-        }
-      }, this.commandTimeout);
 
       child.stdout.on('data', (data) => {
         stdout += data.toString();
         if (stdout.length > this.maxOutputSize) {
-          if (!killed) {
-            killed = true;
-            clearTimeout(timeoutId);
-            child.kill('SIGTERM');
-            reject(new Error('Output size limit exceeded'));
-          }
+          if (requestId && this.activeCommands.has(requestId)) clearTimeout(this.activeCommands.get(requestId).timeoutId);
+          child.kill('SIGTERM');
+          const err = new Error('Output size limit exceeded for stdout');
+          err.stdout = stdout.substring(0, 1024) + "... (truncated)";
+          err.stderr = stderr;
+          err.code = -2;
+          if (requestId) this.activeCommands.delete(requestId);
+          reject(err);
         }
       });
 
       child.stderr.on('data', (data) => {
         stderr += data.toString();
         if (stderr.length > this.maxOutputSize) {
-          if (!killed) {
-            killed = true;
-            clearTimeout(timeoutId);
-            child.kill('SIGTERM');
-            reject(new Error('Error output size limit exceeded'));
-          }
+          if (requestId && this.activeCommands.has(requestId)) clearTimeout(this.activeCommands.get(requestId).timeoutId);
+          child.kill('SIGTERM');
+          const err = new Error('Output size limit exceeded for stderr');
+          err.stdout = stdout;
+          err.stderr = stderr.substring(0, 1024) + "... (truncated)";
+          err.code = -3;
+          if (requestId) this.activeCommands.delete(requestId);
+          reject(err);
         }
       });
 
       child.on('close', (code) => {
-        clearTimeout(timeoutId);
-        if (!killed) {
+        if (requestId && this.activeCommands.has(requestId)) {
+          clearTimeout(this.activeCommands.get(requestId).timeoutId);
+          this.activeCommands.delete(requestId);
+        }
+        console.log(`[${requestId || 'NO_REQ_ID'}] Command exited with code ${code}. Stdout length: ${stdout.length}, Stderr length: ${stderr.length}`);
+        if (code === 0) {
           resolve({ stdout: stdout.trim(), stderr: stderr.trim(), code });
+        } else {
+          const err = new Error(`Command failed with exit code ${code}`);
+          err.stdout = stdout.trim();
+          err.stderr = stderr.trim();
+          err.code = code;
+          reject(err);
         }
       });
 
       child.on('error', (error) => {
-        clearTimeout(timeoutId);
-        if (!killed) {
-          reject(error);
+        if (requestId && this.activeCommands.has(requestId)) {
+          clearTimeout(this.activeCommands.get(requestId).timeoutId);
+          this.activeCommands.delete(requestId);
         }
+        console.error(`[${requestId || 'NO_REQ_ID'}] Spawn error for command ${commandName}:`, error);
+        error.stdout = stdout.trim();
+        error.stderr = stderr.trim();
+        reject(error);
       });
     });
   }
 
-  // MCP Protocol handlers
   async handleListTools() {
     const toolsList = Array.from(this.tools.values()).map(tool => ({
       name: tool.name,
       description: tool.description,
-      inputSchema: tool.schema // Changed 'schema' to 'inputSchema'
+      inputSchema: tool.schema 
     }));
-    
     console.log(`Returning ${toolsList.length} tools to client (using inputSchema)`);
-    
-    // MCP spec: only 'tools' property, no 'result'
     return {
       tools: toolsList
     };
   }
 
-  async handleCallTool(name, arguments_) {
+  async handleCallTool(methodName, params) {
+    const requestId = params._meta && params._meta.progressToken;
+    console.log(`[${requestId || 'NO_REQ_ID'}] Handling tool call: ${methodName} with args:`, params.arguments);
+
     try {
-      const result = await this.executeNetworkCommand(name, arguments_);
+      const result = await this.executeNetworkCommand(methodName, params.arguments, requestId);
+      let outputText = '';
+      let isError = !result.success;
+
+      if (result.success) {
+        outputText = result.stdout || '';
+        if (result.stderr) {
+          if (outputText.length < 150 && result.stderr.length > 0) {
+            outputText = `Stdout:\n${outputText}\n\nStderr:\n${result.stderr}`;
+          } else if (!outputText && result.stderr.length > 0) {
+            outputText = `Stderr:\n${result.stderr}`;
+          } else if (outputText && result.stderr.length > 0 && 
+                     (result.stderr.includes("Nmap scan report") || 
+                      result.stderr.includes("Host is up") || 
+                      result.stderr.includes("Failed to resolve"))) {
+            outputText += `\n\n--- Stderr ---\n${result.stderr}`;
+          }
+        }
+        if (!outputText && !result.stderr) {
+          outputText = "Command executed successfully, but returned no output.";
+        }
+      } else {
+        isError = true;
+        outputText = `Error (Exit Code: ${result.exitCode}): ${result.error || 'Unknown execution error'}`;
+        if (result.stdout) outputText += `\nStdout:\n${result.stdout}`;
+        if (result.stderr && result.stderr !== result.error) outputText += `\nStderr:\n${result.stderr}`;
+      }
       
-      // Ensure we always have text content, even if empty
-      const outputText = result.success 
-        ? (result.output || "Command executed successfully, but returned no output.")
-        : `Error: ${result.error || "Unknown error"}`;
-      
-      // Format according to MCP specification
+      console.log(`[${requestId || 'NO_REQ_ID'}] Tool call ${methodName} result. isError: ${isError}, Output length: ${outputText.length}`);
+
       return {
         content: [{
           type: 'text',
-          text: outputText
+          text: outputText.substring(0, this.maxOutputSize)
         }],
-        isError: !result.success,
-        result: result.success ? 'success' : 'error'
+        isError: isError,
+        result: isError ? 'error' : 'success'
       };
+
     } catch (error) {
+      console.error(`[${requestId || 'NO_REQ_ID'}] Critical error in handleCallTool for ${methodName}:`, error);
       return {
         content: [{
           type: 'text',
-          text: `Execution error: ${error.message || "Unknown error occurred"}`
+          text: `Critical server error during tool execution: ${error.message}`
         }],
         isError: true,
         result: 'error'
@@ -599,289 +638,235 @@ class BusyboxNetworkMCPServer {
   }
   
   async handleVersion() {
-    // Only return version and protocolVersion, not jsonrpc
     return {
       version: "1.0.0",
-      protocolVersion: "1.0.0"
-    };
-  }
-
-  async handleServersList() {
-    return {
-      servers: [
-        {
-          id: "busybox-network",
-          name: "Busybox Network Tools",
-          status: "ready",
-          description: "Network diagnostic tools powered by Busybox"
-        }
-      ]
-    };
-  }
-
-  async handleServerInfo() {
-    return {
-      server: {
-        id: "busybox-network",
-        name: "Busybox Network Tools",
-        version: "1.0.0",
-        status: "ready",
-        description: "Network diagnostic tools powered by Busybox",
-        capabilities: {
-          supportsToolCalls: true,
-          supportsStreaming: false
-        }
-      }
-    };
-  }
-
-  async handleSetRoots(roots) {
-    // Store the provided roots
-    this.roots = roots || [];
-    
-    console.log(`Received ${this.roots.length} roots from client:`, JSON.stringify(this.roots));
-    
-    return {
-      result: "success"
+      protocolVersion: "1.0.0" // Match client's expectation or define your server's supported version
     };
   }
   
-  async handleToolsConfig() {
-    return {
-      config: {
-        confirmBeforeInvoke: true,
-        streaming: false
+  async handleInitialize(params) {
+    const clientProtocolVersion = params.protocolVersion;
+    const serverProtocolVersion = "2025-03-26";
+    console.log(`Client offered protocolVersion: ${clientProtocolVersion}, Server selected: ${serverProtocolVersion}`);
+    const response = {
+      protocolVersion: serverProtocolVersion,
+      serverInfo: {
+        name: "Busybox Network MCP Server",
+        version: "1.0.0",
+        capabilities: { supportsToolCalls: true, supportsStreaming: false }
+      },
+      capabilities: {
+        tools: { list: true, call: true, config: true, listChanged: false },
+        status: { read: true },
+        version: { read: true },
+        servers: { list: true, info: true, listChanged: false },
+        roots: { set: true, listChanged: false }
       }
     };
+    console.log("Initialize response (capabilities simplified for diagnostics):", JSON.stringify(response, null, 2));
+    return response;
   }
 
-  // HTTP server for MCP over HTTP transport
+  async handleNotificationsInitialized() {
+    console.log("Received notifications/initialized from client.");
+  }
+
+  async handleNotificationsCancelled(params) {
+    const { requestId, reason } = params;
+    console.log(`[${requestId}] Received cancellation request. Reason: ${reason || 'No reason provided'}`);
+    if (this.activeCommands.has(requestId)) {
+      const { process, timeoutId } = this.activeCommands.get(requestId);
+      clearTimeout(timeoutId);
+      if (!process.killed) {
+        console.log(`[${requestId}] Killing process PID ${process.pid}`);
+        process.kill('SIGTERM');
+        setTimeout(() => { if (!process.killed) process.kill('SIGKILL'); }, 1000);
+      }
+      this.activeCommands.delete(requestId);
+      console.log(`[${requestId}] Process cancelled and removed from active commands.`);
+    } else {
+      console.log(`[${requestId}] No active command found for cancellation request.`);
+    }
+  }
+
   startServer(port = 3000) {
-    const http = require('http');
-    
     const server = http.createServer(async (req, res) => {
-      // Always set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Request-ID'); // Allow X-Request-ID if client sends it
 
-      // Log all requests
       console.log(`[MCP] ${req.method} ${req.url}`);
 
       if (req.method === 'OPTIONS') {
-        res.writeHead(200);
+        res.writeHead(204); // Use 204 No Content for OPTIONS
         res.end();
         return;
       }
 
-      // Health check endpoint (GET or POST)
       if (req.url === '/health' && (req.method === 'GET' || req.method === 'POST')) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'healthy', tools: this.tools.size }));
         return;
       }
-
-      // Root endpoint for GET (Inspector/browser preflight)
       if (req.url === '/' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ status: 'ok', message: 'Busybox Network MCP Server' }));
+        res.end(JSON.stringify({ status: 'ok', message: 'Busybox Network MCP Server is running' }));
         return;
       }
 
-      // MCP endpoints
       if (req.method === 'POST') {
         let body = '';
         req.on('data', chunk => body += chunk);
         req.on('end', async () => {
+          let request;
           try {
-            const request = JSON.parse(body);
-            let response = {
-              jsonrpc: "2.0"
-            };
-            
-            // Log incoming requests for debugging
+            request = JSON.parse(body);
             console.log(`Received request method: ${request.method}`);
-            if (request.params) {
-              console.log(`Request params: ${JSON.stringify(request.params)}`);
+            if (request.params) console.log(`Request params: ${JSON.stringify(request.params)}`);
+
+            // Handle notifications first (they don't have 'id' or expect a JSON-RPC response body)
+            if (request.id === undefined) {
+              if (request.method === 'notifications/cancelled') {
+                await this.handleNotificationsCancelled(request.params);
+                res.writeHead(204); // No Content
+                res.end();
+                return;
+              } else if (request.method === 'notifications/initialized') {
+                console.log('Received notifications/initialized from client.');
+                res.writeHead(204); // No Content
+                res.end();
+                return;
+              } else {
+                console.error(`Unhandled notification: ${request.method}`);
+                res.writeHead(204); // No Content for other unhandled notifications
+                res.end();
+                return;
+              }
+            }
+
+            // For JSON-RPC calls that expect a response (have an 'id')
+            let response = { jsonrpc: "2.0", id: request.id };
+
+            if (!request.jsonrpc || !request.method) {
+              response.error = { code: -32600, message: 'Invalid Request: missing method' };
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(response));
+              return;
             }
             
-            // Validate the request format
-            if (!request.jsonrpc) {
-              throw new Error('Invalid JSON-RPC request: missing jsonrpc field');
-            }
-            
-            if (!request.method) {
-              throw new Error('Invalid JSON-RPC request: missing method field');
-            }
-            
-            // Keep the request ID in the response
             if (request.id !== undefined) {
               response.id = request.id;
             }
 
+            let resultPromise;
+
             switch (request.method) {
+              case 'initialize':
+                resultPromise = this.handleInitialize(request.params);
+                break;
               case 'tools/list':
-                console.log('Received tools/list request');
-                const toolsResponse = await this.handleListTools();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: toolsResponse };
-                console.log(`Responding with ${toolsResponse.tools?.length || 0} tools`);
+                console.log("Received tools/list request");
+                resultPromise = this.handleListTools();
                 break;
               case 'tools/call':
-                if (!request.params || !request.params.name) {
-                  response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), error: { 
-                    code: -32602,
-                    message: 'Invalid params: missing required parameter "name"', 
-                    data: { expected: "name" }
-                  }};
-                } else {
-                  const toolCallResponse = await this.handleCallTool(request.params.name, request.params.arguments || {});
-                  // Nest the toolCallResponse within the main 'result' object
-                  response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: toolCallResponse }; 
-                }
-                break;
-              case 'tools/config':
-                const toolsConfigResponse = await this.handleToolsConfig();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: toolsConfigResponse };
+                resultPromise = this.handleCallTool(request.params.name, request.params);
                 break;
               case 'status':
-                const statusResponse = await this.handleStatus();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: statusResponse };
+                resultPromise = this.handleStatus();
                 break;
               case 'version':
-                const versionResponse = await this.handleVersion();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: versionResponse };
+                resultPromise = this.handleVersion();
                 break;
               case 'servers/list':
-                const serversResponse = await this.handleServersList();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: serversResponse };
+                resultPromise = this.handleServersList();
                 break;
-              case 'servers/info':
-                const serverInfoResponse = await this.handleServerInfo();
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: serverInfoResponse };
+              case 'server/info':
+                resultPromise = this.handleServerInfo();
                 break;
               case 'roots/set':
-                const rootsSetResponse = await this.handleSetRoots(request.params?.roots);
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), result: rootsSetResponse };
+                resultPromise = this.handleSetRoots(request.params.roots);
                 break;
-              case 'initialize':
-                const clientOfferedProtocolVersion = request.params?.protocolVersion;
-                const selectedProtocolVersion = clientOfferedProtocolVersion || "1.0.0";
-
-                response = {
-                  jsonrpc: "2.0",
-                  ...(request.id !== undefined ? { id: request.id } : {}),
-                  result: {
-                    protocolVersion: selectedProtocolVersion,
-                    serverInfo: {
-                      name: "Busybox Network MCP Server",
-                      version: "1.0.0", // This is application version
-                      capabilities: { // General server capabilities
-                        supportsToolCalls: true, 
-                        supportsStreaming: false 
-                      }
-                    },
-                    capabilities: { // MCP-specific feature capabilities (aligned with SDK)
-                      tools: {
-                        list: true,        // For tools/list
-                        call: true,        // For tools/call
-                        config: true,      // For tools/config
-                        listChanged: false // No dynamic tool list change notifications
-                      },
-                      status: {
-                        read: true         // For the 'status' method
-                      },
-                      version: {
-                        read: true         // For the 'version' method
-                      },
-                      servers: {
-                        list: true,        // For servers/list
-                        info: true,        // For servers/info
-                        listChanged: false // No dynamic server list change notifications
-                      },
-                      roots: {
-                        set: true,         // For roots/set
-                        listChanged: false // No dynamic root change notifications
-                      }
-                      // resourcesProvider and promptsProvider are omitted as they are not implemented
-                    }
-                  }
-                };
-                console.log(`Client offered protocolVersion: ${clientOfferedProtocolVersion}, Server selected: ${selectedProtocolVersion}`);
-                console.log('Initialize response (capabilities simplified for diagnostics):', JSON.stringify(response, null, 2));
+              case 'tools/config':
+                resultPromise = this.handleToolsConfig();
                 break;
-
               case 'notifications/initialized':
-                console.log('Received notifications/initialized from client.');
-                // This is a notification. According to JSON-RPC, no JSON response body should be sent.
-                // We send a 204 No Content to acknowledge receipt at the HTTP level.
-                res.writeHead(204); // No Content
+                await this.handleNotificationsInitialized();
+                res.writeHead(204);
                 res.end();
-                return; // IMPORTANT: return to skip the default JSON response sending logic
-
+                return;
+              case 'notifications/cancelled':
+                await this.handleNotificationsCancelled(request.params);
+                res.writeHead(204);
+                res.end();
+                return;
               default:
                 console.log(`Unhandled method: ${request.method}`);
-                response = { jsonrpc: "2.0", ...(request.id !== undefined ? { id: request.id } : {}), error: { 
-                  code: -32601,
-                  message: 'Method not found', 
-                  data: { method: request.method }
-                }};
+                response.error = { code: -32601, message: 'Method not found', data: { method: request.method } };
             }
-            // Final safety: Remove protocolVersion from all non-initialize responses
-            if (request.method !== 'initialize' && response.protocolVersion) {
-              delete response.protocolVersion;
+
+            if (response.error) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(response));
+            } else if (resultPromise) {
+              try {
+                response.result = await resultPromise;
+                console.log(`Outgoing response for method ${request.method}:`, JSON.stringify(response, null, 2));
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(response));
+              } catch (error) {
+                console.error("Error processing request:", error);
+                response.error = { code: -32000, message: `Server error: ${error.message}` };
+                if (request.id !== undefined) response.id = request.id; else delete response.id;
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(response));
+              }
             }
-            console.log(`Outgoing response for method ${request.method}:`, JSON.stringify(response, null, 2));
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(response));
           } catch (error) {
-            const errorResponse = {
+            console.error("Error processing request:", error);
+            const errorResponseId = (request && request.id !== undefined) ? request.id : null;
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
               jsonrpc: "2.0",
-              error: {
-                code: -32603, // Internal error
-                message: error.message
-              }
-            };
-            
-            // Include the request ID if it was provided
-            try {
-              const request = JSON.parse(body);
-              if (request.id !== undefined) {
-                errorResponse.id = request.id;
-              }
-            } catch (e) {
-              // Could not parse the request, cannot extract ID
-            }
-            
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(errorResponse));
+              error: { code: -32000, message: `Server error: ${error.message}` },
+              id: errorResponseId
+            }));
           }
         });
       } else {
-        const methodNotAllowedResponse = {
-          jsonrpc: "2.0",
-          error: {
-            code: -32700,
-            message: 'Method not allowed',
-            data: { 
-              allowed: ['POST', 'OPTIONS', 'GET'] 
-            }
-          }
-        };
-        res.writeHead(405, { 
-          'Content-Type': 'application/json',
-          'Allow': 'GET, POST, OPTIONS' 
-        });
-        res.end(JSON.stringify(methodNotAllowedResponse));
+        res.writeHead(405); // Method Not Allowed
+        res.end();
       }
     });
 
     server.listen(port, () => {
       console.log(`Busybox Network MCP Server running on port ${port}`);
       console.log(`Available tools: ${Array.from(this.tools.keys()).join(', ')}`);
+      this.logNmapDirs();
     });
+  }
+
+  logNmapDirs() {
+    try {
+      console.log('Listing /usr/share/nmap:');
+      const nmapDir = fs.readdirSync('/usr/share/nmap');
+      console.log(nmapDir);
+      if (fs.existsSync('/usr/share/nmap/scripts')) {
+        console.log('Listing /usr/share/nmap/scripts:');
+        const scriptsDir = fs.readdirSync('/usr/share/nmap/scripts');
+        console.log(scriptsDir.slice(0, 10)); // Only show first 10 for brevity
+      } else {
+        console.log('/usr/share/nmap/scripts does not exist');
+      }
+      if (fs.existsSync('/usr/share/nmap/nse_main.lua')) {
+        console.log('nse_main.lua found in /usr/share/nmap');
+      } else {
+        console.log('nse_main.lua NOT found in /usr/share/nmap');
+      }
+    } catch (e) {
+      console.error('Error listing Nmap directories:', e);
+    }
   }
 }
 
-// Start the server
 const server = new BusyboxNetworkMCPServer();
 server.startServer(process.env.PORT || 3000);
