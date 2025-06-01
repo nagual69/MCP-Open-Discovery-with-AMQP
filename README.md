@@ -152,6 +152,59 @@ All requests are `POST` requests to `http://localhost:3000` with `Content-Type: 
 
 _(See `mcp_server.js` for the full schema of each tool.)_
 
+## Advanced Nmap Usage
+
+With the full Nmap Scripting Engine (NSE) enabled, you can use advanced scans for service discovery, vulnerability checks, and more.
+
+### Example: Nmap with Default Scripts
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "nmap_version_scan",
+    "arguments": {
+      "target": "scanme.nmap.org",
+      "ports": "80,443",
+      "reason": true
+    }
+  },
+  "id": "nmap-default-scripts"
+}
+```
+
+_Note: For custom scripts or script arguments, see the Nmap documentation and consider extending the tool schema._
+
+## Scan Timeouts
+
+- The server allows up to 5 minutes for each scan by default, supporting heavy or comprehensive scans.
+- If you encounter timeouts in your client (e.g., MCP Inspector), increase the client-side timeout to match your scan needs.
+
+## Troubleshooting
+
+- If you see errors like `could not locate nse_main.lua`, ensure the container is rebuilt with the full Nmap scripts as described in the Dockerfile.
+- For long-running scans, check both server and client timeouts.
+
+## Example: Using Nmap Output for CMDB Population
+
+The output from `nmap_version_scan` includes service banners and device info, which can be parsed and ingested into a CMDB. Example output:
+
+```
+PORT    STATE SERVICE  VERSION
+53/tcp  open  domain   TP-LINK router dnsd
+80/tcp  open  http     OpenWrt uHTTPd (TP-LINK router http config)
+443/tcp open  ssl/http OpenWrt uHTTPd (TP-LINK router http config)
+Service Info: OS: Linux; Device: broadband router; CPE: cpe:/o:linux:linux_kernel
+```
+
+You can automate extraction of:
+
+- Open ports and services
+- Detected software versions
+- Device type and OS
+- CPE identifiers
+
 ## Local Development
 
 ### Prerequisites
