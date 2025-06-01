@@ -1,0 +1,70 @@
+[
+  {
+    "id": "1",
+    "type": "tab",
+    "label": "CI Builder Agent",
+    "disabled": false,
+    "info": "Node-RED flow for CI Builder Agent: watches MCP memory, collates facts, infers type, outputs Cypher for Neo4j."
+  },
+  {
+    "id": "2",
+    "type": "inject",
+    "z": "1",
+    "name": "Poll MCP Memory (every 10s)",
+    "props": [],
+    "repeat": "10",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 180,
+    "y": 80,
+    "wires": [["3"]]
+  },
+  {
+    "id": "3",
+    "type": "http request",
+    "z": "1",
+    "name": "Query Incomplete CIs",
+    "method": "POST",
+    "ret": "obj",
+    "url": "http://localhost:3000/",
+    "headers": {"Content-Type": "application/json"},
+    "data": "{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"memory/query\",\"arguments\":{\"incomplete\":true}},\"id\":1}",
+    "x": 410,
+    "y": 80,
+    "wires": [["4"]]
+  },
+  {
+    "id": "4",
+    "type": "function",
+    "z": "1",
+    "name": "Collate & Infer Type",
+    "func": "// For each CI, merge facts, infer type, and build Cypher\nconst results = []\n(msg.payload.result.cis || []).forEach(ci => {\n    let type = 'Unknown';\n    if (ci.services && ci.services.includes('ssh')) type = 'Server';\n    if (ci.services && ci.services.includes('domain')) type = 'NetworkDevice';\n    if (ci.os && ci.os.match(/windows/i)) type = 'WindowsHost';\n    if (ci.os && ci.os.match(/linux/i)) type = 'LinuxHost';\n    // ... more inference rules ...\n    ci.type = type;\n    // Build Cypher\n    const cypher = `MERGE (n:CI {ip: '${ci.ip}'}) SET n += ${JSON.stringify(ci)} RETURN n`\n    results.push({ci, cypher})\n});\nmsg.payload = results;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 670,
+    "y": 80,
+    "wires": [["5"]]
+  },
+  {
+    "id": "5",
+    "type": "debug",
+    "z": "1",
+    "name": "Show Cypher Output",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 900,
+    "y": 80,
+    "wires": []
+  }
+]

@@ -205,6 +205,32 @@ You can automate extraction of:
 - Device type and OS
 - CPE identifiers
 
+## Advanced: Incremental CI Discovery and MCP Memory Integration
+
+To build a robust, intelligent, and automated CMDB population process, you can leverage the MCP memory/context service as a staging and enrichment area for Configuration Items (CIs):
+
+- **Incremental Discovery:** As each tool (Nmap, BusyBox, etc.) discovers new facts about a CI (e.g., IP, hostname, OS, services), store or update a partial CI record in the MCP memory service, keyed by a unique identifier (IP, MAC, hostname, etc.).
+- **Collation & Enrichment:** As more data is gathered, merge new facts into existing CI stubs. Enrichment agents can trigger additional scans or lookups to fill missing fields.
+- **Type Inference & Hierarchy:** Use accumulated facts to infer CI type (e.g., server, router, printer) and build relationships (e.g., parent/child, network topology) in memory before committing to the CMDB.
+- **Validation & Commit:** When a CI is "complete enough" (meets a profile or confidence threshold), commit it to the persistent CMDB (e.g., Neo4j). Use memory to deduplicate and validate before writing.
+
+**Example Workflow:**
+
+1. `ping` discovers IP → memory: `{ip: "192.168.1.10"}`
+2. `nmap_version_scan` adds OS/services → memory: `{ip: "192.168.1.10", os: "Linux", services: [...]}`
+3. `nslookup` adds hostname → memory: `{ip: "192.168.1.10", hostname: "server1.local", ...}`
+4. Enrichment agent triggers more scans if needed.
+5. When enough data is present, CI is written to the CMDB and cleared from memory.
+
+**Benefits:**
+
+- Resilient to partial/incomplete data
+- Supports asynchronous, multi-tool, multi-pass discovery
+- Reduces duplication and errors in the CMDB
+- Enables advanced logic (confidence scoring, enrichment, deduplication) before commit
+
+This approach is modular, extensible, and aligns with modern discovery and asset management best practices. See the project plan below for implementation steps.
+
 ## Local Development
 
 ### Prerequisites

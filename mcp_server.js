@@ -3,6 +3,42 @@ const { spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs');
 
+// In-memory CI store for MCP memory tools
+const ciMemory = new Map();
+
+// Helper: merge new data into existing CI
+function mergeCI(existing, update) {
+  return { ...existing, ...update };
+}
+
+// MCP memory tool handlers
+async function handleMemoryTool(method, args) {
+  if (method === 'memory/get') {
+    const key = args.key;
+    return ciMemory.has(key) ? ciMemory.get(key) : null;
+  }
+  if (method === 'memory/set') {
+    const key = args.key;
+    ciMemory.set(key, args.data);
+    return { success: true };
+  }
+  if (method === 'memory/merge') {
+    const key = args.key;
+    const existing = ciMemory.get(key) || {};
+    ciMemory.set(key, mergeCI(existing, args.data));
+    return { success: true };
+  }
+  if (method === 'memory/query') {
+    // Example: find incomplete CIs (missing type or os)
+    const incomplete = [];
+    for (const [key, ci] of ciMemory.entries()) {
+      if (!ci.type || !ci.os) incomplete.push(ci);
+    }
+    return { cis: incomplete };
+  }
+  return { error: 'Unknown memory tool method' };
+}
+
 class BusyboxNetworkMCPServer {
   constructor() {
     this.tools = new Map();
