@@ -19,22 +19,34 @@ async function handleMemoryTool(method, args) {
   }
   if (method === 'memory/set') {
     const key = args.key;
-    ciMemory.set(key, args.data);
+    ciMemory.set(key, args.value);
     return { success: true };
   }
   if (method === 'memory/merge') {
     const key = args.key;
     const existing = ciMemory.get(key) || {};
-    ciMemory.set(key, mergeCI(existing, args.data));
+    ciMemory.set(key, mergeCI(existing, args.value));
     return { success: true };
   }
   if (method === 'memory/query') {
-    // Example: find incomplete CIs (missing type or os)
-    const incomplete = [];
-    for (const [key, ci] of ciMemory.entries()) {
-      if (!ci.type || !ci.os) incomplete.push(ci);
+    // If a pattern is provided, return all CIs whose key matches the pattern (supports * as wildcard)
+    if (args.pattern && typeof args.pattern === 'string') {
+      // Convert glob pattern to RegExp
+      const pattern = args.pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+      const regex = new RegExp('^' + pattern + '$');
+      const matches = [];
+      for (const [key, ci] of ciMemory.entries()) {
+        if (regex.test(key)) matches.push({ key, ci });
+      }
+      return { cis: matches };
+    } else {
+      // Default: find incomplete CIs (missing type or os)
+      const incomplete = [];
+      for (const [key, ci] of ciMemory.entries()) {
+        if (!ci.type || !ci.os) incomplete.push({ key, ci });
+      }
+      return { cis: incomplete };
     }
-    return { cis: incomplete };
   }
   return { error: 'Unknown memory tool method' };
 }
@@ -443,7 +455,69 @@ class BusyboxNetworkMCPServer {
           }
           return cmd;
         }
-      }
+      },
+      // Register memory tools for MCP Inspector/VS Code
+      {
+        name: 'memory_get',
+        description: 'Get a CI object from MCP memory by key',
+        schema: {
+          type: 'object',
+          properties: {
+            key: { type: 'string', description: 'Unique CI key (e.g., ci:host:192.168.1.10)' }
+          },
+          required: ['key']
+        },
+        command: async (args) => {
+          const result = await handleMemoryTool('memory/get', args);
+          return ['Result:', JSON.stringify(result, null, 2)];
+        }
+      },
+      {
+        name: 'memory_set',
+        description: 'Set a CI object in MCP memory by key',
+        schema: {
+          type: 'object',
+          properties: {
+            key: { type: 'string', description: 'Unique CI key (e.g., ci:host:192.168.1.10)' },
+            value: { type: 'object', description: 'CI object to store' }
+          },
+          required: ['key', 'value']
+        },
+        command: async (args) => {
+          const result = await handleMemoryTool('memory/set', { key: args.key, value: args.value });
+          return ['Result:', JSON.stringify(result, null, 2)];
+        }
+      },
+      {
+        name: 'memory_merge',
+        description: 'Merge new data into an existing CI in MCP memory',
+        schema: {
+          type: 'object',
+          properties: {
+            key: { type: 'string', description: 'Unique CI key (e.g., ci:host:192.168.1.10)' },
+            value: { type: 'object', description: 'Partial CI data to merge' }
+          },
+          required: ['key', 'value']
+        },
+        command: async (args) => {
+          const result = await handleMemoryTool('memory/merge', { key: args.key, value: args.value });
+          return ['Result:', JSON.stringify(result, null, 2)];
+        }
+      },
+      {
+        name: 'memory_query',
+        description: 'Query MCP memory for CIs matching a pattern or incomplete CIs',
+        schema: {
+          type: 'object',
+          properties: {
+            pattern: { type: 'string', description: 'Pattern for CI keys (optional, e.g., ci:host:*)' }
+          }
+        },
+        command: async (args) => {
+          const result = await handleMemoryTool('memory/query', args);
+          return ['Result:', JSON.stringify(result, null, 2)];
+        }
+      },
     ];
 
     networkTools.forEach(tool => this.tools.set(tool.name, tool));
@@ -496,6 +570,17 @@ class BusyboxNetworkMCPServer {
     }
 
     try {
+      // Support async/in-process tools (like memory tools)
+      if (tool.command.constructor.name === 'AsyncFunction') {
+        const result = await tool.command(args);
+        return {
+          success: true,
+          stdout: Array.isArray(result) ? result.join('\n') : String(result),
+          stderr: '',
+          exitCode: 0,
+          isError: false
+        };
+      }
       const commandArray = tool.command(args);
       console.log(`[${requestId || 'NO_REQ_ID'}] Executing command: ${commandArray.join(' ')}`);
       const result = await this.runCommand(commandArray, requestId);
