@@ -21,3 +21,6 @@ npm-debug.log*
 # Docker-related
 .docker/
 *.swp
+
+# Reference material (not needed in repo)
+reference/
