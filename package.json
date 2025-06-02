@@ -25,7 +25,7 @@
     "url": "https://github.com/nagual69/mcp-open-discovery/issues"
   },
   "homepage": "https://github.com/nagual69/mcp-open-discovery#readme",  "engines": {
-    "node": ">=18"
+    "node": ">=23"
   },
   "dependencies": {},
   "devDependencies": {
