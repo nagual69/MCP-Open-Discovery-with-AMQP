@@ -1,7 +1,7 @@
 {
   "name": "mcp-open-discovery",
   "version": "1.0.0",
-  "description": "Busybox networking tools exposed via Model Context Protocol",
+  "description": "Networking Discovery tools exposed via Model Context Protocol",
   "main": "mcp_server.js",
   "scripts": {
     "start": "node mcp_server.js",
