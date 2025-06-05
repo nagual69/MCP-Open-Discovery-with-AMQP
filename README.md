@@ -1,4 +1,4 @@
-# Busybox & Nmap Network MCP Server
+# MCP Open Discovery
 
 A minimalized container that exposes Busybox and Nmap networking tools through the Model Context Protocol (MCP) for use with AI assistants and automation systems.
 

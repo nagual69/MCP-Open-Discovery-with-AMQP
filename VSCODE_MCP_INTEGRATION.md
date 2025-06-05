@@ -1,6 +1,6 @@
 # VS Code MCP Integration
 
-This document provides a brief overview of integrating the MCP-Open-Discovery server with VS Code. For complete setup, usage, and troubleshooting, please refer to the main [README.md](../README.md) and the [TEST_README.md](./TEST_README.md) for testing procedures.
+This document provides a brief overview of integrating the MCP Open Discovery server with VS Code. For complete setup, usage, and troubleshooting, please refer to the main [README.md](../README.md) and the [TEST_README.md](./TEST_README.md) for testing procedures.
 
 ## Testing the Connection in VS Code
 

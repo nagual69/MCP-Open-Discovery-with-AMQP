@@ -1,6 +1,6 @@
-# MCP Protocol Compliance
+# MCP Open Discovery Protocol Compliance
 
-This document outlines how the MCP-Open-Discovery server aligns with the Model Context Protocol (MCP) specification. For a general overview of the server, its tools, and how to use them, please refer to the main [README.md](../README.md).
+This document outlines how the MCP Open Discovery server aligns with the Model Context Protocol (MCP) specification. For a general overview of the server, its tools, and how to use them, please refer to the main [README.md](../README.md).
 
 ## Core Compliance
 

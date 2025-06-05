@@ -1,6 +1,6 @@
-# MCP-Open-Discovery Test Suite
+# MCP Open Discovery Test Suite
 
-This directory contains a test suite for validating the Busybox and Nmap Network MCP Server functionality and MCP protocol compliance.
+This directory contains a test suite for validating the MCP Open Discovery server functionality and MCP protocol compliance.
 
 ## Test Script
 
