@@ -1,6 +1,6 @@
 # Usage Examples
 
-This document provides example usage for the MCP-Open-Discovery server. For detailed API specifications, tool descriptions, and setup instructions, please refer to the main [README.md](../README.md).
+This document provides example usage for the MCP Open Discovery server. For detailed API specifications, tool descriptions, and setup instructions, please refer to the main [README.md](../README.md).
 
 ## API Usage Examples
 
