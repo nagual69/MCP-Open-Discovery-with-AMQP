@@ -23,7 +23,9 @@ The server primarily uses the `text` content type for tool outputs.
 
 ## Testing Compliance
 
-Compliance can be verified using the test client (`npm test`), as described in [TEST_README.md](./TEST_README.md).
+Legacy compliance test scripts (including the previous test client) have been archived as of June 5, 2025. For historical reference, see the `archive/` directory and `archive/test_tools_cleanup_2025-06-05.txt`.
+
+Ongoing compliance is validated through integration and manual tests as part of the main development workflow.
 
 ## Further Information
 

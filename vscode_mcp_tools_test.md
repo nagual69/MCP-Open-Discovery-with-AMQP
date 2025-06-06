@@ -19,3 +19,7 @@ To test a tool (e.g., `ping` or an Nmap scan):
 3.  Choose the desired tool and provide valid parameters.
 
 For more detailed troubleshooting, consult the [VS Code Integration section in the main README.md](../README.md).
+
+## Note on Test Scripts
+
+As of June 5, 2025, all legacy test scripts and test result files have been archived to the `archive/` directory. See `archive/test_tools_cleanup_2025-06-05.txt` for details. These are no longer maintained in the main project.

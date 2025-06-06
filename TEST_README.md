@@ -1,70 +1,27 @@
 # MCP Open Discovery Test Suite
 
-This directory contains a test suite for validating the MCP Open Discovery server functionality and MCP protocol compliance.
+This directory previously contained a test suite for validating the MCP Open Discovery server functionality and MCP protocol compliance.
 
-## Test Script
+**Note:** As of June 5, 2025, all legacy test scripts (including `test_mcp_client.js`) have been archived to the `archive/` directory and are no longer maintained in the main project. If you need to reference or restore these scripts, see `archive/test_tools_cleanup_2025-06-05.txt` for details.
 
-The `test_mcp_client.js` script acts as an MCP client and performs the following tests:
+## Test Scripts (Archived)
 
-1. Checks the server health endpoint
-2. Validates the `tools/list` method response
-3. Tests each available tool with appropriate parameters (including BusyBox and Nmap tools)
-4. Validates responses against the MCP specification
-5. Tests error handling with invalid tool requests
+The following test scripts have been archived:
 
-## Running the Tests
+- `test_mcp_client.js`
+- `create_test_tools.js`
+- `direct_test_tools.js`
+- `vscode_mcp_test.js`
+- `vscode_mcp_test_results.txt`
 
-To run the tests, follow these steps:
+## Running Tests (Deprecated)
 
-### 1. Start the MCP Server
-
-First, make sure the MCP server is running:
-
-```bash
-npm start
-```
-
-This will start the server on port 3000 (or the port specified in the PORT environment variable).
-
-### 2. Run the Test Script
-
-In a separate terminal, run the test script:
-
-```bash
-npm test
-```
-
-Or run it directly:
-
-```bash
-node test_mcp_client.js
-```
-
-### Test Configuration
-
-The test script includes a configuration object that specifies the server URL and test parameters for each tool. You can modify these parameters in the `config` object within the test script.
-
-## Test Output
-
-The test script provides detailed output for each test, including:
-
-- Request and response details
-- MCP compliance validation results
-- Summary of passed and failed tests
+The previous test workflow is now deprecated. If you wish to run or review the old tests, retrieve the scripts from the `archive/` directory and follow the instructions within those files.
 
 ## MCP Compliance Checks
 
-The test suite validates that responses comply with the Model Context Protocol (MCP) specification, including:
-
-- Proper response structure
-- Required fields for each method
-- Matching request and response IDs
-- Correct error handling
+The MCP Open Discovery server continues to be validated for compliance with the Model Context Protocol (MCP) specification through manual and automated integration tests as part of the main development workflow.
 
 ## Troubleshooting
 
-If tests fail, check the following:
-
-1. Ensure the MCP server is running and accessible
-2. Verify network connectivity for tools that require internet access
-3. Check tool-specific parameters in the test configuration
+If you have questions about legacy tests or need to restore any archived scripts, refer to the `archive/` directory or contact the project maintainers.

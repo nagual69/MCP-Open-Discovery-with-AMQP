@@ -281,3 +281,18 @@ For instructions on how to connect this MCP server to VS Code, refer to [VSCODE_
 ## License
 
 MIT License
+
+## Project Structure
+
+- `mcp_server.js`: Main MCP Open Discovery server implementation
+- `mcp_proxy.js`: Proxy/utility for MCP server
+- `ci_builder_nodered.json`: Node-RED flow for CI building
+- `busybox_container.txt`: BusyBox container notes
+- `Dockerfile`, `docker-compose.yml`: Docker configuration
+- `architecture.drawio`: System architecture diagram
+- `archive/`: Archived scripts and files, including legacy test tools
+- `reference/`: Reference materials and documentation
+
+## Archived Test Scripts
+
+As of June 5, 2025, legacy test scripts and test result files have been moved to the `archive/` directory. See `archive/test_tools_cleanup_2025-06-05.txt` for details. These scripts are no longer maintained in the main project.
