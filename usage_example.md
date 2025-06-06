@@ -160,6 +160,10 @@ curl -X POST http://localhost:3000 \\
   }'
 ```
 
+## Note on Test Scripts
+
+As of June 5, 2025, all legacy test scripts and test result files have been archived to the `archive/` directory. See `archive/test_tools_cleanup_2025-06-05.txt` for details. These are no longer maintained in the main project.
+
 ## Further Information
 
 For comprehensive details on installation, configuration, all available tools (including BusyBox and Nmap), security considerations, and troubleshooting, please consult the main [README.md](../README.md).

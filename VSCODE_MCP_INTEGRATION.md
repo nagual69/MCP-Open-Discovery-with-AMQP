@@ -11,3 +11,7 @@ This document provides a brief overview of integrating the MCP Open Discovery se
     - Use "MCP: Execute Tool" to test tools like `ping` or Nmap scans.
 
 For detailed steps and debugging, see the [VS Code Integration section in the main README.md](../README.md).
+
+## Archived Test Scripts
+
+As of June 5, 2025, all legacy test scripts and test result files have been archived to the `archive/` directory. See `archive/test_tools_cleanup_2025-06-05.txt` for details. These are no longer maintained in the main project.
