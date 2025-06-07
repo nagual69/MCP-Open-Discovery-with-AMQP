@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+// Standalone Proxmox API integration test script (ACTIVE)
+//
+// This script tests direct integration with the Proxmox API, including credential encryption/decryption
+// and API request/response handling. Maintained and reusable for integration testing.
+
 // This is a standalone test script for Proxmox API integration
 const https = require('https');
 const fs = require('fs');

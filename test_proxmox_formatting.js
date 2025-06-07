@@ -1,4 +1,8 @@
-// Test script for Proxmox API functions to verify the display formatting
+// Test script for Proxmox API formatting (ACTIVE)
+//
+// This script tests the formatting and output of various Proxmox API functions exposed by the MCP server.
+// It is maintained and reusable for validating API output and display formatting.
+
 const { 
   proxmox_list_nodes, 
   proxmox_get_node_details,
