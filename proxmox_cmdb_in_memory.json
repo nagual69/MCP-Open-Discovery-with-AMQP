@@ -1,0 +1,396 @@
+{
+  "cis": [
+    {
+      "key": "ci:cluster:proxmox1",
+      "ci": {
+        "name": "Proxmox Cluster",
+        "nodes": [
+          "ccctc16gb01",
+          "ccctc16gb02",
+          "ccctc16gb03",
+          "ccctc16gb04",
+          "ccctc8gb01",
+          "ccctc8gb02"
+        ],
+        "credential": "proxmox1"
+      }
+    },
+    {
+      "key": "ci:node:ccctc16gb01",
+      "ci": {
+        "name": "ccctc16gb01",
+        "maxmem": 16659574784,
+        "maxcpu": 4,
+        "cpu": 0.0390604381103193,
+        "uptime": 531251,
+        "disk": 20089737216,
+        "maxdisk": 25931534336,
+        "status": "online",
+        "mem": 6886207488,
+        "type": "node"
+      }
+    },
+    {
+      "key": "ci:node:ccctc16gb02",
+      "ci": {
+        "cpu": 0.140085186938003,
+        "disk": 9294258176,
+        "maxcpu": 4,
+        "maxdisk": 25931534336,
+        "maxmem": 16655945728,
+        "mem": 12706848768,
+        "name": "ccctc16gb02",
+        "status": "online",
+        "type": "node",
+        "uptime": 531145
+      }
+    },
+    {
+      "key": "ci:node:ccctc16gb03",
+      "ci": {
+        "cpu": 0.0262901655306719,
+        "disk": 8207683584,
+        "maxcpu": 4,
+        "maxdisk": 25931534336,
+        "maxmem": 16659435520,
+        "mem": 4303290368,
+        "name": "ccctc16gb03",
+        "status": "online",
+        "type": "node",
+        "uptime": 529134
+      }
+    },
+    {
+      "key": "ci:node:ccctc16gb04",
+      "ci": {
+        "cpu": 0.0250303766707169,
+        "disk": 9633095680,
+        "maxcpu": 4,
+        "maxdisk": 25931534336,
+        "maxmem": 16659435520,
+        "mem": 4344807424,
+        "name": "ccctc16gb04",
+        "status": "online",
+        "type": "node",
+        "uptime": 531072
+      }
+    },
+    {
+      "key": "ci:node:ccctc8gb01",
+      "ci": {
+        "cpu": 0.0271528316524438,
+        "disk": 9220362240,
+        "maxcpu": 4,
+        "maxdisk": 25931534336,
+        "maxmem": 8216432640,
+        "mem": 3912069120,
+        "name": "ccctc8gb01",
+        "status": "online",
+        "type": "node",
+        "uptime": 530918
+      }
+    },
+    {
+      "key": "ci:node:ccctc8gb02",
+      "ci": {
+        "cpu": 0.01751269035533,
+        "disk": 7939739648,
+        "maxcpu": 4,
+        "maxdisk": 22059069440,
+        "maxmem": 8216293376,
+        "mem": 1726136320,
+        "name": "ccctc8gb02",
+        "status": "online",
+        "type": "node",
+        "uptime": 530462
+      }
+    },
+    {
+      "key": "ci:vm:101",
+      "ci": {
+        "cpu": 0.354847134237267,
+        "cpus": 2,
+        "disk": 0,
+        "diskread": 0,
+        "diskwrite": 0,
+        "maxdisk": 103079215104,
+        "maxmem": 8594128896,
+        "mem": 6415196181,
+        "name": "Master-Control",
+        "netin": 7416968371,
+        "netout": 200186510,
+        "node": "ccctc16gb02",
+        "pid": 3537,
+        "status": "running",
+        "uptime": 531087,
+        "vmid": 101
+      }
+    },
+    {
+      "key": "ci:vm:102",
+      "ci": {
+        "cpu": 0,
+        "cpus": 2,
+        "disk": 0,
+        "diskread": 0,
+        "diskwrite": 0,
+        "maxdisk": 68719476736,
+        "maxmem": 8589934592,
+        "mem": 0,
+        "name": "cccctrlcenter.k9content.com",
+        "netin": 0,
+        "netout": 0,
+        "node": "ccctc16gb02",
+        "status": "stopped",
+        "uptime": 0,
+        "vmid": 102
+      }
+    },
+    {
+      "key": "ci:vm:100",
+      "ci": {
+        "cpu": 0,
+        "cpus": 2,
+        "disk": 0,
+        "diskread": 0,
+        "diskwrite": 0,
+        "maxdisk": 34359738368,
+        "maxmem": 8589934592,
+        "mem": 0,
+        "name": "ccc-ubu-01",
+        "netin": 0,
+        "netout": 0,
+        "node": "ccctc16gb03",
+        "status": "stopped",
+        "uptime": 0,
+        "vmid": 100
+      }
+    },
+    {
+      "key": "ci:proxmox:cluster",
+      "ci": {
+        "type": "proxmox_cluster",
+        "name": "proxmox1",
+        "total_nodes": 6,
+        "total_vms": 3,
+        "total_containers": 3,
+        "total_storage": 7,
+        "node_groups": {
+          "16gb": [
+            "ccctc16gb01",
+            "ccctc16gb02",
+            "ccctc16gb03",
+            "ccctc16gb04"
+          ],
+          "8gb": [
+            "ccctc8gb01",
+            "ccctc8gb02"
+          ]
+        },
+        "storage_types": [
+          "ccc-ceph-pool-01",
+          "cephfs",
+          "local",
+          "local-lvm",
+          "ssd-storage",
+          "templates-storage",
+          "ssd-pool"
+        ],
+        "networks": [
+          "localnetwork"
+        ],
+        "resource_pools": [
+          "Core-Home-Services",
+          "OpenESM-Development",
+          "open-webui-homebase"
+        ]
+      }
+    },
+    {
+      "key": "ci:proxmox:node:ccctc16gb01",
+      "ci": {
+        "id": "ccctc16gb01",
+        "type": "proxmox_node",
+        "maxmem": 16659574784,
+        "maxcpu": 4,
+        "maxdisk": 25931534336,
+        "status": "online",
+        "cgroup_mode": 2,
+        "mem_usage": 6597795840,
+        "disk_usage": 20091441152,
+        "cpu_usage": 0.0356629966491144,
+        "uptime": 531961,
+        "local_storage": [
+          "local",
+          "local-lvm",
+          "ssd-pool",
+          "templates-storage",
+          "ssd-storage"
+        ],
+        "shared_storage": [
+          "ccc-ceph-pool-01",
+          "cephfs"
+        ],
+        "network": [
+          "localnetwork"
+        ],
+        "containers": [
+          "104",
+          "205"
+        ],
+        "vms": [],
+        "parent": "ci:proxmox:cluster"
+      }
+    },
+    {
+      "key": "ci:proxmox:node:ccctc16gb02",
+      "ci": {
+        "parent": "ci:proxmox:cluster",
+        "maxcpu": 4,
+        "type": "proxmox_node",
+        "network": [
+          "localnetwork"
+        ],
+        "uptime": 531845,
+        "mem_usage": 12418162688,
+        "maxdisk": 25931534336,
+        "local_storage": [
+          "local",
+          "local-lvm",
+          "ssd-pool"
+        ],
+        "cgroup_mode": 2,
+        "shared_storage": [
+          "ccc-ceph-pool-01",
+          "cephfs"
+        ],
+        "disk_usage": 9295929344,
+        "containers": [],
+        "id": "ccctc16gb02",
+        "cpu_usage": 0.293755025462343,
+        "vms": [
+          "101",
+          "102"
+        ],
+        "maxmem": 16655945728,
+        "status": "online"
+      }
+    },
+    {
+      "key": "ci:proxmox:vm:101",
+      "ci": {
+        "parent": "ci:proxmox:node:ccctc16gb02",
+        "type": "proxmox_vm",
+        "status": "running",
+        "id": "101",
+        "name": "Master-Control",
+        "maxcpu": 2,
+        "maxmem": 8594128896,
+        "mem_usage": 6415196181,
+        "cpu_usage": 0.526838396054299,
+        "maxdisk": 103079215104,
+        "disk_usage": 0,
+        "uptime": 531594,
+        "network": {
+          "in": 7417614328,
+          "out": 200374492
+        },
+        "disk_io": {
+          "read": 9729520806,
+          "write": 562336736256
+        },
+        "template": false
+      }
+    },
+    {
+      "key": "ci:proxmox:container:104",
+      "ci": {
+        "template": false,
+        "parent": "ci:proxmox:node:ccctc16gb01",
+        "disk_io": {
+          "write": 6254215168,
+          "read": 537903104
+        },
+        "maxcpu": 2,
+        "type": "proxmox_container",
+        "uptime": 531518,
+        "network": {
+          "in": 390712515,
+          "out": 10723911
+        },
+        "mem_usage": 1830002688,
+        "maxdisk": 8350298112,
+        "name": "ccc-omada",
+        "disk_usage": 3207004160,
+        "id": "104",
+        "cpu_usage": 0.00647808961456635,
+        "maxmem": 2147483648,
+        "status": "running",
+        "tags": [
+          "community-script",
+          "controller",
+          "tp-link"
+        ]
+      }
+    },
+    {
+      "key": "ci:proxmox:storage:ccc-ceph-pool-01",
+      "ci": {
+        "parent": "ci:proxmox:cluster",
+        "type": "proxmox_storage",
+        "storage_type": "rbd",
+        "shared": true,
+        "content": [
+          "rootdir",
+          "images"
+        ],
+        "name": "ccc-ceph-pool-01",
+        "maxdisk": 660269159451,
+        "disk_usage": 175680869403,
+        "nodes": [
+          "ccctc8gb01",
+          "ccctc16gb04",
+          "ccctc8gb02",
+          "ccctc16gb03",
+          "ccctc16gb02",
+          "ccctc16gb01"
+        ],
+        "status": "available"
+      }
+    },
+    {
+      "key": "ci:proxmox:pool:Core-Home-Services",
+      "ci": {
+        "parent": "ci:proxmox:cluster",
+        "members": [
+          "205"
+        ],
+        "type": "proxmox_pool",
+        "name": "Core-Home-Services",
+        "resources": {
+          "mem": 17874944,
+          "maxcpu": 2,
+          "maxmem": 1073741824,
+          "cpu": 0.000147229309421962
+        }
+      }
+    },
+    {
+      "key": "ci:proxmox:network:localnetwork",
+      "ci": {
+        "name": "localnetwork",
+        "parent": "ci:proxmox:cluster",
+        "type": "proxmox_network",
+        "nodes": [
+          "ccctc8gb01",
+          "ccctc16gb04",
+          "ccctc8gb02",
+          "ccctc16gb03",
+          "ccctc16gb02",
+          "ccctc16gb01"
+        ],
+        "status": "ok"
+      }
+    }
+  ]
+}
