@@ -1,4 +1,20 @@
 #!/usr/bin/env node
+/**
+ * MCP Open Discovery Server
+ *
+ * This server exposes Busybox and Nmap networking tools via the Model Context Protocol (MCP).
+ * It provides a memory-based CMDB (Configuration Management Database) for storing and querying
+ * infrastructure data, including Proxmox cluster resources, nodes, VMs, containers, storage, and networks.
+ *
+ * Key Features:
+ * - Implements MCP JSON-RPC 2.0 methods: initialize, tools/list, tools/call, memory/get, memory/set, memory/merge, memory/query
+ * - In-memory CI (Configuration Item) store for fast, hierarchical CMDB queries
+ * - Supports hierarchical relationships (cluster > node > VM/container, etc.)
+ * - Used for AI-driven automation, VS Code integration, and compliance testing
+ *
+ * See README.md and MCP_COMPLIANCE.md for protocol and integration details.
+ */
+
 const { spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs');
@@ -53,7 +69,7 @@ async function handleMemoryTool(method, args) {
   return { error: 'Unknown memory tool method' };
 }
 
-class BusyboxNetworkMCPServer {
+class MCPOpenDiscoveryServer {
   constructor() {
     this.tools = new Map();
     this.maxOutputSize = 1024 * 1024; // 1MB limit
@@ -1748,6 +1764,8 @@ async function proxmox_list_networks(args) {
       return Object.entries(network)
         .map(([key, value]) => {
           // Handle nested objects properly using the shared formatter
+
+         
           if (typeof value === 'object' && value !== null) {
             return `${key}: ${formatProxmoxObject(value, '')}`;
           }
@@ -1839,7 +1857,7 @@ module.exports = {
 };
 
 // Create an instance of the server
-const server = new BusyboxNetworkMCPServer();
+const server = new MCPOpenDiscoveryServer();
 
 // Define Proxmox tools
 const proxmoxTools = [

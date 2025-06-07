@@ -1,26 +1,22 @@
 # MCP Open Discovery Test Suite
 
-This directory previously contained a test suite for validating the MCP Open Discovery server functionality and MCP protocol compliance.
+This directory contains the test suite for validating the MCP Open Discovery server functionality, including Proxmox API integration and MCP protocol compliance.
 
-**Note:** As of June 5, 2025, all legacy test scripts (including `test_mcp_client.js`) have been archived to the `archive/` directory and are no longer maintained in the main project. If you need to reference or restore these scripts, see `archive/test_tools_cleanup_2025-06-05.txt` for details.
+**Proxmox Test Coverage:**
 
-## Test Scripts (Archived)
+- `test_credentials.js`: Proxmox credential management test (add, list, remove credentials)
+- `test_proxmox_formatting.js`: Proxmox API output formatting test (nodes, VMs, containers, storage, networks)
+- `test_proxmox.js`: Standalone Proxmox API integration test (direct API calls, encryption/decryption)
 
-The following test scripts have been archived:
+All other legacy test scripts (including `test_mcp_client.js`, `create_test_tools.js`, `direct_test_tools.js`, `vscode_mcp_test.js`, `vscode_mcp_test_results.txt`) have been archived to the `archive/` directory and are no longer maintained in the main project. See `archive/test_tools_cleanup_2025-06-05.txt` for details.
 
-- `test_mcp_client.js`
-- `create_test_tools.js`
-- `direct_test_tools.js`
-- `vscode_mcp_test.js`
-- `vscode_mcp_test_results.txt`
+## Running Tests
 
-## Running Tests (Deprecated)
+Active scripts can be run directly with Node.js. Archived scripts are for reference only and should not be used for new development.
 
-The previous test workflow is now deprecated. If you wish to run or review the old tests, retrieve the scripts from the `archive/` directory and follow the instructions within those files.
+## CMDB and Memory Model
 
-## MCP Compliance Checks
-
-The MCP Open Discovery server continues to be validated for compliance with the Model Context Protocol (MCP) specification through manual and automated integration tests as part of the main development workflow.
+The current test focus is on the in-memory CMDB structure, Proxmox resource discovery, and MCP tool compliance. See `mcp_server.js` and `MCP_COMPLIANCE.md` for details.
 
 ## Troubleshooting
 

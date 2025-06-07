@@ -1,4 +1,12 @@
 #!/usr/bin/env node
+// MCP Direct Connection Helper
+//
+// This script provides instructions and utilities for testing direct connections to the MCP server
+// (bypassing the proxy) and for configuring VS Code to connect directly to the MCP server on port 3000.
+// See the console output for step-by-step instructions.
+//
+// For more details, see VSCODE_MCP_INTEGRATION.md.
+
 /**
  * MCP Direct Connection Script
  * This script allows you to test the MCP server directly without using the proxy server

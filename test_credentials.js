@@ -1,3 +1,8 @@
+// Test script for Proxmox credentials toolchain (ACTIVE)
+//
+// This script tests adding, listing, and removing Proxmox credentials via the MCP server's tools/call API.
+// It is maintained and reusable for validating credential management.
+
 const http = require('http');
 
 // Function to make a JSON-RPC request to the MCP server

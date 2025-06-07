@@ -1,6 +1,12 @@
 # VS Code MCP Integration
 
-This document provides a brief overview of integrating the MCP Open Discovery server with VS Code. For complete setup, usage, and troubleshooting, please refer to the main [README.md](../README.md) and the [TEST_README.md](./TEST_README.md) for testing procedures.
+This document provides a brief overview of integrating the MCP Open Discovery server (main class: `MCPOpenDiscoveryServer`) with VS Code. For complete setup, usage, and troubleshooting, please refer to the main [README.md](../README.md) and the [TEST_README.md](./TEST_README.md) for testing procedures.
+
+## Proxmox Tooling in VS Code
+
+- All Proxmox API tools (nodes, VMs, containers, storage, networks, credentials) are available in the VS Code MCP extension.
+- You can add, list, and remove Proxmox credentials, and run cluster discovery directly from the VS Code Command Palette.
+- Proxmox resource data is available for CMDB population, automation, and visualization in VS Code.
 
 ## Testing the Connection in VS Code
 

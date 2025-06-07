@@ -1,6 +1,92 @@
 # Usage Examples
 
-This document provides example usage for the MCP Open Discovery server. For detailed API specifications, tool descriptions, and setup instructions, please refer to the main [README.md](../README.md).
+> **Note:** The MCP Open Discovery server uses the `MCPOpenDiscoveryServer` class (see `mcp_server.js`) and includes an in-memory CMDB for storing and querying Proxmox cluster, node, VM, container, storage, and network data. See `README.md` and `MCP_COMPLIANCE.md` for details.
+>
+> **Proxmox API Examples:**
+>
+> - List nodes, VMs, containers, storage, and networks in a Proxmox cluster
+> - Add, list, and remove Proxmox API credentials for secure multi-cluster support
+>
+> See below for Proxmox-specific usage examples.
+
+## Proxmox API Usage Examples (MCP JSON-RPC)
+
+All examples assume the server is running on `http://localhost:3000` and you have already added credentials with `proxmox_creds_add` (see README for details).
+
+### List Proxmox Nodes
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_list_nodes",
+    "arguments": { "creds_id": "proxmox1" }
+  },
+  "id": "proxmox-nodes-1"
+}'
+```
+
+### Get Proxmox Node Details
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_get_node_details",
+    "arguments": { "node": "ccctc16gb01", "creds_id": "proxmox1" }
+  },
+  "id": "proxmox-node-details-1"
+}'
+```
+
+### List VMs for a Node
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_list_vms",
+    "arguments": { "node": "ccctc16gb01", "creds_id": "proxmox1" }
+  },
+  "id": "proxmox-vms-1"
+}'
+```
+
+### Add Proxmox Credentials
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_creds_add",
+    "arguments": {
+      "id": "proxmox1",
+      "hostname": "proxmox.example.com",
+      "username": "root@pam",
+      "password": "yourpassword"
+    }
+  },
+  "id": "proxmox-creds-add-1"
+}'
+```
+
+### List Proxmox Credentials
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_creds_list",
+    "arguments": {}
+  },
+  "id": "proxmox-creds-list-1"
+}'
+```
 
 ## API Usage Examples
 

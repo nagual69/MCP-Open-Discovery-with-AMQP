@@ -1,6 +1,12 @@
 # VS Code MCP Tools Test
 
-This document is a reference for troubleshooting MCP tool discovery and execution within VS Code, specifically for the MCP Open Discovery server. For general testing procedures, refer to [TEST_README.md](./TEST_README.md). For comprehensive integration details, see the main [README.md](../README.md).
+This document is a reference for troubleshooting MCP tool discovery and execution within VS Code, specifically for the MCP Open Discovery server (main class: `MCPOpenDiscoveryServer`). For general testing procedures, refer to [TEST_README.md](./TEST_README.md). For comprehensive integration details, see the main [README.md](../README.md).
+
+## Proxmox Tool Discovery and Execution
+
+- Proxmox API tools (nodes, VMs, containers, storage, networks, credentials) are available in the VS Code MCP extension.
+- You can test Proxmox cluster discovery, inventory, and credential management directly from VS Code.
+- For best results, ensure you pass the correct `creds_id` when running Proxmox tools.
 
 ## Tool Discovery
 

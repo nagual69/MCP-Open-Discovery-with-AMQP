@@ -1,16 +1,44 @@
 # MCP Open Discovery
 
-A minimalized container that exposes Busybox and Nmap networking tools through the Model Context Protocol (MCP) for use with AI assistants and automation systems.
+A minimalized container that exposes Busybox, Nmap, and Proxmox API tools through the Model Context Protocol (MCP) for use with AI assistants, automation systems, and infrastructure discovery.
+
+## Architecture Overview
+
+- **Main Server Class:** `MCPOpenDiscoveryServer` (see `mcp_server.js`)
+- **In-Memory CMDB:** Hierarchical, queryable configuration database for Proxmox clusters, nodes, VMs, containers, storage, and networks
+- **Tooling:** BusyBox, Nmap, and Proxmox API tools exposed via MCP
+- **Proxmox Integration:** Native support for Proxmox cluster discovery, inventory, and credential management
+- **Dockerized:** Easy to deploy and run as a container
+- **Security Aware:** Runs as a non-root user with minimal privileges
+- **Health Monitoring:** Built-in health checks
 
 ## Features
 
-- **Network-focused**: Includes essential networking tools from Busybox and powerful scanning capabilities from Nmap.
-- **MCP Compliant**: Follows the Model Context Protocol for seamless integration.
-- **Dockerized**: Easy to deploy and run as a container.
-- **Security Aware**: Runs as a non-root user with minimal privileges.
-- **Health Monitoring**: Built-in health checks.
+- **Proxmox Cluster Discovery:** List, query, and manage Proxmox nodes, VMs, containers, storage, and networks via MCP tools
+- **Credential Management:** Securely add, list, and remove Proxmox API credentials for multi-cluster support
+- **Network-focused:** Includes essential networking tools from Busybox and powerful scanning capabilities from Nmap
+- **MCP Compliant:** Follows the Model Context Protocol for seamless integration
+- **In-Memory CMDB:** Stores Proxmox cluster, node, VM, container, storage, and network data in a hierarchical, queryable structure for automation and AI use cases
+- **Dockerized & Secure:** Runs as a non-root user with minimal privileges and health checks
 
 ## Available Tools
+
+### Proxmox Tools
+
+- **`proxmox_list_nodes`**: Returns all nodes in the Proxmox cluster
+- **`proxmox_get_node_details`**: Returns details for a given Proxmox node
+- **`proxmox_list_vms`**: Returns all VMs for a Proxmox node
+- **`proxmox_get_vm_details`**: Returns config/details for a given VM
+- **`proxmox_list_containers`**: Returns all LXC containers for a Proxmox node
+- **`proxmox_get_container_details`**: Returns config/details for a given container
+- **`proxmox_list_storage`**: Returns storage resources for a Proxmox node
+- **`proxmox_list_networks`**: Returns network config for a Proxmox node
+- **`proxmox_cluster_resources`**: Returns a summary of all cluster resources
+- **`proxmox_get_metrics`**: Returns metrics for a node or VM
+- **Credential Management:**
+  - **`proxmox_creds_add`**: Add a new Proxmox credential (encrypted at rest)
+  - **`proxmox_creds_list`**: List all stored Proxmox credentials (no passwords shown)
+  - **`proxmox_creds_remove`**: Remove a Proxmox credential by ID
 
 ### BusyBox Tools
 
@@ -91,6 +119,85 @@ A minimalized container that exposes Busybox and Nmap networking tools through t
       network-mcp-server
     ```
     _Note: Increased memory to 512MB and CPUs to 1 to better accommodate Nmap._
+
+## Proxmox API Usage Examples (MCP JSON-RPC)
+
+All requests are `POST` requests to `http://localhost:3000` with `Content-Type: application/json`.
+
+### Example: List Proxmox Nodes (with Credentials)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_list_nodes",
+    "arguments": { "creds_id": "proxmox1" }
+  },
+  "id": "proxmox-nodes-1"
+}
+```
+
+### Example: Get Proxmox Node Details (with Credentials)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_get_node_details",
+    "arguments": { "node": "ccctc16gb01", "creds_id": "proxmox1" }
+  },
+  "id": "proxmox-node-details-1"
+}
+```
+
+### Example: List VMs for a Node (with Credentials)
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_list_vms",
+    "arguments": { "node": "ccctc16gb01", "creds_id": "proxmox1" }
+  },
+  "id": "proxmox-vms-1"
+}
+```
+
+### Example: Add Proxmox Credentials
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_creds_add",
+    "arguments": {
+      "id": "proxmox1",
+      "hostname": "proxmox.example.com",
+      "username": "root@pam",
+      "password": "yourpassword"
+    }
+  },
+  "id": "proxmox-creds-add-1"
+}
+```
+
+### Example: List Proxmox Credentials
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox_creds_list",
+    "arguments": {}
+  },
+  "id": "proxmox-creds-list-1"
+}
+```
 
 ## API Usage Examples (MCP JSON-RPC)
 
@@ -292,6 +399,17 @@ MIT License
 - `architecture.drawio`: System architecture diagram
 - `archive/`: Archived scripts and files, including legacy test tools
 - `reference/`: Reference materials and documentation
+
+## Test Scripts
+
+- **Active/Maintained:**
+  - `test_credentials.js`: Tests Proxmox credential management via MCP tools.
+  - `test_proxmox_formatting.js`: Validates Proxmox API output formatting.
+  - `test_proxmox.js`: Standalone Proxmox API integration test.
+- **Archived/Deprecated:**
+  - `test_mcp_client.js`, `create_test_tools.js`, `direct_test_tools.js`, `vscode_mcp_test.js`, `vscode_mcp_test_results.txt` (see `archive/` directory and `TEST_README.md` for details)
+
+For more information on the CMDB structure and memory model, see the top of `mcp_server.js` and `MCP_COMPLIANCE.md`.
 
 ## Archived Test Scripts
 
