@@ -24,3 +24,5 @@ npm-debug.log*
 
 # Reference material (not needed in repo)
 reference/
+
+proxmox_credentials.json
