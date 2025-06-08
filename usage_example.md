@@ -1,3 +1,5 @@
+![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
+
 # Usage Examples
 
 > **Note:** The MCP Open Discovery server uses the `MCPOpenDiscoveryServer` class (see `mcp_server.js`) and includes an in-memory CMDB for storing and querying Proxmox cluster, node, VM, container, storage, and network data. See `README.md` and `MCP_COMPLIANCE.md` for details.

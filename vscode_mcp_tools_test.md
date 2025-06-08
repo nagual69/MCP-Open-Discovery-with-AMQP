@@ -1,3 +1,5 @@
+![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
+
 # VS Code MCP Tools Test
 
 This document is a reference for troubleshooting MCP tool discovery and execution within VS Code, specifically for the MCP Open Discovery server (main class: `MCPOpenDiscoveryServer`). For general testing procedures, refer to [TEST_README.md](./TEST_README.md). For comprehensive integration details, see the main [README.md](../README.md).

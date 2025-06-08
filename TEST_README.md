@@ -1,3 +1,5 @@
+![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
+
 # MCP Open Discovery Test Suite
 
 This directory contains the test suite for validating the MCP Open Discovery server functionality, including Proxmox API integration and MCP protocol compliance.

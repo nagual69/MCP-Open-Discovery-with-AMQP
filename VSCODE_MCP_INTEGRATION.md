@@ -1,3 +1,5 @@
+![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
+
 # VS Code MCP Integration
 
 This document provides a brief overview of integrating the MCP Open Discovery server (main class: `MCPOpenDiscoveryServer`) with VS Code. For complete setup, usage, and troubleshooting, please refer to the main [README.md](../README.md) and the [TEST_README.md](./TEST_README.md) for testing procedures.
