@@ -1,3 +1,5 @@
+![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
+
 # MCP Open Discovery Protocol Compliance
 
 This document outlines how the MCP Open Discovery server (main class: `MCPOpenDiscoveryServer`) aligns with the Model Context Protocol (MCP) specification and describes the in-memory CMDB (Configuration Management Database) model.

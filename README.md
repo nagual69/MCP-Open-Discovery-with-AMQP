@@ -1,3 +1,5 @@
+![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
+
 # MCP Open Discovery
 
 A minimalized container that exposes Busybox, Nmap, and Proxmox API tools through the Model Context Protocol (MCP) for use with AI assistants, automation systems, and infrastructure discovery.
