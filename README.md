@@ -8,8 +8,9 @@ A minimalized container that exposes Busybox, Nmap, and Proxmox API tools throug
 
 - **Main Server Class:** `MCPOpenDiscoveryServer` (see `mcp_server.js`)
 - **In-Memory CMDB:** Hierarchical, queryable configuration database for Proxmox clusters, nodes, VMs, containers, storage, and networks
-- **Tooling:** BusyBox, Nmap, and Proxmox API tools exposed via MCP
+- **Tooling:** BusyBox, Nmap, SNMP, and Proxmox API tools exposed via MCP
 - **Proxmox Integration:** Native support for Proxmox cluster discovery, inventory, and credential management
+- **SNMP Discovery:** Comprehensive SNMP-based network and device discovery tools
 - **Dockerized:** Easy to deploy and run as a container
 - **Security Aware:** Runs as a non-root user with minimal privileges
 - **Health Monitoring:** Built-in health checks
@@ -17,6 +18,7 @@ A minimalized container that exposes Busybox, Nmap, and Proxmox API tools throug
 ## Features
 
 - **Proxmox Cluster Discovery:** List, query, and manage Proxmox nodes, VMs, containers, storage, and networks via MCP tools
+- **SNMP-based Network Discovery:** Comprehensive suite of SNMP tools for device inventory, interface discovery, service mapping, and topology analysis
 - **Credential Management:** Securely add, list, and remove Proxmox API credentials for multi-cluster support
 - **Network-focused:** Includes essential networking tools from Busybox and powerful scanning capabilities from Nmap
 - **MCP Compliant:** Follows the Model Context Protocol for seamless integration
@@ -73,6 +75,39 @@ A minimalized container that exposes Busybox, Nmap, and Proxmox API tools throug
   - Parameters: `target` (required), `ports`, `top_ports`, `timing_template`, `reason`, `open_only`.
 - **`nmap_version_scan`**: Probes open ports to determine service/version info (`-sV`). Can also provide OS detection information.
   - Parameters: `target` (required), `ports`, `intensity`, `light_mode`, `all_ports`, `timing_template`, `reason`, `open_only`.
+
+### SNMP Tools
+
+#### Basic SNMP Operations
+
+- **`snmp_create_session`**: Creates an SNMP session with a target device.
+  - Parameters: `host` (required), `community`, `version`, `port`, `timeout`, `retries`.
+  - For SNMPv3: `user`, `authProtocol`, `authKey`, `privProtocol`, `privKey`.
+- **`snmp_close_session`**: Closes an SNMP session.
+  - Parameters: `sessionId` (required).
+- **`snmp_get`**: Retrieves specific OID values.
+  - Parameters: `sessionId` (required), `oids` (required).
+- **`snmp_get_next`**: Performs GETNEXT operation for OIDs.
+  - Parameters: `sessionId` (required), `oids` (required).
+- **`snmp_walk`**: Performs a walk operation to retrieve a subtree of OIDs.
+  - Parameters: `sessionId` (required), `oid` (required).
+- **`snmp_table`**: Retrieves an SNMP table.
+  - Parameters: `sessionId` (required), `oid` (required).
+- **`snmp_discover`**: Discovers SNMP-enabled devices in a network range.
+  - Parameters: `targetRange` (required), `community`, `version`, `port`, `timeout`.
+
+#### Advanced SNMP Discovery Tools
+
+- **`snmp_device_inventory`**: Performs comprehensive device inventory including system info, interfaces, and storage.
+  - Parameters: `host` (required), `community`, `version`.
+- **`snmp_interface_discovery`**: Discovers and details all network interfaces on a device.
+  - Parameters: `host` (required), `community`, `version`.
+- **`snmp_system_health`**: Checks system health metrics including CPU, memory, storage, and interfaces.
+  - Parameters: `host` (required), `community`, `version`.
+- **`snmp_service_discovery`**: Discovers running services and listening ports.
+  - Parameters: `host` (required), `community`, `version`.
+- **`snmp_network_topology`**: Maps network topology using CDP/LLDP and other protocols.
+  - Parameters: `networkRange` (required), `community`, `version`.
 
 ## Quick Start
 

@@ -2,13 +2,17 @@
 
 # MCP Open Discovery Test Suite
 
-This directory contains the test suite for validating the MCP Open Discovery server functionality, including Proxmox API integration and MCP protocol compliance.
+This directory contains the test suite for validating the MCP Open Discovery server functionality, including Proxmox API integration, SNMP discovery tools, and MCP protocol compliance.
 
 **Proxmox Test Coverage:**
 
 - `test_credentials.js`: Proxmox credential management test (add, list, remove credentials)
 - `test_proxmox_formatting.js`: Proxmox API output formatting test (nodes, VMs, containers, storage, networks)
 - `test_proxmox.js`: Standalone Proxmox API integration test (direct API calls, encryption/decryption)
+
+**SNMP Test Coverage:**
+
+- `test_snmp_tools.js`: SNMP tools test suite (device discovery, interface enumeration, service mapping, topology mapping)
 
 All other legacy test scripts (including `test_mcp_client.js`, `create_test_tools.js`, `direct_test_tools.js`, `vscode_mcp_test.js`, `vscode_mcp_test_results.txt`) have been archived to the `archive/` directory and are no longer maintained in the main project. See `archive/test_tools_cleanup_2025-06-05.txt` for details.
 
