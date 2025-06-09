@@ -9,7 +9,12 @@
 > - List nodes, VMs, containers, storage, and networks in a Proxmox cluster
 > - Add, list, and remove Proxmox API credentials for secure multi-cluster support
 >
-> See below for Proxmox-specific usage examples.
+> **SNMP Discovery Examples:**
+>
+> - Create SNMP sessions, query devices, and perform advanced discovery operations
+> - Discover network devices, interfaces, services, and map network topology
+>
+> See below for Proxmox-specific and SNMP-specific usage examples.
 
 ## Proxmox API Usage Examples (MCP JSON-RPC)
 
@@ -87,6 +92,118 @@ Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'applicat
     "arguments": {}
   },
   "id": "proxmox-creds-list-1"
+}'
+```
+
+## SNMP Usage Examples (MCP JSON-RPC)
+
+All examples assume the server is running on `http://localhost:3000`.
+
+### Create an SNMP Session
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "snmp_create_session",
+    "arguments": {
+      "host": "192.168.1.1",
+      "community": "public",
+      "version": "2c"
+    }
+  },
+  "id": "snmp-session-1"
+}'
+```
+
+### Perform a Device Inventory
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "snmp_device_inventory",
+    "arguments": {
+      "host": "192.168.1.1",
+      "community": "public",
+      "version": "2c"
+    }
+  },
+  "id": "snmp-inventory-1"
+}'
+```
+
+### Discover Network Interfaces
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "snmp_interface_discovery",
+    "arguments": {
+      "host": "192.168.1.1",
+      "community": "public",
+      "version": "2c"
+    }
+  },
+  "id": "snmp-interfaces-1"
+}'
+```
+
+### Check System Health
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "snmp_system_health",
+    "arguments": {
+      "host": "192.168.1.1",
+      "community": "public",
+      "version": "2c"
+    }
+  },
+  "id": "snmp-health-1"
+}'
+```
+
+### Discover Services and Ports
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "snmp_service_discovery",
+    "arguments": {
+      "host": "192.168.1.1",
+      "community": "public",
+      "version": "2c"
+    }
+  },
+  "id": "snmp-services-1"
+}'
+```
+
+### Map Network Topology
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000 -Method Post -ContentType 'application/json' -Body '{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "snmp_network_topology",
+    "arguments": {
+      "networkRange": "192.168.1.0/24",
+      "community": "public",
+      "version": "2c"
+    }
+  },
+  "id": "snmp-topology-1"
 }'
 ```
 

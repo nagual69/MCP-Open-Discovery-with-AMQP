@@ -13,6 +13,31 @@ RUN apk add --no-cache nmap \
     && cp /tmp/nmap-src/nse_main.lua /usr/share/nmap/ \
     && rm -rf /tmp/nmap.tar.bz2 /tmp/nmap-src
 
+# Install SNMP tools (net-snmp packages)
+RUN apk add --no-cache net-snmp net-snmp-tools net-snmp-dev 
+
+# Setup SNMP configuration
+RUN mkdir -p /etc/snmp \
+    && echo "mibs +ALL" > /etc/snmp/snmp.conf
+
+# Install additional tools and download MIBs
+RUN apk add --no-cache bash wget curl ca-certificates \
+    && mkdir -p /usr/share/snmp/mibs
+
+# Download MIBs with retries and better error handling
+RUN for MIB in SNMPv2-MIB IF-MIB IP-MIB HOST-RESOURCES-MIB SNMP-FRAMEWORK-MIB; do \
+    echo "Downloading $MIB" && \
+    for i in 1 2 3; do \
+    wget -q --timeout=30 --tries=3 "https://raw.githubusercontent.com/librenms/librenms/master/mibs/rfc/${MIB}.txt" -O "/usr/share/snmp/mibs/${MIB}.txt" && break || \
+    echo "Retry $i for $MIB"; \
+    sleep 2; \
+    done; \
+    if [ ! -s "/usr/share/snmp/mibs/${MIB}.txt" ]; then \
+    echo "Creating empty $MIB file as placeholder"; \
+    touch "/usr/share/snmp/mibs/${MIB}.txt"; \
+    fi; \
+    done
+
 # Set NMAPDIR so Nmap can find its scripts
 ENV NMAPDIR=/usr/share/nmap
 
@@ -20,13 +45,13 @@ ENV NMAPDIR=/usr/share/nmap
 RUN adduser -D -h /home/mcpuser mcpuser
 WORKDIR /home/mcpuser/app
 
-# Copy package.json and install dependencies (we have no runtime dependencies)
-COPY package.json ./
-# We don't have any runtime dependencies, so no need to run npm install
-# RUN npm install --omit=dev
+# Copy package.json and install dependencies
+COPY docker-package.json ./package.json
+RUN npm install --no-fund --no-audit
 
 # Copy server code
 COPY mcp_server.js ./
+COPY snmp_tools.js ./
 
 # Set permissions
 RUN chown -R mcpuser:mcpuser /home/mcpuser
