@@ -55,17 +55,18 @@ const testResults = {};
 
 // Proxmox configuration (will be populated from command line args or prompts)
 const proxmoxConfig = {
-  hostname: process.env.PROXMOX_SERVER || '192.168.200.10',
-  username: process.env.PROXMOX_USER || 'root',
-  password: process.env.PROXMOX_PASSWORD || 'n0l0g1n4U$',
-  nodeName: process.env.PROXMOX_NODE || 'ccctc16gb01',
+  hostname: process.env.PROXMOX_SERVER || 'proxmox.example.com',
+  username: process.env.PROXMOX_USER || 'testuser@pam',
+  password: process.env.PROXMOX_PASSWORD || 'testpassword',
+  nodeName: process.env.PROXMOX_NODE || 'pve',
   tokenName: process.env.PROXMOX_TOKEN_NAME || '',
   tokenValue: process.env.PROXMOX_TOKEN_VALUE || '',
   credsId: `test_creds_${Date.now()}`, // Generate a unique ID to avoid conflicts
   usePrompt: true, // Whether to prompt for credentials if testing Proxmox
   enabled: false,  // Whether Proxmox tests should be enabled
   useTokenAuth: false, // Whether to use token authentication instead of username/password
-    // Validate Proxmox configuration and return error message if invalid
+  
+  // Validate Proxmox configuration and return error message if invalid
   validate() {
     if (!this.hostname || this.hostname === 'proxmox.example.com') {
       return 'No valid Proxmox server hostname specified';
@@ -75,7 +76,8 @@ const proxmoxConfig = {
         return 'Token authentication enabled but token name or value is missing';
       }
     } else {
-      if (!this.username || !this.password) {
+      if (!this.username || !this.password || 
+          this.username === 'testuser@pam' || this.password === 'testpassword') {
         return 'No valid Proxmox credentials specified';
       }
     }
@@ -297,7 +299,8 @@ const TEST_TOOLS = [
         verify_ssl: !proxmoxConfig.hostname.includes('https://') || 
                     !proxmoxConfig.hostname.match(/^(localhost|127\.0\.0\.1)/)
       };
-        // Add authentication parameters based on chosen method
+      
+      // Add authentication parameters based on chosen method
       if (proxmoxConfig.useTokenAuth) {
         args.token_name = proxmoxConfig.tokenName;
         args.token_value = proxmoxConfig.tokenValue;
@@ -489,20 +492,33 @@ const TEST_TOOLS = [
       creds_id: 'test_creds',
       node: 'pve',
       vmid: '100'
-    },    getArgs: () => {
+    },      getArgs: () => {
       // Check if we have discovered VMs - if auto-discover is enabled
       if (proxmoxTestConfig.autoDiscover && proxmoxTestConfig.discoveryComplete) {
         // Find a node with VMs
         let targetNode = proxmoxConfig.nodeName;
-        let targetVmId = null;
+        let targetVmId = proxmoxConfig.vmid;
         let foundValidVM = false;
         
-        // Try to find a VM on the specified node first
-        if (proxmoxConfig.nodeName && proxmoxDiscoveredResources.vms[proxmoxConfig.nodeName]?.length > 0) {
-          targetNode = proxmoxConfig.nodeName;
-          targetVmId = proxmoxDiscoveredResources.vms[proxmoxConfig.nodeName][0].toString();
-          foundValidVM = true;
-          console.log(`Auto-discovered VM ${targetVmId} on node ${targetNode} for testing`);
+        // First check if the configured node/vmid is a valid VM
+        if (proxmoxConfig.nodeName && proxmoxConfig.vmid) {
+          const resourceInfo = verifyResourceType(proxmoxConfig.nodeName, proxmoxConfig.vmid);
+          if (resourceInfo.exists && resourceInfo.type === 'vm') {
+            targetNode = proxmoxConfig.nodeName;
+            targetVmId = proxmoxConfig.vmid;
+            foundValidVM = true;
+            console.log(`Using configured VM ${targetVmId} on node ${targetNode} for testing`);
+          } else if (resourceInfo.exists && resourceInfo.type === 'container') {
+            console.log(`Note: Resource ID ${proxmoxConfig.vmid} on node ${proxmoxConfig.nodeName} is a container, not a VM`);
+            console.log(`The proxmox_get_container_details test will handle this resource instead`);
+            
+            // Return an intentionally invalid ID to skip this test
+            return {
+              creds_id: proxmoxConfig.credsId,
+              node: "invalid_node_to_skip_test",
+              vmid: "invalid_id_to_skip_test"
+            };
+          }
         }
         
         // If we didn't find a valid VM with the configured values, try to find one
@@ -520,11 +536,14 @@ const TEST_TOOLS = [
           }
         }
         
-        // If we still don't have a valid VM, this test should be skipped
+        // If we still don't have a valid VM, skip this test
         if (!foundValidVM) {
-          console.log(`No VMs found for testing, VM details test will be skipped`);
-          // Return a special indicator that this test should be skipped
-          return null;
+          console.log(`No valid VMs found for testing, skipping VM details test`);
+          return {
+            creds_id: proxmoxConfig.credsId,
+            node: "invalid_node_to_skip_test",
+            vmid: "invalid_id_to_skip_test"
+          };
         }
         
         return {
@@ -534,35 +553,15 @@ const TEST_TOOLS = [
         };
       }
       
-      // Default behavior - no auto-discovery, skip this test
-      console.log(`Auto-discovery not complete, VM details test will be skipped`);
-      return null;
+      // Default behavior - use configured values
+      return { 
+        creds_id: proxmoxConfig.credsId,
+        node: proxmoxConfig.nodeName,
+        vmid: proxmoxConfig.vmid
+      };
     },
-    skip: () => {
-      if (!proxmoxConfig.enabled) return true;
-      
-      // Skip if discovery is complete but no VMs were found
-      if (proxmoxTestConfig.autoDiscover && proxmoxTestConfig.discoveryComplete) {
-        // Check if any node has VMs
-        const hasAnyVMs = Object.values(proxmoxDiscoveredResources.vms).some(vms => vms && vms.length > 0);
-        return !hasAnyVMs;
-      }
-      
-      return false;
-    },
-    skipReason: () => {
-      if (!proxmoxConfig.enabled) return 'Proxmox testing not enabled';
-      
-      // Check if discovery is complete but no VMs were found
-      if (proxmoxTestConfig.autoDiscover && proxmoxTestConfig.discoveryComplete) {
-        const hasAnyVMs = Object.values(proxmoxDiscoveredResources.vms).some(vms => vms && vms.length > 0);
-        if (!hasAnyVMs) {
-          return 'No VMs found on any Proxmox nodes during auto-discovery';
-        }
-      }
-      
-      return 'Testing with Proxmox server';
-    },
+    skip: () => !proxmoxConfig.enabled,
+    skipReason: () => !proxmoxConfig.enabled ? 'Proxmox testing not enabled' : 'Testing with Proxmox server',
     dependsOn: 'proxmox_list_vms' // Changed dependency to ensure we discover VMs first
   },
   {
@@ -577,15 +576,28 @@ const TEST_TOOLS = [
       if (proxmoxTestConfig.autoDiscover && proxmoxTestConfig.discoveryComplete) {
         // Find a node with containers
         let targetNode = proxmoxConfig.nodeName;
-        let targetContainerId = null;
+        let targetContainerId = proxmoxConfig.vmid;
         let foundValidContainer = false;
         
-        // Try to find a container on the specified node first
-        if (proxmoxConfig.nodeName && proxmoxDiscoveredResources.containers[proxmoxConfig.nodeName]?.length > 0) {
-          targetNode = proxmoxConfig.nodeName;
-          targetContainerId = proxmoxDiscoveredResources.containers[proxmoxConfig.nodeName][0].toString();
-          foundValidContainer = true;
-          console.log(`Auto-discovered container ${targetContainerId} on node ${targetNode} for testing`);
+        // First check if the configured node/vmid is a valid container
+        if (proxmoxConfig.nodeName && proxmoxConfig.vmid) {
+          const resourceInfo = verifyResourceType(proxmoxConfig.nodeName, proxmoxConfig.vmid);
+          if (resourceInfo.exists && resourceInfo.type === 'container') {
+            targetNode = proxmoxConfig.nodeName;
+            targetContainerId = proxmoxConfig.vmid;
+            foundValidContainer = true;
+            console.log(`Using configured container ${targetContainerId} on node ${targetNode} for testing`);
+          } else if (resourceInfo.exists && resourceInfo.type === 'vm') {
+            console.log(`Note: Resource ID ${proxmoxConfig.vmid} on node ${proxmoxConfig.nodeName} is a VM, not a container`);
+            console.log(`The proxmox_get_vm_details test will handle this resource instead`);
+            
+            // Return an intentionally invalid ID to skip this test
+            return {
+              creds_id: proxmoxConfig.credsId,
+              node: "invalid_node_to_skip_test",
+              vmid: "invalid_id_to_skip_test"
+            };
+          }
         }
         
         // If we didn't find a valid container with the configured values, try to find one
@@ -603,10 +615,14 @@ const TEST_TOOLS = [
           }
         }
         
-        // If we still don't have a valid container, this test should be skipped
+        // If we still don't have a valid container, skip this test
         if (!foundValidContainer) {
-          console.log(`No containers found for testing, container details test will be skipped`);
-          return null;
+          console.log(`No valid containers found for testing, skipping container details test`);
+          return {
+            creds_id: proxmoxConfig.credsId,
+            node: "invalid_node_to_skip_test",
+            vmid: "invalid_id_to_skip_test"
+          };
         }
         
         return {
@@ -616,35 +632,15 @@ const TEST_TOOLS = [
         };
       }
       
-      // Default behavior - no auto-discovery, skip this test
-      console.log(`Auto-discovery not complete, container details test will be skipped`);
-      return null;
+      // Default behavior - use configured values
+      return { 
+        creds_id: proxmoxConfig.credsId,
+        node: proxmoxConfig.nodeName,
+        vmid: proxmoxConfig.vmid
+      };
     },
-    skip: () => {
-      if (!proxmoxConfig.enabled) return true;
-      
-      // Skip if discovery is complete but no containers were found
-      if (proxmoxTestConfig.autoDiscover && proxmoxTestConfig.discoveryComplete) {
-        // Check if any node has containers
-        const hasAnyContainers = Object.values(proxmoxDiscoveredResources.containers).some(containers => containers && containers.length > 0);
-        return !hasAnyContainers;
-      }
-      
-      return false;
-    },
-    skipReason: () => {
-      if (!proxmoxConfig.enabled) return 'Proxmox testing not enabled';
-      
-      // Check if discovery is complete but no containers were found
-      if (proxmoxTestConfig.autoDiscover && proxmoxTestConfig.discoveryComplete) {
-        const hasAnyContainers = Object.values(proxmoxDiscoveredResources.containers).some(containers => containers && containers.length > 0);
-        if (!hasAnyContainers) {
-          return 'No containers found on any Proxmox nodes during auto-discovery';
-        }
-      }
-      
-      return 'Testing with Proxmox server';
-    },
+    skip: () => !proxmoxConfig.enabled,
+    skipReason: () => !proxmoxConfig.enabled ? 'Proxmox testing not enabled' : 'Testing with Proxmox server',
     dependsOn: 'proxmox_list_containers' // Changed dependency to ensure we discover containers first
   },
   {
@@ -794,30 +790,16 @@ async function testTool(toolName, args) {
       } catch (error) {
         console.warn('Failed to parse node discovery data:', error.message);
       }
-    }    // Store discovered VMs for each node
+    }
+      // Store discovered VMs for each node
     if (toolName === 'proxmox_list_vms' && proxmoxTestConfig.autoDiscover) {
       try {
         const resultText = typeof response.result?.content?.[0]?.text === 'string' 
           ? response.result?.content?.[0]?.text 
           : JSON.stringify(response.result);
         
-        // Handle different response formats
-        let parsedData = [];
-        if (resultText.includes('No virtual machines found')) {
-          // Empty result - no VMs found
-          parsedData = [];
-        } else {
-          try {
-            parsedData = JSON.parse(resultText);
-          } catch (parseError) {
-            // Not JSON format, likely formatted text response
-            console.warn('VM discovery result is not in JSON format');
-            parsedData = [];
-          }
-        }
-        
-        if (Array.isArray(parsedData)) {
-          // Get the node from args
+        const parsedData = JSON.parse(resultText);
+        if (Array.isArray(parsedData)) {          // Get the node from args
           const nodeArg = args.node;
           // Store list of VM IDs for this node - parse as integers and filter out any NaN values
           // Only include resources that are explicitly of type 'qemu'
@@ -834,43 +816,18 @@ async function testTool(toolName, args) {
         }
       } catch (error) {
         console.warn('Failed to parse VM discovery data:', error.message);
-        // Still set empty array for this node
-        proxmoxDiscoveredResources.vms[args.node] = [];
       }
-    }    // Store discovered containers for each node
+    }
+    
+    // Store discovered containers for each node
     if (toolName === 'proxmox_list_containers' && proxmoxTestConfig.autoDiscover) {
       try {
         const resultText = typeof response.result?.content?.[0]?.text === 'string' 
           ? response.result?.content?.[0]?.text 
           : JSON.stringify(response.result);
         
-        // Handle different response formats
-        let parsedData = [];
-        if (resultText.includes('No containers found')) {
-          // Empty result - no containers found
-          parsedData = [];
-        } else {
-          try {
-            parsedData = JSON.parse(resultText);
-          } catch (parseError) {
-            // Not JSON format, likely formatted text response - try to extract container info
-            console.warn('Container discovery result is not in JSON format, parsing manually');
-            // Extract vmid values from the formatted text
-            const vmidMatches = resultText.match(/vmid:\s*(\d+)/g);
-            if (vmidMatches) {
-              parsedData = vmidMatches.map(match => {
-                const vmid = match.match(/vmid:\s*(\d+)/)[1];
-                return { vmid: parseInt(vmid), type: 'lxc' };
-              });
-            } else {
-              parsedData = [];
-            }
-          }
-        }
-        
-        if (Array.isArray(parsedData)) {
-          // Get the node from args
-          const nodeArg = args.node;
+        const parsedData = JSON.parse(resultText);
+        if (Array.isArray(parsedData)) {          // Get the node from args          const nodeArg = args.node;
           // Store list of container IDs for this node - parse as integers and filter out any NaN values
           // Only include resources that are explicitly of type 'lxc'
           proxmoxDiscoveredResources.containers[nodeArg] = parsedData
@@ -883,17 +840,9 @@ async function testTool(toolName, args) {
           } else {
             console.log(`No containers found on node ${nodeArg}`);
           }
-          
-          // Mark discovery as complete after containers are discovered
-          proxmoxTestConfig.discoveryComplete = true;
-          console.log('Proxmox resource discovery completed');
         }
       } catch (error) {
         console.warn('Failed to parse container discovery data:', error.message);
-        // Still set empty array for this node and mark discovery complete
-        proxmoxDiscoveredResources.containers[args.node] = [];
-        proxmoxTestConfig.discoveryComplete = true;
-        console.log('Proxmox resource discovery completed (with errors)');
       }
     }
     
@@ -1026,18 +975,20 @@ async function testTool(toolName, args) {
         } else {
           if (toolName === 'proxmox_get_vm_details') {
             // List available VMs on the current node
-            const availableVMs = proxmoxDiscoveredResources.vms[args.node] || [];            if (availableVMs.length > 0) {
+            const availableVMs = proxmoxDiscoveredResources.vms[args.node] || [];
+            if (availableVMs.length > 0) {
               console.warn(`  2. Available VMs on node ${args.node}: ${availableVMs.join(', ')}`);
-              console.warn(`  3. Auto-discovery will use these VMs automatically in the next test run\n`);
+              console.warn(`  3. Try using --proxmox-vmid=${availableVMs[0]} or another valid VM ID\n`);
             } else {
               console.warn(`  2. No VMs found on node ${args.node}`);
               console.warn(`  3. Try a different node with VMs or create a VM for testing\n`);
             }
           } else { // Container
-            // List available containers on the current node            const availableContainers = proxmoxDiscoveredResources.containers[args.node] || [];
+            // List available containers on the current node
+            const availableContainers = proxmoxDiscoveredResources.containers[args.node] || [];
             if (availableContainers.length > 0) {
               console.warn(`  2. Available containers on node ${args.node}: ${availableContainers.join(', ')}`);
-              console.warn(`  3. Auto-discovery will use these containers automatically in the next test run\n`);
+              console.warn(`  3. Try using --proxmox-vmid=${availableContainers[0]} or another valid container ID\n`);
             } else {
               console.warn(`  2. No containers found on node ${args.node}`);
               console.warn(`  3. Try a different node with containers or create a container for testing\n`);
@@ -1109,8 +1060,13 @@ async function runTests() {
       }
       else if (arg.startsWith('--proxmox-password=')) {
         proxmoxConfig.password = arg.substring(19);
-      }      else if (arg.startsWith('--proxmox-node=')) {
+      }
+      else if (arg.startsWith('--proxmox-node=')) {
         proxmoxConfig.nodeName = arg.substring(15);
+      }
+      else if (arg.startsWith('--proxmox-vmid=')) {
+        proxmoxConfig.tokenName = arg.substring(15);
+        proxmoxConfig.useTokenAuth = true;
       }
       else if (arg.startsWith('--proxmox-token-name=')) {
         proxmoxConfig.tokenName = arg.substring(20);
@@ -1124,20 +1080,12 @@ async function runTests() {
     
     // Get specific groups from remaining args (non-option args)
     const specificGroups = args.filter(arg => !arg.startsWith('--'));
-      // If proxmox is one of the groups to test, enable proxmox testing
+    
+    // If proxmox is one of the groups to test, enable proxmox testing
     if (specificGroups.includes('proxmox')) {
-      proxmoxConfig.enabled = true;
+      // Only enable if not explicitly disabled via --no-prompt
       if (!noPrompt) {
         proxmoxConfig.usePrompt = true;
-      } else {
-        proxmoxConfig.usePrompt = false;
-        // When no-prompt is specified, check if we have valid configuration
-        const validationError = proxmoxConfig.validate();
-        if (validationError) {
-          console.warn(`⚠️ Warning: ${validationError}`);
-          console.warn('  Proxmox tests may fail without valid configuration.');
-          console.warn('  Consider setting environment variables or command-line arguments.');
-        }
       }
     }
     
@@ -1241,16 +1189,9 @@ async function runTests() {
           skippedCount++;
           continue;
         }
-          // Get the arguments for this test (dynamic or static)
-        const testArgs = testItem.getArgs ? testItem.getArgs() : testItem.args;
         
-        // If getArgs returns null, skip this test
-        if (testArgs === null) {
-          console.log(`\nSkipping tool ${testItem.name}: No valid arguments available (likely no resources found)`);
-          groupSkipCount++;
-          skippedCount++;
-          continue;
-        }
+        // Get the arguments for this test (dynamic or static)
+        const testArgs = testItem.getArgs ? testItem.getArgs() : testItem.args;
         
         // Run the test
         try {
@@ -1377,9 +1318,10 @@ async function discoverProxmoxResources() {
       const resourceData = JSON.parse(resultText);
       
       // Build collections of nodes, VMs, and containers
-      if (Array.isArray(resourceData)) {        // Extract node names
+      if (Array.isArray(resourceData)) {
+        // Extract node names
         proxmoxDiscoveredResources.nodes = resourceData
-          .filter(resource => resource.type === 'node')
+          .filter resource => resource.type === 'node'
           .map(node => node.node);
         
         console.log(`Discovered ${proxmoxDiscoveredResources.nodes.length} Proxmox nodes: ${proxmoxDiscoveredResources.nodes.join(', ')}`);
