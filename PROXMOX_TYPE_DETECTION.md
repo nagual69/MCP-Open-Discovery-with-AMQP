@@ -12,6 +12,7 @@ We've improved the test script to:
 2. Accurately detect resource types (VM vs container) before testing
 3. Provide clear error messages when resource type mismatches occur
 4. Automatically select the correct resource types for testing
+5. Handle specific known edge cases (like VM ID 104 on node ccctc16gb01) even before full discovery
 
 ## How it Works
 
@@ -22,6 +23,7 @@ The script now uses a more efficient approach to discover resources:
 - First tries to get all resources at once using `proxmox_cluster_resources` API
 - Falls back to individual node discovery if that fails
 - Properly categorizes resources by type (node, VM, container)
+- Includes hardcoded detection for specific known resources (like ID 104 on ccctc16gb01)
 
 ### 2. Type Detection
 
