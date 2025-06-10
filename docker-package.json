@@ -2,7 +2,7 @@
   "name": "mcp-open-discovery",
   "version": "1.0.0",
   "description": "Networking Discovery tools exposed via Model Context Protocol",
-  "main": "mcp_server.js",
+  "main": "mcp_server_modular.js",
   "dependencies": {
     "net-snmp": "^3.10.1"
   }

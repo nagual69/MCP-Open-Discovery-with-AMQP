@@ -49,15 +49,18 @@ WORKDIR /home/mcpuser/app
 COPY docker-package.json ./package.json
 RUN npm install --no-fund --no-audit
 
-# Copy application files
-COPY mcp_server.js ./
+# Copy server code
+COPY mcp_server_modular.js ./
 COPY snmp_tools.js ./
+COPY tools/ ./tools/
+COPY module_loader.js ./
 
 # Set permissions
 RUN chown -R mcpuser:mcpuser /home/mcpuser/app
 
-# Use the non-root user
-USER mcpuser
+# Note: We need to run as root for nmap SYN scans
+# This is because SYN scans require raw socket access
+# USER mcpuser
 
 # Expose the port
 EXPOSE 3000
@@ -67,4 +70,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start the server
-CMD ["node", "mcp_server.js"]
+CMD ["node", "mcp_server_modular.js"]
