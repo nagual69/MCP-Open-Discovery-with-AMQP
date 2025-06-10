@@ -1,6 +1,8 @@
 services:
   mcp-server:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.modular
     image: busybox-network-mcp
     container_name: busybox-network-mcp
     ports:
