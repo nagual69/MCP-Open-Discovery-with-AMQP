@@ -25,11 +25,8 @@
     "url": "https://github.com/nagual69/mcp-open-discovery/issues"
   },  "homepage": "https://github.com/nagual69/mcp-open-discovery#readme",  "engines": {
     "node": ">=23"
-  },
-  "dependencies": {
-    "net-snmp": "^3.10.1"
-  },
-  "devDependencies": {
-    "@modelcontextprotocol/sdk": "^0.1.0"
+  },  "dependencies": {
+    "net-snmp": "^3.10.1",
+    "@modelcontextprotocol/sdk": "^1.0.0"
   }
 }

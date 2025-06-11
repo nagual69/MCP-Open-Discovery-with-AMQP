@@ -88,10 +88,11 @@ function getTools() {
           oids: { type: 'array', items: { type: 'string' }, description: 'Array of OIDs to retrieve' }
         },
         required: ['sessionId', 'oids']
-      },
-      command: async (args) => {
+      },      command: async (args) => {
         try {
-          const result = await snmpTools.snmpGet(args.sessionId, args.oids);
+          // Ensure oids is an array of strings
+          const oids = Array.isArray(args.oids) ? args.oids.map(oid => String(oid)) : [String(args.oids)];
+          const result = await snmpTools.snmpGet(args.sessionId, oids);
           return JSON.stringify(result, null, 2);
         } catch (error) {
           throw new Error(`SNMP GET failed: ${error.message}`);
@@ -108,10 +109,11 @@ function getTools() {
           oids: { type: 'array', items: { type: 'string' }, description: 'Array of OIDs to start from' }
         },
         required: ['sessionId', 'oids']
-      },
-      command: async (args) => {
+      },      command: async (args) => {
         try {
-          const result = await snmpTools.snmpGetNext(args.sessionId, args.oids);
+          // Ensure oids is an array of strings
+          const oids = Array.isArray(args.oids) ? args.oids.map(oid => String(oid)) : [String(args.oids)];
+          const result = await snmpTools.snmpGetNext(args.sessionId, oids);
           return JSON.stringify(result, null, 2);
         } catch (error) {
           throw new Error(`SNMP GETNEXT failed: ${error.message}`);
@@ -128,10 +130,9 @@ function getTools() {
           oid: { type: 'string', description: 'Base OID for the walk' }
         },
         required: ['sessionId', 'oid']
-      },
-      command: async (args) => {
+      },      command: async (args) => {
         try {
-          const result = await snmpTools.snmpWalk(args.sessionId, args.oid);
+          const result = await snmpTools.snmpWalk(args.sessionId, String(args.oid));
           return JSON.stringify(result, null, 2);
         } catch (error) {
           throw new Error(`SNMP WALK failed: ${error.message}`);
@@ -148,10 +149,9 @@ function getTools() {
           oid: { type: 'string', description: 'Base OID for the table' }
         },
         required: ['sessionId', 'oid']
-      },
-      command: async (args) => {
+      },      command: async (args) => {
         try {
-          const result = await snmpTools.snmpTable(args.sessionId, args.oid);
+          const result = await snmpTools.snmpTable(args.sessionId, String(args.oid));
           return JSON.stringify(result, null, 2);
         } catch (error) {
           throw new Error(`SNMP TABLE failed: ${error.message}`);

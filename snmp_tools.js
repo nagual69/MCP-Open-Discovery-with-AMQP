@@ -1,121 +1,159 @@
 /**
- * SNMP Tool Functions for MCP Open Discovery
+ * Universal SNMP Tool Functions for MCP Open Discovery
  * 
  * This module provides SNMP discovery and querying capabilities 
  * for the MCP Open Discovery server.
+ * 
+ * Uses command-line SNMP tools and detects execution environment:
+ * - When running inside container: uses SNMP tools directly
+ * - When running on host: uses docker exec to run commands in container
  */
 
-const snmp = require('net-snmp');
+const { spawn } = require('child_process');
 const crypto = require('crypto');
+const fs = require('fs');
 
 // In-memory store for SNMP sessions and credentials
 const snmpSessions = new Map();
 
-// SNMP Helper Functions
+// Detect if we're running inside a Docker container
+function isRunningInContainer() {
+  try {
+    // Check if we're in a container by looking for Docker-specific files
+    return fs.existsSync('/.dockerenv') || 
+           fs.existsSync('/proc/1/cgroup') && 
+           fs.readFileSync('/proc/1/cgroup', 'utf8').includes('docker');
+  } catch (error) {
+    return false;
+  }
+}
+
+// Execution environment detection
+const IN_CONTAINER = isRunningInContainer();
+console.log(`SNMP Tools: Running ${IN_CONTAINER ? 'inside container' : 'on host'}`);
+
+/**
+ * Execute an SNMP command using command-line tools
+ * Automatically detects if running in container or on host
+ */
+function executeSnmpCommand(command, args, timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    let processArgs;
+    let processCommand;
+    
+    if (IN_CONTAINER) {
+      // Running inside container - execute SNMP commands directly
+      processCommand = command;
+      processArgs = args;
+    } else {
+      // Running on host - execute SNMP commands via docker exec
+      processCommand = 'docker';
+      processArgs = ['exec', 'busybox-network-mcp', command, ...args];
+    }
+    
+    const process = spawn(processCommand, processArgs);
+    let stdout = '';
+    let stderr = '';
+    
+    const timer = setTimeout(() => {
+      process.kill('SIGTERM');
+      reject(new Error(`SNMP command timed out after ${timeout}ms`));
+    }, timeout);
+    
+    process.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+    
+    process.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+    
+    process.on('close', (code) => {
+      clearTimeout(timer);
+      if (code === 0) {
+        resolve(stdout.trim());
+      } else {
+        reject(new Error(`SNMP command failed: ${stderr.trim() || stdout.trim()}`));
+      }
+    });
+    
+    process.on('error', (error) => {
+      clearTimeout(timer);
+      reject(new Error(`Failed to execute SNMP command: ${error.message}`));
+    });
+  });
+}
+
+/**
+ * Parse SNMP response output (filters out MIB warnings)
+ */
+function parseSnmpResponse(output) {
+  const lines = output.split('\n').filter(line => line.trim());
+  const results = [];
+  
+  for (const line of lines) {
+    // Skip MIB warnings and errors
+    if (line.includes('Cannot find module') || 
+        line.includes('Did not find') || 
+        line.includes('Unlinked OID') || 
+        line.includes('Undefined identifier') || 
+        line.includes('Cannot adopt OID') ||
+        line.includes('MIB search path:') ||
+        line.includes('Unknown module')) {
+      continue;
+    }
+    
+    // Look for actual SNMP response lines
+    // Example: "RFC1213-MIB::sysDescr.0 = STRING: Linux..."
+    const match = line.match(/^(.+?)\s*=\s*([^:]+):\s*(.*)$/);
+    if (match) {
+      const [, oidName, type, value] = match;
+      // Extract numeric OID if possible, otherwise use the full OID name
+      const oidMatch = oidName.match(/\.(\d+(?:\.\d+)*)$/);
+      const oid = oidMatch ? oidMatch[1] : oidName;
+      
+      results.push({
+        oid: oid,
+        oidName: oidName.trim(),
+        value: value.replace(/^"(.*)"$/, '$1'), // Remove quotes if present
+        type: type.trim()
+      });
+    }
+  }
+  
+  return results;
+}
+
 function createSnmpSession(host, options = {}) {
   const sessionOptions = {
+    host,
+    community: options.community || 'public',
+    version: options.version || '2c',
     port: options.port || 161,
-    retries: options.retries || 1,
     timeout: options.timeout || 5000,
-    backoff: 1.0,
-    transport: "udp4",
-    trapPort: 162,
-    version: getSnmpVersion(options.version || '2c'),
-    backwardsGetNexts: true,
-    reportOidMismatchErrors: false,
+    retries: options.retries || 1
   };
-
-  // Add community string for v1/v2c or authentication for v3
-  if (sessionOptions.version === snmp.Version3) {
-    sessionOptions.context = options.context || "";
-    
-    // Configure security level and auth
-    if (options.user && options.authProtocol && options.authKey) {
-      if (options.privProtocol && options.privKey) {
-        // authPriv
-        sessionOptions.security = {
-          level: snmp.SecurityLevel.authPriv,
-          user: options.user,
-          authProtocol: getAuthProtocol(options.authProtocol),
-          authKey: options.authKey,
-          privProtocol: getPrivProtocol(options.privProtocol),
-          privKey: options.privKey
-        };
-      } else {
-        // authNoPriv
-        sessionOptions.security = {
-          level: snmp.SecurityLevel.authNoPriv,
-          user: options.user,
-          authProtocol: getAuthProtocol(options.authProtocol),
-          authKey: options.authKey
-        };
-      }
-    } else {
-      // noAuthNoPriv
-      sessionOptions.security = {
-        level: snmp.SecurityLevel.noAuthNoPriv,
-        user: options.user || "nobody"
-      };
-    }
-  } else {
-    // v1 or v2c
-    sessionOptions.community = options.community || "public";
-  }
-
-  const session = snmp.createSession(host, sessionOptions);
   
-  // Store session in memory with a unique ID
+  // Add SNMPv3 options if specified
+  if (options.version === '3') {
+    sessionOptions.user = options.user;
+    sessionOptions.authProtocol = options.authProtocol;
+    sessionOptions.authKey = options.authKey;
+    sessionOptions.privProtocol = options.privProtocol;
+    sessionOptions.privKey = options.privKey;
+  }
+  
   const sessionId = crypto.randomUUID();
   snmpSessions.set(sessionId, { 
-    session, 
-    host, 
-    options, 
+    options: sessionOptions, 
     lastUsed: Date.now() 
   });
   
-  return { sessionId, session };
-}
-
-function getAuthProtocol(authProtocol) {
-  const protocols = {
-    'md5': snmp.AuthProtocols.md5,
-    'sha': snmp.AuthProtocols.sha,
-    'sha224': snmp.AuthProtocols.sha224,
-    'sha256': snmp.AuthProtocols.sha256,
-    'sha384': snmp.AuthProtocols.sha384,
-    'sha512': snmp.AuthProtocols.sha512
-  };
-  return protocols[authProtocol.toLowerCase()] || snmp.AuthProtocols.sha;
-}
-
-function getPrivProtocol(privProtocol) {
-  const protocols = {
-    'des': snmp.PrivProtocols.des,
-    'aes': snmp.PrivProtocols.aes,
-    'aes128': snmp.PrivProtocols.aes128,
-    'aes192': snmp.PrivProtocols.aes192,
-    'aes256': snmp.PrivProtocols.aes256
-  };
-  return protocols[privProtocol.toLowerCase()] || snmp.PrivProtocols.aes;
+  return { sessionId };
 }
 
 function closeSnmpSession(sessionId) {
-  if (snmpSessions.has(sessionId)) {
-    const { session } = snmpSessions.get(sessionId);
-    session.close();
-    snmpSessions.delete(sessionId);
-    return true;
-  }
-  return false;
-}
-
-function getSnmpVersion(versionStr) {
-  const versions = {
-    '1': snmp.Version1,
-    '2c': snmp.Version2c,
-    '3': snmp.Version3
-  };
-  return versions[versionStr] || snmp.Version2c;
+  return snmpSessions.delete(sessionId);
 }
 
 // Periodically clean up old sessions
@@ -125,8 +163,7 @@ setInterval(() => {
   
   for (const [sessionId, sessionInfo] of snmpSessions.entries()) {
     if (now - sessionInfo.lastUsed > expireTime) {
-      console.log(`Closing idle SNMP session ${sessionId} for ${sessionInfo.host}`);
-      sessionInfo.session.close();
+      console.log(`Cleaning up idle SNMP session ${sessionId}`);
       snmpSessions.delete(sessionId);
     }
   }
@@ -134,142 +171,124 @@ setInterval(() => {
 
 // SNMP Tool Functions
 async function snmpGet(sessionId, oids) {
-  return new Promise((resolve, reject) => {
-    if (!snmpSessions.has(sessionId)) {
-      reject(new Error(`SNMP session ${sessionId} not found`));
-      return;
-    }
-    
-    const { session } = snmpSessions.get(sessionId);
-    snmpSessions.get(sessionId).lastUsed = Date.now();
-    
-    session.get(oids, (error, varbinds) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      
-      // Check for errors in response
-      for (const vb of varbinds) {
-        if (snmp.isVarbindError(vb)) {
-          reject(new Error(`Error for OID ${vb.oid}: ${snmp.varbindError(vb)}`));
-          return;
-        }
-      }
-      
-      // Format results for human readability
-      const results = varbinds.map(vb => {
-        return {
-          oid: vb.oid,
-          value: vb.value.toString(),
-          type: snmp.ObjectType[vb.type]
-        };
-      });
-      
-      resolve(results);
-    });
-  });
+  if (!snmpSessions.has(sessionId)) {
+    throw new Error(`SNMP session ${sessionId} not found`);
+  }
+  
+  const session = snmpSessions.get(sessionId);
+  const options = session.options;
+  snmpSessions.get(sessionId).lastUsed = Date.now();
+  
+  // Ensure oids is an array
+  const oidArray = Array.isArray(oids) ? oids : [oids];
+  
+  // Build snmpget command
+  const args = [
+    '-v', options.version,
+    '-c', options.community,
+    '-t', Math.floor(options.timeout / 1000).toString(),
+    '-r', options.retries.toString(),
+    `${options.host}:${options.port}`,
+    ...oidArray
+  ];
+  
+  try {
+    const output = await executeSnmpCommand('snmpget', args, options.timeout + 1000);
+    return parseSnmpResponse(output);
+  } catch (error) {
+    throw new Error(`SNMP GET failed: ${error.message}`);
+  }
 }
 
 async function snmpGetNext(sessionId, oids) {
-  return new Promise((resolve, reject) => {
-    if (!snmpSessions.has(sessionId)) {
-      reject(new Error(`SNMP session ${sessionId} not found`));
-      return;
-    }
-    
-    const { session } = snmpSessions.get(sessionId);
-    snmpSessions.get(sessionId).lastUsed = Date.now();
-    
-    session.getNext(oids, (error, varbinds) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      
-      // Check for errors in response
-      for (const vb of varbinds) {
-        if (snmp.isVarbindError(vb)) {
-          reject(new Error(`Error for OID ${vb.oid}: ${snmp.varbindError(vb)}`));
-          return;
-        }
-      }
-      
-      // Format results for human readability
-      const results = varbinds.map(vb => {
-        return {
-          oid: vb.oid,
-          value: vb.value.toString(),
-          type: snmp.ObjectType[vb.type]
-        };
-      });
-      
-      resolve(results);
-    });
-  });
+  if (!snmpSessions.has(sessionId)) {
+    throw new Error(`SNMP session ${sessionId} not found`);
+  }
+  
+  const session = snmpSessions.get(sessionId);
+  const options = session.options;
+  snmpSessions.get(sessionId).lastUsed = Date.now();
+  
+  // Ensure oids is an array
+  const oidArray = Array.isArray(oids) ? oids : [oids];
+  
+  // Build snmpgetnext command
+  const args = [
+    '-v', options.version,
+    '-c', options.community,
+    '-t', Math.floor(options.timeout / 1000).toString(),
+    '-r', options.retries.toString(),
+    `${options.host}:${options.port}`,
+    ...oidArray
+  ];
+  
+  try {
+    const output = await executeSnmpCommand('snmpgetnext', args, options.timeout + 1000);
+    return parseSnmpResponse(output);
+  } catch (error) {
+    throw new Error(`SNMP GETNEXT failed: ${error.message}`);
+  }
 }
 
 async function snmpWalk(sessionId, oid) {
-  return new Promise((resolve, reject) => {
-    if (!snmpSessions.has(sessionId)) {
-      reject(new Error(`SNMP session ${sessionId} not found`));
-      return;
-    }
-    
-    const { session } = snmpSessions.get(sessionId);
-    snmpSessions.get(sessionId).lastUsed = Date.now();
-    const results = [];
-    
-    function doneCb(error) {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(results);
-      }
-    }
-    
-    function feedCb(varbinds) {
-      for (const vb of varbinds) {
-        if (snmp.isVarbindError(vb)) {
-          continue;
-        }
-        results.push({
-          oid: vb.oid,
-          value: vb.value.toString(),
-          type: snmp.ObjectType[vb.type]
-        });
-      }
-    }
-    
-    session.walk(oid, feedCb, doneCb);
-  });
+  if (!snmpSessions.has(sessionId)) {
+    throw new Error(`SNMP session ${sessionId} not found`);
+  }
+  
+  const session = snmpSessions.get(sessionId);
+  const options = session.options;
+  snmpSessions.get(sessionId).lastUsed = Date.now();
+  
+  // Build snmpwalk command
+  const args = [
+    '-v', options.version,
+    '-c', options.community,
+    '-t', Math.floor(options.timeout / 1000).toString(),
+    '-r', options.retries.toString(),
+    `${options.host}:${options.port}`,
+    oid
+  ];
+  
+  try {
+    const output = await executeSnmpCommand('snmpwalk', args, options.timeout + 1000);
+    return parseSnmpResponse(output);
+  } catch (error) {
+    throw new Error(`SNMP WALK failed: ${error.message}`);
+  }
 }
 
 async function snmpTable(sessionId, oid) {
-  return new Promise((resolve, reject) => {
-    if (!snmpSessions.has(sessionId)) {
-      reject(new Error(`SNMP session ${sessionId} not found`));
-      return;
-    }
-    
-    const { session } = snmpSessions.get(sessionId);
-    snmpSessions.get(sessionId).lastUsed = Date.now();
-    
-    session.table(oid, (error, table) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(table);
-    });
-  });
+  if (!snmpSessions.has(sessionId)) {
+    throw new Error(`SNMP session ${sessionId} not found`);
+  }
+  
+  const session = snmpSessions.get(sessionId);
+  const options = session.options;
+  snmpSessions.get(sessionId).lastUsed = Date.now();
+  
+  // Build snmptable command
+  const args = [
+    '-v', options.version,
+    '-c', options.community,
+    '-t', Math.floor(options.timeout / 1000).toString(),
+    '-r', options.retries.toString(),
+    `${options.host}:${options.port}`,
+    oid
+  ];
+  
+  try {
+    const output = await executeSnmpCommand('snmptable', args, options.timeout + 1000);
+    return parseSnmpResponse(output);
+  } catch (error) {
+    throw new Error(`SNMP TABLE failed: ${error.message}`);
+  }
 }
 
 async function snmpDiscover(targetRange, options = {}) {
   const community = options.community || 'public';
   const port = options.port || 161;
   const timeout = options.timeout || 5000;
-  const version = getSnmpVersion(options.version || '2c');
+  const version = options.version || '2c';
   
   // Parse IP range (e.g., 192.168.1.0/24)
   const [baseIp, cidr] = targetRange.split('/');
@@ -299,24 +318,18 @@ async function snmpDiscover(targetRange, options = {}) {
       community
     };
     
-    const promise = new Promise(resolve => {
-      const session = snmp.createSession(ip, sessionOptions);
-      const timer = setTimeout(() => {
-        session.close();
-        resolve(null);
-      }, timeout);
-      
-      session.get(['1.3.6.1.2.1.1.1.0', '1.3.6.1.2.1.1.5.0'], (error, varbinds) => {
-        clearTimeout(timer);
-        session.close();
+    const promise = new Promise(async (resolve) => {
+      try {
+        const { sessionId } = createSnmpSession(ip, sessionOptions);
         
-        if (error || snmp.isVarbindError(varbinds[0])) {
-          resolve(null);
-          return;
-        }
+        // Try to get system description and name
+        const oids = ['1.3.6.1.2.1.1.1.0', '1.3.6.1.2.1.1.5.0']; // sysDescr, sysName
+        const result = await snmpGet(sessionId, oids);
         
-        const sysDesc = varbinds[0]?.value?.toString() || 'Unknown';
-        const sysName = varbinds[1]?.value?.toString() || 'Unknown';
+        closeSnmpSession(sessionId);
+        
+        const sysDesc = result[0]?.value || 'Unknown';
+        const sysName = result[1]?.value || 'Unknown';
         
         results.push({
           ip,
@@ -325,7 +338,10 @@ async function snmpDiscover(targetRange, options = {}) {
         });
         
         resolve(true);
-      });
+      } catch (error) {
+        // Device doesn't respond to SNMP or has different community
+        resolve(false);
+      }
     });
     
     promises.push(promise);
@@ -397,35 +413,6 @@ async function snmpDeviceInventory(host, community = 'public', version = '2c') {
       inventory.interfaces = { error: "Failed to get interface information: " + e.message };
     }
     
-    // Try to get storage information
-    try {
-      const storage = await snmpWalk(sessionId, '1.3.6.1.2.1.25.2.3.1');
-      
-      // Group storage data by index
-      const storageData = {};
-      storage.forEach(item => {
-        const parts = item.oid.split('.');
-        const storageIndex = parts[parts.length - 1];
-        const storageMetric = parts[parts.length - 2];
-        
-        if (!storageData[storageIndex]) {
-          storageData[storageIndex] = {};
-        }
-        
-        switch (storageMetric) {
-          case '2': storageData[storageIndex].type = item.value; break;
-          case '3': storageData[storageIndex].description = item.value; break;
-          case '4': storageData[storageIndex].allocationUnits = item.value; break;
-          case '5': storageData[storageIndex].size = item.value; break;
-          case '6': storageData[storageIndex].used = item.value; break;
-        }
-      });
-      
-      inventory.storage = storageData;
-    } catch (e) {
-      inventory.storage = { error: "Failed to get storage information: " + e.message };
-    }
-    
     // Close the session
     closeSnmpSession(sessionId);
     
@@ -468,14 +455,6 @@ async function snmpInterfaceDiscovery(host, community = 'public', version = '2c'
         const descrResult = await snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.2.${index}`]);
         interfaceData.name = descrResult[0].value;
         
-        // Get interface description (ifAlias) if available
-        try {
-          const aliasResult = await snmpGet(sessionId, [`1.3.6.1.2.1.31.1.1.1.18.${index}`]);
-          interfaceData.description = aliasResult[0].value;
-        } catch (e) {
-          // ifAlias might not be supported
-        }
-        
         // Get interface type
         const typeResult = await snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.3.${index}`]);
         interfaceData.type = typeResult[0].value;
@@ -495,26 +474,6 @@ async function snmpInterfaceDiscovery(host, community = 'public', version = '2c'
         // Get operational status
         const operResult = await snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.8.${index}`]);
         interfaceData.operStatus = operResult[0].value === '1' ? 'up' : 'down';
-        
-        // Try to get IP addresses for this interface
-        try {
-          // This is complex as we need to correlate IP address table with interface
-          // A simplified approach is shown here
-          const ipAddrTable = await snmpWalk(sessionId, '1.3.6.1.2.1.4.20.1');
-          
-          for (const entry of ipAddrTable) {
-            const parts = entry.oid.split('.');
-            const metricType = parts[parts.length - 5];
-            
-            // If this is an ifIndex entry and matches our interface
-            if (metricType === '2' && entry.value === index) {
-              const ipAddress = parts.slice(-4).join('.');
-              interfaceData.ipAddresses.push(ipAddress);
-            }
-          }
-        } catch (e) {
-          // IP address collection failed
-        }
         
         interfaces.interfaces.push(interfaceData);
       } catch (e) {
@@ -538,9 +497,7 @@ async function snmpSystemHealthCheck(host, community = 'public', version = '2c')
     const healthData = {
       ip: host,
       system: {},
-      cpu: {},
       memory: {},
-      storage: {},
       interfaces: {}
     };
     
@@ -561,130 +518,6 @@ async function snmpSystemHealthCheck(host, community = 'public', version = '2c')
       healthData.system = { error: e.message };
     }
     
-    // Get CPU info (system load)
-    try {
-      // Try UCD-SNMP-MIB (Net-SNMP) CPU metrics
-      const loadAvg = await snmpGet(sessionId, ['1.3.6.1.4.1.2021.10.1.3.1']);
-      healthData.cpu.loadAverage1min = loadAvg[0].value;
-      
-      // Try HOST-RESOURCES-MIB CPU metrics
-      const cpuProcesses = await snmpWalk(sessionId, '1.3.6.1.2.1.25.3.3.1.2');
-      healthData.cpu.processes = cpuProcesses.map(p => ({ 
-        id: p.oid.split('.').pop(),
-        utilization: p.value
-      }));
-    } catch (e) {
-      // Not all systems expose CPU metrics
-      healthData.cpu = { error: "CPU metrics not available: " + e.message };
-    }
-    
-    // Get memory info
-    try {
-      // Try UCD-SNMP-MIB memory info
-      const memInfo = await Promise.all([
-        snmpGet(sessionId, ['1.3.6.1.4.1.2021.4.5.0']), // Total RAM
-        snmpGet(sessionId, ['1.3.6.1.4.1.2021.4.6.0'])  // Free RAM
-      ]);
-      
-      healthData.memory = {
-        total: memInfo[0][0].value,
-        free: memInfo[1][0].value,
-        used: memInfo[0][0].value - memInfo[1][0].value,
-        percentUsed: (((memInfo[0][0].value - memInfo[1][0].value) / memInfo[0][0].value) * 100).toFixed(2)
-      };
-    } catch (e) {
-      // Try HOST-RESOURCES-MIB memory info
-      try {
-        const hrStorage = await snmpWalk(sessionId, '1.3.6.1.2.1.25.2.3.1');
-        
-        // Process storage entries to find memory
-        const storageEntries = {};
-        hrStorage.forEach(entry => {
-          const parts = entry.oid.split('.');
-          const index = parts.pop();
-          const type = parts.pop();
-          
-          if (!storageEntries[index]) {
-            storageEntries[index] = {};
-          }
-          
-          switch (type) {
-            case '2': storageEntries[index].type = entry.value; break;
-            case '3': storageEntries[index].descr = entry.value; break;
-            case '4': storageEntries[index].allocationUnits = entry.value; break;
-            case '5': storageEntries[index].size = entry.value; break;
-            case '6': storageEntries[index].used = entry.value; break;
-          }
-        });
-        
-        // Find RAM entries (usually type 2 or description contains "RAM" or "Memory")
-        for (const [index, entry] of Object.entries(storageEntries)) {
-          if (entry.type === '2' || 
-              (entry.descr && (entry.descr.includes('RAM') || entry.descr.includes('Memory')))) {
-            healthData.memory = {
-              description: entry.descr,
-              allocationUnits: entry.allocationUnits,
-              totalUnits: entry.size,
-              usedUnits: entry.used,
-              percentUsed: ((entry.used / entry.size) * 100).toFixed(2)
-            };
-            break;
-          }
-        }
-        
-        if (!healthData.memory.description) {
-          healthData.memory = { error: "Could not identify memory entries in storage table" };
-        }
-      } catch (e2) {
-        healthData.memory = { error: "Memory metrics not available: " + e2.message };
-      }
-    }
-    
-    // Get storage info
-    try {
-      // Get disk storage from HOST-RESOURCES-MIB
-      const storageTable = await snmpWalk(sessionId, '1.3.6.1.2.1.25.2.3.1');
-      
-      // Process storage entries
-      const storageEntries = {};
-      storageTable.forEach(entry => {
-        const parts = entry.oid.split('.');
-        const index = parts.pop();
-        const type = parts.pop();
-        
-        if (!storageEntries[index]) {
-          storageEntries[index] = {};
-        }
-        
-        switch (type) {
-          case '2': storageEntries[index].type = entry.value; break;
-          case '3': storageEntries[index].descr = entry.value; break;
-          case '4': storageEntries[index].allocationUnits = entry.value; break;
-          case '5': storageEntries[index].size = entry.value; break;
-          case '6': storageEntries[index].used = entry.value; break;
-        }
-      });
-      
-      // Find disk entries (usually type 4 for fixed disk)
-      healthData.storage.disks = [];
-      for (const [index, entry] of Object.entries(storageEntries)) {
-        // Skip RAM and other non-disk entries
-        if (entry.type === '4' || 
-            (entry.descr && entry.descr.includes('/') && !entry.descr.includes('RAM'))) {
-          const disk = {
-            description: entry.descr,
-            allocationUnits: entry.allocationUnits,
-            totalUnits: entry.size,
-            usedUnits: entry.used,
-            percentUsed: entry.size > 0 ? ((entry.used / entry.size) * 100).toFixed(2) : 0
-          };
-          healthData.storage.disks.push(disk);
-        }
-      }
-    } catch (e) {
-      healthData.storage = { error: "Storage metrics not available: " + e.message };
-    }
-    
     // Get interface statistics
     try {
       // Get interface indexes
@@ -696,13 +529,11 @@ async function snmpSystemHealthCheck(host, community = 'public', version = '2c')
       for (const ifIdx of ifIndexes) {
         const index = ifIdx.value;
         try {
-          const [nameResult, statusResult, inOctets, outOctets, inErrors, outErrors] = await Promise.all([
+          const [nameResult, statusResult, inOctets, outOctets] = await Promise.all([
             snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.2.${index}`]),
             snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.8.${index}`]),
             snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.10.${index}`]),
-            snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.16.${index}`]),
-            snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.14.${index}`]),
-            snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.20.${index}`])
+            snmpGet(sessionId, [`1.3.6.1.2.1.2.2.1.16.${index}`])
           ]);
           
           healthData.interfaces.list.push({
@@ -710,9 +541,7 @@ async function snmpSystemHealthCheck(host, community = 'public', version = '2c')
             name: nameResult[0].value,
             status: statusResult[0].value === '1' ? 'up' : 'down',
             inOctets: inOctets[0].value,
-            outOctets: outOctets[0].value,
-            inErrors: inErrors[0].value,
-            outErrors: outErrors[0].value
+            outOctets: outOctets[0].value
           });
         } catch (e) {
           // Skip failed interface
@@ -737,7 +566,9 @@ async function snmpServiceDiscovery(host, community = 'public', version = '2c') 
     
     const servicesData = {
       ip: host,
-      services: []
+      services: [],
+      tcpPorts: [],
+      udpPorts: []
     };
     
     // Get running processes from HOST-RESOURCES-MIB
@@ -764,7 +595,7 @@ async function snmpServiceDiscovery(host, community = 'public', version = '2c') 
         }
       });
       
-      // Convert to array and add status text
+      // Convert to array
       for (const process of Object.values(processEntries)) {
         if (process.name) {
           let statusText;
@@ -782,56 +613,6 @@ async function snmpServiceDiscovery(host, community = 'public', version = '2c') 
       }
     } catch (e) {
       servicesData.processError = e.message;
-    }
-    
-    // Try to get TCP and UDP listening ports
-    try {
-      // Get TCP listening ports (tcpConnTable)
-      const tcpTable = await snmpWalk(sessionId, '1.3.6.1.2.1.6.13.1.1');
-      
-      servicesData.tcpPorts = [];
-      for (const entry of tcpTable) {
-        const parts = entry.oid.split('.');
-        // Extract local address and port from OID
-        const localPort = parseInt(parts[parts.length - 1]);
-        const localAddr = parts.slice(-5, -1).join('.');
-        
-        // Only include listening ports (state = 2)
-        try {
-          const stateOid = `1.3.6.1.2.1.6.13.1.1.${entry.value}.${localAddr}.${localPort}`;
-          const stateResult = await snmpGet(sessionId, [stateOid]);
-          
-          if (stateResult[0].value === '2') { // listening
-            servicesData.tcpPorts.push({
-              localAddr,
-              localPort
-            });
-          }
-        } catch (e) {
-          // Skip this entry
-        }
-      }
-    } catch (e) {
-      servicesData.tcpError = e.message;
-    }
-    
-    try {
-      // Get UDP ports (udpTable)
-      const udpTable = await snmpWalk(sessionId, '1.3.6.1.2.1.7.5.1.2');
-      
-      servicesData.udpPorts = [];
-      for (const entry of udpTable) {
-        const parts = entry.oid.split('.');
-        const localPort = parseInt(parts[parts.length - 1]);
-        const localAddr = parts.slice(-5, -1).join('.');
-        
-        servicesData.udpPorts.push({
-          localAddr,
-          localPort
-        });
-      }
-    } catch (e) {
-      servicesData.udpError = e.message;
     }
     
     // Close the session
@@ -901,123 +682,6 @@ async function snmpNetworkTopologyMapper(networkRange, community = 'public', ver
         
         nodeInfo.interfaces = Object.values(interfaces).filter(iface => iface.name);
         
-        // Try to get neighbor information via various methods
-        
-        // Method 1: CDP (Cisco Discovery Protocol)
-        try {
-          const cdpNeighbors = await snmpWalk(sessionId, '1.3.6.1.4.1.9.9.23.1.2.1.1');
-          
-          // Process CDP entries (simplified)
-          const cdpEntries = {};
-          cdpNeighbors.forEach(entry => {
-            const parts = entry.oid.split('.');
-            const property = parts[parts.length - 2];
-            const ifIndex = parts[parts.length - 3];
-            
-            if (!cdpEntries[ifIndex]) {
-              cdpEntries[ifIndex] = { localInterface: ifIndex };
-            }
-            
-            // Extract CDP information based on property type
-            switch (property) {
-              case '6': cdpEntries[ifIndex].remoteDevice = entry.value; break;
-              case '7': cdpEntries[ifIndex].remoteInterface = entry.value; break;
-              case '4': cdpEntries[ifIndex].remoteIp = entry.value; break;
-            }
-          });
-          
-          // Add CDP neighbors to topology links
-          for (const cdp of Object.values(cdpEntries)) {
-            if (cdp.remoteDevice && cdp.remoteInterface) {
-              topology.links.push({
-                source: device.ip,
-                sourceInterface: interfaces[cdp.localInterface]?.name || cdp.localInterface,
-                target: cdp.remoteIp || cdp.remoteDevice,
-                targetInterface: cdp.remoteInterface,
-                discoveryProtocol: 'CDP'
-              });
-            }
-          }
-        } catch (e) {
-          // CDP not available
-        }
-        
-        // Method 2: LLDP (Link Layer Discovery Protocol)
-        try {
-          const lldpNeighbors = await snmpWalk(sessionId, '1.0.8802.1.1.2.1.4.1.1');
-          
-          // Process LLDP entries (simplified)
-          const lldpEntries = {};
-          lldpNeighbors.forEach(entry => {
-            const parts = entry.oid.split('.');
-            const property = parts[parts.length - 3];
-            const ifIndex = parts[parts.length - 2];
-            
-            if (!lldpEntries[ifIndex]) {
-              lldpEntries[ifIndex] = { localInterface: ifIndex };
-            }
-            
-            // Extract LLDP information based on property type
-            switch (property) {
-              case '1': lldpEntries[ifIndex].remoteChassisId = entry.value; break;
-              case '7': lldpEntries[ifIndex].remotePortId = entry.value; break;
-              case '9': lldpEntries[ifIndex].remoteSysName = entry.value; break;
-            }
-          });
-          
-          // Add LLDP neighbors to topology links
-          for (const lldp of Object.values(lldpEntries)) {
-            if (lldp.remoteSysName && lldp.remotePortId) {
-              topology.links.push({
-                source: device.ip,
-                sourceInterface: interfaces[lldp.localInterface]?.name || lldp.localInterface,
-                target: lldp.remoteSysName,
-                targetInterface: lldp.remotePortId,
-                discoveryProtocol: 'LLDP'
-              });
-            }
-          }
-        } catch (e) {
-          // LLDP not available
-        }
-        
-        // Method 3: Bridge table / MAC address table
-        try {
-          const bridgeTable = await snmpWalk(sessionId, '1.3.6.1.2.1.17.4.3.1.2');
-          
-          // Process bridge table entries
-          for (const entry of bridgeTable) {
-            const parts = entry.oid.split('.');
-            const macAddr = parts.slice(-6).map(p => parseInt(p).toString(16).padStart(2, '0')).join(':');
-            const portNum = entry.value;
-            
-            // Find corresponding interface for this port
-            let ifIndex = null;
-            try {
-              const portMapResult = await snmpGet(sessionId, [`1.3.6.1.2.1.17.1.4.1.2.${portNum}`]);
-              ifIndex = portMapResult[0].value;
-            } catch (e) {
-              // Can't map bridge port to interface
-              continue;
-            }
-            
-            // Add to topology if this is not our own MAC
-            const isOwnMac = nodeInfo.interfaces.some(iface => 
-              iface.mac && iface.mac.toLowerCase() === macAddr.toLowerCase());
-            
-            if (!isOwnMac) {
-              topology.links.push({
-                source: device.ip,
-                sourceInterface: interfaces[ifIndex]?.name || ifIndex,
-                targetMac: macAddr,
-                discoveryProtocol: 'Bridge-MIB'
-              });
-            }
-          }
-        } catch (e) {
-          // Bridge table not available
-        }
-        
         // Add this node to the topology
         topology.nodes.push(nodeInfo);
         
@@ -1027,9 +691,6 @@ async function snmpNetworkTopologyMapper(networkRange, community = 'public', ver
         // Skip failed device
       }
     }
-    
-    // Try to resolve MAC addresses to IPs using ARP tables
-    // This step would ideally reference ARP tables from all devices
     
     return topology;
   } catch (error) {
@@ -1042,9 +703,6 @@ module.exports = {
   // Session management
   createSnmpSession,
   closeSnmpSession,
-  getSnmpVersion,
-  getAuthProtocol,
-  getPrivProtocol,
   
   // Basic SNMP operations
   snmpGet,
