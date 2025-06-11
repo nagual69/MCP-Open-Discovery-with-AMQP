@@ -4,7 +4,7 @@
  * This script initializes the server and tests that tools are loaded correctly.
  */
 
-const MCPOpenDiscoveryServer = require('./mcp_server_modular');
+const MCPOpenDiscoveryServer = require('../mcp_server_modular');
 
 async function testModularServer() {
   console.log('[TEST] Initializing modular MCP server...');
