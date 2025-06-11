@@ -109,7 +109,19 @@ A minimalized container that exposes Busybox, Nmap, and Proxmox API tools throug
 - **`snmp_network_topology`**: Maps network topology using CDP/LLDP and other protocols.
   - Parameters: `networkRange` (required), `community`, `version`.
 
-## Quick Start
+## Modular Architecture
+
+The MCP Open Discovery server uses a modular architecture that organizes tools into separate modules for improved maintainability and flexibility:
+
+- **Network Tools** (`tools/network_tools.js`): Basic network tools like ping, wget, nslookup
+- **Nmap Tools** (`tools/nmap_tools.js`): Network scanning tools  
+- **Memory Tools** (`tools/memory_tools.js`): In-memory CMDB tools
+- **Proxmox Tools** (`tools/proxmox_tools.js`): Proxmox VE API integration
+- **SNMP Tools** (`tools/snmp_module.js`): SNMP discovery and monitoring
+
+Each module exports a `getTools()` function that returns tool definitions. The module loader (`tools/module_loader.js`) dynamically loads all modules at startup.
+
+## Docker Deployment
 
 ### Using Docker Compose (Recommended)
 
@@ -125,37 +137,93 @@ A minimalized container that exposes Busybox, Nmap, and Proxmox API tools throug
     curl http://localhost:3000/health
     ```
 
-    Expected output: `{"status":"healthy","tools":13}` (tool count may vary)
-
-3.  **List available tools (MCP Request):**
+3.  **List available tools:**
     ```bash
-    curl -X POST http://localhost:3000 -H "Content-Type: application/json" -d \'\'\'{"jsonrpc":"2.0","method":"tools/list","id":1}\'\'\'
+    curl -X POST http://localhost:3000 -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
     ```
 
-### Using Docker Directly
+### Security & Capabilities
 
-1.  **Build the container:**
+The Docker container runs with specific capabilities required for network tools:
+- **NET_RAW**: Required for ping and SYN scans
+- **NET_ADMIN**: Required for network administration tools
+- **Read-only filesystem**: Prevents container modifications
+- **Memory limits**: 512MB limit with swap disabled
 
-    ```bash
-    docker build -t network-mcp-server .
-    ```
+## MCP Protocol Compliance
 
-2.  **Run the container:**
-    ```bash
-    docker run -d \\
-      --name network-mcp-server \\
-      --read-only \\
-      --tmpfs /tmp:noexec,nosuid,size=100m \\
-      --cap-drop=ALL \\
-      --cap-add=NET_RAW \\
-      --cap-add=NET_ADMIN \\
-      --security-opt=no-new-privileges:true \\
-      --memory=512m \\
-      --cpus=1 \\
-      -p 3000:3000 \\
-      network-mcp-server
-    ```
-    _Note: Increased memory to 512MB and CPUs to 1 to better accommodate Nmap._
+This server implements the Model Context Protocol (MCP) specification:
+- **JSON-RPC 2.0**: Standard request/response format
+- **Core Methods**: `initialize`, `tools/list`, `tools/call`
+- **Tool Schemas**: Complete parameter definitions for all tools
+- **Error Handling**: Proper error codes and messages
+
+## SNMP Testing Environment
+
+For comprehensive SNMP testing, use the provided Docker test environment:
+
+```bash
+# Start SNMP test containers
+docker-compose -f testing/docker-compose-snmp-testing.yml up -d
+
+# Test SNMP connectivity
+docker exec busybox-network-mcp snmpget -v2c -c public 172.20.0.10:161 1.3.6.1.2.1.1.1.0
+```
+
+**Available Test Targets:**
+- `172.20.0.10` - Basic SNMP simulator
+- `172.20.0.11` - Full-featured SNMP agent  
+- `172.20.0.12` - SNMP lab with custom MIBs
+
+## VS Code Integration
+
+To use with VS Code MCP extension:
+
+1. **Configure VS Code settings.json:**
+   ```json
+   {
+     "mcp.servers": {
+       "mcp-open-discovery": {
+         "command": "node",
+         "args": ["mcp_server_modular.js"],
+         "cwd": "/path/to/mcp-open-discovery"
+       }
+     }
+   }
+   ```
+
+2. **Use MCP tools in VS Code:**
+   - Execute tools via Command Palette: "MCP: Execute Tool"
+   - Browse available tools: "MCP: List Tools"
+   - Manage Proxmox credentials directly in VS Code
+
+## Testing
+
+Run the comprehensive test suite:
+
+```bash
+# All tests
+cd testing && node test_runner.js
+
+# Specific test suites  
+node test_runner.js --snmp --proxmox
+
+# Verbose output
+node test_runner.js --verbose
+```
+
+For detailed testing information, see [TESTING.md](./TESTING.md).
+
+## Development
+
+To add new tool modules:
+
+1. **Create a new module** in `tools/` directory
+2. **Export getTools() function** returning tool definitions
+3. **Follow MCP tool schema format**
+4. **Add comprehensive tests**
+
+For detailed development guidelines, see [DEVELOPER.md](./DEVELOPER.md).
 
 ## Proxmox API Usage Examples (MCP JSON-RPC)
 
