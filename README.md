@@ -6,7 +6,7 @@ A minimalized container that exposes Busybox, Nmap, and Proxmox API tools throug
 
 ## Architecture Overview
 
-- **Main Server Class:** `MCPOpenDiscoveryServer` (see `mcp_server.js`)
+- **Main Server Class:** `MCPOpenDiscoveryServer` (see `mcp_server_modular.js`)
 - **In-Memory CMDB:** Hierarchical, queryable configuration database for Proxmox clusters, nodes, VMs, containers, storage, and networks
 - **Tooling:** BusyBox, Nmap, SNMP, and Proxmox API tools exposed via MCP
 - **Proxmox Integration:** Native support for Proxmox cluster discovery, inventory, and credential management
@@ -428,26 +428,34 @@ MIT License
 
 ## Project Structure
 
-- `mcp_server.js`: Main MCP Open Discovery server implementation
-- `mcp_proxy.js`: Proxy/utility for MCP server
-- `ci_builder_nodered.json`: Node-RED flow for CI building
-- `busybox_container.txt`: BusyBox container notes
-- `Dockerfile`, `docker-compose.yml`: Docker configuration
-- `architecture.drawio`: System architecture diagram
-- `archive/`: Archived scripts and files, including legacy test tools
-- `reference/`: Reference materials and documentation
+- **`mcp_server_modular.js`**: ⭐ **Current modular MCP server implementation**
+- **`tools/`**: Modular tool definitions (network, nmap, proxmox, snmp, memory)
+- **`snmp_tools.js`**: Universal SNMP tools implementation
+- **`test_runner.js`**: Master test runner for all test suites
+- **Test Files**: `test_snmp_final.js`, `test_proxmox.js`, `test_modular_server.js`, `test_comprehensive.js`
+- **`mcp_proxy.js`**: Development proxy/utility for MCP server debugging
+- **`docker-compose.yml`**: Docker configuration for deployment
+- **`archive/`**: Archived files including `mcp_server_original.js` (original monolithic server preserved for reference)
+- **`reference/`**: Reference materials and documentation
 
 ## Test Scripts
 
-- **Active/Maintained:**
-  - `test_credentials.js`: Tests Proxmox credential management via MCP tools.
-  - `test_proxmox_formatting.js`: Validates Proxmox API output formatting.
-  - `test_proxmox.js`: Standalone Proxmox API integration test.
-- **Archived/Deprecated:**
-  - `test_mcp_client.js`, `create_test_tools.js`, `direct_test_tools.js`, `vscode_mcp_test.js`, `vscode_mcp_test_results.txt` (see `archive/` directory and `TEST_README.md` for details)
+- **Current Testing System:**
 
-For more information on the CMDB structure and memory model, see the top of `mcp_server.js` and `MCP_COMPLIANCE.md`.
+  - **`test_runner.js`**: ⭐ Master test runner with selective execution
+  - **`test_snmp_final.js`**: SNMP comprehensive tests (100% pass rate)
+  - **`test_proxmox.js`**: Proxmox API integration tests
+  - **`test_modular_server.js`**: Modular server initialization tests
+  - **`test_comprehensive.js`**: Full end-to-end test suite
 
-## Archived Test Scripts
+- **Legacy/Archived:**
+  - **`archive/mcp_server_original.js`**: Original monolithic server (preserved for reference)
+  - Various obsolete test files and SNMP tool variants (see `TESTING.md` for cleanup details)
+
+For more information on the testing system, see [TESTING.md](./TESTING.md).
+
+## Archived Files Reference
+
+**📁 Original Monolithic Server**: The original `mcp_server.js` has been preserved as `archive/mcp_server_original.js` for historical reference and comparison with the new modular architecture.
 
 As of June 5, 2025, legacy test scripts and test result files have been moved to the `archive/` directory. See `archive/test_tools_cleanup_2025-06-05.txt` for details. These scripts are no longer maintained in the main project.

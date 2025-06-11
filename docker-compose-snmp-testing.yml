@@ -1,0 +1,93 @@
+services:
+  # Your existing MCP server
+  busybox-network-mcp:
+    build: 
+      context: .
+      dockerfile: Dockerfile.modular
+    container_name: busybox-network-mcp
+    ports:
+      - "3000:3000"
+      - "161:161/udp"
+    networks:
+      - mcp-testing
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # SNMP Test Targets
+  
+  # 1. Simple SNMP Agent using Alpine with net-snmp
+  snmp-agent-1:
+    image: alpine:latest
+    container_name: snmp-agent-1
+    ports:
+      - "1161:161/udp"
+    networks:
+      mcp-testing:
+        ipv4_address: 172.20.0.10
+    restart: unless-stopped
+    command: >
+      sh -c "
+      apk add --no-cache net-snmp &&
+      mkdir -p /etc/snmp &&
+      echo 'rocommunity public default' > /etc/snmp/snmpd.conf &&
+      echo 'syslocation Docker Test Lab' >> /etc/snmp/snmpd.conf &&
+      echo 'syscontact Admin <admin@test.local>' >> /etc/snmp/snmpd.conf &&
+      echo 'sysname snmp-test-1' >> /etc/snmp/snmpd.conf &&
+      /usr/sbin/snmpd -f -Lo -c /etc/snmp/snmpd.conf"
+
+  # 2. Second SNMP Agent 
+  snmp-agent-2:
+    image: alpine:latest
+    container_name: snmp-agent-2
+    ports:
+      - "2161:161/udp"
+    networks:
+      mcp-testing:
+        ipv4_address: 172.20.0.11
+    restart: unless-stopped
+    command: >
+      sh -c "
+      apk add --no-cache net-snmp &&
+      mkdir -p /etc/snmp &&
+      echo 'rocommunity public default' > /etc/snmp/snmpd.conf &&
+      echo 'syslocation Docker Test Lab 2' >> /etc/snmp/snmpd.conf &&
+      echo 'syscontact Admin <admin@test.local>' >> /etc/snmp/snmpd.conf &&
+      echo 'sysname snmp-test-2' >> /etc/snmp/snmpd.conf &&
+      /usr/sbin/snmpd -f -Lo -c /etc/snmp/snmpd.conf"
+
+  # 3. Third SNMP Agent with different community
+  snmp-agent-3:
+    image: alpine:latest
+    container_name: snmp-agent-3
+    ports:
+      - "3161:161/udp"
+    networks:
+      mcp-testing:
+        ipv4_address: 172.20.0.12
+    restart: unless-stopped
+    command: >
+      sh -c "
+      apk add --no-cache net-snmp &&
+      mkdir -p /etc/snmp &&
+      echo 'rocommunity public default' > /etc/snmp/snmpd.conf &&
+      echo 'rocommunity testcommunity default' >> /etc/snmp/snmpd.conf &&
+      echo 'syslocation Docker Test Lab 3' >> /etc/snmp/snmpd.conf &&
+      echo 'syscontact Admin <admin@test.local>' >> /etc/snmp/snmpd.conf &&
+      echo 'sysname snmp-test-3' >> /etc/snmp/snmpd.conf &&
+      /usr/sbin/snmpd -f -Lo -c /etc/snmp/snmpd.conf"
+
+networks:
+  mcp-testing:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  snmp-data:
+    driver: local

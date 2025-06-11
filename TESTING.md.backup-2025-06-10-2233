@@ -116,7 +116,7 @@ The SNMP test suite validates:
 
 ## 📁 Cleaned Up Files
 
-**Phase 1: Removed obsolete test files** (16 files deleted):
+**Removed obsolete test files** (16 files deleted):
 
 - `test_snmp_*` variants (10 files) - consolidated into `test_snmp_final.js`
 - `test_comprehensive_new.js` - merged into `test_comprehensive.js`
@@ -124,15 +124,6 @@ The SNMP test suite validates:
 - `test_mcp_client.js` - moved to archive
 - `test_credentials.js` - covered by Proxmox tests
 - `test_proxmox_formatting.js` - merged into main Proxmox test
-
-**Phase 2: Removed obsolete core files** (12 files deleted, ~175KB saved):
-
-- `mcp_server.js` - **ARCHIVED** as `archive/mcp_server_original.js` (original monolithic server preserved for reference)
-- `snmp_tools_universal.js` - exact duplicate of `snmp_tools.js`
-- `snmp_tools_old.js`, `snmp_tools_new.js`, `snmp_tools_cmdline.js` - obsolete SNMP variants
-- `debug_*.js` files (5 files) - development debug scripts
-- `create_test_tools.js`, `vscode_mcp_test.js` - empty files
-- `module_loader.js` (root) - replaced by `tools/module_loader.js`
 
 ## 🎯 Test Strategy
 
