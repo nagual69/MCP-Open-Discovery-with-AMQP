@@ -5,7 +5,7 @@
  * Tests all SNMP functionality with our Docker-based implementation
  */
 
-const snmpTools = require('./testing/snmp_tools.js');
+const snmpTools = require('./snmp_tools.js');
 
 async function runComprehensiveSNMPTest() {
   console.log('🧪 COMPREHENSIVE SNMP TOOLS TEST');
