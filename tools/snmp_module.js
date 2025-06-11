@@ -5,7 +5,7 @@
  */
 
 // Import the SNMP tools implementation
-const snmpTools = require('../testing/snmp_tools');
+const snmpTools = require('../snmp_tools');
 
 /**
  * Returns the tool definitions for SNMP tools
