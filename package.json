@@ -1,12 +1,18 @@
 {
   "name": "mcp-open-discovery",
-  "version": "1.0.0",
-  "description": "Networking Discovery tools exposed via Model Context Protocol",
-  "main": "mcp_server.js",  "scripts": {
-    "start": "node mcp_server.js",
+  "version": "2.0.0",
+  "description": "Networking Discovery tools exposed via Model Context Protocol - SDK Compatible",
+  "main": "mcp_server_multi_transport_sdk.js",
+  "scripts": {
+    "start": "node mcp_server_multi_transport_sdk.js",    "start-stdio": "set TRANSPORT_MODE=stdio&& node mcp_server_multi_transport_sdk.js",
+    "start-http": "set TRANSPORT_MODE=http&& node mcp_server_multi_transport_sdk.js",
+    "start-both": "set TRANSPORT_MODE=both&& node mcp_server_multi_transport_sdk.js",
+    "start-legacy": "node mcp_server.js",
+    "start-legacy-modular": "node mcp_server_modular.js",
     "start-sdk": "node mcp_server_sdk.js",
-    "test": "node test_mcp_client.js",
-    "test-sdk": "node test_sdk_server.js",
+    "start-modular-sdk": "node mcp_server_modular_sdk.js",
+    "test": "node test_sdk_server.js",
+    "test-legacy": "node test_mcp_client.js",
     "health": "powershell -Command \"Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing\""
   },
   "repository": {
@@ -31,6 +37,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "express": "^5.1.0",
     "net-snmp": "^3.10.1",
     "zod": "^3.25.64"
   }

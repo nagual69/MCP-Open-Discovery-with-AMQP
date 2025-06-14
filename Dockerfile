@@ -50,14 +50,18 @@ COPY docker-package.json ./package.json
 RUN npm install --no-fund --no-audit
 
 # Copy application files
-COPY mcp_server.js ./
+COPY mcp_server_multi_transport_sdk.js ./
 COPY snmp_tools.js ./
+COPY tools/ ./tools/
 
 # Set permissions
 RUN chown -R mcpuser:mcpuser /home/mcpuser/app
 
 # Use the non-root user
 USER mcpuser
+
+# Set default transport mode to HTTP for container deployment
+ENV TRANSPORT_MODE=http
 
 # Expose the port
 EXPOSE 3000
@@ -67,4 +71,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start the server
-CMD ["node", "mcp_server.js"]
+CMD ["node", "mcp_server_multi_transport_sdk.js"]

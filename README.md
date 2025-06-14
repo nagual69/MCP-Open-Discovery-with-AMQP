@@ -2,32 +2,59 @@
 
 # MCP Open Discovery
 
-A minimalized container that exposes Busybox, Nmap, and Proxmox API tools through the Model Context Protocol (MCP) for use with AI assistants, automation systems, and infrastructure discovery.
+A comprehensive networking and infrastructure discovery platform that exposes 42 powerful tools through the official Model Context Protocol (MCP) SDK. Designed for AI assistants, automation systems, and infrastructure discovery with full MCP compliance.
 
 ## Architecture Overview
 
-- **Main Server Class:** `MCPOpenDiscoveryServer` (see `mcp_server_modular.js`)
-- **In-Memory CMDB:** Hierarchical, queryable configuration database for Proxmox clusters, nodes, VMs, containers, storage, and networks
-- **Tooling:** BusyBox, Nmap, SNMP, and Proxmox API tools exposed via MCP
-- **Proxmox Integration:** Native support for Proxmox cluster discovery, inventory, and credential management
-- **SNMP Discovery:** Comprehensive SNMP-based network and device discovery tools
-- **Dockerized:** Easy to deploy and run as a container
-- **Security Aware:** Runs as a non-root user with minimal privileges
-- **Health Monitoring:** Built-in health checks
+- **Main Server:** `mcp_server_modular_sdk.js` - Full MCP SDK implementation
+- **Tool Registry:** Centralized SDK-compatible tool registration with Zod schemas
+- **In-Memory CMDB:** Hierarchical, queryable configuration database for discovered infrastructure
+- **42 Tools Available:** BusyBox networking, Nmap scanning, SNMP discovery, Proxmox API, and memory management
+- **Full SDK Compliance:** Uses official `@modelcontextprotocol/sdk` with proper type safety
+- **Security Enhanced:** Advanced input sanitization, rate limiting, and error handling
+- **Dockerized:** Easy deployment with health monitoring and graceful shutdown
 
 ## Features
 
-- **Proxmox Cluster Discovery:** List, query, and manage Proxmox nodes, VMs, containers, storage, and networks via MCP tools
-- **SNMP-based Network Discovery:** Comprehensive suite of SNMP tools for device inventory, interface discovery, service mapping, and topology analysis
-- **Credential Management:** Securely add, list, and remove Proxmox API credentials for multi-cluster support
-- **Network-focused:** Includes essential networking tools from Busybox and powerful scanning capabilities from Nmap
-- **MCP Compliant:** Follows the Model Context Protocol for seamless integration
-- **In-Memory CMDB:** Stores Proxmox cluster, node, VM, container, storage, and network data in a hierarchical, queryable structure for automation and AI use cases
-- **Dockerized & Secure:** Runs as a non-root user with minimal privileges and health checks
+- **🎯 Full MCP SDK Compliance:** Built with official `@modelcontextprotocol/sdk` for complete protocol compatibility
+- **🔧 42 Powerful Tools:** Comprehensive networking, scanning, discovery, and management capabilities
+- **🏗️ Proxmox Cluster Discovery:** Complete API integration for nodes, VMs, containers, storage, and networks
+- **🌐 SNMP-based Network Discovery:** Advanced device inventory, interface discovery, service mapping, and topology analysis
+- **🔐 Secure Credential Management:** Encrypted storage for Proxmox API credentials with multi-cluster support
+- **📊 In-Memory CMDB:** Hierarchical storage for discovered infrastructure with query capabilities
+- **🛡️ Enhanced Security:** Advanced input sanitization, request timeouts, and structured error handling
+- **📈 Performance Monitoring:** Request timing, structured logging, and comprehensive health checks
+- **🐳 Production Ready:** Dockerized deployment with graceful shutdown and non-root execution
 
-## Available Tools
+## Available Tools (42 Total)
 
-### Proxmox Tools
+### 🌐 Network Tools (8 tools)
+
+- **`ping`**: Send ICMP echo requests to network hosts
+- **`wget`**: Download files from web servers
+- **`nslookup`**: Query DNS servers for domain name resolution
+- **`netstat`**: Display network connections and routing tables
+- **`telnet`**: Test TCP connectivity to specific ports
+- **`route`**: Display or manipulate IP routing table
+- **`ifconfig`**: Display network interface configuration
+- **`arp`**: Display or manipulate ARP cache
+
+### 🧠 Memory/CMDB Tools (4 tools)
+
+- **`memory_get`**: Get a CI object from MCP memory by key
+- **`memory_set`**: Set a CI object in MCP memory by key
+- **`memory_merge`**: Merge new data into an existing CI in MCP memory
+- **`memory_query`**: Query MCP memory for CIs matching a pattern
+
+### 🔍 NMAP Scanning Tools (5 tools)
+
+- **`nmap_ping_scan`**: Discover online hosts without port scanning
+- **`nmap_tcp_syn_scan`**: Stealthy TCP port scanning (requires root)
+- **`nmap_tcp_connect_scan`**: TCP connect scan (no special privileges)
+- **`nmap_udp_scan`**: UDP port scanning (can be slow)
+- **`nmap_version_scan`**: Service and version detection
+
+### 🖥️ Proxmox Tools (13 tools)
 
 - **`proxmox_list_nodes`**: Returns all nodes in the Proxmox cluster
 - **`proxmox_get_node_details`**: Returns details for a given Proxmox node
@@ -40,83 +67,53 @@ A minimalized container that exposes Busybox, Nmap, and Proxmox API tools throug
 - **`proxmox_cluster_resources`**: Returns a summary of all cluster resources
 - **`proxmox_get_metrics`**: Returns metrics for a node or VM
 - **Credential Management:**
+
   - **`proxmox_creds_add`**: Add a new Proxmox credential (encrypted at rest)
   - **`proxmox_creds_list`**: List all stored Proxmox credentials (no passwords shown)
   - **`proxmox_creds_remove`**: Remove a Proxmox credential by ID
 
-### BusyBox Tools
+- **`proxmox_list_nodes`**: Returns all nodes in the Proxmox cluster
+- **`proxmox_get_node_details`**: Returns details for a given Proxmox node
+- **`proxmox_list_vms`**: Returns all VMs for a Proxmox node
+- **`proxmox_get_vm_details`**: Returns config/details for a given VM
+- **`proxmox_list_containers`**: Returns all LXC containers for a Proxmox node
+- **`proxmox_get_container_details`**: Returns config/details for a given container
+- **`proxmox_list_storage`**: Returns storage resources for a Proxmox node
+- **`proxmox_list_networks`**: Returns network config for a Proxmox node
+- **`proxmox_cluster_resources`**: Returns a summary of all cluster resources
+- **`proxmox_get_metrics`**: Returns metrics for a node or VM
+- **`proxmox_creds_add`**: Add a new Proxmox credential (encrypted at rest)
+- **`proxmox_creds_list`**: Lists stored Proxmox API credentials
+- **`proxmox_creds_remove`**: Removes stored Proxmox API credentials
 
-- **`ping`**: Send ICMP echo requests to network hosts.
-  - Parameters: `host` (required), `count`, `timeout`, `size`.
-- **`wget`**: Download files from web servers.
-  - Parameters: `url` (required), `timeout`, `tries`, `headers_only`.
-- **`nslookup`**: Query DNS servers for domain name resolution.
-  - Parameters: `domain` (required), `server`, `type`.
-- **`netstat`**: Display network connections and routing tables.
-  - Parameters: `listening`, `numeric`, `tcp`, `udp`, `all`.
-- **`telnet`**: Test TCP connectivity to specific ports. (Note: `telnet` client must be available in the container's execution environment).
-  - Parameters: `host` (required), `port` (required).
-- **`route`**: Display or manipulate IP routing table.
-  - Parameters: `numeric`.
-- **`ifconfig`**: Display network interface configuration.
-  - Parameters: `interface`.
-- **`arp`**: Display or manipulate ARP cache.
-  - Parameters: `numeric`.
+### 📡 SNMP Discovery Tools (12 tools)
 
-### Nmap Tools
+- **`snmp_create_session`**: Creates an SNMP session with a target device
+- **`snmp_close_session`**: Closes an SNMP session
+- **`snmp_get`**: Performs SNMP GET operation to retrieve specific OID values
+- **`snmp_get_next`**: Performs SNMP GETNEXT operation for OIDs
+- **`snmp_walk`**: Performs SNMP WALK operation to retrieve OID subtrees
+- **`snmp_table`**: Retrieves SNMP tables
+- **`snmp_discover`**: Discovers SNMP-enabled devices in network ranges
+- **`snmp_device_inventory`**: Comprehensive device inventory via SNMP
+- **`snmp_interface_discovery`**: Discovers and details network interfaces
+- **`snmp_system_health`**: Checks system health metrics via SNMP
+- **`snmp_service_discovery`**: Discovers running services and listening ports
+- **`snmp_network_topology`**: Maps network topology using CDP/LLDP protocols
 
-- **`nmap_ping_scan`**: Discovers online hosts without port scanning (`-sn`).
-  - Parameters: `target` (required).
-- **`nmap_tcp_syn_scan`**: Stealthy scan for open TCP ports (`-sS`). Requires root/administrator privileges if not run in the provided Docker container.
-  - Parameters: `target` (required), `ports`, `fast_scan`, `timing_template`, `reason`, `open_only`.
-- **`nmap_tcp_connect_scan`**: Scans for open TCP ports using the `connect()` system call (`-sT`). Does not require special privileges.
-  - Parameters: `target` (required), `ports`, `timing_template`, `reason`, `open_only`.
-- **`nmap_udp_scan`**: Scans for open UDP ports (`-sU`). Can be slow.
-  - Parameters: `target` (required), `ports`, `top_ports`, `timing_template`, `reason`, `open_only`.
-- **`nmap_version_scan`**: Probes open ports to determine service/version info (`-sV`). Can also provide OS detection information.
-  - Parameters: `target` (required), `ports`, `intensity`, `light_mode`, `all_ports`, `timing_template`, `reason`, `open_only`.
+## SDK Architecture
 
-### SNMP Tools
+The MCP Open Discovery server v2.0 uses a modern SDK-based architecture with full MCP compliance:
 
-#### Basic SNMP Operations
-
-- **`snmp_create_session`**: Creates an SNMP session with a target device.
-  - Parameters: `host` (required), `community`, `version`, `port`, `timeout`, `retries`.
-  - For SNMPv3: `user`, `authProtocol`, `authKey`, `privProtocol`, `privKey`.
-- **`snmp_close_session`**: Closes an SNMP session.
-  - Parameters: `sessionId` (required).
-- **`snmp_get`**: Retrieves specific OID values.
-  - Parameters: `sessionId` (required), `oids` (required).
-- **`snmp_get_next`**: Performs GETNEXT operation for OIDs.
-  - Parameters: `sessionId` (required), `oids` (required).
-- **`snmp_walk`**: Performs a walk operation to retrieve a subtree of OIDs.
-  - Parameters: `sessionId` (required), `oid` (required).
-- **`snmp_table`**: Retrieves an SNMP table.
-  - Parameters: `sessionId` (required), `oid` (required).
-- **`snmp_discover`**: Discovers SNMP-enabled devices in a network range.
-  - Parameters: `targetRange` (required), `community`, `version`, `port`, `timeout`.
-
-#### Advanced SNMP Discovery Tools
-
-- **`snmp_device_inventory`**: Performs comprehensive device inventory including system info, interfaces, and storage.
-  - Parameters: `host` (required), `community`, `version`.
-- **`snmp_interface_discovery`**: Discovers and details all network interfaces on a device.
-  - Parameters: `host` (required), `community`, `version`.
-- **`snmp_system_health`**: Checks system health metrics including CPU, memory, storage, and interfaces.
-  - Parameters: `host` (required), `community`, `version`.
-- **`snmp_service_discovery`**: Discovers running services and listening ports.
-  - Parameters: `host` (required), `community`, `version`.
-- **`snmp_network_topology`**: Maps network topology using CDP/LLDP and other protocols.
-  - Parameters: `networkRange` (required), `community`, `version`.
-
-## Modular Architecture
-
-The MCP Open Discovery server uses a modular architecture that organizes tools into separate modules for improved maintainability and flexibility:
-
-- **Network Tools** (`tools/network_tools.js`): Basic network tools like ping, wget, nslookup
-- **Nmap Tools** (`tools/nmap_tools.js`): Network scanning tools  
-- **Memory Tools** (`tools/memory_tools.js`): In-memory CMDB tools
-- **Proxmox Tools** (`tools/proxmox_tools.js`): Proxmox VE API integration
+- **Main Server** (`mcp_server_modular_sdk.js`): Official MCP SDK implementation
+- **Tool Registry** (`tools/sdk_tool_registry.js`): Centralized SDK tool registration
+- **SDK Tool Modules**: All tools converted to SDK format with Zod schemas:
+  - `tools/network_tools_sdk.js` - Network utilities (8 tools)
+  - `tools/memory_tools_sdk.js` - CMDB memory tools (4 tools)
+  - `tools/nmap_tools_sdk.js` - Network scanning (5 tools)
+  - `tools/proxmox_tools_sdk.js` - Proxmox VE integration (13 tools)
+  - `tools/snmp_tools_sdk.js` - SNMP discovery (12 tools)
+- **Legacy Support**: Original servers maintained for compatibility
 - **SNMP Tools** (`tools/snmp_module.js`): SNMP discovery and monitoring
 
 Each module exports a `getTools()` function that returns tool definitions. The module loader (`tools/module_loader.js`) dynamically loads all modules at startup.
@@ -142,9 +139,114 @@ Each module exports a `getTools()` function that returns tool definitions. The m
     curl -X POST http://localhost:3000 -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
     ```
 
+### Local Development
+
+Run the SDK-based server locally with multiple transport options:
+
+```bash
+# Install dependencies
+npm install
+
+# Start the main SDK server (default: stdio transport)
+npm start
+
+# Or choose specific transport modes:
+npm run start-stdio      # Stdio transport only (for CLI clients)
+npm run start-http       # HTTP transport only (for web clients)
+npm run start-both       # Both transports simultaneously
+
+# Test HTTP transport health
+npm run health           # Check server status via HTTP
+
+# Environment variable control:
+set TRANSPORT_MODE=stdio && npm start    # Windows
+set TRANSPORT_MODE=http && npm start     # Windows
+set TRANSPORT_MODE=both && npm start     # Windows
+```
+
+#### Transport Modes
+
+**📡 Stdio Transport (Default)**
+
+- **Purpose**: CLI tools, desktop MCP clients, development
+- **Protocol**: JSON-RPC over stdin/stdout
+- **Usage**: Default mode for most MCP integrations
+- **Port**: None (stdin/stdout)
+
+**🌐 HTTP Transport**
+
+- **Purpose**: Web applications, REST API, browser integration
+- **Protocol**: JSON-RPC over HTTP with Server-Sent Events (SSE)
+- **Features**: Session management, CORS support, streaming
+- **Endpoints**:
+  - `http://localhost:3000/mcp` - MCP protocol endpoint
+  - `http://localhost:3000/health` - Server health check
+- **Port**: 3000 (configurable via `HTTP_PORT` environment variable)
+
+**🔄 Multi-Transport Mode**
+
+- **Purpose**: Development, testing, hybrid deployments
+- **Features**: Simultaneous stdio and HTTP support
+- **Use Case**: Support both CLI tools and web clients
+
+#### Testing the HTTP Transport
+
+```bash
+# 1. Start HTTP transport
+npm run start-http
+
+# 2. Check health
+curl http://localhost:3000/health
+
+# 3. Initialize MCP session
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{"tools":{}},"clientInfo":{"name":"test-client","version":"1.0.0"}}}'
+
+# 4. Run comprehensive tests
+node test_http_transport.js
+```
+
+#### Using with MCP Inspector
+
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector) is Claude's official debugging tool for MCP servers. To connect:
+
+1. **Start the HTTP transport**:
+
+   ```bash
+   npm run start-http
+   ```
+
+2. **Configure MCP Inspector**:
+
+   - Transport: **Streamable HTTP**
+   - URL: `http://localhost:3000/mcp`
+   - ✅ Successfully tested - can list tools and execute them
+
+3. **Alternative: Use stdio transport** (if you prefer command-line setup):
+   - Command: `node mcp_server_multi_transport_sdk.js`
+   - Working Directory: `/path/to/mcp-open-discovery`
+
+npm start
+
+# Or run specific versions
+
+npm run start-sdk # Simple SDK server
+npm run start-legacy # Original legacy server
+npm run start-legacy-modular # Legacy modular server
+
+# Run tests
+
+npm test # Test SDK server
+npm run test-legacy # Test legacy server
+
+````
+
 ### Security & Capabilities
 
 The Docker container runs with specific capabilities required for network tools:
+
 - **NET_RAW**: Required for ping and SYN scans
 - **NET_ADMIN**: Required for network administration tools
 - **Read-only filesystem**: Prevents container modifications
@@ -152,11 +254,13 @@ The Docker container runs with specific capabilities required for network tools:
 
 ## MCP Protocol Compliance
 
-This server implements the Model Context Protocol (MCP) specification:
+This server implements the Model Context Protocol (MCP) specification with full SDK compatibility:
+
+- **Official SDK**: Built with `@modelcontextprotocol/sdk` v1.12.1+
 - **JSON-RPC 2.0**: Standard request/response format
 - **Core Methods**: `initialize`, `tools/list`, `tools/call`
-- **Tool Schemas**: Complete parameter definitions for all tools
-- **Error Handling**: Proper error codes and messages
+- **Type Safety**: Zod schemas for all tool parameters
+- **Error Handling**: Proper error codes and structured messages
 
 ## SNMP Testing Environment
 
@@ -168,11 +272,12 @@ docker-compose -f testing/docker-compose-snmp-testing.yml up -d
 
 # Test SNMP connectivity
 docker exec busybox-network-mcp snmpget -v2c -c public 172.20.0.10:161 1.3.6.1.2.1.1.1.0
-```
+````
 
 **Available Test Targets:**
+
 - `172.20.0.10` - Basic SNMP simulator
-- `172.20.0.11` - Full-featured SNMP agent  
+- `172.20.0.11` - Full-featured SNMP agent
 - `172.20.0.12` - SNMP lab with custom MIBs
 
 ## VS Code Integration
@@ -180,6 +285,7 @@ docker exec busybox-network-mcp snmpget -v2c -c public 172.20.0.10:161 1.3.6.1.2
 To use with VS Code MCP extension:
 
 1. **Configure VS Code settings.json:**
+
    ```json
    {
      "mcp.servers": {
@@ -199,13 +305,27 @@ To use with VS Code MCP extension:
 
 ## Testing
 
-Run the comprehensive test suite:
+### SDK Server Testing (Default)
 
 ```bash
-# All tests
+# Test the main SDK server with all 42 tools
+npm test
+
+# Test specific SDK components
+node test_sdk_server.js
+node test_memory_tools.js
+```
+
+### Legacy Testing
+
+```bash
+# Test legacy servers
+npm run test-legacy
+
+# Comprehensive testing suite
 cd testing && node test_runner.js
 
-# Specific test suites  
+# Specific test suites
 node test_runner.js --snmp --proxmox
 
 # Verbose output
