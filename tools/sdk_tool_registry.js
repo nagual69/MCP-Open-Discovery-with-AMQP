@@ -8,9 +8,8 @@
 const { registerNetworkTools } = require('./network_tools_sdk');
 const { registerMemoryTools, initialize: initializeMemoryTools } = require('./memory_tools_sdk');
 const { registerNmapTools } = require('./nmap_tools_sdk');
-// TODO: Add other tool modules as they're converted:
-// const { registerProxmoxTools } = require('./proxmox_tools_sdk');
-// const { registerSnmpTools } = require('./snmp_tools_sdk');
+const { registerProxmoxTools } = require('./proxmox_tools_sdk');
+const { registerSnmpTools } = require('./snmp_tools_sdk');
 
 /**
  * Register all available tools with the MCP server
@@ -31,13 +30,13 @@ async function registerAllTools(server, options = {}) {
     registerNetworkTools(server);
       // Register memory tools (converted to SDK)
     registerMemoryTools(server);
-    
-    // Register NMAP tools (converted to SDK)
+      // Register NMAP tools (converted to SDK)
     registerNmapTools(server);
+      // Register Proxmox tools (converted to SDK)
+    registerProxmoxTools(server);
     
-    // TODO: Register other tool modules as they're converted
-    // registerProxmoxTools(server);
-    // registerSnmpTools(server);
+    // Register SNMP tools (converted to SDK)
+    registerSnmpTools(server);
     
     console.log('[MCP SDK] All tools registered successfully');
   } catch (error) {
@@ -50,14 +49,13 @@ async function registerAllTools(server, options = {}) {
  * Get count of tools that will be registered (for logging/monitoring)
  * @returns {Object} Tool counts by category
  */
-function getToolCounts() {
-  return {
+function getToolCounts() {  return {
     network: 8,   // ✅ Converted
     memory: 4,    // ✅ Converted
     nmap: 5,      // ✅ Converted
-    proxmox: 0,   // TODO: Update as converted
-    snmp: 0,      // TODO: Update as converted
-    total: 17     // Updated total
+    proxmox: 13,  // ✅ Converted
+    snmp: 12,     // ✅ Converted
+    total: 42     // Updated total
   };
 }
 

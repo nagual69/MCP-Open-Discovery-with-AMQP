@@ -1,130 +1,239 @@
-# Developer Guide for MCP Open Discovery
+# Developer Guide for MCP Open Discovery v2.0
 
-This guide covers best practices for developing and adding new tool modules to the MCP Open Discovery server.
+This guide covers best practices for developing and adding new tools to the MCP Open Discovery server using the official MCP SDK.
 
-## Modular Architecture Overview
+## SDK-Based Architecture Overview
 
-The MCP Open Discovery server uses a modular architecture where tools are organized into separate modules by functionality:
+MCP Open Discovery v2.0 uses the official Model Context Protocol SDK with a modular architecture:
 
-- **Network Tools** (`tools/network_tools.js`): Basic network utilities
-- **Nmap Tools** (`tools/nmap_tools.js`): Network scanning tools
-- **Memory Tools** (`tools/memory_tools.js`): In-memory CMDB operations
-- **Proxmox Tools** (`tools/proxmox_tools.js`): Proxmox VE API integration
-- **SNMP Tools** (`tools/snmp_module.js`): SNMP discovery and monitoring
+### Core Components
 
-## Creating a New Tool Module
+- **Main Server** (`mcp_server_modular_sdk.js`): Official MCP SDK implementation
+- **Tool Registry** (`tools/sdk_tool_registry.js`): Centralized tool registration
+- **SDK Tool Modules**: All tools use SDK format with Zod schemas:
+  - `tools/network_tools_sdk.js` - Network utilities (8 tools)
+  - `tools/memory_tools_sdk.js` - CMDB memory operations (4 tools)
+  - `tools/nmap_tools_sdk.js` - Network scanning tools (5 tools)
+  - `tools/proxmox_tools_sdk.js` - Proxmox VE API integration (13 tools)
+  - `tools/snmp_tools_sdk.js` - SNMP discovery and monitoring (12 tools)
 
-### 1. Module Structure
+### Legacy Components (Preserved)
 
-Create a new file in the `tools/` directory following this template:
+- **Legacy Servers**: Original implementations maintained for compatibility
+- **Legacy Tool Modules**: Original format tools in `tools/` (non-SDK files)
+
+## Creating a New SDK Tool Module
+
+### 1. SDK Module Structure
+
+Create a new file in the `tools/` directory following the `*_sdk.js` naming convention:
 
 ```javascript
 /**
- * [Module Name] Tools for MCP Open Discovery
+ * [Module Name] Tools for MCP Open Discovery - SDK Compatible
  *
- * Description of what this module provides
+ * Description of what this module provides using the official MCP SDK patterns.
+ * Converted from custom format to use Zod schemas and CallToolResult responses.
  */
 
-const { spawn } = require("child_process");
-
-/**
- * Helper function example
- */
-function helperFunction(param) {
-  // Implementation
-}
+const { z } = require("zod");
 
 /**
- * Tool implementation example
+ * Convert results to CallToolResult format
+ * @param {any} data - The response data
+ * @param {string} description - Description of the operation
+ * @returns {Object} CallToolResult format
  */
-async function exampleTool(args) {
+function formatResult(data, description = "") {
   try {
-    // Tool logic here
+    const formattedData =
+      typeof data === "string" ? data : JSON.stringify(data, null, 2);
     return {
-      success: true,
-      data: result,
-      message: "Operation completed successfully",
+      content: [
+        {
+          type: "text",
+          text: description
+            ? `${description}\\n\\n${formattedData}`
+            : formattedData,
+        },
+      ],
     };
   } catch (error) {
     return {
-      success: false,
-      error: error.message,
+      content: [
+        {
+          type: "text",
+          text: `Error formatting result: ${error.message}`,
+        },
+      ],
+      isError: true,
     };
   }
 }
 
 /**
- * Returns the tool definitions for this module
- * @param {Object} server - Reference to the server instance
- * @returns {Array} Array of tool definitions
+ * Handle errors and return proper CallToolResult format
+ * @param {Error} error - The error object
+ * @returns {Object} CallToolResult with error
  */
-function getTools(server) {
-  return [
-    {
-      name: "example_tool",
-      description: "Example tool description",
-      inputSchema: {
-        type: "object",
-        properties: {
-          required_param: {
-            type: "string",
-            description: "Required parameter description",
-          },
-          optional_param: {
-            type: "string",
-            description: "Optional parameter description",
-            default: "default_value",
-          },
-        },
-        required: ["required_param"],
+function formatError(error) {
+  return {
+    content: [
+      {
+        type: "text",
+        text: `Error: ${error.message}`,
       },
-      handler: exampleTool,
-    },
-    // ... more tool definitions
-  ];
+    ],
+    isError: true,
+  };
 }
 
-module.exports = {
-  getTools,
+/**
+ * Register all tools in this module with the MCP server
+ * @param {McpServer} server - The MCP server instance
+ */
+function registerMyTools(server) {
+  // Example simple tool
+  server.tool(
+    "my_simple_tool",
+    "Example tool description",
+    {
+      param1: z.string().describe("Required string parameter"),
+      param2: z.number().optional().describe("Optional number parameter"),
+    },
+    async ({ param1, param2 }) => {
+      try {
+        // Tool implementation here
+        const result = await performOperation(param1, param2);
+        return formatResult(result, `Operation completed for ${param1}`);
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  // Example tool with complex schema
+  server.tool(
+    "my_complex_tool",
+    "More complex tool with validation",
+    {
+      host: z.string().describe("Target hostname or IP address"),
+      options: z
+        .object({
+          timeout: z.number().min(1).max(60).default(10),
+          retries: z.number().min(1).max(5).default(3),
+        })
+        .optional()
+        .describe("Optional configuration"),
+    },
+    async ({ host, options = {} }) => {
+      try {
+        const { timeout = 10, retries = 3 } = options;
+        const result = await complexOperation(host, { timeout, retries });
+        return formatResult(result, `Complex operation completed for ${host}`);
+      } catch (error) {
+        return formatError(error);
+      }
+    }
+  );
+
+  console.log("[MCP SDK] Registered X MyTools");
+}
+
+module.exports = { registerMyTools };
+```
+
+### 2. Register Tools in SDK Tool Registry
+
+Update `tools/sdk_tool_registry.js` to include your new module:
+
+```javascript
+// Add import
+const { registerMyTools } = require("./my_tools_sdk");
+
+// Add to registerAllTools function
+async function registerAllTools(server, options = {}) {
+  try {
+    console.log("[MCP SDK] Starting tool registration...");
+
+    // ... existing registrations ...
+
+    // Register your new tools
+    registerMyTools(server);
+
+    console.log("[MCP SDK] All tools registered successfully");
+  } catch (error) {
+    console.error(`[MCP SDK] Error registering tools: ${error.message}`);
+    throw error;
+  }
+}
+
+// Update tool counts
+function getToolCounts() {
+  return {
+    // ... existing counts ...
+    mytools: X, // Number of your tools
+    total: XX, // Updated total
+  };
+}
+```
+
+### 3. Schema Definition Best Practices
+
+#### Use Zod for Type Safety
+
+```javascript
+// Simple types
+z.string().describe("String parameter");
+z.number().min(1).max(100).describe("Number with range");
+z.boolean().default(false).describe("Boolean with default");
+
+// Complex types
+z.object({
+  nested_param: z.string(),
+  nested_number: z.number().optional(),
+}).describe("Nested object");
+
+z.array(z.string()).describe("Array of strings");
+z.enum(["option1", "option2"]).describe("Limited options");
+
+// Optional parameters
+z.string().optional().describe("Optional parameter");
+z.number().default(10).describe("Parameter with default");
+```
+
+### 4. CallToolResult Format
+
+All tools must return the standard CallToolResult format:
+
+```javascript
+// Success response
+return {
+  content: [
+    {
+      type: "text",
+      text: "Result content as string",
+    },
+  ],
+};
+
+// Error response
+return {
+  content: [
+    {
+      type: "text",
+      text: "Error description",
+    },
+  ],
+  isError: true,
 };
 ```
 
-### 2. Tool Definition Schema
+## Input Validation and Security
 
-Each tool must follow the MCP tool schema format:
-
-```javascript
-{
-  name: 'tool_name',              // Unique tool identifier
-  description: 'Tool description', // Clear description of functionality
-  inputSchema: {                  // JSON Schema for parameters
-    type: 'object',
-    properties: {
-      param_name: {
-        type: 'string|number|boolean|array|object',
-        description: 'Parameter description',
-        enum: ['option1', 'option2'], // For limited options
-        default: 'default_value'      // Optional default
-      }
-    },
-    required: ['required_param1', 'required_param2']
-  },
-  handler: handlerFunction        // Async function to execute
-}
-```
-
-### 3. Handler Function Best Practices
-
-#### Input Validation
+### Input Sanitization
 
 ```javascript
-async function toolHandler(args) {
-  // Validate required parameters
-  if (!args.required_param) {
-    throw new Error("required_param is required");
-  }
-
-  // Sanitize and validate input
   const sanitizedInput = sanitizeInput(args.user_input);
 }
 ```
