@@ -31,12 +31,29 @@ This document outlines the step-by-step migration plan to align the MCP Open Dis
 - **Estimated Effort**: 1-2 hours
 - **Status**: ✅ **COMPLETED** - All tools use standard MCP response formatting with CallToolResult
 
-### Phase 5: Memory/CMDB Integration Update 📝 ENHANCEMENT
+### Phase 5: Resource and Prompt Support ⚠️ **MEDIUM PRIORITY**
 
 - **Priority**: Medium
+- **Impact**: Protocol Compliance
+- **Estimated Effort**: 4-6 hours
+- **Status**: ⚠️ **PENDING** - Resource and prompt support, capability registration
+
+### Phase 6: Enhanced Compliance ⚠️ **LOWER PRIORITY**
+
+- **Priority**: Lower
 - **Impact**: Advanced Features
-- **Estimated Effort**: 2-3 hours
-- **Status**: ⚠️ **PENDING** - Enhanced CMDB features and data model
+- **Estimated Effort**: 3-4 hours
+- **Status**: ⚠️ **PENDING** - Output validation, annotations, performance optimization
+
+### Phase 7: Memory/CMDB Integration Redesign 📝 **FUTURE ENHANCEMENT**
+
+- **Priority**: Future Enhancement
+- **Impact**: Advanced Features
+- **Estimated Effort**: 4-6 hours
+- **Status**: ⚠️ **PENDING** - Resource-based CMDB redesign using patterns from Phase 5
+- **Impact**: Advanced Features
+- **Estimated Effort**: 3-4 hours
+- **Status**: ⚠️ **PENDING** - Output validation, annotations, performance optimization
 
 ---
 
@@ -273,62 +290,178 @@ npm run health           # Test health endpoint
 
 ---
 
-## Phase 5: Memory/CMDB Integration Update 📝 ENHANCEMENT
+## Phase 5: Resource and Prompt Support ⚠️ **MEDIUM PRIORITY**
+
+### **5.1 Missing Resource and Prompt Support** ⚠️ **MEDIUM**
+
+**Current Issue:** The server only implements tools but lacks resource and prompt capabilities that are part of the full MCP specification.
+
+**Missing Features:**
+
+- Resource registration (`server.resource()`)
+- Prompt registration (`server.prompt()`)
+- Resource templates for dynamic content
+- Proper capability registration
+
+### Implementation Steps
+
+#### Step 5.1: Add Resource Support
+
+- Implement `server.resource()` for configuration and discovery data
+- Create resource templates for CI objects and network data
+- Add resource listing capabilities
+- Implement resource content retrieval
+
+#### Step 5.2: Add Prompt Support
+
+- Implement `server.prompt()` for interactive workflows
+- Create prompt templates for discovery workflows
+- Add prompt argument handling
+- Implement prompt message generation
+
+#### Step 5.3: Capability Registration
+
+- Register proper server capabilities in initialization
+- Declare support for tools, resources, and prompts
+- Implement capability-based feature detection
+- Add proper capability negotiation
+
+#### Step 5.4: Dynamic Updates
+
+- Implement `listChanged` notifications for dynamic updates
+- Add resource change notifications
+- Implement tool/prompt/resource refresh capabilities
+- Add subscription management for updates
+
+### Acceptance Criteria
+
+- [ ] Resource registration implemented
+- [ ] Prompt capabilities added
+- [ ] Proper capability registration
+- [ ] Dynamic update notifications
+- [ ] Resource templates functional
+- [ ] Interactive prompt workflows
+
+---
+
+## Phase 6: Enhanced Compliance ⚠️ **LOWER PRIORITY**
+
+### **6.1 Advanced MCP Features**
+
+**Implementation Goals:**
+
+- Add output schema validation for structured responses
+- Implement tool annotations for better UX
+- Add resource templates for dynamic content
+- Optimize for performance and memory usage
+
+### Implementation Steps
+
+#### Step 6.1: Output Schema Validation
+
+- Add Zod schemas for tool output validation
+- Implement structured response validation
+- Add schema-based error handling
+- Ensure consistent output formats
+
+#### Step 6.2: Tool Annotations
+
+- Add tool descriptions and usage examples
+- Implement parameter hints and validation
+- Add tool categorization and tagging
+- Enhance tool discovery experience
+
+#### Step 6.3: Resource Templates
+
+- Implement dynamic resource generation
+- Add template-based content creation
+- Support parameterized resource queries
+- Enable resource composition
+
+#### Step 6.4: Performance Optimization
+
+- Optimize memory usage for large datasets
+- Implement caching for frequently accessed data
+- Add connection pooling for network tools
+- Optimize SNMP session management
+
+### Acceptance Criteria
+
+- [ ] Output validation implemented
+- [ ] Tool annotations complete
+- [ ] Resource templates functional
+- [ ] Performance optimized
+- [ ] Memory usage optimized
+- [ ] Caching implemented
+
+---
+
+## Phase 7: Memory/CMDB Integration Redesign 📝 **FUTURE ENHANCEMENT**
 
 ### Current State Analysis
 
 - **Current**: Custom memory tools with direct object manipulation
-- **Goal**: Align with MCP resource patterns
-- **Priority**: Lower (functionality preservation focus)
+- **Goal**: Align with MCP resource patterns established in Phase 5
+- **Priority**: Future enhancement (after resource patterns are established)
+
+### Implementation Strategy
+
+#### Step 7.1: Analyze Resource Patterns
+
+- Review resource implementation from Phase 5
+- Identify patterns for CI object storage and retrieval
+- Design generic in-memory data storage support
+- Plan migration from tool-based to resource-based approach
+
+#### Step 7.2: Generic Memory Resource Implementation
+
+- Convert memory tools to use resource patterns
+- Implement generic in-memory data storage via resources
+- Create resource templates for different data types
+- Add resource-based querying and filtering
+
+#### Step 7.3: CI Object Resources
+
+- Design CI object schema and resource structure
+- Implement CI object lifecycle via resources
+- Add relationship modeling through resource links
+- Enable discovery workflow integration
+
+#### Step 7.4: CMDB Resource Integration
+
+- Integrate CI objects with discovery tools
+- Implement automatic CI creation from discovery results
+- Add resource-based reporting and analytics
+- Enable cross-reference capabilities
 
 ### Implementation Options
 
-#### Option A: Keep as Tools (Minimal Change)
+#### Option A: Gradual Migration (Recommended)
 
-- Maintain current memory tools
-- Update to SDK format (covered in Phase 1)
-- Preserve existing CMDB functionality
+- Keep existing memory tools functional during migration
+- Implement new resource-based storage alongside
+- Gradually migrate functionality to resources
+- Deprecate tools once resources are stable
 
-#### Option B: Convert to Resources (Future Enhancement)
+#### Option B: Complete Redesign
 
-- Implement MCP resource patterns
-- Use server.resource() for CI objects
-- Enable resource templates for queries
+- Replace memory tools entirely with resources
+- Implement comprehensive resource-based CMDB
+- Provide migration path for existing data
+- Focus on resource patterns established in Phase 5
 
 ### Recommendation
 
-Start with Option A for migration completion, consider Option B for future enhancement.
+Start with Option A after Phase 5 is complete, leveraging the resource patterns and capabilities established in the resource implementation phase.
 
----
+### Acceptance Criteria
 
-## Risk Assessment and Mitigation
-
-### High Risks
-
-1. **Breaking Changes**: Complete architecture replacement
-
-   - **Mitigation**: Incremental migration with testing at each step
-   - **Fallback**: Maintain current server alongside new implementation
-
-2. **Tool Functionality Loss**: Complex tool behaviors
-
-   - **Mitigation**: Comprehensive testing of each tool module
-   - **Fallback**: Keep original implementations as reference
-
-3. **Client Compatibility**: Changed communication protocol
-   - **Mitigation**: Document new connection methods
-   - **Fallback**: Provide compatibility layer if needed
-
-### Medium Risks
-
-1. **Performance Impact**: SDK overhead vs custom implementation
-
-   - **Mitigation**: Performance testing and optimization
-   - **Monitoring**: Benchmark before/after migration
-
-2. **Configuration Changes**: Environment variables and settings
-   - **Mitigation**: Maintain backward compatibility
-   - **Documentation**: Clear migration guide for users
+- [ ] Memory functionality migrated to resource patterns
+- [ ] Generic in-memory storage via resources
+- [ ] CI object modeling through resources
+- [ ] Integration with discovery workflows
+- [ ] Data migration path provided
+- [ ] Enhanced querying and filtering capabilities
 
 ---
 
@@ -359,18 +492,23 @@ Start with Option A for migration completion, consider Option B for future enhan
 
 ## Implementation Timeline
 
-### Week 1: Foundation (Phases 1-2)
+### ✅ Week 1: Foundation (Phases 1-2) - COMPLETED
 
-- **Days 1-2**: Phase 1 - Tool Registration and Schema Format
-- **Days 3-4**: Phase 2 - Server Architecture Replacement
-- **Day 5**: Testing and integration
+- **Days 1-2**: Phase 1 - Tool Registration and Schema Format ✅
+- **Days 3-4**: Phase 2 - Server Architecture Replacement ✅
+- **Day 5**: Testing and integration ✅
 
-### Week 2: Transport and Polish (Phases 3-5)
+### ✅ Week 2: Transport and Polish (Phases 3-4) - COMPLETED
 
-- **Days 1-2**: Phase 3 - Transport Layer Implementation
-- **Day 3**: Phase 4 - Response Format Standardization
-- **Day 4**: Phase 5 - Memory/CMDB Integration Update
-- **Day 5**: Final testing and documentation
+- **Days 1-2**: Phase 3 - Transport Layer Implementation ✅
+- **Day 3**: Phase 4 - Response Format Standardization ✅
+- **Days 4-5**: Final testing and documentation ✅
+
+### 📝 Week 3: Full MCP Compliance (Phases 5-7) - FUTURE ENHANCEMENT
+
+- **Days 1-2**: Phase 5 - Resource and Prompt Support (Foundation for resources)
+- **Day 3**: Phase 6 - Enhanced Compliance (Validation, Annotations, Performance)
+- **Days 4-5**: Phase 7 - Memory/CMDB Integration Redesign (Using resource patterns)
 
 ---
 
