@@ -120,7 +120,29 @@ Each module exports a `getTools()` function that returns tool definitions. The m
 
 ## Docker Deployment
 
-### Using Docker Compose (Recommended)
+The Docker container **defaults to HTTP transport** for web-based usage and API access.
+
+### Quick Start
+
+1.  **Build and start the container:**
+
+    ```bash
+    docker build -t mcp-open-discovery .
+    docker run -d --name mcp-open-discovery -p 3000:3000 mcp-open-discovery
+    ```
+
+2.  **Check container health:**
+
+    ```bash
+    curl http://localhost:3000/health
+    ```
+
+3.  **Test with MCP Inspector:**
+    ```bash
+    npx @modelcontextprotocol/inspector http://localhost:3000/mcp
+    ```
+
+### Using Docker Compose (Alternative)
 
 1.  **Build and start the container:**
 
@@ -134,10 +156,15 @@ Each module exports a `getTools()` function that returns tool definitions. The m
     curl http://localhost:3000/health
     ```
 
-3.  **List available tools:**
-    ```bash
-    curl -X POST http://localhost:3000 -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
-    ```
+### Container Configuration
+
+The Docker container is preconfigured with:
+
+- **Default Transport**: HTTP (set via `ENV TRANSPORT_MODE=http`)
+- **Port**: 3000 (exposed)
+- **Health Check**: Available at `/health` endpoint
+- **MCP Endpoint**: Available at `/mcp` endpoint
+- **All 42 tools**: Preloaded and ready to use
 
 ### Local Development
 
