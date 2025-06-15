@@ -13,11 +13,11 @@ const { McpServer } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 
 // Tool modules to audit
-const { registerNetworkTools } = require('./tools/network_tools_sdk.js');
-const { registerMemoryTools } = require('./tools/memory_tools_sdk.js');
-const { registerNmapTools } = require('./tools/nmap_tools_sdk.js');
-const { registerProxmoxTools } = require('./tools/proxmox_tools_sdk.js');
-const { registerSnmpTools } = require('./tools/snmp_tools_sdk.js');
+const { registerNetworkTools } = require('../tools/network_tools_sdk.js');
+const { registerMemoryTools } = require('../tools/memory_tools_sdk.js');
+const { registerNmapTools } = require('../tools/nmap_tools_sdk.js');
+const { registerProxmoxTools } = require('../tools/proxmox_tools_sdk.js');
+const { registerSnmpTools } = require('../tools/snmp_tools_sdk.js');
 
 /**
  * Validate MCP response format
