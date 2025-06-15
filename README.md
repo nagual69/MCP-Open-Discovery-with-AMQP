@@ -142,29 +142,43 @@ The Docker container **defaults to HTTP transport** for web-based usage and API 
     npx @modelcontextprotocol/inspector http://localhost:3000/mcp
     ```
 
-### Using Docker Compose (Alternative)
+### Using Docker Compose (Recommended)
 
-1.  **Build and start the container:**
+1.  **Build and start all services (includes 3 SNMP test servers):**
 
     ```bash
     docker-compose up -d --build
     ```
 
-2.  **Check health:**
+2.  **Check MCP server health:**
 
     ```bash
     curl http://localhost:3000/health
     ```
 
+3.  **Test SNMP discovery with the test servers:**
+
+    ```bash
+    # The compose setup includes 3 SNMP agents for testing:
+    # - snmp-agent-1: 172.20.0.10 (port 1161)
+    # - snmp-agent-2: 172.20.0.11 (port 2161)
+    # - snmp-agent-3: 172.20.0.12 (port 3161)
+
+    # Test SNMP discovery against the test network
+    # Use MCP Inspector to call snmp_discover with target: "172.20.0.0/24"
+    ```
+
 ### Container Configuration
 
-The Docker container is preconfigured with:
+The Docker Compose setup includes:
 
-- **Default Transport**: HTTP (set via `ENV TRANSPORT_MODE=http`)
-- **Port**: 3000 (exposed)
-- **Health Check**: Available at `/health` endpoint
-- **MCP Endpoint**: Available at `/mcp` endpoint
-- **All 42 tools**: Preloaded and ready to use
+- **MCP Server**: HTTP transport on port 3000 with all 42 tools
+- **3 SNMP Test Agents**: Alpine-based SNMP servers for testing discovery tools
+  - **snmp-agent-1**: Basic SNMP agent (172.20.0.10:1161)
+  - **snmp-agent-2**: Second test agent (172.20.0.11:2161)
+  - **snmp-agent-3**: Agent with multiple communities (172.20.0.12:3161)
+- **Custom Network**: Isolated bridge network (172.20.0.0/16)
+- **Health Checks**: Automatic monitoring and restart capabilities
 
 ### Local Development
 
