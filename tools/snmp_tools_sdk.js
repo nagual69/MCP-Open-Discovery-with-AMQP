@@ -6,7 +6,7 @@
  */
 
 const { z } = require('zod');
-const snmpTools = require('../snmp_tools');
+const snmpTools = require('../testing/snmp_tools');
 
 /**
  * Convert SNMP results to CallToolResult format
