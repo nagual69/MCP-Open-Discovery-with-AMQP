@@ -95,7 +95,7 @@ docker-compose up -d --build
 # Network: 172.20.0.0/16
 # - mcp-open-discovery: Main server (port 3000)
 # - snmp-agent-1: 172.20.0.10 (port 1161) - Docker Test Lab
-# - snmp-agent-2: 172.20.0.11 (port 2161) - Docker Test Lab 2  
+# - snmp-agent-2: 172.20.0.11 (port 2161) - Docker Test Lab 2
 # - snmp-agent-3: 172.20.0.12 (port 3161) - Docker Test Lab 3
 
 # Test health

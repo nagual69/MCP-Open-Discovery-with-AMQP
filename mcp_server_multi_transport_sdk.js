@@ -220,6 +220,20 @@ async function startHttpServer() {
     });
   });
 
+  // Root endpoint - provide information about available MCP endpoints
+  app.get('/', (req, res) => {
+    res.json({
+      service: 'MCP Open Discovery Server',
+      version: '2.0.0',
+      endpoints: {
+        health: '/health',
+        mcp: '/mcp'
+      },
+      note: 'Use /mcp endpoint for MCP communication',
+      redirect: '/mcp'
+    });
+  });
+
   // CORS middleware for web clients
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
