@@ -84,19 +84,36 @@ The MCP Open Discovery server has been successfully migrated to full compliance 
 - ✅ Health check endpoint at `/health`
 - ✅ MCP endpoint at `/mcp`
 - ✅ Port 3000 exposed
+- ✅ **3 SNMP Test Servers included for testing**
 
-**Quick Start**:
+**Docker Compose Setup (Recommended)**:
 
 ```bash
-# Build and run
-docker build -t mcp-open-discovery .
-docker run -d --name mcp-open-discovery -p 3000:3000 mcp-open-discovery
+# Deploys MCP server + 3 SNMP test agents
+docker-compose up -d --build
+
+# Network: 172.20.0.0/16
+# - mcp-open-discovery: Main server (port 3000)
+# - snmp-agent-1: 172.20.0.10 (port 1161) - Docker Test Lab
+# - snmp-agent-2: 172.20.0.11 (port 2161) - Docker Test Lab 2  
+# - snmp-agent-3: 172.20.0.12 (port 3161) - Docker Test Lab 3
 
 # Test health
 curl http://localhost:3000/health
 
 # Use with MCP Inspector
 npx @modelcontextprotocol/inspector http://localhost:3000/mcp
+
+# Test SNMP discovery against test network
+# Use tool: snmp_discover with targetRange: "172.20.0.0/24"
+```
+
+**Alternative - Single Container**:
+
+```bash
+# Build and run MCP server only
+docker build -t mcp-open-discovery .
+docker run -d --name mcp-open-discovery -p 3000:3000 mcp-open-discovery
 ```
 
 ## Validation Results
