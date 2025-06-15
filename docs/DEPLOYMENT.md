@@ -73,19 +73,19 @@ spec:
         app: mcp-open-discovery
     spec:
       containers:
-      - name: mcp-open-discovery
-        image: mcp-open-discovery:latest
-        ports:
-        - containerPort: 3000
-        env:
-        - name: TRANSPORT_MODE
-          value: "http"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
+        - name: mcp-open-discovery
+          image: mcp-open-discovery:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: TRANSPORT_MODE
+              value: "http"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -105,16 +105,16 @@ spec:
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `TRANSPORT_MODE` | `http` | Transport mode: `http`, `stdio`, or `both` |
-| `PORT` | `3000` | HTTP server port |
-| `LOG_LEVEL` | `info` | Logging level: `debug`, `info`, `warn`, `error` |
+| Variable         | Default | Description                                     |
+| ---------------- | ------- | ----------------------------------------------- |
+| `TRANSPORT_MODE` | `http`  | Transport mode: `http`, `stdio`, or `both`      |
+| `PORT`           | `3000`  | HTTP server port                                |
+| `LOG_LEVEL`      | `info`  | Logging level: `debug`, `info`, `warn`, `error` |
 
 ### Docker Compose Configuration
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   mcp-server:
     build: .
@@ -164,7 +164,7 @@ npx @modelcontextprotocol/inspector http://localhost:3000/mcp
 
 # Should show 42 available tools across categories:
 # - Network Tools (8)
-# - Memory Tools (4) 
+# - Memory Tools (4)
 # - NMAP Tools (5)
 # - Proxmox Tools (13)
 # - SNMP Tools (12)
@@ -244,6 +244,7 @@ docker system prune -a
 ### Common Issues
 
 **Container won't start:**
+
 ```bash
 # Check port conflicts
 netstat -tlnp | grep 3000
@@ -253,6 +254,7 @@ docker-compose logs mcp-server
 ```
 
 **Health check failing:**
+
 ```bash
 # Check container status
 docker-compose ps
@@ -262,6 +264,7 @@ curl -v http://localhost:3000/health
 ```
 
 **Tools not loading:**
+
 ```bash
 # Check for missing dependencies
 docker-compose exec mcp-server npm list
@@ -273,6 +276,7 @@ curl http://localhost:3000/mcp | jq '.tools | length'
 ### Support
 
 For additional support:
+
 1. Check container logs first
 2. Verify network connectivity
 3. Review environment variables

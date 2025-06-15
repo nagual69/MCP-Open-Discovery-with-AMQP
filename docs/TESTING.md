@@ -42,16 +42,19 @@ node test_modular_sdk_server.js
 ### Core Test Files (Active)
 
 1. **`test_container_health.js`** - ⭐ **Container Deployment Tests**
+
    - Verifies Docker container health
    - Tests all 42 tools are loaded correctly
    - Validates MCP protocol endpoints
 
 2. **`test_http_transport.js`** - ✅ **HTTP/SSE Transport Tests**
+
    - Tests HTTP transport functionality
    - Validates Server-Sent Events streaming
    - Session management and concurrent connections
 
 3. **`test_snmp_network.js`** - ✅ **SNMP Network Discovery Tests**
+
    - Tests SNMP discovery with test containers
    - Device inventory and health monitoring
    - Network topology discovery
