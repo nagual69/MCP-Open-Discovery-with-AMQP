@@ -2,7 +2,22 @@
 
 ## Overview
 
-The MCP Open Discovery server has been successfully migrated to full compliance with the official Model Context Protocol TypeScript SDK (v1.12.1). This represents a complete transformation from a custom implementation to a production-ready, standards-compliant MCP server.
+The MCP Open Discovery server has been successfully migrated to full compliance with the official Model Context Protocol TypeScript SDK (v1.12.1). This represents a complete transformation from a custom implementation to a **production-ready, enterprise-focused network discovery platform** designed for container deployment in enterprise networks.
+
+## 🏢 Enterprise Container Deployment Focus
+
+**Primary Use Case**: Enterprise network discovery running as containerized service
+**Key Transport**: HTTP with Server-Sent Events (SSE) for enterprise integration
+**Deployment Model**: Docker containers in enterprise network environments
+
+### Enterprise Features
+
+- **🌐 HTTP/SSE Transport**: Web-standard protocols for enterprise networks
+- **🐳 Container-First**: Optimized for Docker/Kubernetes deployments
+- **🔍 Network Discovery**: Comprehensive NMAP, SNMP, and network tools
+- **📊 Health Monitoring**: Built-in health endpoints for orchestration
+- **🛡️ Enterprise Security**: CORS, rate limiting, session management
+- **⚡ Real-time Streaming**: Live discovery results via SSE
 
 ## Migration Results
 
@@ -22,8 +37,9 @@ The MCP Open Discovery server has been successfully migrated to full compliance 
 
 **Phase 3: Transport Layer Implementation**
 
-- ✅ Multi-transport support: stdio, HTTP, and both modes
-- ✅ Server-Sent Events (SSE) for HTTP transport
+- ✅ **HTTP/SSE transport prioritized for enterprise deployment**
+- ✅ Multi-transport support: HTTP (primary), stdio (development), both modes
+- ✅ Container-optimized with HTTP as default transport
 - ✅ MCP Inspector compatibility verified
 
 **Phase 4: Response Format Standardization**
@@ -34,14 +50,22 @@ The MCP Open Discovery server has been successfully migrated to full compliance 
 
 ## Technical Specifications
 
-### Server Architecture
+### Enterprise Server Architecture
 
 **Main Server**: `mcp_server_multi_transport_sdk.js`
 
 - Official MCP TypeScript SDK implementation
-- Multi-transport support (stdio/HTTP/both)
+- **HTTP transport optimized for enterprise containers**
+- Server-Sent Events (SSE) for real-time discovery streaming
 - Enhanced security and logging
-- Session management for HTTP transport
+- Session management for concurrent enterprise users
+
+**Container Deployment**: `docker-compose.yml`
+
+- **HTTP transport as default** (`TRANSPORT_MODE=http`)
+- Health check endpoints for container orchestration
+- SNMP test network included for validation
+- Production-ready container configuration
 
 **Tool Registry**: `tools/sdk_tool_registry.js`
 
@@ -160,36 +184,81 @@ npm run start-both
 npm run health
 ```
 
-### Docker Deployment
+### 🏢 Enterprise Container Deployment (Primary)
 
 ```bash
-# Using Docker directly
-docker build -t mcp-open-discovery .
-docker run -d --name mcp-open-discovery -p 3000:3000 mcp-open-discovery
-
-# Using Docker Compose
+# Using Docker Compose (Recommended for Enterprise)
 docker-compose up -d --build
+
+# Verify enterprise deployment
+curl http://localhost:3000/health  # Health check for orchestration
+curl http://localhost:3000/mcp     # MCP endpoint for integrations
+
+# Container logs for monitoring
+docker-compose logs -f mcp-open-discovery
 ```
 
-### MCP Inspector Testing
+### 🐳 Individual Container Deployment
 
 ```bash
-# Connect to local server
+# Build and deploy single container
+docker build -t mcp-open-discovery .
+docker run -d --name mcp-discovery \
+  -p 3000:3000 \
+  -e TRANSPORT_MODE=http \
+  mcp-open-discovery
+
+# Container defaults to HTTP transport for enterprise use
+```
+
+### 🔧 Local Development (Testing Only)
+
+```bash
+# Install dependencies
+npm install
+
+# Start server for development (HTTP mode)
+TRANSPORT_MODE=http npm start
+
+# Start with both transports (mixed environment)
+TRANSPORT_MODE=both npm start
+
+# Test HTTP health endpoint
+curl http://localhost:3000/health
+```
+
+### 🧪 MCP Inspector Testing
+
+```bash
+# Test enterprise HTTP endpoint
 npx @modelcontextprotocol/inspector http://localhost:3000/mcp
 
-# Or using stdio transport
+# Development stdio testing (if needed)
 npx @modelcontextprotocol/inspector npx -p . npm start
 ```
 
-## Key Benefits Achieved
+## 🎯 Key Benefits Achieved
 
-1. **Standards Compliance**: Full MCP TypeScript SDK compatibility
-2. **Type Safety**: Zod schema validation for all tool inputs
-3. **Multi-Transport**: Support for both stdio and HTTP/SSE transports
-4. **Enhanced Security**: Request validation, rate limiting, and proper error handling
-5. **Developer Experience**: Comprehensive documentation and testing
-6. **Production Ready**: Docker deployment with health checks
-7. **MCP Inspector Ready**: Official tooling compatibility
+### Enterprise Focus
+
+1. **🌐 HTTP/SSE Transport**: Web-standard protocols for enterprise networks
+2. **🐳 Container-First**: Optimized for Docker/Kubernetes deployments
+3. **📊 Enterprise Monitoring**: Health endpoints and structured logging
+4. **🔒 Enterprise Security**: CORS, rate limiting, session management
+
+### MCP Compliance
+
+1. **📋 Standards Compliance**: Full MCP TypeScript SDK compatibility
+2. **🛡️ Type Safety**: Zod schema validation for all tool inputs
+3. **⚡ Multi-Transport**: HTTP (primary) and stdio (development) support
+4. **🧪 MCP Inspector Ready**: Official tooling compatibility
+
+### Production Ready
+
+1. **🚀 Production Ready**: Container deployment with health checks
+2. **📈 Enhanced Security**: Request validation, rate limiting, proper error handling
+3. **📚 Developer Experience**: Comprehensive documentation and testing
+4. **🔍 Network Discovery**: 42 enterprise-grade discovery tools
 
 ## Documentation
 
