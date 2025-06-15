@@ -7,10 +7,12 @@ You asked to **re-include the 3 SNMP servers** in the Docker setup, and we have 
 ### ✅ What's Now Included
 
 **Complete Test Environment**:
+
 - **1 MCP Server**: `mcp-open-discovery` (HTTP transport, all 42 tools)
 - **3 SNMP Test Servers**: Alpine-based SNMP agents for testing
 
 **Network Configuration**:
+
 - **Docker Network**: `172.20.0.0/16` (isolated bridge network)
 - **MCP Server**: `mcp-open-discovery` on port 3000
 - **SNMP Agent 1**: `172.20.0.10:1161` (snmp-test-1, Docker Test Lab)
@@ -20,22 +22,26 @@ You asked to **re-include the 3 SNMP servers** in the Docker setup, and we have 
 ### 🚀 How to Use the Complete Setup
 
 **1. Deploy Everything**:
+
 ```bash
 docker-compose up -d --build
 ```
 
 **2. Verify All Containers Running**:
+
 ```bash
 docker ps
 # Should show 4 containers: mcp-open-discovery + 3 SNMP agents
 ```
 
 **3. Test MCP Server Health**:
+
 ```bash
 curl http://localhost:3000/health
 ```
 
 **4. Test SNMP Discovery with Live Network**:
+
 ```bash
 # Connect MCP Inspector
 npx @modelcontextprotocol/inspector http://localhost:3000/mcp
@@ -66,16 +72,19 @@ With the 3 SNMP servers running, you can now test all SNMP discovery tools:
 ### 🎯 What This Enables
 
 **For Development**:
+
 - Test all SNMP tools without external dependencies
 - Validate network discovery functionality
 - Debug SNMP queries in a controlled environment
 
 **For Demonstrations**:
+
 - Show complete SNMP discovery capabilities
 - Demonstrate network topology mapping
 - Prove the MCP server's network discovery features
 
 **For Testing**:
+
 - Automated testing of SNMP discovery tools
 - Validate tool responses against known devices
 - Performance testing with multiple SNMP agents
@@ -86,6 +95,6 @@ With the 3 SNMP servers running, you can now test all SNMP discovery tools:
 ✅ **SNMP Agents**: 3 test servers responding to queries  
 ✅ **Network Discovery**: Ready to test with real SNMP devices  
 ✅ **MCP Inspector**: Compatible for manual testing  
-✅ **Documentation**: Updated to reflect complete test environment  
+✅ **Documentation**: Updated to reflect complete test environment
 
 Your MCP Open Discovery server now includes a complete, self-contained SNMP testing environment! 🚀

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "mcp-open-discovery": {
+      "command": "node",
+      "args": [
+        "mcp_server_multi_transport_sdk.js"
+      ],
+      "env": {
+        "TRANSPORT_MODE": "stdio"
+      }
+    }
+  }
+}
