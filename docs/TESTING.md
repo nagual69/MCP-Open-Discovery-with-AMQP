@@ -1,8 +1,18 @@
 # Testing Guide for MCP Open Discovery
 
-This document describes the testing infrastructure and procedures for the MCP Open Discovery Server.
+This document describes the testing infrastructure and procedures for the MCP Open Discovery Server v2.0.
 
-## Quick Start
+## 🚀 Quick Start
+
+### Prerequisites
+
+```bash
+# Ensure Docker containers are running
+docker-compose up -d
+
+# Install dependencies
+npm install
+```
 
 ### Run All Tests
 
@@ -14,39 +24,39 @@ node test_runner.js
 ### Run Specific Test Suites
 
 ```bash
-# SNMP tests only
-node test_runner.js --snmp
+# Container health and deployment tests
+node test_container_health.js
 
-# Proxmox tests only
-node test_runner.js --proxmox
+# HTTP transport and MCP protocol tests
+node test_http_transport.js
 
-# Multiple test suites
-node test_runner.js --snmp --proxmox --verbose
+# SNMP network discovery tests
+node test_snmp_network.js
+
+# SDK server functionality tests
+node test_modular_sdk_server.js
 ```
 
-## Test Structure
+## 🧪 Test Structure
 
-### Essential Test Files
+### Core Test Files (Active)
 
-1. **`test_runner.js`** - ⭐ **Master Test Runner**
+1. **`test_container_health.js`** - ⭐ **Container Deployment Tests**
+   - Verifies Docker container health
+   - Tests all 42 tools are loaded correctly
+   - Validates MCP protocol endpoints
 
-   - Unified entry point for all testing
-   - Supports selective test execution
-   - Provides comprehensive reporting
+2. **`test_http_transport.js`** - ✅ **HTTP/SSE Transport Tests**
+   - Tests HTTP transport functionality
+   - Validates Server-Sent Events streaming
+   - Session management and concurrent connections
 
-2. **`test_snmp_final.js`** - ✅ **SNMP Comprehensive Tests**
+3. **`test_snmp_network.js`** - ✅ **SNMP Network Discovery Tests**
+   - Tests SNMP discovery with test containers
+   - Device inventory and health monitoring
+   - Network topology discovery
 
-   - Tests all 12 SNMP tools and functions
-   - 100% pass rate on Docker environment
-   - Covers device discovery, inventory, health checks
-
-3. **`test_proxmox.js`** - ✅ **Proxmox API Integration Tests**
-
-   - Tests Proxmox API connectivity
-   - Credential management and encryption
-   - Resource discovery and monitoring
-
-4. **`test_modular_server.js`** - ✅ **Modular Server Tests**
+4. **`test_modular_sdk_server.js`** - ✅ **SDK Server Tests**
 
    - Tests MCP server initialization
    - Module loading verification
