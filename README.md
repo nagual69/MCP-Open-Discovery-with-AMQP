@@ -657,25 +657,37 @@ MIT License
 
 ## Project Structure
 
-- **`mcp_server_modular.js`**: ⭐ **Current modular MCP server implementation**
-- **`tools/`**: Modular tool definitions (network, nmap, proxmox, snmp, memory)
-- **`snmp_tools.js`**: Universal SNMP tools implementation
-- **`test_runner.js`**: Master test runner for all test suites
-- **Test Files**: `test_snmp_final.js`, `test_proxmox.js`, `test_modular_server.js`, `test_comprehensive.js`
-- **`mcp_proxy.js`**: Development proxy/utility for MCP server debugging
-- **`docker-compose.yml`**: Docker configuration for deployment
-- **`archive/`**: Archived files including `mcp_server_original.js` (original monolithic server preserved for reference)
-- **`reference/`**: Reference materials and documentation
+- **`mcp_server_multi_transport_sdk.js`**: ⭐ **Current MCP server implementation** (SDK-based with HTTP/SSE support)
+- **`tools/`**: SDK-based tool implementations (\*\_sdk.js files)
+  - `network_tools_sdk.js`: Network discovery and diagnostics
+  - `nmap_tools_sdk.js`: Nmap scanning capabilities
+  - `proxmox_tools_sdk.js`: Proxmox virtualization management
+  - `snmp_tools_sdk.js`: SNMP discovery and monitoring
+  - `memory_tools_sdk.js`: In-memory CI database
+  - `sdk_tool_registry.js`: Tool registration and management
+  - `module_loader.js`: Dynamic module loading utilities
+- **`testing/`**: Test suites for SDK-based tools
+- **`docs/`**: Comprehensive documentation (deployment, testing, integration guides)
+- **`docker-compose.yml`**: Docker configuration for container deployment
+- **`archive/`**: Deprecated files from pre-SDK implementations
+- **`reference/`**: Reference materials and examples
 
 ## Test Scripts
 
 - **Current Testing System:**
 
-  - **`test_runner.js`**: ⭐ Master test runner with selective execution
-  - **`test_snmp_final.js`**: SNMP comprehensive tests (100% pass rate)
-  - **`test_proxmox.js`**: Proxmox API integration tests
-  - **`test_modular_server.js`**: Modular server initialization tests
-  - **`test_comprehensive.js`**: Full end-to-end test suite
+  - **`testing/test_snmp_sdk.js`**: SDK-based SNMP tools testing
+  - **`testing/test_proxmox_sdk.js`**: Proxmox SDK integration tests
+  - **`testing/test_memory_tools.js`**: Memory/CI database tests
+  - **`testing/test_http_transport.js`**: HTTP/SSE transport testing
+  - **`testing/test_container_health.js`**: Container health checks
+  - **`testing/audit_mcp_compliance.js`**: MCP standard compliance validation
+
+- **Documentation:**
+
+  - **`docs/TESTING.md`**: Complete testing procedures and guidelines
+  - **`docs/DEPLOYMENT.md`**: Container deployment instructions
+  - **`docs/VSCODE_MCP_INTEGRATION.md`**: VS Code integration guide
 
 - **Legacy/Archived:**
   - **`archive/mcp_server_original.js`**: Original monolithic server (preserved for reference)

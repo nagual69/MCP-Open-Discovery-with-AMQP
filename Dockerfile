@@ -46,12 +46,11 @@ RUN adduser -D -h /home/mcpuser mcpuser
 WORKDIR /home/mcpuser/app
 
 # Copy package.json and install dependencies
-COPY docker-package.json ./package.json
+COPY package.json ./
 RUN npm install --no-fund --no-audit
 
 # Copy application files
 COPY mcp_server_multi_transport_sdk.js ./
-COPY snmp_tools.js ./
 COPY tools/ ./tools/
 
 # Set permissions
