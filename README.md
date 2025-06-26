@@ -848,4 +848,35 @@ export MCP_CREDS_KEY=$(openssl rand -base64 32)
 - Regularly rotate credentials and encryption keys
 - Monitor the audit log for unauthorized access
 - Use principle of least privilege for credential access
+
+## Testing Resources
+
+You can test the newly implemented MCP resources:
+
+```bash
+# Test resource registration and functionality
+node testing/test_resources.js
+
+# Or test via HTTP transport
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/list","params":{}}'
+```
+
+## Available Resources (5 Total)
+
+Resources provide static or streamable data that can be read by MCP clients:
+
+### 🏥 Nagios XI Resources (4 resources)
+
+- **`nagios://eventlog/recent`** - Recent event log entries with filtering support
+- **`nagios://inventory/hosts`** - Complete host inventory snapshot
+- **`nagios://config/hosts`** - Current host configuration data
+- **`nagios://config/services`** - Current service configuration data
+
+### 📋 Credential Management Resources (1 resource)
+
+- **`credentials://audit/log`** - Audit log of all credential operations
+
+All resources support real-time data retrieval with MCP-compliant error handling and content delivery.
 ````

@@ -12,6 +12,7 @@ const { registerProxmoxTools } = require('./proxmox_tools_sdk');
 const { registerSnmpTools } = require('./snmp_tools_sdk');
 const { getNagiosTools, getNagiosResources } = require('./nagios_tools_sdk');
 const { getCredentialTools, getCredentialResources } = require('./credentials_tools_sdk');
+const { registerAllResources } = require('./resource_registry');
 
 /**
  * Register all available tools with the MCP server
@@ -44,6 +45,9 @@ async function registerAllTools(server, options = {}) {
     // Register credential management tools/resources
     registerCredentialTools(server);
     
+    // Register all resources
+    await registerAllResources(server);
+    
     console.log('[MCP SDK] All tools registered successfully');
   } catch (error) {
     console.error(`[MCP SDK] Error registering tools: ${error.message}`);
@@ -73,26 +77,12 @@ function registerNagiosTools(server) {
   for (const tool of nagiosTools) {
     server.registerTool(tool);
   }
-  // Register Nagios resources if your server supports resource registration
-  if (typeof server.registerResource === 'function') {
-    const nagiosResources = getNagiosResources();
-    for (const resource of nagiosResources) {
-      server.registerResource(resource);
-    }
-  }
 }
 
 function registerCredentialTools(server) {
   const credentialTools = getCredentialTools();
   for (const tool of credentialTools) {
     server.registerTool(tool);
-  }
-  // Register credential resources if your server supports resource registration
-  if (typeof server.registerResource === 'function') {
-    const credentialResources = getCredentialResources();
-    for (const resource of credentialResources) {
-      server.registerResource(resource);
-    }
   }
 }
 
