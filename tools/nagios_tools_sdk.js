@@ -8,6 +8,23 @@ const url = require('url');
 const { z } = require('zod');
 
 /**
+ * Validate required Nagios parameters
+ * @param {string} baseUrl - Nagios XI base URL
+ * @param {string} apiKey - Nagios XI API key
+ * @returns {object|null} Error response if validation fails, null if valid
+ */
+function validateNagiosParams(baseUrl, apiKey) {
+    if (!baseUrl || !apiKey) {
+        return {
+            isError: true,
+            content: [{ type: 'text', text: 'Nagios error: baseUrl and apiKey are required parameters' }],
+            structuredContent: { error: 'baseUrl and apiKey are required parameters' },
+        };
+    }
+    return null;
+}
+
+/**
  * Helper to make HTTP(S) requests to Nagios XI API
  * @param {string} apiUrl - Full API URL
  * @param {string} method - HTTP method (GET, POST, etc.)
@@ -71,6 +88,15 @@ const nagiosHostStatusTool = {
     }),
     outputSchema: z.any(),
     handler: async ({ baseUrl, apiKey, host_name, current_state, limit, cursor }) => {
+        // Validate required parameters
+        if (!baseUrl || !apiKey) {
+            return {
+                isError: true,
+                content: [{ type: 'text', text: 'Nagios host status error: baseUrl and apiKey are required parameters' }],
+                structuredContent: { error: 'baseUrl and apiKey are required parameters' },
+            };
+        }
+        
         let apiUrl = `${baseUrl}/nagiosxi/api/v1/objects/hoststatus?apikey=${apiKey}&records=${limit}&pretty=1`;
         if (host_name) apiUrl += `&host_name=${encodeURIComponent(host_name)}`;
         if (typeof current_state === 'number') apiUrl += `&current_state=${current_state}`;
@@ -112,6 +138,10 @@ const nagiosServiceStatusTool = {
     }),
     outputSchema: z.any(),
     handler: async ({ baseUrl, apiKey, host_name, service_description, current_state, limit, cursor }) => {
+        // Validate required parameters
+        const validationError = validateNagiosParams(baseUrl, apiKey);
+        if (validationError) return validationError;
+        
         let apiUrl = `${baseUrl}/nagiosxi/api/v1/objects/servicestatus?apikey=${apiKey}&records=${limit}&pretty=1`;
         if (host_name) apiUrl += `&host_name=${encodeURIComponent(host_name)}`;
         if (service_description) apiUrl += `&service_description=${encodeURIComponent(service_description)}`;

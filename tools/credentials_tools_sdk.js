@@ -5,30 +5,47 @@
 const { z } = require('zod');
 const credentialsManager = require('./credentials_manager');
 
-// Schema for credential types
-const CredentialTypeSchema = z.enum(['password', 'apiKey', 'sshKey', 'oauthToken', 'certificate', 'custom']);
+// Schema for credential types - using enum with clear description
+const CREDENTIAL_TYPES = ['password', 'apiKey', 'sshKey', 'oauthToken', 'certificate', 'custom'];
+const CredentialTypeSchema = z.enum(CREDENTIAL_TYPES)
+  .describe('Type of credential. Valid values: password, apiKey, sshKey, oauthToken, certificate, custom');
 
 // MCP Tool: Add Credential
 const addCredentialTool = {
   name: 'credentials_add',
-  description: 'Add a new encrypted credential to the secure store (supports password, apiKey, sshKey, oauthToken, certificate)',
+  description: 'Add a new encrypted credential to the secure store. Valid types: "password", "apiKey", "sshKey", "oauthToken", "certificate", "custom"',
   inputSchema: z.object({
     id: z.string().describe('Unique credential ID'),
-    type: CredentialTypeSchema.describe('Type of credential'),
+    type: CredentialTypeSchema,
     username: z.string().optional().describe('Username (if applicable)'),
     url: z.string().optional().describe('URL/endpoint (if applicable)'),
-    password: z.string().optional().describe('Password to encrypt'),
-    apiKey: z.string().optional().describe('API key to encrypt'),
-    sshKey: z.string().optional().describe('SSH private key to encrypt'),
-    oauthToken: z.string().optional().describe('OAuth token to encrypt'),
-    certificate: z.string().optional().describe('Certificate/cert data to encrypt'),
-    customField1: z.string().optional().describe('Custom field 1 (for custom type)'),
-    customField2: z.string().optional().describe('Custom field 2 (for custom type)'),
+    password: z.string().optional().describe('Password to encrypt (use with type="password")'),
+    apiKey: z.string().optional().describe('API key to encrypt (use with type="apiKey")'),
+    sshKey: z.string().optional().describe('SSH private key to encrypt (use with type="sshKey")'),
+    oauthToken: z.string().optional().describe('OAuth token to encrypt (use with type="oauthToken")'),
+    certificate: z.string().optional().describe('Certificate/cert data to encrypt (use with type="certificate")'),
+    customField1: z.string().optional().describe('Custom field 1 (use with type="custom")'),
+    customField2: z.string().optional().describe('Custom field 2 (use with type="custom")'),
     notes: z.string().optional().describe('Notes about this credential'),
   }),
   outputSchema: z.any(),
   handler: async ({ id, type, ...data }) => {
     try {
+      // Validate required parameters
+      if (!id || !type) {
+        return {
+          isError: true,
+          content: [{ 
+            type: 'text', 
+            text: 'Failed to add credential: id and type are required parameters' 
+          }],
+          structuredContent: { 
+            success: false, 
+            error: 'id and type are required parameters' 
+          },
+        };
+      }
+      
       credentialsManager.addCredential(id, type, data);
       return {
         content: [{ 
@@ -74,6 +91,21 @@ const getCredentialTool = {
   outputSchema: z.any(),
   handler: async ({ id }) => {
     try {
+      // Validate required parameters
+      if (!id) {
+        return {
+          isError: true,
+          content: [{ 
+            type: 'text', 
+            text: 'Failed to get credential: id is a required parameter' 
+          }],
+          structuredContent: { 
+            success: false, 
+            error: 'id is a required parameter' 
+          },
+        };
+      }
+      
       const credential = credentialsManager.getCredential(id);
       return {
         content: [{ 
@@ -154,6 +186,21 @@ const removeCredentialTool = {
   outputSchema: z.any(),
   handler: async ({ id }) => {
     try {
+      // Validate required parameters
+      if (!id) {
+        return {
+          isError: true,
+          content: [{ 
+            type: 'text', 
+            text: 'Failed to remove credential: id is a required parameter' 
+          }],
+          structuredContent: { 
+            success: false, 
+            error: 'id is a required parameter' 
+          },
+        };
+      }
+      
       credentialsManager.removeCredential(id);
       return {
         content: [{ 
