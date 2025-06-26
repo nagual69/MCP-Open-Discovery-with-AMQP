@@ -1,4 +1,4 @@
-![MCP Open - **53 Tools Available:** BusyBox networking, Nmap scanning, SNMP discovery, Proxmox API, Nagios XI monitoring, credential management, and memory managementiscovery Logo](./mcp-open-discovery-logo.png)
+![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
 
 # MCP Open Discovery
 
@@ -9,7 +9,7 @@ A comprehensive networking and infrastructure discovery platform that exposes 53
 - **Main Server:** `mcp_server_modular_sdk.js` - Full MCP SDK implementation
 - **Tool Registry:** Centralized SDK-compatible tool registration with Zod schemas
 - **In-Memory CMDB:** Hierarchical, queryable configuration database for discovered infrastructure
-- **53 Tools Available:** BusyBox networking, Nmap scanning, SNMP discovery, Proxmox API, and memory management
+- **53 Tools Available:** BusyBox networking, Nmap scanning, SNMP discovery, Proxmox API, Nagios XI monitoring, credential management, and memory management
 - **Full SDK Compliance:** Uses official `@modelcontextprotocol/sdk` with proper type safety
 - **Security Enhanced:** Advanced input sanitization, rate limiting, and error handling
 - **Dockerized:** Easy deployment with health monitoring and graceful shutdown
@@ -84,22 +84,6 @@ For more details, see the planning documentation in `docs/MCP_SDK_MIGRATION_PLAN
 - **`nmap_version_scan`**: Service and version detection
 
 ### 🖥️ Proxmox Tools (13 tools)
-
-- **`proxmox_list_nodes`**: Returns all nodes in the Proxmox cluster
-- **`proxmox_get_node_details`**: Returns details for a given Proxmox node
-- **`proxmox_list_vms`**: Returns all VMs for a Proxmox node
-- **`proxmox_get_vm_details`**: Returns config/details for a given VM
-- **`proxmox_list_containers`**: Returns all LXC containers for a Proxmox node
-- **`proxmox_get_container_details`**: Returns config/details for a given container
-- **`proxmox_list_storage`**: Returns storage resources for a Proxmox node
-- **`proxmox_list_networks`**: Returns network config for a Proxmox node
-- **`proxmox_cluster_resources`**: Returns a summary of all cluster resources
-- **`proxmox_get_metrics`**: Returns metrics for a node or VM
-- **Credential Management:**
-
-  - **`proxmox_creds_add`**: Add a new Proxmox credential (encrypted at rest)
-  - **`proxmox_creds_list`**: List all stored Proxmox credentials (no passwords shown)
-  - **`proxmox_creds_remove`**: Remove a Proxmox credential by ID
 
 - **`proxmox_list_nodes`**: Returns all nodes in the Proxmox cluster
 - **`proxmox_get_node_details`**: Returns details for a given Proxmox node
@@ -325,20 +309,22 @@ node test_http_transport.js
    - Command: `node mcp_server_multi_transport_sdk.js`
    - Working Directory: `/path/to/mcp-open-discovery`
 
+```bash
+# Install dependencies
+npm install
+
+# Start the main SDK server (default: stdio transport)
 npm start
 
 # Or run specific versions
-
 npm run start-sdk # Simple SDK server
 npm run start-legacy # Original legacy server
 npm run start-legacy-modular # Legacy modular server
 
 # Run tests
-
 npm test # Test SDK server
 npm run test-legacy # Test legacy server
-
-````
+```
 
 ### Security & Capabilities
 
@@ -804,6 +790,7 @@ All tools/resources support robust filtering, pagination, and MCP-compliant erro
 #### Using MCP Tools
 
 All credential operations are available as MCP tools:
+
 - `credentials_add` - Add encrypted credentials
 - `credentials_get` - Retrieve credentials
 - `credentials_list` - List stored credentials
@@ -837,6 +824,7 @@ node tools/cli/rotate_key.js
 #### Environment Variables
 
 For enhanced security, you can provide the encryption key via environment variable:
+
 ```bash
 export MCP_CREDS_KEY=$(openssl rand -base64 32)
 ```
@@ -879,4 +867,7 @@ Resources provide static or streamable data that can be read by MCP clients:
 - **`credentials://audit/log`** - Audit log of all credential operations
 
 All resources support real-time data retrieval with MCP-compliant error handling and content delivery.
-````
+
+```
+
+```
