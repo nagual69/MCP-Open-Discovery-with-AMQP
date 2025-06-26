@@ -15,6 +15,44 @@ const { getCredentialTools, getCredentialResources } = require('./credentials_to
 const { registerAllResources } = require('./resource_registry');
 
 /**
+ * Register Nagios tools with the server
+ * @param {McpServer} server - The MCP server instance
+ */
+function registerNagiosTools(server) {
+  try {
+    const nagiosTools = getNagiosTools();
+    for (const tool of nagiosTools) {
+      // Extract the shape from the Zod schema for MCP SDK compatibility
+      const inputShape = tool.inputSchema.shape || tool.inputSchema;
+      server.tool(tool.name, tool.description, inputShape, tool.handler);
+    }
+    console.log(`[MCP SDK] Registered ${nagiosTools.length} Nagios tools`);
+  } catch (error) {
+    console.error(`[MCP SDK] Error registering Nagios tools: ${error.message}`);
+    // Don't re-throw to allow other tools to register
+  }
+}
+
+/**
+ * Register credential management tools with the server  
+ * @param {McpServer} server - The MCP server instance
+ */
+function registerCredentialTools(server) {
+  try {
+    const credentialTools = getCredentialTools();
+    for (const tool of credentialTools) {
+      // Extract the shape from the Zod schema for MCP SDK compatibility
+      const inputShape = tool.inputSchema.shape || tool.inputSchema;
+      server.tool(tool.name, tool.description, inputShape, tool.handler);
+    }
+    console.log(`[MCP SDK] Registered ${credentialTools.length} credential tools`);
+  } catch (error) {
+    console.error(`[MCP SDK] Error registering credential tools: ${error.message}`);
+    // Don't re-throw to allow other tools to register
+  }
+}
+
+/**
  * Register all available tools with the MCP server
  * @param {McpServer} server - The MCP server instance
  * @param {Object} options - Configuration options (e.g., ciMemory)
@@ -40,8 +78,10 @@ async function registerAllTools(server, options = {}) {
     
     // Register SNMP tools (converted to SDK)
     registerSnmpTools(server);
+    
     // Register Nagios tools/resources
     registerNagiosTools(server);
+    
     // Register credential management tools/resources
     registerCredentialTools(server);
     
@@ -51,6 +91,8 @@ async function registerAllTools(server, options = {}) {
     console.log('[MCP SDK] All tools registered successfully');
   } catch (error) {
     console.error(`[MCP SDK] Error registering tools: ${error.message}`);
+    // Log the stack trace for debugging
+    console.error(error.stack);
     throw error;
   }
 }
@@ -70,20 +112,6 @@ function getToolCounts() {
     credentials: 5,  // ✅ Added - Credential management tools
     total: 53        // Updated total
   };
-}
-
-function registerNagiosTools(server) {
-  const nagiosTools = getNagiosTools();
-  for (const tool of nagiosTools) {
-    server.registerTool(tool);
-  }
-}
-
-function registerCredentialTools(server) {
-  const credentialTools = getCredentialTools();
-  for (const tool of credentialTools) {
-    server.registerTool(tool);
-  }
 }
 
 module.exports = {

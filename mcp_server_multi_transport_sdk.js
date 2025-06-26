@@ -105,7 +105,7 @@ const rateLimiter = new RateLimiter();
 /**
  * Create and configure the MCP server instance (following official MCP SDK pattern)
  */
-function createServer() {
+async function createServer() {
   const server = new McpServer(
     {
       name: 'mcp-open-discovery',
@@ -123,7 +123,7 @@ function createServer() {
   );
 
   // Register all tools using the SDK's built-in registration
-  registerAllTools(server);
+  await registerAllTools(server);
   // Add request/response logging and security middleware (same pattern as working server)
   const originalHandleRequest = server.handleRequest;
   server.handleRequest = async function(request) {
@@ -176,7 +176,7 @@ function createServer() {
  * Start the server with stdio transport
  */
 async function startStdioServer() {
-  const server = createServer();
+  const server = await createServer();
   const transport = new StdioServerTransport();
   
   await server.connect(transport);
@@ -207,6 +207,9 @@ async function startStdioServer() {
 async function startHttpServer() {
   const app = express();
   app.use(express.json({ limit: '10mb' }));
+  
+  // Create a single MCP server instance to be reused across all sessions
+  const mcpServer = await createServer();
   
   // Map to store transports by session ID
   const transports = {};
@@ -292,9 +295,8 @@ async function startHttpServer() {
           }
         };
 
-        // Connect the transport to the MCP server
-        const server = createServer();
-        await server.connect(transport);
+        // Connect the shared MCP server to this transport
+        await mcpServer.connect(transport);
         await transport.handleRequest(req, res, req.body);
         return; // Already handled
       } else {
