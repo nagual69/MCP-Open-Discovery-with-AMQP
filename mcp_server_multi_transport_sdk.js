@@ -12,6 +12,7 @@ const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/ser
 const express = require('express');
 const { randomUUID } = require('node:crypto');
 const { registerAllTools, getToolCounts } = require('./tools/sdk_tool_registry');
+const { getResourceCounts } = require('./tools/resource_registry');
 
 // Environment configuration with defaults
 const CONFIG = {
@@ -114,6 +115,7 @@ function createServer() {
     {
       capabilities: {
         tools: {},
+        resources: {},
         logging: {},
         prompts: {}
       }
@@ -181,10 +183,12 @@ async function startStdioServer() {
   
   // Log successful startup
   const toolCounts = getToolCounts();
+  const resourceCounts = getResourceCounts();
   log('info', 'MCP Open Discovery Server (SDK) started successfully', {
     version: '2.0.0',
     transport: 'stdio',
     tools: toolCounts,
+    resources: resourceCounts,
     config: {
       maxConnections: CONFIG.MAX_CONNECTIONS,
       requestTimeout: CONFIG.REQUEST_TIMEOUT,
@@ -210,11 +214,13 @@ async function startHttpServer() {
   // Health check endpoint
   app.get('/health', (req, res) => {
     const toolCounts = getToolCounts();
+    const resourceCounts = getResourceCounts();
     res.json({
       status: 'healthy',
       version: '2.0.0',
       transport: 'http',
       tools: toolCounts,
+      resources: resourceCounts,
       uptime: process.uptime(),
       timestamp: new Date().toISOString()
     });
@@ -371,11 +377,13 @@ async function startHttpServer() {
   // Start HTTP server
   app.listen(CONFIG.HTTP_PORT, () => {
     const toolCounts = getToolCounts();
+    const resourceCounts = getResourceCounts();
     log('info', 'MCP Open Discovery Server (SDK) started successfully', {
       version: '2.0.0',
       transport: 'http',
       port: CONFIG.HTTP_PORT,
       tools: toolCounts,
+      resources: resourceCounts,
       config: {
         maxConnections: CONFIG.MAX_CONNECTIONS,
         requestTimeout: CONFIG.REQUEST_TIMEOUT,
