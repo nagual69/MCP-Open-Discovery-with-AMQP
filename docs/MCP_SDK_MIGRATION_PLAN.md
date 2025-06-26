@@ -465,6 +465,45 @@ Start with Option A after Phase 5 is complete, leveraging the resource patterns 
 
 ---
 
+## Phase 5.5: Nagios Integration and MCP Tools vs Resources Analysis (June 2025)
+
+### Context
+
+As part of expanding discovery and monitoring integrations, we evaluated adding support for the Nagios XI API. This prompted a review of how best to model monitoring/discovery data in MCP: as Tools, Resources, or both.
+
+### Analysis: Tools vs Resources for Monitoring/Discovery
+
+- **MCP Tools** are best for dynamic, parameterized queries and actions (e.g., fetch host/service status, query events, trigger checks).
+- **MCP Resources** are best for exposing static or streamable data (e.g., event logs, inventory snapshots, config dumps) that can be read or subscribed to by clients.
+- **Prompts** can be used to guide users/LLMs through common workflows, possibly embedding resources.
+
+#### Mapping for Nagios (and similar monitoring systems):
+
+| Data/Functionality               | MCP Tool? | MCP Resource? | Rationale                                 |
+| -------------------------------- | --------- | ------------- | ----------------------------------------- |
+| Get status for a specific host   | Yes       | No            | Needs parameters, dynamic query           |
+| Get all host statuses (snapshot) | Maybe     | Yes           | Can be a resource (snapshot), or a tool   |
+| Fetch recent event log entries   | Yes       | Yes           | Tool for filtered query, resource for log |
+| Stream event log                 | No        | Yes           | Resource with subscription                |
+| Get full config dump             | No        | Yes           | Resource (text or JSON)                   |
+| Acknowledge alert                | Yes       | No            | Action, needs parameters                  |
+
+### Recommendation
+
+- **Expose dynamic, parameterized queries as Tools.**
+- **Expose logs, snapshots, and static data as Resources.**
+- **Use Prompts for guided workflows.**
+
+This hybrid approach provides both flexible, on-demand queries (Tools) and efficient, discoverable data streams/snapshots (Resources), aligning with MCP best practices and enterprise ITSM/CMDB needs.
+
+### Next Steps
+
+- Implement Nagios XI API integration as a set of MCP Tools for dynamic queries/actions.
+- Expose Nagios event logs and inventory snapshots as MCP Resources for CMDB/event ingestion.
+- Document this approach in the main README and developer guides.
+
+---
+
 ## Testing Strategy
 
 ### Unit Testing

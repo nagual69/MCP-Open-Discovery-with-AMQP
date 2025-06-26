@@ -9,5 +9,17 @@
         "TRANSPORT_MODE": "stdio"
       }
     }
-  }
+  },
+  "nagiosInstances": [
+    {
+      "id": "nagios1",
+      "baseUrl": "http://your-nagios-xi-instance-1",
+      "credentialId": "nagios1-creds"
+    },
+    {
+      "id": "nagios2",
+      "baseUrl": "http://your-nagios-xi-instance-2",
+      "credentialId": "nagios2-creds"
+    }
+  ]
 }
