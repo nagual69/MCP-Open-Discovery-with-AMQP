@@ -28,13 +28,13 @@ RUN apk add --no-cache bash wget curl ca-certificates \
 RUN for MIB in SNMPv2-MIB IF-MIB IP-MIB HOST-RESOURCES-MIB SNMP-FRAMEWORK-MIB; do \
     echo "Downloading $MIB" && \
     for i in 1 2 3; do \
-    wget -q --timeout=30 --tries=3 "https://raw.githubusercontent.com/librenms/librenms/master/mibs/rfc/${MIB}.txt" -O "/usr/share/snmp/mibs/${MIB}.txt" && break || \
+    wget -q --timeout=30 --tries=3 "https://raw.githubusercontent.com/librenms/librenms/master/mibs/${MIB}" -O "/usr/share/snmp/mibs/${MIB}" && break || \
     echo "Retry $i for $MIB"; \
     sleep 2; \
     done; \
-    if [ ! -s "/usr/share/snmp/mibs/${MIB}.txt" ]; then \
+    if [ ! -s "/usr/share/snmp/mibs/${MIB}" ]; then \
     echo "Creating empty $MIB file as placeholder"; \
-    touch "/usr/share/snmp/mibs/${MIB}.txt"; \
+    touch "/usr/share/snmp/mibs/${MIB}"; \
     fi; \
     done
 

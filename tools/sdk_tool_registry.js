@@ -10,6 +10,8 @@ const { registerMemoryTools, initialize: initializeMemoryTools } = require('./me
 const { registerNmapTools } = require('./nmap_tools_sdk');
 const { registerProxmoxTools } = require('./proxmox_tools_sdk');
 const { registerSnmpTools } = require('./snmp_tools_sdk');
+const { getNagiosTools, getNagiosResources } = require('./nagios_tools_sdk');
+const { getCredentialTools, getCredentialResources } = require('./credentials_tools_sdk');
 
 /**
  * Register all available tools with the MCP server
@@ -37,6 +39,10 @@ async function registerAllTools(server, options = {}) {
     
     // Register SNMP tools (converted to SDK)
     registerSnmpTools(server);
+    // Register Nagios tools/resources
+    registerNagiosTools(server);
+    // Register credential management tools/resources
+    registerCredentialTools(server);
     
     console.log('[MCP SDK] All tools registered successfully');
   } catch (error) {
@@ -49,14 +55,45 @@ async function registerAllTools(server, options = {}) {
  * Get count of tools that will be registered (for logging/monitoring)
  * @returns {Object} Tool counts by category
  */
-function getToolCounts() {  return {
-    network: 8,   // ✅ Converted
-    memory: 4,    // ✅ Converted
-    nmap: 5,      // ✅ Converted
-    proxmox: 13,  // ✅ Converted
-    snmp: 12,     // ✅ Converted
-    total: 42     // Updated total
+function getToolCounts() {  
+  return {
+    network: 8,      // ✅ Converted
+    memory: 4,       // ✅ Converted
+    nmap: 5,         // ✅ Converted
+    proxmox: 13,     // ✅ Converted
+    snmp: 12,        // ✅ Converted
+    nagios: 6,       // ✅ Added - Nagios XI tools
+    credentials: 5,  // ✅ Added - Credential management tools
+    total: 53        // Updated total
   };
+}
+
+function registerNagiosTools(server) {
+  const nagiosTools = getNagiosTools();
+  for (const tool of nagiosTools) {
+    server.registerTool(tool);
+  }
+  // Register Nagios resources if your server supports resource registration
+  if (typeof server.registerResource === 'function') {
+    const nagiosResources = getNagiosResources();
+    for (const resource of nagiosResources) {
+      server.registerResource(resource);
+    }
+  }
+}
+
+function registerCredentialTools(server) {
+  const credentialTools = getCredentialTools();
+  for (const tool of credentialTools) {
+    server.registerTool(tool);
+  }
+  // Register credential resources if your server supports resource registration
+  if (typeof server.registerResource === 'function') {
+    const credentialResources = getCredentialResources();
+    for (const resource of credentialResources) {
+      server.registerResource(resource);
+    }
+  }
 }
 
 module.exports = {

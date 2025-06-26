@@ -1,15 +1,15 @@
-![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
+![MCP Open - **53 Tools Available:** BusyBox networking, Nmap scanning, SNMP discovery, Proxmox API, Nagios XI monitoring, credential management, and memory managementiscovery Logo](./mcp-open-discovery-logo.png)
 
 # MCP Open Discovery
 
-A comprehensive networking and infrastructure discovery platform that exposes 42 powerful tools through the official Model Context Protocol (MCP) SDK. Designed for AI assistants, automation systems, and infrastructure discovery with full MCP compliance.
+A comprehensive networking and infrastructure discovery platform that exposes 53 powerful tools through the official Model Context Protocol (MCP) SDK. Designed for AI assistants, automation systems, and infrastructure discovery with full MCP compliance.
 
 ## Architecture Overview
 
 - **Main Server:** `mcp_server_modular_sdk.js` - Full MCP SDK implementation
 - **Tool Registry:** Centralized SDK-compatible tool registration with Zod schemas
 - **In-Memory CMDB:** Hierarchical, queryable configuration database for discovered infrastructure
-- **42 Tools Available:** BusyBox networking, Nmap scanning, SNMP discovery, Proxmox API, and memory management
+- **53 Tools Available:** BusyBox networking, Nmap scanning, SNMP discovery, Proxmox API, and memory management
 - **Full SDK Compliance:** Uses official `@modelcontextprotocol/sdk` with proper type safety
 - **Security Enhanced:** Advanced input sanitization, rate limiting, and error handling
 - **Dockerized:** Easy deployment with health monitoring and graceful shutdown
@@ -17,7 +17,7 @@ A comprehensive networking and infrastructure discovery platform that exposes 42
 ## Features
 
 - **🎯 Full MCP SDK Compliance:** Built with official `@modelcontextprotocol/sdk` for complete protocol compatibility
-- **🔧 42 Powerful Tools:** Comprehensive networking, scanning, discovery, and management capabilities
+- **🔧 53 Powerful Tools:** Comprehensive networking, scanning, discovery, and management capabilities
 - **🏗️ Proxmox Cluster Discovery:** Complete API integration for nodes, VMs, containers, storage, and networks
 - **🌐 SNMP-based Network Discovery:** Advanced device inventory, interface discovery, service mapping, and topology analysis
 - **🔐 Secure Credential Management:** Encrypted storage for Proxmox API credentials with multi-cluster support
@@ -26,7 +26,36 @@ A comprehensive networking and infrastructure discovery platform that exposes 42
 - **📈 Performance Monitoring:** Request timing, structured logging, and comprehensive health checks
 - **🐳 Production Ready:** Dockerized deployment with graceful shutdown and non-root execution
 
-## Available Tools (42 Total)
+## 🧩 MCP Tools vs Resources: Best Practices for Monitoring & Discovery Data
+
+This project follows a hybrid approach for modeling monitoring and discovery data, based on a detailed analysis of the Model Context Protocol (MCP) concepts of Tools, Resources, and Prompts:
+
+- **MCP Tools**: Used for dynamic, parameterized queries and actions (e.g., fetch host/service status, query events, trigger checks). Tools are ideal for API integrations where input parameters are required and results are generated on demand.
+- **MCP Resources**: Used for exposing static or streamable data (e.g., event logs, inventory/config snapshots) that can be read or subscribed to by clients. Resources are ideal for logs, bulk exports, and data streams.
+- **MCP Prompts**: Used to guide users/LLMs through common workflows, optionally embedding resources for context.
+
+### Example Mapping for Monitoring/Discovery (Nagios, SNMP, etc.)
+
+| Data/Functionality               | MCP Tool? | MCP Resource? | Rationale                                 |
+| -------------------------------- | --------- | ------------- | ----------------------------------------- |
+| Get status for a specific host   | Yes       | No            | Needs parameters, dynamic query           |
+| Get all host statuses (snapshot) | Maybe     | Yes           | Can be a resource (snapshot), or a tool   |
+| Fetch recent event log entries   | Yes       | Yes           | Tool for filtered query, resource for log |
+| Stream event log                 | No        | Yes           | Resource with subscription                |
+| Get full config dump             | No        | Yes           | Resource (text or JSON)                   |
+| Acknowledge alert                | Yes       | No            | Action, needs parameters                  |
+
+### Why This Matters
+
+- **Tools** provide flexible, on-demand queries and actions for LLMs and automation.
+- **Resources** enable efficient, discoverable data streams and snapshots for CMDB/event ingestion.
+- **Prompts** support guided workflows and user/LLM interaction.
+
+This approach is especially important for integrating with systems like Nagios XI, where both real-time queries (Tools) and bulk/streaming data (Resources) are needed for ITSM, CMDB, and event management use cases.
+
+For more details, see the planning documentation in `docs/MCP_SDK_MIGRATION_PLAN.md`.
+
+## Available Tools (53 Total)
 
 ### 🌐 Network Tools (8 tools)
 
@@ -101,6 +130,33 @@ A comprehensive networking and infrastructure discovery platform that exposes 42
 - **`snmp_service_discovery`**: Discovers running services and listening ports
 - **`snmp_network_topology`**: Maps network topology using CDP/LLDP protocols
 
+### 📋 Credential Management Tools (5 tools)
+
+- **`credentials_add`**: Add encrypted credentials (password, apiKey, sshKey, oauthToken, certificate)
+- **`credentials_get`**: Retrieve and decrypt stored credentials
+- **`credentials_list`**: List all stored credentials (safe - no sensitive data exposed)
+- **`credentials_remove`**: Remove credentials from secure store
+- **`credentials_rotate_key`**: Rotate encryption key and re-encrypt all credentials
+
+### 🏥 Nagios XI Integration Tools (6 tools)
+
+- **`nagios_get_host_status`**: Fetch host status with filtering and pagination
+- **`nagios_get_service_status`**: Fetch service status with filtering and pagination
+- **`nagios_get_event_log`**: Fetch event log entries with time-based filtering
+- **`nagios_get_host_config`**: Fetch host configuration (inventory)
+- **`nagios_get_service_config`**: Fetch service configuration (inventory)
+- **`nagios_acknowledge_alert`**: Acknowledge host/service problems
+
+### 📊 MCP Resources
+
+- **Nagios Resources:**
+  - `nagios://eventlog/recent` - Recent event log entries
+  - `nagios://inventory/hosts` - Host inventory snapshot
+  - `nagios://config/hosts` - Host configuration
+  - `nagios://config/services` - Service configuration
+- **Credential Resources:**
+  - `credentials://audit/log` - Credential operation audit log
+
 ## SDK Architecture
 
 The MCP Open Discovery server v2.0 uses a modern SDK-based architecture with full MCP compliance:
@@ -172,7 +228,7 @@ The Docker container **defaults to HTTP transport** for web-based usage and API 
 
 The Docker Compose setup includes:
 
-- **MCP Server**: HTTP transport on port 3000 with all 42 tools
+- **MCP Server**: HTTP transport on port 3000 with all 53 tools
 - **3 SNMP Test Agents**: Alpine-based SNMP servers for testing discovery tools
   - **snmp-agent-1**: Basic SNMP agent (172.20.0.10:1161)
   - **snmp-agent-2**: Second test agent (172.20.0.11:2161)
@@ -313,7 +369,7 @@ docker-compose -f testing/docker-compose-snmp-testing.yml up -d
 
 # Test SNMP connectivity
 docker exec busybox-network-mcp snmpget -v2c -c public 172.20.0.10:161 1.3.6.1.2.1.1.1.0
-````
+```
 
 **Available Test Targets:**
 
@@ -349,7 +405,7 @@ To use with VS Code MCP extension:
 ### SDK Server Testing (Default)
 
 ```bash
-# Test the main SDK server with all 42 tools
+# Test the main SDK server with all 53 tools
 npm test
 
 # Test specific SDK components
@@ -700,3 +756,96 @@ For more information on the testing system, see [TESTING.md](./TESTING.md).
 **📁 Original Monolithic Server**: The original `mcp_server.js` has been preserved as `archive/mcp_server_original.js` for historical reference and comparison with the new modular architecture.
 
 As of June 5, 2025, legacy test scripts and test result files have been moved to the `archive/` directory. See `archive/test_tools_cleanup_2025-06-05.txt` for details. These scripts are no longer maintained in the main project.
+
+## Nagios XI Integration
+
+### Configuration
+
+- Add your Nagios XI instances to `vscode-mcp-config.json` under the `nagiosInstances` array:
+
+```json
+"nagiosInstances": [
+  {
+    "id": "nagios1",
+    "baseUrl": "http://your-nagios-xi-instance-1",
+    "credentialId": "nagios1-creds"
+  },
+  {
+    "id": "nagios2",
+    "baseUrl": "http://your-nagios-xi-instance-2",
+    "credentialId": "nagios2-creds"
+  }
+]
+```
+
+- Store credentials securely using the new `tools/credentials_manager.js` (see below).
+
+### Tools and Resources
+
+Nagios integration exposes the following MCP tools and resources:
+
+- **Tools:**
+  - `nagios_get_host_status`
+  - `nagios_get_service_status`
+  - `nagios_get_event_log`
+  - `nagios_get_host_config`
+  - `nagios_get_service_config`
+  - `nagios_acknowledge_alert`
+- **Resources:**
+  - `nagios://eventlog/recent`
+  - `nagios://inventory/hosts`
+  - `nagios://config/hosts`
+  - `nagios://config/services`
+
+All tools/resources support robust filtering, pagination, and MCP-compliant error handling.
+
+### Credential Management
+
+#### Using MCP Tools
+
+All credential operations are available as MCP tools:
+- `credentials_add` - Add encrypted credentials
+- `credentials_get` - Retrieve credentials
+- `credentials_list` - List stored credentials
+- `credentials_remove` - Remove credentials
+- `credentials_rotate_key` - Rotate encryption key
+
+#### Using CLI Scripts
+
+For convenience, CLI scripts are provided in `tools/cli/`:
+
+```bash
+# Add a Nagios XI API credential
+node tools/cli/add_credential.js --type apiKey --id nagios1-creds --apiKey YOUR_API_KEY --url http://nagios-xi
+
+# Add SSH credentials
+node tools/cli/add_credential.js --type sshKey --id server1-ssh --username root --sshKey "$(cat ~/.ssh/id_rsa)"
+
+# List all credentials
+node tools/cli/list_credentials.js
+
+# List credentials by type
+node tools/cli/list_credentials.js --type apiKey
+
+# Remove a credential
+node tools/cli/remove_credential.js --id nagios1-creds
+
+# Rotate encryption key
+node tools/cli/rotate_key.js
+```
+
+#### Environment Variables
+
+For enhanced security, you can provide the encryption key via environment variable:
+```bash
+export MCP_CREDS_KEY=$(openssl rand -base64 32)
+```
+
+#### Security Best Practices
+
+- Store credentials using encrypted storage (never in plain text files)
+- Use environment variables or secure mounts for encryption keys in production
+- Regularly rotate credentials and encryption keys
+- Monitor the audit log for unauthorized access
+- Use principle of least privilege for credential access
+````

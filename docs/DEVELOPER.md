@@ -460,3 +460,33 @@ const process = spawn(command, args, {
 6. **Clear documentation**: Document all parameters and behavior
 7. **Comprehensive testing**: Test all functionality and edge cases
 8. **Modular design**: Keep modules focused and independent
+
+## Nagios XI Integration for Developers
+
+- Nagios tools/resources are registered in `tools/sdk_tool_registry.js` via `getNagiosTools` and `getNagiosResources`.
+- Add new Nagios tools/resources in `tools/nagios_tools_sdk.js` using Zod schemas and MCP-compliant output.
+- Use the generic `tools/credentials_manager.js` for all credential storage (Nagios, Proxmox, etc.).
+- Reference credentials by `credentialId` in config and tool/resource calls.
+- To support new credential types, extend the credentials manager and update documentation.
+
+## Credential Manager Usage
+
+- Add a credential:
+  ```js
+  const { addCredential } = require("./tools/credentials_manager");
+  addCredential("nagios1-creds", "nagios", {
+    username: "apiuser",
+    apiKey: "your-api-key",
+    url: "http://your-nagios-xi-instance",
+  });
+  ```
+- List credentials:
+  ```js
+  const { listCredentials } = require("./tools/credentials_manager");
+  console.log(listCredentials("nagios"));
+  ```
+- Remove a credential:
+  ```js
+  const { removeCredential } = require("./tools/credentials_manager");
+  removeCredential("nagios1-creds");
+  ```
