@@ -12,7 +12,7 @@ function runMcpCommand(method, params = {}) {
     params
   };
 
-  const result = spawnSync('node', ['mcp_server_sdk.js'], {
+  const result = spawnSync('node', ['mcp_server_multi_transport_sdk.js'], {
     input: JSON.stringify(request) + '\n',
     encoding: 'utf8',
     stdio: ['pipe', 'pipe', 'pipe']

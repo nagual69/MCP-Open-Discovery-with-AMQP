@@ -20,7 +20,7 @@ A comprehensive networking and infrastructure discovery platform that exposes 53
 - **🔧 53 Powerful Tools:** Comprehensive networking, scanning, discovery, and management capabilities
 - **🏗️ Proxmox Cluster Discovery:** Complete API integration for nodes, VMs, containers, storage, and networks
 - **🌐 SNMP-based Network Discovery:** Advanced device inventory, interface discovery, service mapping, and topology analysis
-- **🔐 Secure Credential Management:** Encrypted storage for Proxmox API credentials with multi-cluster support
+- **🔐 Secure Credential Management:** Enhanced encrypted storage for Proxmox API credentials using enterprise-grade credential management system with multi-cluster support, audit trails, and compliance features
 - **📊 In-Memory CMDB:** Hierarchical storage for discovered infrastructure with query capabilities
 - **🛡️ Enhanced Security:** Advanced input sanitization, request timeouts, and structured error handling
 - **📈 Performance Monitoring:** Request timing, structured logging, and comprehensive health checks
@@ -95,9 +95,11 @@ For more details, see the planning documentation in `docs/MCP_SDK_MIGRATION_PLAN
 - **`proxmox_list_networks`**: Returns network config for a Proxmox node
 - **`proxmox_cluster_resources`**: Returns a summary of all cluster resources
 - **`proxmox_get_metrics`**: Returns metrics for a node or VM
-- **`proxmox_creds_add`**: Add a new Proxmox credential (encrypted at rest)
-- **`proxmox_creds_list`**: Lists stored Proxmox API credentials
-- **`proxmox_creds_remove`**: Removes stored Proxmox API credentials
+- **`proxmox_creds_add`**: Add a new Proxmox credential using enhanced credential system
+- **`proxmox_creds_list`**: Lists stored Proxmox API credentials from enhanced credential system  
+- **`proxmox_creds_remove`**: Removes stored Proxmox API credentials from enhanced credential system
+
+> **Note**: Proxmox credentials now use the enhanced enterprise credential management system with audit trails, compliance features, and multi-cloud support. Legacy credentials can be migrated using `tools/migrate_proxmox_credentials.js`.
 
 ### 📡 SNMP Discovery Tools (12 tools)
 
