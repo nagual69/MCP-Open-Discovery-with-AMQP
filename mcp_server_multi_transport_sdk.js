@@ -13,6 +13,7 @@ const express = require('express');
 const { randomUUID } = require('node:crypto');
 const { registerAllTools, getToolCounts } = require('./tools/sdk_tool_registry');
 const { getResourceCounts } = require('./tools/resource_registry');
+const { registerAllPrompts } = require('./tools/prompts_sdk');
 
 // Environment configuration with defaults
 const CONFIG = {
@@ -122,8 +123,30 @@ async function createServer() {
     }
   );
 
-  // Register all tools using the SDK's built-in registration
-  await registerAllTools(server);
+  log('info', '[DEBUG] Starting tool registration');
+  try {
+    await registerAllTools(server);
+    log('info', '[DEBUG] Tool registration complete');
+  } catch (err) {
+    console.error('[FATAL] Tool registration failed:', JSON.stringify(err, null, 2));
+    if (err && err.stack) console.error(err.stack);
+    process.exit(1);
+  }
+
+  log('info', '[DEBUG] Starting prompt registration');
+  try {
+    // If registerAllPrompts is async, await it
+    const maybePromise = registerAllPrompts(server);
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      await maybePromise;
+    }
+    log('info', '[DEBUG] Prompt registration complete');
+  } catch (err) {
+    console.error('[FATAL] Prompt registration failed:', JSON.stringify(err, null, 2));
+    if (err && err.stack) console.error(err.stack);
+    process.exit(1);
+  }
+
   // Add request/response logging and security middleware (same pattern as working server)
   const originalHandleRequest = server.handleRequest;
   server.handleRequest = async function(request) {
@@ -460,7 +483,10 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  log('error', 'Unhandled promise rejection', { reason, promise });
+  console.error('[UNHANDLED REJECTION]', JSON.stringify(reason, null, 2));
+  if (reason && reason.stack) {
+    console.error(reason.stack);
+  }
   process.exit(1);
 });
 
