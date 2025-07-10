@@ -1,8 +1,10 @@
-![MCP Open Discovery Logo](./mcp-open-discovery-logo.png)
-
 # MCP Open Discovery
 
-A comprehensive networking and infrastructure discovery platform that exposes 53 powerful tools through the official Model Context Protocol (MCP) SDK. Designed for AI assistants, automation systems, and infrastructure discovery with full MCP compliance.
+<div align="left">
+  <img src="./mcp-open-discovery-logo.png" width="125" style="float: left; margin-left: 15px;" alt="MCP Open Discovery Logo">
+</div>
+<p>A comprehensive networking and infrastructure discovery platform that exposes 53 powerful tools through the official Model Context Protocol (MCP) SDK. Designed for AI assistants, automation systems, and infrastructure discovery with full MCP compliance.</p>
+<br>
 
 ## Architecture Overview
 

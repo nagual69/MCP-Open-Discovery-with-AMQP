@@ -3,6 +3,7 @@
 const { z } = require('zod');
 
 // Example: Code Review Prompt
+/*
 const codeReviewPrompt = {
   name: 'code_review',
   title: 'Request Code Review',
@@ -26,9 +27,21 @@ const codeReviewPrompt = {
     };
   }
 };
+*/
 
 function getPrompts() {
-  return [codeReviewPrompt];
+  return [{
+    name: 'hello_world',
+    title: 'Hello World',
+    description: 'Returns a hello world message',
+    argsSchema: z.object({}),
+    callback: async () => ({
+      description: 'Hello world prompt',
+      messages: [
+        { role: 'user', content: { type: 'text', text: 'Hello, world!' } }
+      ]
+    })
+  }];
 }
 
 // Internal registry for dynamic management
