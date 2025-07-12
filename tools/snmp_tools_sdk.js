@@ -326,30 +326,31 @@ async function snmpDeviceInventory(host, options = {}) {
       version: options.version || '2c' 
     });
     
-    // Get basic system information
-    const systemInfo = await Promise.all([
-      snmpGet(sessionId, ['1.3.6.1.2.1.1.1.0']), // sysDescr
-      snmpGet(sessionId, ['1.3.6.1.2.1.1.2.0']), // sysObjectID
-      snmpGet(sessionId, ['1.3.6.1.2.1.1.3.0']), // sysUpTime
-      snmpGet(sessionId, ['1.3.6.1.2.1.1.4.0']), // sysContact
-      snmpGet(sessionId, ['1.3.6.1.2.1.1.5.0']), // sysName
-      snmpGet(sessionId, ['1.3.6.1.2.1.1.6.0'])  // sysLocation
-    ]);
+    try {
+      // Get basic system information
+      const systemInfo = await Promise.all([
+        snmpGet(sessionId, ['1.3.6.1.2.1.1.1.0']), // sysDescr
+        snmpGet(sessionId, ['1.3.6.1.2.1.1.2.0']), // sysObjectID
+        snmpGet(sessionId, ['1.3.6.1.2.1.1.3.0']), // sysUpTime
+        snmpGet(sessionId, ['1.3.6.1.2.1.1.4.0']), // sysContact
+        snmpGet(sessionId, ['1.3.6.1.2.1.1.5.0']), // sysName
+        snmpGet(sessionId, ['1.3.6.1.2.1.1.6.0'])  // sysLocation
+      ]);
     
-    // Map system info to a readable format
-    const inventory = {
-      ip: host,
-      system: {
-        description: systemInfo[0][0].value,
-        objectID: systemInfo[1][0].value,
-        uptime: systemInfo[2][0].value,
-        contact: systemInfo[3][0].value,
-        name: systemInfo[4][0].value,
-        location: systemInfo[5][0].value
-      },
-      interfaces: {},
-      storage: {}
-    };
+      // Map system info to a readable format
+      const inventory = {
+        ip: host,
+        system: {
+          description: systemInfo[0][0].value,
+          objectID: systemInfo[1][0].value,
+          uptime: systemInfo[2][0].value,
+          contact: systemInfo[3][0].value,
+          name: systemInfo[4][0].value,
+          location: systemInfo[5][0].value
+        },
+        interfaces: {},
+        storage: {}
+      };
     
     // Try to get interface information
     try {
@@ -387,6 +388,17 @@ async function snmpDeviceInventory(host, options = {}) {
     closeSnmpSession(sessionId);
     
     return inventory;
+    } catch (error) {
+      // If sessionId is available, make sure to close the session
+      if (sessionId) {
+        try {
+          closeSnmpSession(sessionId);
+        } catch (closeError) {
+          console.error('Error closing SNMP session:', closeError);
+        }
+      }
+      return { error: error.message };
+    }
   } catch (error) {
     return { error: error.message };
   }

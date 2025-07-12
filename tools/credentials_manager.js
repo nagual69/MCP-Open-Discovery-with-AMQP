@@ -6,12 +6,18 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const CREDS_STORE_PATH = path.join('/tmp', 'mcp_creds_store.json');
-const CREDS_KEY_PATH = path.join('/tmp', 'mcp_creds_key');
+const CREDS_STORE_PATH = path.join(process.cwd(), 'data', 'mcp_creds_store.json');
+const CREDS_KEY_PATH = path.join(process.cwd(), 'data', 'mcp_creds_key');
 // Credential types supported: password, apiKey, sshKey, oauthToken, certificate, custom
 // Each credential can have arbitrary fields (e.g., username, url, etc.)
 // Audit log support
-const AUDIT_LOG_PATH = path.join('/tmp', 'mcp_creds_audit.log');
+const AUDIT_LOG_PATH = path.join(process.cwd(), 'data', 'mcp_creds_audit.log');
+
+// Ensure data directory exists
+const dataDir = path.join(process.cwd(), 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
 function auditLog(action, id, type) {
   const entry = {

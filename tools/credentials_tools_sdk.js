@@ -109,10 +109,9 @@ const getCredentialTool = {
       const credential = credentialsManager.getCredential(id);
       return {
         content: [{ 
-          type: 'json', 
-          json: credential 
+          type: 'text', 
+          text: JSON.stringify(credential, null, 2)
         }],
-        structuredContent: credential,
         isError: false,
       };
     } catch (error) {
@@ -149,10 +148,9 @@ const listCredentialsTool = {
       const credentials = credentialsManager.listCredentials(type);
       return {
         content: [{ 
-          type: 'json', 
-          json: credentials 
+          type: 'text', 
+          text: JSON.stringify(credentials, null, 2)
         }],
-        structuredContent: credentials,
         isError: false,
       };
     } catch (error) {
@@ -162,10 +160,6 @@ const listCredentialsTool = {
           type: 'text', 
           text: `Failed to list credentials: ${error.message}` 
         }],
-        structuredContent: { 
-          success: false, 
-          error: error.message 
-        },
       };
     }
   },
