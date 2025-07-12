@@ -26,3 +26,6 @@ npm-debug.log*
 reference/
 
 proxmox_credentials.json
+archive/
+
+package-lock.json
