@@ -1,12 +1,13 @@
 /**
  * Module Loader for MCP Open Discovery Server
  * 
- * Handles dynamically loading all tool modules and registering their tools
- * with the MCP server instance.
+ * DEPRECATED: This module is deprecated in favor of sdk_tool_registry.js
+ * which provides proper MCP SDK integration.
+ * 
+ * This file is kept for backward compatibility and will be removed in v3.0.0
  */
 
-const path = require('path');
-const fs = require('fs');
+const { registerAllTools } = require('./sdk_tool_registry');
 
 /**
  * Loads all tool modules and registers their tools with the server
@@ -14,39 +15,17 @@ const fs = require('fs');
  * @param {Object} server - The MCP server instance
  * @param {Object} options - Additional options
  * @returns {Promise<void>}
+ * @deprecated Use registerAllTools from sdk_tool_registry.js instead
  */
 async function loadAllModules(server, options = {}) {
+  console.warn('[DEPRECATED] module_loader.js is deprecated. Use sdk_tool_registry.js instead.');
+  
   try {
-    // Load core network tools
-    const networkTools = require('./network_tools').getTools(server);
-    networkTools.forEach(tool => server.tools.set(tool.name, tool));
-    console.log(`[MCP] Loaded ${networkTools.length} network tools`);
-    
-    // Load Nmap tools
-    const nmapTools = require('./nmap_tools').getTools(server);
-    nmapTools.forEach(tool => server.tools.set(tool.name, tool));
-    console.log(`[MCP] Loaded ${nmapTools.length} nmap tools`);
-    
-    // Load and initialize memory tools
-    const memoryTools = require('./memory_tools');
-    memoryTools.initialize(options.ciMemory || {});
-    const memoryToolDefs = memoryTools.getTools(server);
-    memoryToolDefs.forEach(tool => server.tools.set(tool.name, tool));
-    console.log(`[MCP] Loaded ${memoryToolDefs.length} memory tools`);
-    
-    // Load Proxmox tools
-    const proxmoxTools = require('./proxmox_tools').getTools(server);
-    proxmoxTools.forEach(tool => server.tools.set(tool.name, tool));
-    console.log(`[MCP] Loaded ${proxmoxTools.length} proxmox tools`);
-    
-    // Load SNMP tools
-    const snmpTools = require('./snmp_module').getTools(server);
-    snmpTools.forEach(tool => server.tools.set(tool.name, tool));
-    console.log(`[MCP] Loaded ${snmpTools.length} SNMP tools`);
-    
-    console.log(`[MCP] Loaded ${server.tools.size} tools from modules`);
+    // Delegate to the new SDK tool registry
+    await registerAllTools(server);
+    console.log('[MCP] All SDK tools loaded successfully via registry');
   } catch (error) {
-    console.error(`[MCP] Error loading modules: ${error.message}`);
+    console.error('[MCP] Failed to load tools via SDK registry:', error.message);
     throw error;
   }
 }

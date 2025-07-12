@@ -23,8 +23,21 @@ const CONFIG = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   SECURITY_MODE: process.env.SECURITY_MODE || 'standard',
   HTTP_PORT: parseInt(process.env.HTTP_PORT) || 3000,
-  TRANSPORT_MODE: process.env.TRANSPORT_MODE || 'stdio' // 'stdio', 'http', or 'both'
+  // Smart default: HTTP in containers, stdio otherwise
+  TRANSPORT_MODE: process.env.TRANSPORT_MODE || (isRunningInContainer() ? 'http' : 'stdio')
 };
+
+/**
+ * Detect if we're running inside a Docker container
+ */
+function isRunningInContainer() {
+  try {
+    return require('fs').existsSync('/.dockerenv') || 
+           require('fs').readFileSync('/proc/1/cgroup', 'utf8').includes('docker');
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Enhanced logging with different levels
