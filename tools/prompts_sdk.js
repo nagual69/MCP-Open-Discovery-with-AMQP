@@ -22,15 +22,15 @@ CMDB CI Classification Standards:
 4. CI Status: Active, Inactive, Planned, Retired, Under Change
 
 Discovery Context:`;
-        
+
         if (deviceType) {
           promptText += `\nDevice Type: ${deviceType}`;
         }
-        
+
         if (discoveredData) {
           promptText += `\nDiscovered Data:\n${discoveredData}`;
         }
-        
+
         promptText += `\n\nPlease provide:
 1. Recommended CI classification and type
 2. Key attributes to capture
@@ -52,7 +52,7 @@ Discovery Context:`;
         };
       }
     },
-    
+
     {
       name: 'network_topology_analysis',
       title: 'Network Topology Analysis',
@@ -100,7 +100,7 @@ ${networkData}`;
         };
       }
     },
-    
+
     {
       name: 'infrastructure_health_assessment',
       title: 'Infrastructure Health Assessment',
@@ -148,7 +148,7 @@ ${healthData}`;
         };
       }
     },
-    
+
     {
       name: 'compliance_gap_analysis',
       title: 'Infrastructure Compliance Gap Analysis',
@@ -196,7 +196,7 @@ ${configData}`;
         };
       }
     },
-    
+
     {
       name: 'incident_analysis_guidance',
       title: 'Infrastructure Incident Analysis',
