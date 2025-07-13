@@ -10,6 +10,7 @@ const { registerMemoryTools, initialize: initializeMemoryTools } = require('./me
 const { registerNmapTools } = require('./nmap_tools_sdk');
 const { registerProxmoxTools } = require('./proxmox_tools_sdk');
 const { registerSnmpTools } = require('./snmp_tools_sdk');
+const { registerZabbixTools } = require('./zabbix_tools_sdk');
 const { getCredentialTools, getCredentialResources } = require('./credentials_tools_sdk');
 const { registerAllResources } = require('./resource_registry');
 
@@ -59,6 +60,9 @@ async function registerAllTools(server, options = {}) {
     // Register SNMP tools (converted to SDK)
     registerSnmpTools(server);
     
+    // Register Zabbix tools (new)
+    registerZabbixTools(server);
+    
     // Register credential management tools/resources
     registerCredentialTools(server);
     
@@ -85,8 +89,9 @@ function getToolCounts() {
     nmap: 5,         // ✅ Converted
     proxmox: 10,     // ✅ Converted (removed 3 credential management tools)
     snmp: 12,        // ✅ Converted
+    zabbix: 4,       // 🆕 NEW - Enterprise monitoring integration
     credentials: 5,  // ✅ Added - Credential management tools
-    total: 48        // Updated total (54 - 6 Nagios tools)
+    total: 52        // Updated total (48 + 4 Zabbix tools)
   };
 }
 
