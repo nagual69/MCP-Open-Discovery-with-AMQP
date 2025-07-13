@@ -13,7 +13,18 @@ const express = require('express');
 const { randomUUID } = require('node:crypto');
 const { registerAllTools, getToolCounts } = require('./tools/sdk_tool_registry');
 const { getResourceCounts } = require('./tools/resource_registry');
-const { registerAllPrompts } = require('./tools/prompts_sdk');
+const { registerPrompts } = require('./tools/prompts_sdk');
+
+// MCP Protocol Version Compliance
+const LATEST_PROTOCOL_VERSION = "2025-06-18";
+const DEFAULT_NEGOTIATED_PROTOCOL_VERSION = "2025-03-26";
+const SUPPORTED_PROTOCOL_VERSIONS = [
+  LATEST_PROTOCOL_VERSION,
+  "2025-03-26",
+  "2024-11-05",
+  "2024-10-07",
+];
+const JSONRPC_VERSION = "2.0";
 
 // Environment configuration with defaults
 const CONFIG = {
@@ -58,6 +69,68 @@ function log(level, message, data = null) {
   }
 }
 
+/**
+ * Enhanced input validation for MCP compliance
+ */
+function validateMCPRequest(request) {
+  // Basic JSON-RPC 2.0 validation
+  if (!request || typeof request !== 'object') {
+    throw new Error('Invalid request: must be an object');
+  }
+  
+  if (request.jsonrpc !== JSONRPC_VERSION) {
+    throw new Error(`Invalid JSON-RPC version: expected ${JSONRPC_VERSION}`);
+  }
+  
+  if (typeof request.method !== 'string') {
+    throw new Error('Invalid request: method must be a string');
+  }
+  
+  if (request.id !== undefined && typeof request.id !== 'string' && typeof request.id !== 'number') {
+    throw new Error('Invalid request: id must be string or number');
+  }
+  
+  return request;
+}
+
+/**
+ * Protocol version negotiation
+ */
+function negotiateProtocolVersion(requestedVersion) {
+  if (!requestedVersion) {
+    return DEFAULT_NEGOTIATED_PROTOCOL_VERSION;
+  }
+  
+  return SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion)
+    ? requestedVersion
+    : LATEST_PROTOCOL_VERSION;
+}
+
+/**
+ * Enhanced HTTP header validation for MCP compliance
+ */
+function validateMCPHeaders(req) {
+  const contentType = req.headers['content-type'];
+  const accept = req.headers['accept'];
+  
+  // Content-Type validation for POST requests
+  if (req.method === 'POST' && !contentType?.includes('application/json')) {
+    return {
+      valid: false,
+      error: 'Content-Type must be application/json for MCP requests'
+    };
+  }
+  
+  // Accept header validation for MCP compatibility
+  if (!accept?.includes('application/json') && !accept?.includes('text/event-stream') && !accept?.includes('*/*')) {
+    return {
+      valid: false,
+      error: 'Client must accept both application/json and text/event-stream'
+    };
+  }
+  
+  return { valid: true };
+}
 /**
  * Input sanitization for security
  */
@@ -128,10 +201,11 @@ async function createServer() {
     },
     {
       capabilities: {
-        tools: {},
-        resources: {},
+        tools: { listChanged: true },
+        resources: { listChanged: true },
         logging: {},
-        prompts: {}
+        prompts: { listChanged: true },
+        completions: {}
       }
     }
   );
@@ -148,11 +222,8 @@ async function createServer() {
 
   log('info', '[DEBUG] Starting prompt registration');
   try {
-    // If registerAllPrompts is async, await it
-    const maybePromise = registerAllPrompts(server);
-    if (maybePromise && typeof maybePromise.then === 'function') {
-      await maybePromise;
-    }
+    // Register prompts with proper MCP SDK handlers
+    registerPrompts(server);
     log('info', '[DEBUG] Prompt registration complete');
   } catch (err) {
     console.error('[FATAL] Prompt registration failed:', JSON.stringify(err, null, 2));
@@ -173,6 +244,9 @@ async function createServer() {
         log('warn', 'Rate limit exceeded', { identifier, method: request.method });
         throw new Error('Rate limit exceeded. Please slow down your requests.');
       }
+
+      // Enhanced MCP request validation
+      validateMCPRequest(request);
 
       log('debug', `Request ${requestId}: ${request.method}`, {
         params: CONFIG.LOG_LEVEL === 'debug' ? request.params : undefined
@@ -279,8 +353,9 @@ async function startHttpServer() {
     });
   });
 
-  // CORS middleware for web clients
+  // CORS and MCP header validation middleware
   app.use((req, res, next) => {
+    // CORS headers
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, last-event-id');
@@ -289,6 +364,23 @@ async function startHttpServer() {
       res.sendStatus(200);
       return;
     }
+    
+    // Enhanced MCP header validation for POST requests
+    if (req.method === 'POST' && req.path === '/mcp') {
+      const headerValidation = validateMCPHeaders(req);
+      if (!headerValidation.valid) {
+        res.status(406).json({
+          jsonrpc: JSONRPC_VERSION,
+          error: {
+            code: -32000,
+            message: `Not Acceptable: ${headerValidation.error}`,
+          },
+          id: req.body?.id || null,
+        });
+        return;
+      }
+    }
+    
     next();
   });
 
@@ -338,7 +430,7 @@ async function startHttpServer() {
       } else {
         // Invalid request - no session ID or not initialization request
         res.status(400).json({
-          jsonrpc: '2.0',
+          jsonrpc: JSONRPC_VERSION,
           error: {
             code: -32000,
             message: 'Bad Request: No valid session ID provided or invalid request',
@@ -359,7 +451,7 @@ async function startHttpServer() {
       
       if (!res.headersSent) {
         res.status(500).json({
-          jsonrpc: '2.0',
+          jsonrpc: JSONRPC_VERSION,
           error: {
             code: -32603,
             message: 'Internal server error',

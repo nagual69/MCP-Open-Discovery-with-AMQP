@@ -1,23 +1,98 @@
 // tools/prompts_sdk.js
 // MCP Prompts for Infrastructure Discovery and CMDB Standards
-const { z } = require('zod');
+const { 
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema 
+} = require('@modelcontextprotocol/sdk/types');
 
-/**
- * Register all infrastructure analysis prompts with the MCP server
- * @param {McpServer} server - The MCP server instance
- */
-function registerPrompts(server) {
-  console.log('[MCP] Registering infrastructure analysis prompts...');
+const PROMPTS = {
+  'cmdb_ci_classification': {
+    name: 'cmdb_ci_classification',
+    description: 'Provides guidance for classifying Configuration Items (CIs) in the CMDB according to ITIL v4 standards',
+    arguments: [
+      {
+        name: 'deviceType',
+        description: 'Type of device discovered (server, network, storage, etc.)',
+        required: false
+      },
+      {
+        name: 'discoveredData',
+        description: 'Raw discovery data from SNMP, network scans, etc.',
+        required: false
+      }
+    ]
+  },
+  'network_topology_analysis': {
+    name: 'network_topology_analysis',
+    description: 'Analyzes network discovery data to identify topology patterns and infrastructure relationships',
+    arguments: [
+      {
+        name: 'networkData',
+        description: 'Network discovery data (SNMP, ping, traceroute results)',
+        required: true
+      },
+      {
+        name: 'subnet',
+        description: 'Network subnet being analyzed',
+        required: false
+      }
+    ]
+  },
+  'infrastructure_health_assessment': {
+    name: 'infrastructure_health_assessment',
+    description: 'Evaluates infrastructure health metrics and provides operational recommendations',
+    arguments: [
+      {
+        name: 'healthData',
+        description: 'Infrastructure health metrics (CPU, memory, disk, network)',
+        required: true
+      },
+      {
+        name: 'systemType',
+        description: 'Type of system (server, network device, storage)',
+        required: false
+      }
+    ]
+  },
+  'compliance_gap_analysis': {
+    name: 'compliance_gap_analysis',
+    description: 'Identifies compliance gaps in infrastructure configuration and security',
+    arguments: [
+      {
+        name: 'configData',
+        description: 'Infrastructure configuration data',
+        required: true
+      },
+      {
+        name: 'complianceFramework',
+        description: 'Compliance framework (SOX, PCI-DSS, HIPAA, etc.)',
+        required: false
+      }
+    ]
+  },
+  'incident_analysis_guidance': {
+    name: 'incident_analysis_guidance',
+    description: 'Provides structured analysis framework for infrastructure incidents and outages',
+    arguments: [
+      {
+        name: 'incidentData',
+        description: 'Incident details, symptoms, and initial findings',
+        required: true
+      },
+      {
+        name: 'severity',
+        description: 'Incident severity level',
+        required: false
+      }
+    ]
+  }
+};
 
-  // 1. CMDB CI Classification Prompt
-  server.prompt(
-    'cmdb_ci_classification',
-    'Provides guidance for classifying Configuration Items (CIs) in the CMDB according to ITIL v4 standards',
-    {
-      deviceType: z.string().optional().describe('Type of device discovered (server, network, storage, etc.)'),
-      discoveredData: z.string().optional().describe('Raw discovery data from SNMP, network scans, etc.')
-    },
-    async ({ deviceType, discoveredData }) => {
+function generatePromptResponse(promptName, args) {
+  switch (promptName) {
+    case 'cmdb_ci_classification': {
+      const { deviceType, discoveredData } = args || {};
+      
       let promptText = `As an ITIL v4 expert, help classify Configuration Items (CIs) for a CMDB based on infrastructure discovery data.
 
 CMDB CI Classification Standards:
@@ -56,17 +131,10 @@ Discovery Context:`;
         ]
       };
     }
-  );
 
-  // 2. Network Topology Analysis Prompt
-  server.prompt(
-    'network_topology_analysis',
-    'Analyzes network discovery data to identify topology patterns and infrastructure relationships',
-    {
-      networkData: z.string().describe('Network discovery data (SNMP, ping, traceroute results)'),
-      subnet: z.string().optional().describe('Network subnet being analyzed')
-    },
-    async ({ networkData, subnet }) => {
+    case 'network_topology_analysis': {
+      const { networkData, subnet } = args || {};
+      
       let promptText = `As a network infrastructure expert, analyze the following network discovery data to identify topology patterns and device relationships.
 
 Network Analysis Framework:
@@ -77,7 +145,7 @@ Network Analysis Framework:
 5. Security Boundaries: Firewalls, ACLs, Network boundaries
 
 Discovery Data:
-${networkData}`;
+${networkData || 'No network data provided'}`;
 
       if (subnet) {
         promptText += `\nSubnet Context: ${subnet}`;
@@ -104,17 +172,10 @@ ${networkData}`;
         ]
       };
     }
-  );
 
-  // 3. Infrastructure Health Assessment Prompt
-  server.prompt(
-    'infrastructure_health_assessment',
-    'Evaluates infrastructure health metrics and provides operational recommendations',
-    {
-      healthData: z.string().describe('Infrastructure health metrics (CPU, memory, disk, network)'),
-      systemType: z.string().optional().describe('Type of system (server, network device, storage)')
-    },
-    async ({ healthData, systemType }) => {
+    case 'infrastructure_health_assessment': {
+      const { healthData, systemType } = args || {};
+      
       let promptText = `As an infrastructure monitoring expert, assess the following health metrics and provide operational recommendations.
 
 Health Assessment Framework:
@@ -125,7 +186,7 @@ Health Assessment Framework:
 5. Maintenance Windows: Optimal timing, Impact analysis
 
 Health Metrics:
-${healthData}`;
+${healthData || 'No health data provided'}`;
 
       if (systemType) {
         promptText += `\nSystem Type: ${systemType}`;
@@ -152,17 +213,10 @@ ${healthData}`;
         ]
       };
     }
-  );
 
-  // 4. Compliance Gap Analysis Prompt
-  server.prompt(
-    'compliance_gap_analysis',
-    'Identifies compliance gaps in infrastructure configuration and security',
-    {
-      configData: z.string().describe('Infrastructure configuration data'),
-      complianceFramework: z.string().optional().describe('Compliance framework (SOX, PCI-DSS, HIPAA, etc.)')
-    },
-    async ({ configData, complianceFramework }) => {
+    case 'compliance_gap_analysis': {
+      const { configData, complianceFramework } = args || {};
+      
       let promptText = `As a compliance and security expert, analyze the infrastructure configuration for compliance gaps and security vulnerabilities.
 
 Compliance Assessment Framework:
@@ -173,7 +227,7 @@ Compliance Assessment Framework:
 5. Change Management: Approval processes, Documentation, Testing
 
 Configuration Data:
-${configData}`;
+${configData || 'No configuration data provided'}`;
 
       if (complianceFramework) {
         promptText += `\nCompliance Framework: ${complianceFramework}`;
@@ -200,17 +254,10 @@ ${configData}`;
         ]
       };
     }
-  );
 
-  // 5. Incident Analysis Guidance Prompt
-  server.prompt(
-    'incident_analysis_guidance',
-    'Provides structured analysis framework for infrastructure incidents and outages',
-    {
-      incidentData: z.string().describe('Incident details, symptoms, and initial findings'),
-      severity: z.string().optional().describe('Incident severity level')
-    },
-    async ({ incidentData, severity }) => {
+    case 'incident_analysis_guidance': {
+      const { incidentData, severity } = args || {};
+      
       let promptText = `As an incident response expert, provide structured analysis guidance for the following infrastructure incident.
 
 Incident Analysis Framework:
@@ -221,7 +268,7 @@ Incident Analysis Framework:
 5. Prevention: Lessons learned, Process improvements, Monitoring enhancements
 
 Incident Details:
-${incidentData}`;
+${incidentData || 'No incident data provided'}`;
 
       if (severity) {
         promptText += `\nSeverity Level: ${severity}`;
@@ -248,11 +295,46 @@ ${incidentData}`;
         ]
       };
     }
-  );
 
-  console.log('[MCP] Successfully registered 5 infrastructure analysis prompts');
+    default:
+      throw new Error(`Prompt not found: ${promptName}`);
+  }
+}
+
+function registerPrompts(server) {
+  console.log('[PROMPTS] Registering infrastructure analysis prompts...');
+
+  // List available prompts
+  server.setRequestHandler(ListPromptsRequestSchema, async () => {
+    console.log('[PROMPTS] Listing prompts - found', Object.keys(PROMPTS).length, 'prompts');
+    return {
+      prompts: Object.values(PROMPTS)
+    };
+  });
+
+  // Get specific prompt
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    console.log('[PROMPTS] Getting prompt:', request.params.name);
+    const prompt = PROMPTS[request.params.name];
+    if (!prompt) {
+      throw new Error(`Prompt not found: ${request.params.name}`);
+    }
+
+    try {
+      const response = generatePromptResponse(request.params.name, request.params.arguments);
+      console.log('[PROMPTS] Generated prompt response for:', request.params.name);
+      return response;
+    } catch (error) {
+      console.error('[PROMPTS] Error generating prompt response:', error);
+      throw error;
+    }
+  });
+
+  console.log(`[PROMPTS] Successfully registered ${Object.keys(PROMPTS).length} infrastructure analysis prompts`);
 }
 
 module.exports = {
-  registerPrompts
+  registerPrompts,
+  PROMPTS,
+  generatePromptResponse
 };
