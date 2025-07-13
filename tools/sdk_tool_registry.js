@@ -10,28 +10,8 @@ const { registerMemoryTools, initialize: initializeMemoryTools } = require('./me
 const { registerNmapTools } = require('./nmap_tools_sdk');
 const { registerProxmoxTools } = require('./proxmox_tools_sdk');
 const { registerSnmpTools } = require('./snmp_tools_sdk');
-const { getNagiosTools, getNagiosResources } = require('./nagios_tools_sdk');
 const { getCredentialTools, getCredentialResources } = require('./credentials_tools_sdk');
 const { registerAllResources } = require('./resource_registry');
-
-/**
- * Register Nagios tools with the server
- * @param {McpServer} server - The MCP server instance
- */
-function registerNagiosTools(server) {
-  try {
-    const nagiosTools = getNagiosTools();
-    for (const tool of nagiosTools) {
-      // Extract the shape from the Zod schema for MCP SDK compatibility
-      const inputShape = tool.inputSchema.shape || tool.inputSchema;
-      server.tool(tool.name, tool.description, inputShape, tool.handler);
-    }
-    console.log(`[MCP SDK] Registered ${nagiosTools.length} Nagios tools`);
-  } catch (error) {
-    console.error(`[MCP SDK] Error registering Nagios tools: ${error.message}`);
-    // Don't re-throw to allow other tools to register
-  }
-}
 
 /**
  * Register credential management tools with the server  
@@ -79,9 +59,6 @@ async function registerAllTools(server, options = {}) {
     // Register SNMP tools (converted to SDK)
     registerSnmpTools(server);
     
-    // Register Nagios tools/resources
-    registerNagiosTools(server);
-    
     // Register credential management tools/resources
     registerCredentialTools(server);
     
@@ -104,13 +81,12 @@ async function registerAllTools(server, options = {}) {
 function getToolCounts() {  
   return {
     network: 8,      // ✅ Converted
-    memory: 4,       // ✅ Converted
+    memory: 8,       // ✅ Converted + Enhanced with persistent storage (was 4, now 8)
     nmap: 5,         // ✅ Converted
-    proxmox: 13,     // ✅ Converted
+    proxmox: 10,     // ✅ Converted (removed 3 credential management tools)
     snmp: 12,        // ✅ Converted
-    nagios: 6,       // ✅ Added - Nagios XI tools
     credentials: 5,  // ✅ Added - Credential management tools
-    total: 53        // Updated total
+    total: 48        // Updated total (54 - 6 Nagios tools)
   };
 }
 

@@ -12,7 +12,7 @@ Required:
   --id        Credential ID to remove
 
 Examples:
-  node remove_credential.js --id nagios1-creds
+  node remove_credential.js --id proxmox1-creds
   node remove_credential.js --id db-admin
 `);
 }

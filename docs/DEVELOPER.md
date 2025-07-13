@@ -5,8 +5,9 @@
 **MCP Open Discovery v2.0** represents a mature, production-validated infrastructure discovery platform built on the official MCP SDK with **91% tool success rate** and comprehensive enterprise features.
 
 ### **🎯 Architecture Achievements**
+
 - **✅ 53 Production Tools** - All using official MCP SDK with Zod schemas
-- **✅ Enterprise Security** - AES-256 encrypted credential management  
+- **✅ Enterprise Security** - AES-256 encrypted credential management
 - **✅ Multi-Transport Support** - HTTP, stdio, and WebSocket ready
 - **✅ In-Memory CMDB** - ITIL v4 compliant configuration database
 - **✅ Production Monitoring** - Health checks, metrics, and audit trails
@@ -28,7 +29,7 @@ MCP Open Discovery v2.0 uses the **official Model Context Protocol SDK** with a 
 ### **SDK Tool Modules** (All Production Ready)
 
 - **🌐 Network Tools** (`tools/network_tools_sdk.js`) - 8 tools, 87.5% success rate
-- **📊 Memory CMDB** (`tools/memory_tools_sdk.js`) - 4 tools, 100% success rate  
+- **📊 Memory CMDB** (`tools/memory_tools_sdk.js`) - 4 tools, 100% success rate
 - **🔍 NMAP Scanning** (`tools/nmap_tools_sdk.js`) - 5 tools, 60% success rate
 - **🏗️ Proxmox Integration** (`tools/proxmox_tools_sdk.js`) - 13 tools, 100% success rate
 - **📡 SNMP Discovery** (`tools/snmp_tools_sdk.js`) - 12 tools, 83.3% success rate
@@ -478,32 +479,24 @@ const process = spawn(command, args, {
 7. **Comprehensive testing**: Test all functionality and edge cases
 8. **Modular design**: Keep modules focused and independent
 
-## Nagios XI Integration for Developers
-
-- Nagios tools/resources are registered in `tools/sdk_tool_registry.js` via `getNagiosTools` and `getNagiosResources`.
-- Add new Nagios tools/resources in `tools/nagios_tools_sdk.js` using Zod schemas and MCP-compliant output.
-- Use the generic `tools/credentials_manager.js` for all credential storage (Nagios, Proxmox, etc.).
-- Reference credentials by `credentialId` in config and tool/resource calls.
-- To support new credential types, extend the credentials manager and update documentation.
-
 ## Credential Manager Usage
 
 - Add a credential:
   ```js
   const { addCredential } = require("./tools/credentials_manager");
-  addCredential("nagios1-creds", "nagios", {
+  addCredential("proxmox1-creds", "password", {
     username: "apiuser",
-    apiKey: "your-api-key",
-    url: "http://your-nagios-xi-instance",
+    password: "your-password",
+    url: "https://your-proxmox-instance:8006",
   });
   ```
 - List credentials:
   ```js
   const { listCredentials } = require("./tools/credentials_manager");
-  console.log(listCredentials("nagios"));
+  console.log(listCredentials("password"));
   ```
 - Remove a credential:
   ```js
   const { removeCredential } = require("./tools/credentials_manager");
-  removeCredential("nagios1-creds");
+  removeCredential("proxmox1-creds");
   ```

@@ -1,22 +1,91 @@
 /**
  * Memory Tools Module for MCP Open Discovery - SDK Compatible
  * 
- * This module provides tools for interacting with the in-memory CMDB
+ * This module provides tools for interacting with the persistent encrypted CMDB
  * using the official MCP SDK patterns with Zod schemas.
  */
 
 const { z } = require('zod');
+const { 
+  loadMemoryData, 
+  saveMemoryData, 
+  clearMemoryData, 
+  rotateMemoryKey, 
+  getMemoryStats,
+  auditLog 
+} = require('./memory_persistence');
 
 // Reference to the in-memory CI store
 let ciMemory = {};
 
+// Auto-save configuration
+const AUTO_SAVE_ENABLED = process.env.MEMORY_AUTO_SAVE !== 'false';
+const AUTO_SAVE_INTERVAL = parseInt(process.env.MEMORY_AUTO_SAVE_INTERVAL) || 30000; // 30 seconds
+let autoSaveTimer = null;
+
 /**
- * Initialize the memory tools module
- * @param {Object} memoryStore - Reference to the server's memory store
+ * Initialize the memory tools module with persistent storage
+ * @param {Object} memoryStore - Reference to the server's memory store (optional, will load from disk)
  */
 function initialize(memoryStore) {
-  ciMemory = memoryStore || {};
-  console.log('[MCP SDK] Memory tools initialized');
+  try {
+    // Load from persistent storage first
+    const persistentData = loadMemoryData();
+    
+    // Merge with any provided memory store, with persistent data taking precedence
+    ciMemory = { ...memoryStore, ...persistentData };
+    
+    console.log(`[MCP SDK] Memory tools initialized with ${Object.keys(ciMemory).length} CIs from persistent storage`);
+    
+    // Start auto-save if enabled
+    if (AUTO_SAVE_ENABLED) {
+      startAutoSave();
+    }
+    
+    auditLog('initialize', `Memory initialized with ${Object.keys(ciMemory).length} CIs`);
+  } catch (error) {
+    console.error('[MCP SDK] Memory initialization failed:', error.message);
+    ciMemory = memoryStore || {};
+    auditLog('initialize_error', `Memory initialization failed: ${error.message}`);
+  }
+}
+
+/**
+ * Start automatic saving of memory data
+ */
+function startAutoSave() {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+  }
+  
+  autoSaveTimer = setInterval(() => {
+    try {
+      saveMemoryData(ciMemory);
+      console.log(`[Memory Auto-Save] Saved ${Object.keys(ciMemory).length} CIs to persistent storage`);
+    } catch (error) {
+      console.error('[Memory Auto-Save] Failed:', error.message);
+    }
+  }, AUTO_SAVE_INTERVAL);
+  
+  console.log(`[MCP SDK] Auto-save enabled with ${AUTO_SAVE_INTERVAL}ms interval`);
+}
+
+/**
+ * Stop automatic saving
+ */
+function stopAutoSave() {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = null;
+    console.log('[MCP SDK] Auto-save disabled');
+  }
+}
+
+/**
+ * Manually trigger a save to persistent storage
+ */
+function triggerSave() {
+  return saveMemoryData(ciMemory);
 }
 
 /**
@@ -79,11 +148,14 @@ function registerMemoryTools(server) {
       try {
         ciMemory[key] = value;
         
+        // Trigger save to persistent storage
+        const saveSuccess = triggerSave();
+        
         return {
           content: [
             {
               type: "text", 
-              text: `Successfully stored CI with key: ${key}\nStored data: ${JSON.stringify(value, null, 2)}`
+              text: `Successfully stored CI with key: ${key}\nSaved to persistent storage: ${saveSuccess ? 'Yes' : 'Failed'}\nStored data: ${JSON.stringify(value, null, 2)}`
             }
           ]
         };
@@ -111,15 +183,17 @@ function registerMemoryTools(server) {
     },
     async ({ key, value }) => {
       try {
-        const existing = key in ciMemory ? ciMemory[key] : {};
-        const merged = mergeCI(existing, value);
-        ciMemory[key] = merged;
+        const existing = ciMemory[key] || {};
+        ciMemory[key] = mergeCI(existing, value);
+        
+        // Trigger save to persistent storage
+        const saveSuccess = triggerSave();
         
         return {
           content: [
             {
               type: "text",
-              text: `Successfully merged CI with key: ${key}\nMerged data: ${JSON.stringify(merged, null, 2)}`
+              text: `Successfully merged data into CI with key: ${key}\nSaved to persistent storage: ${saveSuccess ? 'Yes' : 'Failed'}\nMerged data: ${JSON.stringify(ciMemory[key], null, 2)}`
             }
           ]
         };
@@ -146,39 +220,29 @@ function registerMemoryTools(server) {
     },
     async ({ pattern }) => {
       try {
-        let results = [];
+        let matchingCIs = {};
         
-        if (pattern && typeof pattern === 'string') {
-          // Convert glob pattern to RegExp
-          const regexPattern = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
-          const regex = new RegExp('^' + regexPattern + '$');
+        if (pattern) {
+          // Convert glob pattern to regex
+          const regex = new RegExp(pattern.replace(/\*/g, '.*'));
           
-          for (const key in ciMemory) {
+          for (const [key, value] of Object.entries(ciMemory)) {
             if (regex.test(key)) {
-              results.push({ key, ci: ciMemory[key] });
+              matchingCIs[key] = value;
             }
           }
         } else {
-          // Default: find incomplete CIs (missing type or os)
-          for (const key in ciMemory) {
-            const ci = ciMemory[key];
-            if (!ci.type || !ci.os) {
-              results.push({ key, ci });
-            }
-          }
+          // Return all CIs if no pattern provided
+          matchingCIs = { ...ciMemory };
         }
         
-        const resultText = results.length > 0 
-          ? `Found ${results.length} matching CIs:\n\n${results.map(r => `Key: ${r.key}\nData: ${JSON.stringify(r.ci, null, 2)}`).join('\n\n---\n\n')}`
-          : pattern 
-            ? `No CIs found matching pattern: ${pattern}`
-            : 'No incomplete CIs found';
-            
+        const count = Object.keys(matchingCIs).length;
+        
         return {
           content: [
             {
               type: "text",
-              text: resultText
+              text: `Found ${count} matching CIs${pattern ? ` for pattern: ${pattern}` : ''}\n\n${JSON.stringify(matchingCIs, null, 2)}`
             }
           ]
         };
@@ -187,7 +251,7 @@ function registerMemoryTools(server) {
           content: [
             {
               type: "text",
-              text: `Error querying CIs: ${error.message}`
+              text: `Error querying memory: ${error.message}`
             }
           ],
           isError: true
@@ -196,7 +260,167 @@ function registerMemoryTools(server) {
     }
   );
 
-  console.log('[MCP SDK] Registered 4 memory tools');
+  // Memory Save tool (manual save trigger)
+  server.tool(
+    'memory_save',
+    'Manually save all memory data to encrypted persistent storage',
+    {},
+    async () => {
+      try {
+        const saveSuccess = triggerSave();
+        const ciCount = Object.keys(ciMemory).length;
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: saveSuccess 
+                ? `Successfully saved ${ciCount} CIs to encrypted persistent storage`
+                : `Failed to save ${ciCount} CIs to persistent storage`
+            }
+          ],
+          isError: !saveSuccess
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error saving memory: ${error.message}`
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Memory Clear tool
+  server.tool(
+    'memory_clear',
+    'Clear all memory data (both in-memory and persistent storage)',
+    {},
+    async () => {
+      try {
+        const ciCount = Object.keys(ciMemory).length;
+        
+        // Clear in-memory data
+        ciMemory = {};
+        
+        // Clear persistent storage
+        const clearSuccess = clearMemoryData();
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: clearSuccess 
+                ? `Successfully cleared ${ciCount} CIs from memory and persistent storage`
+                : `Cleared ${ciCount} CIs from memory, but failed to clear persistent storage`
+            }
+          ],
+          isError: !clearSuccess
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error clearing memory: ${error.message}`
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Memory Stats tool
+  server.tool(
+    'memory_stats',
+    'Get statistics about memory usage and persistent storage',
+    {},
+    async () => {
+      try {
+        const stats = getMemoryStats();
+        const inMemoryCount = Object.keys(ciMemory).length;
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Memory Statistics:
+              
+In-Memory CIs: ${inMemoryCount}
+Persistent Store Exists: ${stats.storeExists}
+Encryption Key Exists: ${stats.keyExists}
+Store Size: ${stats.storeSize} bytes
+Last Modified: ${stats.lastModified}
+Audit Log Entries: ${stats.auditEntries}
+Auto-Save Enabled: ${AUTO_SAVE_ENABLED}
+Auto-Save Interval: ${AUTO_SAVE_INTERVAL}ms`
+            }
+          ]
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error getting memory stats: ${error.message}`
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Memory Key Rotation tool
+  server.tool(
+    'memory_rotate_key',
+    'Rotate the encryption key and re-encrypt all stored memory data',
+    {
+      newKey: z.string().optional().describe('New 32-byte key (base64). If not provided, generates a new random key.')
+    },
+    async ({ newKey }) => {
+      try {
+        let keyBuffer = null;
+        if (newKey) {
+          keyBuffer = Buffer.from(newKey, 'base64');
+          if (keyBuffer.length !== 32) {
+            throw new Error('New key must be exactly 32 bytes when base64 decoded');
+          }
+        }
+        
+        const rotateSuccess = rotateMemoryKey(keyBuffer);
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: rotateSuccess 
+                ? 'Successfully rotated memory encryption key and re-encrypted all data'
+                : 'Failed to rotate memory encryption key'
+            }
+          ],
+          isError: !rotateSuccess
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error rotating memory encryption key: ${error.message}`
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+
+  console.log('[MCP SDK] Registered 8 memory tools');
 }
 
 /**
@@ -207,9 +431,24 @@ function getMemoryStore() {
   return ciMemory;
 }
 
+/**
+ * Cleanup function to stop auto-save and save final state
+ */
+function cleanup() {
+  stopAutoSave();
+  if (Object.keys(ciMemory).length > 0) {
+    console.log('[MCP SDK] Saving final memory state before shutdown...');
+    triggerSave();
+  }
+}
+
 module.exports = {
   initialize,
   registerMemoryTools,
   mergeCI,
-  getMemoryStore
+  getMemoryStore,
+  cleanup,
+  triggerSave,
+  startAutoSave,
+  stopAutoSave
 };

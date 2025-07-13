@@ -15,9 +15,14 @@ docker-compose build
 Write-Host "🚀 Starting containers..." -ForegroundColor Yellow
 docker-compose up -d
 
+# Pause to ensure services are up
+Write-Host "⏳ Waiting for services to start..." -ForegroundColor Yellow
+Start-Sleep -Seconds 10
+
 # Show running containers
 Write-Host "📊 Running containers:" -ForegroundColor Green
 docker-compose ps
 
 Write-Host "✅ Rebuild and redeploy complete!" -ForegroundColor Cyan
 Write-Host "To view logs, use: docker-compose logs -f" -ForegroundColor Gray
+docker-compose logs -f

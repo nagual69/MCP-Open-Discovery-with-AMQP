@@ -4,7 +4,7 @@
 
 **MCP Open Discovery v2.0** has been extensively tested and validated for production use:
 
-- **✅ 91% Tool Success Rate** - 48 of 53 tools working perfectly
+- **✅ 90% Tool Success Rate** - 45 of 50 tools working perfectly
 - **✅ Production Validated** - Tested against live 6-node Proxmox cluster
 - **✅ Zero Critical Failures** - All core infrastructure tools operational
 - **✅ Enterprise Ready** - Complete credential management and audit trails
@@ -28,7 +28,7 @@ docker-compose up -d --build
 
 # Verify production deployment
 curl http://localhost:3000/health
-# Expected: {"status":"healthy","tools":53,"resources":5}
+# Expected: {"status":"healthy","tools":50,"resources":5}
 ```
 
 ### Prerequisites
@@ -181,7 +181,7 @@ npx @modelcontextprotocol/inspector http://localhost:3000/mcp
 # - Network Tools (8)
 # - Memory Tools (4)
 # - NMAP Tools (5)
-# - Proxmox Tools (13)
+# - Proxmox Tools (10)
 # - SNMP Tools (12)
 ```
 

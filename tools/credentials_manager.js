@@ -1,6 +1,6 @@
 // tools/credentials_manager.js
 // Generic encrypted credentials manager for MCP Open Discovery
-// Supports multiple credential types (Nagios, Proxmox, etc.)
+// Supports multiple credential types (Proxmox, SNMP, etc.)
 
 const fs = require('fs');
 const path = require('path');

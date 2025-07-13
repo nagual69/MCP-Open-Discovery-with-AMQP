@@ -50,12 +50,12 @@ function getProxmoxCredsById(id) {
       const url = new URL(credential.url);
       hostname = url.hostname;
       port = parseInt(url.port) || 8006;
-    } else if (credential.hostname) {
-      // Fallback to hostname field if URL not available
-      hostname = credential.hostname;
-      port = credential.port || 8006;
+    } else if (credential.customField1) {
+      // Check if hostname is stored in customField1 (backward compatibility)
+      hostname = credential.customField1;
+      port = credential.customField2 ? parseInt(credential.customField2) : 8006;
     } else {
-      throw new Error(`Credential '${id}' missing hostname/URL information`);
+      throw new Error(`Credential '${id}' missing hostname/URL information. Use credentials_add with 'url' field for Proxmox credentials.`);
     }
     
     return {
@@ -63,8 +63,10 @@ function getProxmoxCredsById(id) {
       port: port,
       username: credential.username,
       password: credential.password,
-      realm: credential.realm || 'pam',
-      verify_ssl: credential.verify_ssl !== false
+      realm: credential.notes && credential.notes.includes('realm:') 
+        ? credential.notes.split('realm:')[1].split(',')[0].trim() 
+        : 'pam',
+      verify_ssl: credential.notes && credential.notes.includes('verify_ssl:false') ? false : true
     };
   } catch (error) {
     throw new Error(`Failed to get Proxmox credential '${id}': ${error.message}`);
@@ -82,11 +84,13 @@ async function proxmoxApiRequest(endpoint, method = 'GET', data = null, credsId 
     const allCredentials = credentialsManager.listCredentials();
     const proxmoxCredentials = allCredentials.filter(c => 
       c.type === 'password' && 
-      (c.url || c.hostname || (c.id && c.id.toLowerCase().includes('proxmox')))
+      (c.url && c.url.includes(':8006')) || 
+      (c.notes && c.notes.toLowerCase().includes('proxmox')) ||
+      (c.id && c.id.toLowerCase().includes('proxmox'))
     );
     
     if (proxmoxCredentials.length === 0) {
-      throw new Error('No Proxmox credentials found. Use credentials_add to add Proxmox credentials with type="password".');
+      throw new Error('No Proxmox credentials found. Use credentials_add with type="password" and url="https://hostname:8006" to add Proxmox credentials.');
     }
     
     creds = getProxmoxCredsById(proxmoxCredentials[0].id);
@@ -435,184 +439,28 @@ function registerProxmoxTools(server) {
     }
   );
 
-  // Proxmox Credentials Add - Using new credential system
-  server.tool(
-    'proxmox_creds_add',
-    'Add a new Proxmox credential using the enhanced credential system.',
-    {
-      id: z.string().describe('Credential ID (unique, e.g. proxmox1)'),
-      hostname: z.string().describe('Proxmox API hostname (e.g. proxmox.example.com or IP)'),
-      port: z.number().default(8006).describe('Proxmox API port (default: 8006)'),
-      username: z.string().describe('Username for authentication'),
-      password: z.string().describe('Password for authentication'),
-      realm: z.string().default('pam').describe('Authentication realm (default: pam)'),
-      verify_ssl: z.boolean().default(true).describe('Verify SSL certificate')
-    },
-    async ({ id, hostname, port, username, password, realm, verify_ssl }) => {
-      try {
-        // Validate required inputs
-        if (!id || !hostname || !username || !password) {
-          throw new Error('id, hostname, username, and password are required');
-        }
-        
-        // Validate host URL format and normalize
-        let hostUrl = hostname;
-        if (!hostUrl.match(/^https?:\/\//)) {
-          hostUrl = `https://${hostUrl}`;
-        }
-        
-        const parsedUrl = new URL(hostUrl);
-        const normalizedHostname = parsedUrl.hostname;
-        const finalPort = port || 8006;
-        const finalUrl = `https://${normalizedHostname}:${finalPort}`;
-        
-        // Test the credentials by attempting to get a ticket
-        const testCreds = {
-          hostname: normalizedHostname,
-          port: finalPort,
-          username,
-          password,
-          realm: realm || 'pam',
-          verify_ssl: verify_ssl !== false
-        };
-        
-        try {
-          await fetchProxmoxTicket(testCreds);
-        } catch (error) {
-          throw new Error(`Credential validation failed: ${error.message}`);
-        }
-        
-        // Prepare credential data for new system
-        const credentialData = {
-          username: username,
-          password: password, // Will be encrypted by the new system
-          url: finalUrl,
-          hostname: normalizedHostname,
-          port: finalPort,
-          realm: realm || 'pam',
-          verify_ssl: verify_ssl !== false,
-          notes: `Proxmox credential for ${normalizedHostname}:${finalPort}`
-        };
-        
-        // Add using new credential system
-        credentialsManager.addCredential(id, 'password', credentialData);
-        
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Proxmox credential '${id}' added successfully using enhanced credential system for ${normalizedHostname}:${finalPort}`
-            }
-          ]
-        };
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
+  // Note: Proxmox credential management is now handled by the unified credential system.
+  // Use the following tools for credential management:
+  // - credentials_add (with type="password") to add Proxmox credentials
+  // - credentials_list (with type="password" filter) to list Proxmox credentials  
+  // - credentials_remove to remove Proxmox credentials
+  //
+  // Example for adding Proxmox credentials:
+  // credentials_add({
+  //   id: "proxmox1", 
+  //   type: "password",
+  //   username: "root",
+  //   password: "secret",
+  //   url: "https://pve.example.com:8006",
+  //   notes: "Proxmox VE cluster primary, realm:pam, verify_ssl:true"
+  // })
+  //
+  // The system will auto-detect Proxmox credentials by:
+  // 1. URL containing port 8006
+  // 2. Notes containing "proxmox" 
+  // 3. ID containing "proxmox"
 
-  // Proxmox Credentials List - Using new credential system
-  server.tool(
-    'proxmox_creds_list',
-    'Lists stored Proxmox API credentials from enhanced credential system.',
-    {},
-    async () => {
-      try {
-        // Get all password-type credentials that might be Proxmox credentials
-        const allCredentials = credentialsManager.listCredentials();
-        const proxmoxCredentials = allCredentials.filter(c => 
-          c.type === 'password' && 
-          (c.url || c.hostname || (c.id && c.id.toLowerCase().includes('proxmox')))
-        );
-        
-        if (proxmoxCredentials.length === 0) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: "No Proxmox credentials stored. Use credentials_add with type='password' to add Proxmox credentials."
-              }
-            ]
-          };
-        }
-        
-        // Get detailed information for each credential
-        const detailedCredentials = proxmoxCredentials.map(credMeta => {
-          try {
-            const cred = credentialsManager.getCredential(credMeta.id);
-            let hostname, port;
-            
-            if (cred.url) {
-              const url = new URL(cred.url);
-              hostname = url.hostname;
-              port = parseInt(url.port) || 8006;
-            } else {
-              hostname = cred.hostname || 'unknown';
-              port = cred.port || 8006;
-            }
-            
-            return {
-              id: credMeta.id,
-              hostname: hostname,
-              port: port,
-              username: cred.username,
-              realm: cred.realm || 'pam',
-              verify_ssl: cred.verify_ssl !== false,
-              url: cred.url || `https://${hostname}:${port}`,
-              created: cred.created || 'unknown'
-            };
-          } catch (error) {
-            return {
-              id: credMeta.id,
-              error: `Failed to load: ${error.message}`
-            };
-          }
-        });
-        
-        return formatProxmoxResult(detailedCredentials, 'Stored Proxmox Credentials (from enhanced credential system):');
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox Credentials Remove - Using new credential system
-  server.tool(
-    'proxmox_creds_remove',
-    'Removes stored Proxmox API credentials from enhanced credential system.',
-    {
-      id: z.string().describe('Credential ID to remove')
-    },
-    async ({ id }) => {
-      try {
-        // Verify the credential exists and is a Proxmox credential
-        try {
-          const credential = credentialsManager.getCredential(id);
-          if (credential.type !== 'password') {
-            throw new Error(`Credential '${id}' is not a password-type credential`);
-          }
-        } catch (error) {
-          throw new Error(`Credential ID '${id}' not found`);
-        }
-        
-        // Remove using new credential system
-        credentialsManager.removeCredential(id);
-        
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Proxmox credential '${id}' removed successfully from enhanced credential system`
-            }
-          ]
-        };
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  console.log('[MCP SDK] Registered 13 Proxmox tools');
+  console.log('[MCP SDK] Registered 10 Proxmox tools');
 }
 
 module.exports = { registerProxmoxTools };

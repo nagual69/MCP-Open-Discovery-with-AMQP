@@ -2,7 +2,6 @@
 // MCP Resource Registry for MCP Open Discovery Server
 // Handles registration and management of MCP resources
 
-const { getNagiosResources } = require('./nagios_tools_sdk');
 const { getCredentialResources } = require('./credentials_tools_sdk');
 
 /**
@@ -15,11 +14,9 @@ async function registerAllResources(server) {
     console.log('[MCP SDK] Starting resource registration...');
     
     // Get all resources from modules
-    const nagiosResources = getNagiosResources();
     const credentialResources = getCredentialResources();
     
     const allResources = [
-      ...nagiosResources,
       ...credentialResources
     ];
     
@@ -34,15 +31,12 @@ async function registerAllResources(server) {
           }
           
           try {
-            // For testing/demo purposes, use mock credentials
-            // In production, these would come from the credential manager
-            const mockParams = {
-              uri: uri.href,
-              baseUrl: 'https://demo-nagios.example.com',
-              apiKey: 'demo-api-key-placeholder'
+            // For credential resources, provide appropriate context
+            const params = {
+              uri: uri.href
             };
             
-            const result = await resource.getContent(mockParams);
+            const result = await resource.getContent(params);
             
             // Ensure each content item has the required uri field
             const contents = (result.content || []).map(item => ({
@@ -78,9 +72,8 @@ async function registerAllResources(server) {
  */
 function getResourceCounts() {
   return {
-    nagios: 4,      // Event log, inventory, host config, service config
     credentials: 1, // Audit log
-    total: 5
+    total: 1
   };
 }
 
