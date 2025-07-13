@@ -13,18 +13,7 @@ const express = require('express');
 const { randomUUID } = require('node:crypto');
 const { registerAllTools, getToolCounts } = require('./tools/sdk_tool_registry');
 const { getResourceCounts } = require('./tools/resource_registry');
-const { registerPrompts } = require('./tools/prompts_sdk');
-
-// MCP Protocol Version Compliance
-const LATEST_PROTOCOL_VERSION = "2025-06-18";
-const DEFAULT_NEGOTIATED_PROTOCOL_VERSION = "2025-03-26";
-const SUPPORTED_PROTOCOL_VERSIONS = [
-  LATEST_PROTOCOL_VERSION,
-  "2025-03-26",
-  "2024-11-05",
-  "2024-10-07",
-];
-const JSONRPC_VERSION = "2.0";
+const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
 
 // Environment configuration with defaults
 const CONFIG = {
@@ -35,7 +24,10 @@ const CONFIG = {
   SECURITY_MODE: process.env.SECURITY_MODE || 'standard',
   HTTP_PORT: parseInt(process.env.HTTP_PORT) || 3000,
   // Smart default: HTTP in containers, stdio otherwise
-  TRANSPORT_MODE: process.env.TRANSPORT_MODE || (isRunningInContainer() ? 'http' : 'stdio')
+  TRANSPORT_MODE: process.env.TRANSPORT_MODE || (isRunningInContainer() ? 'http' : 'stdio'),
+  // OAuth 2.1 configuration
+  OAUTH_ENABLED: process.env.OAUTH_ENABLED === 'true' || false,
+  OAUTH_PROTECTED_ENDPOINTS: (process.env.OAUTH_PROTECTED_ENDPOINTS || '/mcp').split(',').map(p => p.trim())
 };
 
 /**
@@ -69,68 +61,6 @@ function log(level, message, data = null) {
   }
 }
 
-/**
- * Enhanced input validation for MCP compliance
- */
-function validateMCPRequest(request) {
-  // Basic JSON-RPC 2.0 validation
-  if (!request || typeof request !== 'object') {
-    throw new Error('Invalid request: must be an object');
-  }
-  
-  if (request.jsonrpc !== JSONRPC_VERSION) {
-    throw new Error(`Invalid JSON-RPC version: expected ${JSONRPC_VERSION}`);
-  }
-  
-  if (typeof request.method !== 'string') {
-    throw new Error('Invalid request: method must be a string');
-  }
-  
-  if (request.id !== undefined && typeof request.id !== 'string' && typeof request.id !== 'number') {
-    throw new Error('Invalid request: id must be string or number');
-  }
-  
-  return request;
-}
-
-/**
- * Protocol version negotiation
- */
-function negotiateProtocolVersion(requestedVersion) {
-  if (!requestedVersion) {
-    return DEFAULT_NEGOTIATED_PROTOCOL_VERSION;
-  }
-  
-  return SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion)
-    ? requestedVersion
-    : LATEST_PROTOCOL_VERSION;
-}
-
-/**
- * Enhanced HTTP header validation for MCP compliance
- */
-function validateMCPHeaders(req) {
-  const contentType = req.headers['content-type'];
-  const accept = req.headers['accept'];
-  
-  // Content-Type validation for POST requests
-  if (req.method === 'POST' && !contentType?.includes('application/json')) {
-    return {
-      valid: false,
-      error: 'Content-Type must be application/json for MCP requests'
-    };
-  }
-  
-  // Accept header validation for MCP compatibility
-  if (!accept?.includes('application/json') && !accept?.includes('text/event-stream') && !accept?.includes('*/*')) {
-    return {
-      valid: false,
-      error: 'Client must accept both application/json and text/event-stream'
-    };
-  }
-  
-  return { valid: true };
-}
 /**
  * Input sanitization for security
  */
@@ -201,11 +131,10 @@ async function createServer() {
     },
     {
       capabilities: {
-        tools: { listChanged: true },
-        resources: { listChanged: true },
+        tools: {},
+        resources: {},
         logging: {},
-        prompts: { listChanged: true },
-        completions: {}
+        prompts: {}
       }
     }
   );
@@ -222,8 +151,11 @@ async function createServer() {
 
   log('info', '[DEBUG] Starting prompt registration');
   try {
-    // Register prompts with proper MCP SDK handlers
-    registerPrompts(server);
+    // If registerAllPrompts is async, await it
+    const maybePromise = registerAllPrompts(server);
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      await maybePromise;
+    }
     log('info', '[DEBUG] Prompt registration complete');
   } catch (err) {
     console.error('[FATAL] Prompt registration failed:', JSON.stringify(err, null, 2));
@@ -244,9 +176,6 @@ async function createServer() {
         log('warn', 'Rate limit exceeded', { identifier, method: request.method });
         throw new Error('Rate limit exceeded. Please slow down your requests.');
       }
-
-      // Enhanced MCP request validation
-      validateMCPRequest(request);
 
       log('debug', `Request ${requestId}: ${request.method}`, {
         params: CONFIG.LOG_LEVEL === 'debug' ? request.params : undefined
@@ -315,6 +244,25 @@ async function startStdioServer() {
  * Start the server with HTTP transport
  */
 async function startHttpServer() {
+  log('debug', 'Starting HTTP server setup');
+  
+  // Import OAuth module here to avoid initialization order issues
+  let oauthMiddleware, protectedResourceMetadataHandler, OAUTH_CONFIG;
+  try {
+    const oauthModule = require('./tools/oauth_middleware_sdk');
+    oauthMiddleware = oauthModule.oauthMiddleware;
+    protectedResourceMetadataHandler = oauthModule.protectedResourceMetadataHandler;
+    OAUTH_CONFIG = oauthModule.OAUTH_CONFIG;
+    
+    log('debug', 'OAuth module loaded successfully', {
+      oauthEnabled: OAUTH_CONFIG.OAUTH_ENABLED,
+      realm: OAUTH_CONFIG.REALM
+    });
+  } catch (error) {
+    log('error', 'Failed to load OAuth module', { error: error.message });
+    throw error;
+  }
+
   const app = express();
   app.use(express.json({ limit: '10mb' }));
   
@@ -335,9 +283,55 @@ async function startHttpServer() {
       tools: toolCounts,
       resources: resourceCounts,
       uptime: process.uptime(),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      oauth: {
+        enabled: OAUTH_CONFIG.OAUTH_ENABLED,
+        realm: OAUTH_CONFIG.REALM,
+        supportedScopes: OAUTH_CONFIG.SUPPORTED_SCOPES
+      }
     });
   });
+
+  // OAuth 2.1 Protected Resource Metadata endpoint (RFC 9728)
+  log('debug', 'Registering OAuth protected resource metadata endpoint', {
+    handlerType: typeof protectedResourceMetadataHandler,
+    handlerExists: !!protectedResourceMetadataHandler
+  });
+  
+  if (protectedResourceMetadataHandler) {
+    const oauthPath = '/.well-known/oauth-protected-resource';
+    log('debug', 'Registering OAuth route', { path: oauthPath });
+    app.get(oauthPath, protectedResourceMetadataHandler);
+    
+    // Add a simple test endpoint to debug routing
+    app.get('/test-oauth', (req, res) => {
+      res.json({ test: 'oauth routing works', timestamp: new Date().toISOString() });
+    });
+    
+    // Alternative route without dots to test
+    app.get('/oauth-metadata', protectedResourceMetadataHandler);
+  } else {
+    log('error', 'protectedResourceMetadataHandler is undefined!');
+    // Fallback handler
+    app.get('/.well-known/oauth-protected-resource', (req, res) => {
+      res.status(500).json({ error: 'OAuth handler not available' });
+    });
+  }
+
+  // OAuth discovery endpoint (additional convenience endpoint)
+  app.get('/.well-known/oauth-authorization-server', (req, res) => {
+    if (!OAUTH_CONFIG.AUTHORIZATION_SERVER) {
+      return res.status(404).json({
+        error: 'not_found',
+        error_description: 'Authorization server not configured'
+      });
+    }
+    
+    // Redirect to the actual authorization server's discovery endpoint
+    res.redirect(302, `${OAUTH_CONFIG.AUTHORIZATION_SERVER}/.well-known/oauth-authorization-server`);
+  });
+  
+  log('debug', 'OAuth endpoints registered successfully');
 
   // Root endpoint - provide information about available MCP endpoints
   app.get('/', (req, res) => {
@@ -346,43 +340,49 @@ async function startHttpServer() {
       version: '2.0.0',
       endpoints: {
         health: '/health',
-        mcp: '/mcp'
+        mcp: '/mcp',
+        oauth_metadata: '/.well-known/oauth-protected-resource'
+      },
+      oauth: {
+        enabled: OAUTH_CONFIG.OAUTH_ENABLED,
+        realm: OAUTH_CONFIG.REALM,
+        supportedScopes: OAUTH_CONFIG.SUPPORTED_SCOPES,
+        authorizationServer: OAUTH_CONFIG.AUTHORIZATION_SERVER
       },
       note: 'Use /mcp endpoint for MCP communication',
       redirect: '/mcp'
     });
   });
 
-  // CORS and MCP header validation middleware
+  // CORS middleware for web clients
   app.use((req, res, next) => {
-    // CORS headers
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, last-event-id');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, last-event-id, Authorization');
     
     if (req.method === 'OPTIONS') {
       res.sendStatus(200);
       return;
     }
-    
-    // Enhanced MCP header validation for POST requests
-    if (req.method === 'POST' && req.path === '/mcp') {
-      const headerValidation = validateMCPHeaders(req);
-      if (!headerValidation.valid) {
-        res.status(406).json({
-          jsonrpc: JSONRPC_VERSION,
-          error: {
-            code: -32000,
-            message: `Not Acceptable: ${headerValidation.error}`,
-          },
-          id: req.body?.id || null,
-        });
-        return;
-      }
-    }
-    
     next();
   });
+
+  // OAuth 2.1 middleware for protected MCP endpoints
+  if (OAUTH_CONFIG.OAUTH_ENABLED) {
+    log('info', 'OAuth 2.1 authentication enabled', {
+      protectedEndpoints: CONFIG.OAUTH_PROTECTED_ENDPOINTS,
+      realm: OAUTH_CONFIG.REALM,
+      supportedScopes: OAUTH_CONFIG.SUPPORTED_SCOPES
+    });
+    
+    // Apply OAuth middleware to MCP endpoints
+    app.use('/mcp', oauthMiddleware({
+      requiredScope: 'mcp:read',
+      skipPaths: [] // Don't skip any paths under /mcp when OAuth is enabled
+    }));
+  } else {
+    log('info', 'OAuth 2.1 authentication disabled');
+  }
 
   // MCP POST endpoint
   app.post('/mcp', async (req, res) => {
@@ -430,7 +430,7 @@ async function startHttpServer() {
       } else {
         // Invalid request - no session ID or not initialization request
         res.status(400).json({
-          jsonrpc: JSONRPC_VERSION,
+          jsonrpc: '2.0',
           error: {
             code: -32000,
             message: 'Bad Request: No valid session ID provided or invalid request',
@@ -451,7 +451,7 @@ async function startHttpServer() {
       
       if (!res.headersSent) {
         res.status(500).json({
-          jsonrpc: JSONRPC_VERSION,
+          jsonrpc: '2.0',
           error: {
             code: -32603,
             message: 'Internal server error',
@@ -508,24 +508,35 @@ async function startHttpServer() {
   app.listen(CONFIG.HTTP_PORT, () => {
     const toolCounts = getToolCounts();
     const resourceCounts = getResourceCounts();
+    const promptCounts = getPromptCounts();
     log('info', 'MCP Open Discovery Server (SDK) started successfully', {
       version: '2.0.0',
       transport: 'http',
       port: CONFIG.HTTP_PORT,
       tools: toolCounts,
       resources: resourceCounts,
+      prompts: promptCounts,
       config: {
         maxConnections: CONFIG.MAX_CONNECTIONS,
         requestTimeout: CONFIG.REQUEST_TIMEOUT,
         rateLimiting: CONFIG.ENABLE_RATE_LIMITING,
         securityMode: CONFIG.SECURITY_MODE,
-        logLevel: CONFIG.LOG_LEVEL
+        logLevel: CONFIG.LOG_LEVEL,
+        oauth: {
+          enabled: OAUTH_CONFIG.OAUTH_ENABLED,
+          realm: OAUTH_CONFIG.REALM,
+          supportedScopes: OAUTH_CONFIG.SUPPORTED_SCOPES,
+          authorizationServer: OAUTH_CONFIG.AUTHORIZATION_SERVER
+        }
       }
     });
     
     log('info', `HTTP server listening on port ${CONFIG.HTTP_PORT}`);
     log('info', `Health endpoint: http://localhost:${CONFIG.HTTP_PORT}/health`);
     log('info', `MCP endpoint: http://localhost:${CONFIG.HTTP_PORT}/mcp`);
+    if (OAUTH_CONFIG.OAUTH_ENABLED) {
+      log('info', `OAuth metadata: http://localhost:${CONFIG.HTTP_PORT}/.well-known/oauth-protected-resource`);
+    }
   });
 
   // Handle server shutdown
@@ -603,4 +614,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { startServer, startStdioServer, startHttpServer, CONFIG };
+module.exports = { startServer, startStdioServer, startHttpServer, CONFIG, log };

@@ -1,103 +1,184 @@
 // tools/prompts_sdk.js
-// MCP Prompts registry for Infrastructure Discovery and CMDB Standards
+// MCP Prompts for Infrastructure Discovery and CMDB Standards
+const { 
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema 
+} = require('@modelcontextprotocol/sdk/types');
 
-/**
- * Get all available prompts for MCP registration
- * These are properly formatted MCP prompts, not tools with callbacks
- */
-function getPrompts() {
-  return [
-    {
-      name: 'cmdb_ci_classification',
-      title: 'CMDB CI Classification Standards',
-      description: 'Provides guidance for classifying Configuration Items (CIs) in the CMDB according to ITIL v4 standards',
-      arguments: [
-        {
-          name: 'deviceType',
-          description: 'Type of device discovered (server, network, storage, etc.)',
-          required: false
-        },
-        {
-          name: 'discoveredData',
-          description: 'Raw discovery data from SNMP, network scans, etc.',
-          required: false
+const PROMPTS = {
+  'cmdb_ci_classification': {
+    name: 'cmdb_ci_classification',
+    description: 'Provides guidance for classifying Configuration Items (CIs) in the CMDB according to ITIL v4 standards',
+    arguments: [
+      {
+        name: 'deviceType',
+        description: 'Type of device discovered (server, network, storage, etc.)',
+        required: false
+      },
+      {
+        name: 'discoveredData',
+        description: 'Raw discovery data from SNMP, network scans, etc.',
+        required: false
+      }
+    ]
+  },
+  'network_topology_analysis': {
+    name: 'network_topology_analysis',
+    description: 'Analyzes network discovery data to identify topology patterns and infrastructure relationships',
+    arguments: [
+      {
+        name: 'networkData',
+        description: 'Network discovery data (SNMP, ping, traceroute results)',
+        required: true
+      },
+      {
+        name: 'subnet',
+        description: 'Network subnet being analyzed',
+        required: false
+      }
+    ]
+  },
+  'infrastructure_health_assessment': {
+    name: 'infrastructure_health_assessment',
+    description: 'Evaluates infrastructure health metrics and provides operational recommendations',
+    arguments: [
+      {
+        name: 'healthData',
+        description: 'Infrastructure health metrics (CPU, memory, disk, network)',
+        required: true
+      },
+      {
+        name: 'systemType',
+        description: 'Type of system (server, network device, storage)',
+        required: false
+      }
+    ]
+  },
+  'compliance_gap_analysis': {
+    name: 'compliance_gap_analysis',
+    description: 'Identifies compliance gaps in infrastructure configuration and security',
+    arguments: [
+      {
+        name: 'configData',
+        description: 'Infrastructure configuration data',
+        required: true
+      },
+      {
+        name: 'complianceFramework',
+        description: 'Compliance framework (SOX, PCI-DSS, HIPAA, etc.)',
+        required: false
+      }
+    ]
+  },
+  'incident_analysis_guidance': {
+    name: 'incident_analysis_guidance',
+    description: 'Provides structured analysis framework for infrastructure incidents and outages',
+    arguments: [
+      {
+        name: 'incidentData',
+        description: 'Incident details, symptoms, and initial findings',
+        required: true
+      },
+      {
+        name: 'severity',
+        description: 'Incident severity level',
+        required: false
+      }
+    ]
+  }
+};
+
+function generatePromptResponse(promptName, args) {
+  switch (promptName) {
+    case 'cmdb_ci_classification': {
+      const { deviceType, discoveredData } = args || {};
+        let promptText = `As an ITIL v4 expert, help classify Configuration Items (CIs) for a CMDB based on infrastructure discovery data.
+
+CMDB CI Classification Standards:
+1. CI Types: Server, Network Device, Storage, Application, Service, Database, Virtual Machine, Container
+2. CI Attributes: Name, Type, Status, Location, Owner, Dependencies, Relationships
+3. CI Relationships: Depends On, Part Of, Connects To, Hosts, Runs On
+4. CI Status: Active, Inactive, Planned, Retired, Under Change
+
+Discovery Context:`;
+
+        if (deviceType) {
+          promptText += `\nDevice Type: ${deviceType}`;
         }
-      ]
+
+        if (discoveredData) {
+          promptText += `\nDiscovered Data:\n${discoveredData}`;
+        }
+
+        promptText += `\n\nPlease provide:
+1. Recommended CI classification and type
+2. Key attributes to capture
+3. Suggested relationships to other CIs
+4. CMDB naming convention
+5. Lifecycle status recommendation`;
+
+        return {
+          description: 'CMDB CI classification guidance',
+          messages: [
+            {
+              role: 'user',
+              content: {
+                type: 'text',
+                text: promptText
+              }
+            }
+          ]
+        };
+      }
     },
 
     {
       name: 'network_topology_analysis',
-      title: 'Network Topology Analysis', 
+      title: 'Network Topology Analysis',
       description: 'Analyzes network discovery data to identify topology patterns and infrastructure relationships',
-      arguments: [
-        {
-          name: 'networkData',
-          description: 'Network discovery data (SNMP, ping, traceroute results)',
-          required: true
-        },
-        {
-          name: 'subnet',
-          description: 'Network subnet being analyzed',
-          required: false
-        }
-      ]
-    },
+      argsSchema: z.object({
+        networkData: z.string().describe('Network discovery data (SNMP, ping, traceroute results)'),
+        subnet: z.string().optional().describe('Network subnet being analyzed')
+      }),
+      callback: async ({ networkData, subnet }) => {
+        let promptText = `As a network infrastructure expert, analyze the following network discovery data to identify topology patterns and device relationships.
 
-    {
-      name: 'infrastructure_security_assessment',
-      title: 'Infrastructure Security Assessment',
-      description: 'Evaluates security posture of discovered infrastructure components',
-      arguments: [
-        {
-          name: 'scanResults',
-          description: 'Security scan results (Nmap, vulnerability scans, etc.)',
-          required: true
-        },
-        {
-          name: 'complianceFramework',
-          description: 'Compliance framework to assess against (ISO 27001, NIST, PCI-DSS, etc.)',
-          required: false
-        }
-      ]
-    },
+Network Analysis Framework:
+1. Device Role Identification: Core, Distribution, Access, DMZ, Management
+2. Network Segmentation: VLANs, Subnets, Security Zones
+3. Redundancy Patterns: Primary/Secondary paths, Load balancing
+4. Service Dependencies: Critical vs. Non-critical devices
+5. Security Boundaries: Firewalls, ACLs, Network boundaries
 
-    {
-      name: 'capacity_planning_analysis',
-      title: 'Infrastructure Capacity Planning',
-      description: 'Analyzes current infrastructure utilization and provides capacity planning recommendations',
-      arguments: [
-        {
-          name: 'utilizationData',
-          description: 'Current utilization metrics (CPU, memory, storage, network)',
-          required: true
-        },
-        {
-          name: 'growthProjections',
-          description: 'Expected growth projections or business requirements',
-          required: false
-        }
-      ]
-    },
+Discovery Data:
+${networkData}`;
 
-    {
-      name: 'incident_response_playbook',
-      title: 'Incident Response Playbook Generator',
-      description: 'Generates incident response procedures based on infrastructure discovery and monitoring data',
-      arguments: [
-        {
-          name: 'incidentType',
-          description: 'Type of incident (network outage, server failure, security breach, etc.)',
-          required: true
-        },
-        {
-          name: 'affectedSystems',
-          description: 'List of affected systems or components',
-          required: false
+        if (subnet) {
+          promptText += `\nSubnet Context: ${subnet}`;
         }
-      ]
-    }
-  ];
-}
+
+        promptText += `\n\nPlease provide:
+1. Network topology map description
+2. Device role classifications
+3. Critical path identification
+4. Redundancy and failover analysis
+5. Security zone recommendations
+6. Suggested CMDB relationships`;
+
+        return {
+          description: 'Network topology analysis and recommendations',
+          messages: [
+            {
+              role: 'user',
+              content: {
+                type: 'text',
+                text: promptText
+              }
+            }
+          ]
+        };
+      }
+    },
 
     {
       name: 'infrastructure_health_assessment',

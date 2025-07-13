@@ -1,8 +1,6 @@
 // tools/prompts_sdk.js
 // MCP Prompts registry for Infrastructure Discovery and CMDB Standards
 
-const { z } = require('zod');
-
 /**
  * Get all available prompts for MCP registration
  * These are properly formatted MCP prompts following the 2025-06-18 specification
@@ -333,92 +331,44 @@ Alert Details:`;
 }
 
 /**
- * Get prompt counts for server summary
- * @returns {Object} Prompt counts
- */
-function getPromptCounts() {
-  const prompts = getPrompts();
-  return {
-    infrastructure: prompts.length,
-    total: prompts.length
-  };
-}
-
-/**
  * Register all prompts with the MCP server using the correct SDK pattern
  */
 function registerAllPrompts(server) {
   try {
     console.log('[MCP SDK] Starting prompt registration...');
     
-    // Register each prompt individually using server.prompt() method with Zod schemas
+    const prompts = getPrompts();
     
-    // 1. CMDB CI Classification prompt
-    server.prompt(
-      'cmdb_ci_classification',
-      'CMDB CI Classification Standards - Provides guidance for classifying Configuration Items (CIs) in the CMDB according to ITIL v4 standards',
-      {
-        deviceType: z.string().optional().describe('Type of device discovered (server, network, storage, etc.)'),
-        discoveredData: z.string().optional().describe('Raw discovery data from SNMP, network scans, etc.')
+    // Register prompts handlers using the correct SDK method
+    server.setPromptRequestHandlers({
+      // Handler for prompts/list
+      async listPrompts() {
+        return {
+          prompts: prompts.map(p => ({
+            name: p.name,
+            title: p.title,
+            description: p.description,
+            arguments: p.arguments
+          }))
+        };
       },
-      async (args) => {
-        return await handlePromptRequest('cmdb_ci_classification', args || {});
+      
+      // Handler for prompts/get
+      async getPrompt(request) {
+        const { name, arguments: args } = request.params;
+        
+        // Find the requested prompt
+        const prompt = prompts.find(p => p.name === name);
+        if (!prompt) {
+          throw new Error(`Prompt not found: ${name}`);
+        }
+        
+        // Generate dynamic content based on the prompt and arguments
+        return await handlePromptRequest(name, args || {});
       }
-    );
-
-    // 2. Network Topology Analysis prompt  
-    server.prompt(
-      'network_topology_analysis',
-      'Network Topology Analysis - Analyzes network topology data and provides insights for infrastructure mapping',
-      {
-        topologyData: z.string().optional().describe('Network topology discovery data (CDP/LLDP neighbors, routing tables, etc.)'),
-        networkSegment: z.string().optional().describe('Specific network segment or VLAN to analyze')
-      },
-      async (args) => {
-        return await handlePromptRequest('network_topology_analysis', args || {});
-      }
-    );
-
-    // 3. Security Assessment prompt
-    server.prompt(
-      'security_assessment',
-      'Infrastructure Security Assessment - Provides security analysis and recommendations based on infrastructure discovery',
-      {
-        scanResults: z.string().optional().describe('Port scan results, service discovery, vulnerability data'),
-        assetType: z.string().optional().describe('Type of asset being assessed (server, network device, application)')
-      },
-      async (args) => {
-        return await handlePromptRequest('security_assessment', args || {});
-      }
-    );
-
-    // 4. Capacity Planning prompt
-    server.prompt(
-      'capacity_planning',
-      'Infrastructure Capacity Planning - Analyzes resource utilization and provides capacity planning recommendations',
-      {
-        utilizationData: z.string().optional().describe('CPU, memory, storage, and network utilization metrics'),
-        timeframe: z.string().optional().describe('Planning timeframe (6 months, 1 year, 2 years)')
-      },
-      async (args) => {
-        return await handlePromptRequest('capacity_planning', args || {});
-      }
-    );
-
-    // 5. Incident Response prompt
-    server.prompt(
-      'incident_response',
-      'Incident Response Playbook - Provides incident response guidance based on infrastructure alerts and monitoring data',
-      {
-        alertData: z.string().optional().describe('Alert details, monitoring data, system logs'),
-        severity: z.string().optional().describe('Incident severity level (critical, high, medium, low)')
-      },
-      async (args) => {
-        return await handlePromptRequest('incident_response', args || {});
-      }
-    );
+    });
     
-    console.log(`[MCP SDK] Registered 5 prompts successfully`);
+    console.log(`[MCP SDK] Registered ${prompts.length} prompts successfully`);
     
   } catch (error) {
     console.error('[MCP SDK] Error registering prompts:', error.message);
@@ -429,6 +379,5 @@ function registerAllPrompts(server) {
 module.exports = {
   getPrompts,
   registerAllPrompts,
-  handlePromptRequest,
-  getPromptCounts
+  handlePromptRequest
 };

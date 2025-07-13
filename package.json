@@ -8,10 +8,12 @@
     "start-stdio": "set TRANSPORT_MODE=stdio&& node mcp_server_multi_transport_sdk.js",
     "start-http": "set TRANSPORT_MODE=http&& node mcp_server_multi_transport_sdk.js",
     "start-both": "set TRANSPORT_MODE=both&& node mcp_server_multi_transport_sdk.js",
+    "start-oauth": "set TRANSPORT_MODE=http&& set OAUTH_ENABLED=true&& node mcp_server_multi_transport_sdk.js",
     "test": "node test_sdk_server.js",
     "test-container": "node testing/test_container_health.js",
     "test-tools": "node testing/test_container_tools.js",
     "test-http": "node testing/test_http_transport.js",
+    "test-oauth": "node testing/test_oauth_implementation.js",
     "health": "powershell -Command \"Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing\"",
     "migrate-credentials": "node tools/migrate_proxmox_credentials.js"
   },
@@ -39,6 +41,7 @@
     "@modelcontextprotocol/sdk": "^1.0.0",
     "express": "^5.1.0",
     "net-snmp": "^3.10.1",
+    "node-fetch": "^2.7.0",
     "zod": "^3.25.64"
   }
 }

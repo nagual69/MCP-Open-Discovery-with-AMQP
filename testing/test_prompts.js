@@ -1,380 +1,300 @@
-/**
- * Test script for MCP Prompts using proper MCP HTTP transport
- */
-
+// Test script for MCP Open Discovery prompts
 const http = require('http');
 
-function log(level, message, data = null) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
-  
-  if (level === 'error') {
-    console.error(logMessage, data ? JSON.stringify(data, null, 2) : '');
-  } else {
-    console.log(logMessage, data ? JSON.stringify(data, null, 2) : '');
-  }
-}
+let sessionId = null;
 
-function makeRequest(options, data = null) {
-  return new Promise((resolve, reject) => {
-    const req = http.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => {
-        body += chunk;
-      });
-      res.on('end', () => {
-        try {
-          // Handle SSE format response
-          if (res.headers['content-type']?.includes('text/event-stream')) {
-            const lines = body.split('\n');
-            let jsonData = null;
-            
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  jsonData = JSON.parse(line.substring(6));
-                  break;
-                } catch (e) {
-                  // Continue looking for valid JSON
-                }
-              }
-            }
-            
-            resolve({
-              statusCode: res.statusCode,
-              headers: res.headers,
-              body: jsonData
-            });
-          } else {
-            // Handle regular JSON response
-            const parsed = body ? JSON.parse(body) : null;
-            resolve({
-              statusCode: res.statusCode,
-              headers: res.headers,
-              body: parsed
-            });
-          }
-        } catch (error) {
-          resolve({
-            statusCode: res.statusCode,
-            headers: res.headers,
-            body: body
-          });
-        }
-      });
-    });
+async function testPromptsAPI() {
+  console.log('🧪 Testing MCP Open Discovery Prompts...\n');
 
-    req.on('error', reject);
-    
-    if (data) {
-      req.write(JSON.stringify(data));
-    }
-    req.end();
-  });
-}
-
-class MCPPromptClient {
-  constructor() {
-    this.sessionId = null;
-    this.baseOptions = {
-      hostname: 'localhost',
-      port: 3000,
-      path: '/mcp',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json, text/event-stream'
-      }
-    };
-  }
-
-  async initialize() {
-    log('info', 'Initializing MCP session...');
-    
-    const initRequest = {
+  // Initialize session first
+  console.log('🔌 Initializing MCP session...');
+  try {
+    const initResult = await makeRequest({
       jsonrpc: '2.0',
-      id: 1,
+      id: 0,
       method: 'initialize',
       params: {
         protocolVersion: '2024-11-05',
         capabilities: {
+          tools: {},
           prompts: {}
         },
         clientInfo: {
-          name: 'mcp-prompt-tester',
+          name: 'test-client',
           version: '1.0.0'
         }
       }
-    };
-
-    try {
-      const response = await makeRequest(this.baseOptions, initRequest);
-      
-      log('debug', 'Full initialization response', {
-        statusCode: response.statusCode,
-        headers: response.headers,
-        body: response.body
-      });
-      
-      if (response.statusCode === 200 && response.body) {
-        if (response.body.result) {
-          log('info', 'MCP session initialized successfully', response.body.result);
-          
-          this.sessionId = response.headers['mcp-session-id'];
-          if (this.sessionId) {
-            log('info', `Session ID: ${this.sessionId}`);
-            this.baseOptions.headers['mcp-session-id'] = this.sessionId;
-            return true;
-          } else {
-            log('error', 'No session ID returned');
-            return false;
-          }
-        } else if (response.body.error) {
-          log('error', 'MCP initialization failed', response.body.error);
-          return false;
-        }
-      } else {
-        log('error', 'Unexpected response from server', {
-          statusCode: response.statusCode,
-          body: response.body
-        });
-        return false;
-      }
-    } catch (error) {
-      log('error', 'Failed to initialize MCP session', error.message);
-      return false;
+    });
+    
+    if (initResult.result) {
+      sessionId = initResult.sessionId; // Extract session ID
+      console.log('✅ Session initialized successfully');
+      console.log('🆔 Session ID:', sessionId);
+      console.log('🔍 Server capabilities:', JSON.stringify(initResult.result.capabilities, null, 2));
+    } else {
+      console.log('❌ Failed to initialize session:', initResult.error);
+      return;
     }
+  } catch (error) {
+    console.log(`❌ Error initializing session: ${error.message}`);
+    return;
   }
 
-  async listPrompts() {
-    log('info', 'Listing available prompts...');
-    
-    const listRequest = {
+  console.log('\n' + '='.repeat(60) + '\n');
+
+  // Test 1: List all prompts
+  console.log('📋 Test 1: Listing all available prompts');
+  try {
+    const listResult = await makeRequest({
       jsonrpc: '2.0',
-      id: 2,
+      id: 1,
       method: 'prompts/list',
       params: {}
-    };
-
-    try {
-      const response = await makeRequest(this.baseOptions, listRequest);
-      
-      if (response.statusCode === 200 && response.body?.result) {
-        const prompts = response.body.result.prompts || [];
-        log('info', `Found ${prompts.length} prompts`);
-        
-        prompts.forEach((prompt, index) => {
-          log('info', `Prompt ${index + 1}: ${prompt.name}`, {
-            description: prompt.description,
-            arguments: prompt.arguments
-          });
-        });
-        
-        return prompts;
-      } else {
-        log('error', 'Failed to list prompts', response.body);
-        return [];
-      }
-    } catch (error) {
-      log('error', 'Error listing prompts', error.message);
-      return [];
+    }, sessionId);
+    
+    console.log('🔍 Raw response:', JSON.stringify(listResult, null, 2));
+    
+    if (listResult.result && listResult.result.prompts) {
+      console.log(`✅ Found ${listResult.result.prompts.length} prompts:`);
+      listResult.result.prompts.forEach(prompt => {
+        console.log(`   - ${prompt.name}: ${prompt.description}`);
+      });
+    } else if (listResult.result) {
+      console.log('⚠️ Got result but no prompts array:', listResult.result);
+    } else if (listResult.error) {
+      console.log('❌ Error in response:', listResult.error);
+    } else {
+      console.log('❌ Unexpected response format');
     }
+  } catch (error) {
+    console.log(`❌ Error listing prompts: ${error.message}`);
   }
 
-  async testPrompt(promptName, args = {}) {
-    log('info', `Testing prompt: ${promptName}`);
-    
-    const promptRequest = {
+  console.log('\n' + '='.repeat(60) + '\n');
+
+  // Test 2: Test CMDB CI Classification prompt
+  console.log('🏗️ Test 2: Testing CMDB CI Classification prompt');
+  try {
+    const cmdbResult = await makeRequest({
       jsonrpc: '2.0',
-      id: Math.floor(Math.random() * 1000) + 100,
+      id: 2,
       method: 'prompts/get',
       params: {
-        name: promptName,
-        arguments: args
-      }
-    };
-
-    try {
-      const response = await makeRequest(this.baseOptions, promptRequest);
-      
-      log('debug', 'Raw prompt response', {
-        statusCode: response.statusCode,
-        body: response.body
-      });
-      
-      if (response.statusCode === 200 && response.body) {
-        if (response.body.result) {
-          const result = response.body.result;
-          log('info', `✅ Prompt '${promptName}' succeeded`);
-          
-          if (result.messages && Array.isArray(result.messages)) {
-            log('info', `Generated ${result.messages.length} message(s)`);
-            result.messages.forEach((msg, index) => {
-              log('info', `Message ${index + 1}:`, {
-                role: msg.role,
-                contentLength: msg.content?.text?.length || 0,
-                preview: msg.content?.text?.substring(0, 200) + '...'
-              });
-            });
-          }
-          
-          return { success: true, result };
-        } else if (response.body.error) {
-          log('error', `❌ Prompt '${promptName}' failed`, response.body.error);
-          return { success: false, error: response.body.error };
+        name: 'cmdb_ci_classification',
+        arguments: {
+          deviceType: 'server',
+          discoveredData: 'Linux server, 16GB RAM, Intel Xeon CPU, running Apache web server on port 80'
         }
-      } else {
-        log('error', `❌ Unexpected response for prompt '${promptName}'`, {
-          statusCode: response.statusCode,
-          body: response.body
-        });
-        return { success: false, error: 'Unexpected response' };
       }
-    } catch (error) {
-      log('error', `❌ Error testing prompt '${promptName}'`, error.message);
-      return { success: false, error: error.message };
+    }, sessionId);
+    
+    console.log('🔍 CMDB Raw response:', JSON.stringify(cmdbResult, null, 2));
+    
+    if (cmdbResult.result) {
+      console.log('✅ CMDB CI Classification prompt executed successfully');
+      console.log('📝 Prompt content preview:');
+      const content = cmdbResult.result.messages[0].content.text;
+      console.log(content.substring(0, 300) + '...');
+    } else if (cmdbResult.error) {
+      console.log('❌ CMDB prompt error:', cmdbResult.error);
+    } else {
+      console.log('❌ CMDB prompt failed - unexpected response format');
     }
+  } catch (error) {
+    console.log(`❌ Error testing CMDB prompt: ${error.message}`);
   }
 
-  async runAllPromptTests() {
-    log('info', '🚀 Starting MCP Prompt Tests');
-    
-    const initialized = await this.initialize();
-    if (!initialized) {
-      log('error', 'Failed to initialize MCP session');
-      return;
-    }
+  console.log('\n' + '='.repeat(60) + '\n');
 
-    const prompts = await this.listPrompts();
-    if (prompts.length === 0) {
-      log('error', 'No prompts available for testing');
-      return;
-    }
-
-    const testCases = [
-      {
-        name: 'cmdb_ci_classification',
-        args: {
-          deviceType: 'server',
-          discoveredData: JSON.stringify({
-            hostname: 'web-server-01',
-            ip: '192.168.1.100',
-            os: 'Ubuntu 20.04',
-            services: ['nginx', 'mysql'],
-            cpu_cores: 4,
-            memory: '8GB'
-          })
-        }
-      },
-      {
+  // Test 3: Test Network Topology Analysis prompt
+  console.log('🌐 Test 3: Testing Network Topology Analysis prompt');
+  try {
+    const networkResult = await makeRequest({
+      jsonrpc: '2.0',
+      id: 3,
+      method: 'prompts/get',
+      params: {
         name: 'network_topology_analysis',
-        args: {
-          networkData: JSON.stringify({
-            devices: [
-              { name: 'router-01', type: 'router', ip: '192.168.1.1' },
-              { name: 'switch-01', type: 'switch', ip: '192.168.1.2' },
-              { name: 'server-01', type: 'server', ip: '192.168.1.100' }
-            ],
-            connections: [
-              { from: 'router-01', to: 'switch-01', type: 'ethernet' },
-              { from: 'switch-01', to: 'server-01', type: 'ethernet' }
-            ]
-          }),
+        arguments: {
+          networkData: 'Router 192.168.1.1, Switch 192.168.1.2, Server 192.168.1.10',
           subnet: '192.168.1.0/24'
         }
-      },
-      {
+      }
+    });
+    
+    if (networkResult.result) {
+      console.log('✅ Network Topology Analysis prompt executed successfully');
+      console.log('📝 Prompt content preview:');
+      const content = networkResult.result.messages[0].content.text;
+      console.log(content.substring(0, 300) + '...');
+    } else {
+      console.log('❌ Network topology prompt failed');
+    }
+  } catch (error) {
+    console.log(`❌ Error testing network topology prompt: ${error.message}`);
+  }
+
+  console.log('\n' + '='.repeat(60) + '\n');
+
+  // Test 4: Test Infrastructure Health Assessment prompt
+  console.log('💚 Test 4: Testing Infrastructure Health Assessment prompt');
+  try {
+    const healthResult = await makeRequest({
+      jsonrpc: '2.0',
+      id: 4,
+      method: 'prompts/get',
+      params: {
         name: 'infrastructure_health_assessment',
-        args: {
-          healthData: JSON.stringify({
-            servers: [
-              { name: 'web-01', cpu: 85, memory: 92, disk: 78, status: 'warning' },
-              { name: 'db-01', cpu: 45, memory: 67, disk: 23, status: 'healthy' }
-            ],
-            network: { latency: 15, packet_loss: 0.1, bandwidth_util: 65 },
-            alerts: ['High memory usage on web-01', 'Disk space warning on web-01']
-          }),
+        arguments: {
+          healthData: 'CPU: 85%, Memory: 78%, Disk: 65%, Network: Normal',
           systemType: 'server'
         }
-      },
-      {
+      }
+    });
+    
+    if (healthResult.result) {
+      console.log('✅ Infrastructure Health Assessment prompt executed successfully');
+      console.log('📝 Prompt content preview:');
+      const content = healthResult.result.messages[0].content.text;
+      console.log(content.substring(0, 300) + '...');
+    } else {
+      console.log('❌ Health assessment prompt failed');
+    }
+  } catch (error) {
+    console.log(`❌ Error testing health assessment prompt: ${error.message}`);
+  }
+
+  console.log('\n' + '='.repeat(60) + '\n');
+
+  // Test 5: Test Compliance Gap Analysis prompt
+  console.log('🔒 Test 5: Testing Compliance Gap Analysis prompt');
+  try {
+    const complianceResult = await makeRequest({
+      jsonrpc: '2.0',
+      id: 5,
+      method: 'prompts/get',
+      params: {
         name: 'compliance_gap_analysis',
-        args: {
-          configData: JSON.stringify({
-            framework: 'SOC2',
-            systems: [
-              { name: 'database-server', encryption: true, access_control: true, logging: false },
-              { name: 'web-server', encryption: false, access_control: true, logging: true }
-            ],
-            policies: ['Data encryption required', 'Access logging mandatory', 'MFA required']
-          }),
-          complianceFramework: 'SOC2'
+        arguments: {
+          configData: 'SSH enabled, root login allowed, no firewall configured',
+          complianceFramework: 'PCI-DSS'
         }
-      },
-      {
+      }
+    });
+    
+    if (complianceResult.result) {
+      console.log('✅ Compliance Gap Analysis prompt executed successfully');
+      console.log('📝 Prompt content preview:');
+      const content = complianceResult.result.messages[0].content.text;
+      console.log(content.substring(0, 300) + '...');
+    } else {
+      console.log('❌ Compliance gap analysis prompt failed');
+    }
+  } catch (error) {
+    console.log(`❌ Error testing compliance gap analysis prompt: ${error.message}`);
+  }
+
+  console.log('\n' + '='.repeat(60) + '\n');
+
+  // Test 6: Test Incident Analysis Guidance prompt
+  console.log('🚨 Test 6: Testing Incident Analysis Guidance prompt');
+  try {
+    const incidentResult = await makeRequest({
+      jsonrpc: '2.0',
+      id: 6,
+      method: 'prompts/get',
+      params: {
         name: 'incident_analysis_guidance',
-        args: {
-          incidentData: JSON.stringify({
-            incident_id: 'INC-2024-001',
-            description: 'Database server experiencing high CPU usage',
-            affected_systems: ['db-primary', 'web-frontend'],
-            start_time: '2024-01-15T10:30:00Z',
-            severity: 'High',
-            current_status: 'Investigating'
-          }),
+        arguments: {
+          incidentData: 'Web server down, users cannot access application, error 500',
           severity: 'High'
         }
       }
-    ];
+    });
+    
+    if (incidentResult.result) {
+      console.log('✅ Incident Analysis Guidance prompt executed successfully');
+      console.log('📝 Prompt content preview:');
+      const content = incidentResult.result.messages[0].content.text;
+      console.log(content.substring(0, 300) + '...');
+    } else {
+      console.log('❌ Incident analysis guidance prompt failed');
+    }
+  } catch (error) {
+    console.log(`❌ Error testing incident analysis guidance prompt: ${error.message}`);
+  }
 
-    const results = [];
-    for (const testCase of testCases) {
-      const result = await this.testPrompt(testCase.name, testCase.args);
-      results.push({ name: testCase.name, ...result });
+  console.log('\n🎉 Prompt testing complete!');
+}
+
+function makeRequest(data, sessionId = null) {
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify(data);
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json, text/event-stream',
+      'Content-Length': Buffer.byteLength(postData)
+    };
+    
+    // Add session ID if available
+    if (sessionId) {
+      headers['mcp-session-id'] = sessionId;
+    }
+    
+    const options = {
+      hostname: 'localhost',
+      port: 3000,
+      path: '/mcp',
+      method: 'POST',
+      headers: headers
+    };
+
+    const req = http.request(options, (res) => {
+      let responseData = '';
       
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    log('info', '\n📊 TEST SUMMARY');
-    log('info', '================');
-    
-    const successful = results.filter(r => r.success);
-    const failed = results.filter(r => !r.success);
-    
-    log('info', `✅ Successful: ${successful.length}/${results.length}`);
-    log('info', `❌ Failed: ${failed.length}/${results.length}`);
-    
-    if (successful.length > 0) {
-      log('info', '\n✅ Successful prompts:');
-      successful.forEach(r => log('info', `   - ${r.name}`));
-    }
-    
-    if (failed.length > 0) {
-      log('info', '\n❌ Failed prompts:');
-      failed.forEach(r => {
-        log('info', `   - ${r.name}:`);
-        if (r.error) {
-          log('info', `     Error: ${r.error.message || JSON.stringify(r.error)}`);
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+      
+      res.on('end', () => {
+        try {
+          // Handle SSE format response
+          if (typeof responseData === 'string' && responseData.includes('event: message')) {
+            const dataMatch = responseData.match(/data: ({.*})/);
+            if (dataMatch) {
+              const parsed = JSON.parse(dataMatch[1]);
+              const newSessionId = res.headers['mcp-session-id'];
+              resolve({ 
+                ...parsed, 
+                sessionId: newSessionId 
+              });
+            } else {
+              reject(new Error('Failed to parse SSE data'));
+            }
+          } else {
+            // Handle regular JSON response
+            const parsed = JSON.parse(responseData);
+            const newSessionId = res.headers['mcp-session-id'];
+            resolve({ 
+              ...parsed, 
+              sessionId: newSessionId 
+            });
+          }
+        } catch (error) {
+          reject(new Error(`Failed to parse response: ${error.message} - Data: ${responseData.substring(0, 100)}`));
         }
       });
-    }
-  }
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.write(postData);
+    req.end();
+  });
 }
 
-async function main() {
-  const client = new MCPPromptClient();
-  
-  try {
-    await client.runAllPromptTests();
-  } catch (error) {
-    log('error', 'Test suite failed', error.message);
-  }
-  
-  process.exit(0);
-}
-
-if (require.main === module) {
-  main().catch(console.error);
-}
-
-module.exports = MCPPromptClient;
+// Run the tests
+testPromptsAPI().catch(console.error);
