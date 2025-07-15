@@ -89,9 +89,9 @@ function getToolCounts() {
     nmap: 5,         // ✅ Converted
     proxmox: 10,     // ✅ Converted (removed 3 credential management tools)
     snmp: 12,        // ✅ Converted
-    zabbix: 4,       // 🆕 NEW - Enterprise monitoring integration
+    zabbix: 7,       // 🆕 NEW - Enterprise monitoring integration (4 original + 3 Priority 1)
     credentials: 5,  // ✅ Added - Credential management tools
-    total: 52        // Updated total (48 + 4 Zabbix tools)
+    total: 55        // Updated total (52 + 3 Priority 1 Zabbix tools)
   };
 }
 

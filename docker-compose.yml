@@ -7,6 +7,10 @@ services:
     container_name: mcp-open-discovery
     ports:
       - "3000:3000"
+    environment:
+      - ZABBIX_BASE_URL=http://172.20.0.22:8080
+      - ZABBIX_USERNAME=Admin
+      - ZABBIX_PASSWORD=OpenMCPD1sc0v3ry!
     networks:
       - mcp-network
     restart: unless-stopped
