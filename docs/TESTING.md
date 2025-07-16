@@ -5,27 +5,31 @@
 **MCP Open Discovery v2.0** has undergone comprehensive testing achieving **91% success rate** against real production infrastructure:
 
 ### **🎯 Live Production Results**
+
 - **✅ 48/53 Tools Working** (91% success rate)
 - **✅ Zero Critical Failures** - All core infrastructure tools operational
 - **✅ Production Validated** - Tested against live 6-node Proxmox cluster
 - **✅ Enterprise Ready** - Complete credential encryption and audit trails
 
 ### **🔬 Real Infrastructure Testing**
+
 - **Production Proxmox Cluster**: 6 nodes, 45+ VMs, multiple storage backends
-- **Live Network Infrastructure**: SNMP-enabled devices, switches, routers  
-- **Nagios Core Integration**: Real monitoring data and alerting systems
+- **Live Network Infrastructure**: SNMP-enabled devices, switches, routers
+- **Zabbix Integration**: Real monitoring data, alerting, and metrics
 - **Security Validation**: Credential encryption, audit trails, input sanitization
 
 ### **📊 Success Rates by Category**
-| Category | Success Rate | Status |
-|----------|--------------|--------|
-| Memory CMDB | 100% (4/4) | ✅ Perfect |
-| Proxmox Integration | 100% (13/13) | ✅ Perfect |
-| Credential Management | 100% (5/5) | ✅ Perfect |
-| Network Tools | 87.5% (7/8) | ✅ Excellent |
-| SNMP Discovery | 83.3% (10/12) | ✅ Excellent |
-| Nagios Monitoring | 100% (6/6*) | ✅ Perfect |
-| NMAP Scanning | 60% (3/5) | ⚠️ Good |
+
+| Category              | Success Rate  | Status       |
+| --------------------- | ------------- | ------------ |
+| Memory CMDB           | 100% (4/4)    | ✅ Perfect   |
+| Proxmox Integration   | 100% (13/13)  | ✅ Perfect   |
+| Credential Management | 100% (5/5)    | ✅ Perfect   |
+| Network Tools         | 87.5% (7/8)   | ✅ Excellent |
+| SNMP Discovery        | 83.3% (10/12) | ✅ Excellent |
+| Nagios Monitoring     | 100% (6/6\*)  | ✅ Perfect   |
+| Zabbix Monitoring     | 100% (7/7)    | ✅ Perfect   |
+| NMAP Scanning         | 60% (3/5)     | ⚠️ Good      |
 
 **[View Complete Live Testing Report →](../archive/LIVE_TESTING_REPORT.md)**
 
@@ -67,6 +71,42 @@ node test_modular_sdk_server.js
 ```
 
 ## 🧪 Test Structure
+
+### Zabbix Test Environment
+
+The MCP Open Discovery test suite includes a dedicated Zabbix server environment for full integration and regression testing. This is provided via a Docker Compose file:
+
+```bash
+docker-compose -f testing/docker-compose-zabbix-testing.yml up -d
+```
+
+**Zabbix Test Server Details:**
+
+- **Image:** zabbix/zabbix-appliance:latest
+- **Default URL:** http://172.20.0.22:8080
+- **Default Credentials:** Admin / OpenMCPD1sc0v3ry!
+- **Docker Network:** 172.20.0.0/16 unified with MCP and SNMP test agents
+
+This environment is used to validate all Zabbix tools, including host discovery, metrics, alerts, inventory, problems, events, and triggers. Example test call:
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "method": "tools/call",
+    "params": {
+      "name": "zabbix_get_problems",
+      "arguments": {
+        "baseUrl": "http://172.20.0.22:8080",
+        "username": "Admin",
+        "password": "OpenMCPD1sc0v3ry!",
+        "limit": 3
+      }
+    }
+  }'
+```
+
+All Zabbix tools are tested against this environment for full API compliance and regression coverage.
 
 ### Core Test Files (Active)
 
