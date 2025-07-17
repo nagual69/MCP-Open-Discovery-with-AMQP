@@ -143,7 +143,7 @@ function registerNmapTools(server) {
     },
     async ({ target, ports, fast_scan, timing_template, reason, open_only }) => {
       try {
-        const cmd = ['nmap', '-sS'];
+        const cmd = ['nmap', '-sS', '--privileged'];
         
         if (ports) {
           cmd.push('-p', ports);
@@ -234,7 +234,7 @@ function registerNmapTools(server) {
     },
     async ({ target, ports, top_ports, timing_template, reason, open_only }) => {
       try {
-        const cmd = ['nmap', '-sU'];
+        const cmd = ['nmap', '-sU', '--privileged'];
         
         if (ports) {
           cmd.push('-p', ports);

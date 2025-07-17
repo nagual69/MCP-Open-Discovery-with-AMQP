@@ -13,7 +13,9 @@ RUN apk add --no-cache nmap \
     && cp /tmp/nmap-src/nse_main.lua /usr/share/nmap/ \
     && rm -rf /tmp/nmap.tar.bz2 /tmp/nmap-src
 
-# Install SNMP tools (net-snmp packages)
+# Install libcap for capability management and grant network capabilities to nmap 
+RUN apk add --no-cache libcap \
+    && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap   # Install SNMP tools (net-snmp packages)
 RUN apk add --no-cache net-snmp net-snmp-tools net-snmp-dev 
 
 # Setup SNMP configuration

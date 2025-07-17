@@ -112,6 +112,10 @@ const getCredentialTool = {
           type: 'text', 
           text: JSON.stringify(credential, null, 2)
         }],
+        structuredContent: { 
+          success: true, 
+          credential 
+        },
         isError: false,
       };
     } catch (error) {
@@ -151,6 +155,11 @@ const listCredentialsTool = {
           type: 'text', 
           text: JSON.stringify(credentials, null, 2)
         }],
+        structuredContent: { 
+          success: true, 
+          credentials, 
+          count: credentials.length 
+        },
         isError: false,
       };
     } catch (error) {
@@ -160,6 +169,10 @@ const listCredentialsTool = {
           type: 'text', 
           text: `Failed to list credentials: ${error.message}` 
         }],
+        structuredContent: { 
+          success: false, 
+          error: error.message 
+        },
       };
     }
   },
@@ -282,7 +295,8 @@ const auditLogResource = {
   getContent: async (params) => {
     try {
       const fs = require('fs');
-      const AUDIT_LOG_PATH = require('path').join('/tmp', 'mcp_creds_audit.log');
+      const path = require('path');
+      const AUDIT_LOG_PATH = path.join(process.cwd(), 'data', 'mcp_creds_audit.log');
       
       if (!fs.existsSync(AUDIT_LOG_PATH)) {
         return {
