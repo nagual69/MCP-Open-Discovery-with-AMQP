@@ -1,38 +1,33 @@
-# MCP Open Discovery v2.0 🔥 - REVOLUTIONARY DEPLOYMENT GUIDE
+# MCP Open Discovery v2.0 - Production Deployment Guide
 
-## � **WORLD'S FIRST DYNAMIC MCP REGISTRY**
+## 🏆 **Production Success Story**
 
-**MCP Open Discovery v2.0** represents the most advanced MCP server deployment featuring revolutionary hot-reload capabilities and self-managing architecture:
+**MCP Open Discovery v2.0** has been extensively tested and validated for production use with our latest security enhancements:
 
-- **🔥 100% Tool Success Rate** - All 61 tools working perfectly including dynamic management
-- **⚡ Hot-Reload Capabilities** - Runtime module loading without server restart
-- **🗄️ SQLite Registry Database** - Persistent tracking of modules, tools, and analytics
-- **🔧 Self-Managing Tools** - 5 MCP tools that manage the registry itself
-- **✅ Production Validated** - Tested with live infrastructure and zero-downtime updates
-- **🛡️ Enterprise Security** - Encrypted credentials with hot-reload support
-- **📊 Real-Time Analytics** - Live module status and performance tracking
+- **✅ 91% Tool Success Rate** - 51 of 55 tools working perfectly (improved from 89%)
+- **✅ Production Validated** - Tested against live 6-node Proxmox cluster with capability-based security
+- **✅ Zero Critical Failures** - All core infrastructure tools operational including privileged operations
+- **✅ Enterprise Ready** - Complete credential management, audit trails, and secure privilege escalation
+- **✅ Security Innovation** - Capability-based model achieving privileged functionality without root access
 
-## � **Dynamic Registry Features**
+## 🛡️ **Security Architecture Highlights**
 
-### Revolutionary Hot-Reload Architecture
+### Capability-Based Security Model
 
-Our breakthrough dynamic registry enables capabilities never before seen in MCP servers:
+Our innovative security approach provides enterprise-grade network scanning while maintaining strict security boundaries:
 
-**🚀 Dynamic Features:**
+**Key Security Features:**
 
-- **Runtime Module Loading**: Add new tool modules without server restart
-- **File Watching**: Automatic reload when module code changes
-- **Module Caching**: Fast reload operations with persistent state
-- **Database Persistence**: SQLite tracks all modules, tools, and operations
-- **Self-Management**: Registry tools can manage the registry itself
+- **Non-Root Execution**: All operations run as `mcpuser` with minimal privileges
+- **Linux Capabilities**: Precise privilege escalation using `NET_RAW`, `NET_ADMIN`, `NET_BIND_SERVICE`
+- **Container Security**: Docker capability model prevents privilege escalation attacks
+- **Audit Compliance**: All privileged operations logged and traceable
 
-**🔧 Registry Management Tools:**
+**NMAP Security Achievement:**
 
-- ✅ `registry_get_status` - Get comprehensive registry status and hot-reload info
-- ✅ `registry_load_module` - Dynamically load new modules at runtime
-- ✅ `registry_unload_module` - Remove modules and their tools
-- ✅ `registry_reload_module` - Hot-reload modules with updated code
-- ✅ `registry_toggle_hotreload` - Enable/disable hot-reload system-wide
+- ✅ **Before**: 3/5 tools working (60% success) - privilege failures blocked SYN/UDP scans
+- ✅ **After**: 5/5 tools working (100% success) - capability-based privileges enable all scan types
+- ✅ **Security Maintained**: No root access, minimal attack surface, full audit trail
 
 ---
 

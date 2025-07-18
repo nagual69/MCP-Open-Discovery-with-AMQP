@@ -1,7 +1,7 @@
 {
   "name": "mcp-open-discovery",
   "version": "2.0.0",
-  "description": "🔥 WORLD'S FIRST DYNAMIC MCP TOOL REGISTRY - Revolutionary infrastructure discovery with hot-reload capabilities, runtime module management, and persistent SQLite registry",
+  "description": "Networking Discovery tools exposed via Model Context Protocol - SDK Compatible",
   "main": "mcp_server_multi_transport_sdk.js",
   "scripts": {
     "start": "node mcp_server_multi_transport_sdk.js",
@@ -23,20 +23,10 @@
   },
   "keywords": [
     "mcp",
-    "dynamic-registry",
-    "hot-reload",
-    "runtime-loading", 
-    "self-managing",
-    "sqlite-persistence",
-    "infrastructure-discovery",
+    "busybox",
     "networking",
-    "snmp",
-    "proxmox",
-    "nmap",
-    "zabbix",
-    "enterprise-security",
-    "revolutionary",
-    "world-first"
+    "tools",
+    "container"
   ],
   "author": "Toby Schmeling",
   "license": "MIT",
@@ -52,7 +42,6 @@
     "express": "^5.1.0",
     "net-snmp": "^3.10.1",
     "node-fetch": "^2.7.0",
-    "sqlite3": "^5.1.7",
     "zod": "^3.25.64"
   }
 }

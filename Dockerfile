@@ -1,14 +1,5 @@
 FROM node:24-alpine
 
-# Install build dependencies for native modules (sqlite3, etc.)
-RUN apk add --no-cache \
-    build-base \
-    python3 \
-    make \
-    g++ \
-    sqlite \
-    sqlite-dev
-
 # Install busybox
 RUN apk add --no-cache busybox
 
@@ -24,18 +15,15 @@ RUN apk add --no-cache nmap \
 
 # Install libcap for capability management and grant network capabilities to nmap 
 RUN apk add --no-cache libcap \
-    && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap   
-
-# Install SNMP tools (net-snmp packages)
+    && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap   # Install SNMP tools (net-snmp packages)
 RUN apk add --no-cache net-snmp net-snmp-tools net-snmp-dev 
 
 # Setup SNMP configuration
 RUN mkdir -p /etc/snmp \
     && echo "mibs +ALL" > /etc/snmp/snmp.conf
 
-# Install additional networking tools and download MIBs
+# Install additional tools and download MIBs
 RUN apk add --no-cache bash wget curl ca-certificates \
-    netcat-openbsd iputils traceroute bind-tools whois \
     && mkdir -p /usr/share/snmp/mibs
 
 # Download MIBs with retries and better error handling
@@ -62,12 +50,6 @@ WORKDIR /home/mcpuser/app
 # Copy package.json and install dependencies
 COPY package.json ./
 RUN npm install --no-fund --no-audit
-
-# Clean up build dependencies to reduce image size (keep sqlite runtime)
-RUN apk del build-base python3 make g++ sqlite-dev
-
-# Create data directory for SQLite database
-RUN mkdir -p /home/mcpuser/app/data
 
 # Copy application files
 COPY mcp_server_multi_transport_sdk.js ./
