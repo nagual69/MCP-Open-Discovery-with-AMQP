@@ -409,7 +409,8 @@ class DynamicRegistryDB {
           COUNT(*) as total_cis,
           COUNT(CASE WHEN encrypted = 1 THEN 1 END) as encrypted_cis,
           MIN(created_at) as oldest_ci,
-          MAX(updated_at) as newest_ci
+          MAX(updated_at) as newest_ci,
+          SUM(LENGTH(ci_data)) as total_size_bytes
         FROM memory_store
       `);
 
@@ -423,10 +424,18 @@ class DynamicRegistryDB {
         FROM memory_audit
       `);
 
+      const typeBreakdown = await this.allAsync(`
+        SELECT ci_type, COUNT(*) as count 
+        FROM memory_store 
+        GROUP BY ci_type 
+        ORDER BY count DESC
+      `);
+
       return {
-        memory_store: stats || { total_cis: 0, encrypted_cis: 0, oldest_ci: null, newest_ci: null },
+        memory_store: stats || { total_cis: 0, encrypted_cis: 0, oldest_ci: null, newest_ci: null, total_size_bytes: 0 },
         encryption_keys: keyInfo || { total_keys: 0, latest_key: null },
-        audit_trail: auditInfo || { total_audit_entries: 0, latest_audit: null }
+        audit_trail: auditInfo || { total_audit_entries: 0, latest_audit: null },
+        type_breakdown: typeBreakdown || []
       };
     } catch (error) {
       console.error('[DynamicRegistryDB] Failed to get memory stats:', error.message);

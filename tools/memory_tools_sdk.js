@@ -344,6 +344,8 @@ function registerMemoryTools(server) {
         const stats = registryDB ? await registryDB.getMemoryStats() : {};
         const inMemoryCount = Object.keys(ciMemory).length;
         
+        const typeBreakdown = stats.type_breakdown?.map(t => `  ${t.ci_type}: ${t.count}`).join('\n') || '  No data';
+        
         return {
           content: [
             {
@@ -353,15 +355,18 @@ function registerMemoryTools(server) {
 In-Memory CIs: ${inMemoryCount}
 SQLite CIs: ${stats.memory_store?.total_cis || 0}
 Encrypted CIs: ${stats.memory_store?.encrypted_cis || 0}
+Total Storage Size: ${stats.memory_store?.total_size_bytes || 0} bytes
 Active Keys: ${stats.encryption_keys?.total_keys || 0}
 Audit Entries: ${stats.audit_trail?.total_audit_entries || 0}
 Oldest CI: ${stats.memory_store?.oldest_ci || 'N/A'}
 Newest CI: ${stats.memory_store?.newest_ci || 'N/A'}
-Store Size: ${stats.storeSize} bytes
-Last Modified: ${stats.lastModified}
-Audit Log Entries: ${stats.auditEntries}
+Latest Key: ${stats.encryption_keys?.latest_key || 'N/A'}
+Latest Audit: ${stats.audit_trail?.latest_audit || 'N/A'}
 Auto-Save Enabled: ${AUTO_SAVE_ENABLED}
-Auto-Save Interval: ${AUTO_SAVE_INTERVAL}ms`
+Auto-Save Interval: ${AUTO_SAVE_INTERVAL}ms
+
+CI Type Breakdown:
+${typeBreakdown}`
             }
           ]
         };
