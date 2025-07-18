@@ -277,17 +277,22 @@ function registerNetworkTools(server) {
     }
   );
 
-  // Telnet tool
+  // TCP Port Connectivity Test tool (netcat-based)
   server.tool(
-    'telnet',
-    'Test TCP connectivity to specific ports',
+    'tcp_connect',
+    'Test TCP connectivity to specific ports using netcat',
     {
       host: z.string().describe("Target hostname or IP address"),
-      port: z.number().min(1).max(65535).describe("Target port number")
+      port: z.number().min(1).max(65535).describe("Target port number"),
+      timeout: z.number().min(1).max(30).default(5).describe("Connection timeout in seconds")
     },
-    async ({ host, port }) => {
+    async ({ host, port, timeout = 5 }) => {
       try {
-        const cmd = ['telnet', sanitizeHost(host), String(port)];
+        // Use netcat with timeout for TCP connectivity testing
+        // -z: scan for listening daemons, without sending any data
+        // -v: verbose output
+        // -w: timeout in seconds
+        const cmd = ['nc', '-z', '-v', '-w', String(timeout), sanitizeHost(host), String(port)];
         return await executeCommand(cmd);
       } catch (error) {
         return {
@@ -372,7 +377,37 @@ function registerNetworkTools(server) {
     }
   );
 
-  console.log('[MCP SDK] Registered 8 network tools');
+  // WHOIS tool
+  server.tool(
+    'whois',
+    'Query WHOIS databases for domain and IP information',
+    {
+      query: z.string().describe("Domain name or IP address to lookup"),
+      server: z.string().optional().describe("Specific WHOIS server to query (optional)")
+    },
+    async ({ query, server: whoisServer }) => {
+      try {
+        const cmd = ['whois'];
+        
+        // Add server if specified
+        if (whoisServer) {
+          cmd.push('-h', sanitizeHost(whoisServer));
+        }
+        
+        // Add the query (domain or IP)
+        cmd.push(sanitizeHost(query));
+        
+        return await executeCommand(cmd);
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Error: ${error.message}` }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  console.log('[MCP SDK] Registered 9 network tools');
 }
 
 module.exports = { registerNetworkTools };

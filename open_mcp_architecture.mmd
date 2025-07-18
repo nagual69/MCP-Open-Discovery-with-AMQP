@@ -1,0 +1,82 @@
+---
+id: 70ab8892-f07a-436f-b361-8c105dd95852
+---
+flowchart TB
+    subgraph DynamicCore["🔥 Dynamic Registry Core"]
+        direction TB
+        Tracker[("🎯 Registration<br/>Tracker")]
+        HotReload[("🔄 Hot-Reload<br/>Engine")]
+        Analytics[("📊 Analytics<br/>Dashboard")]
+    end
+
+    subgraph Persistence["🗄️ Persistence Layer"]
+        direction TB
+        SQLite[("💾 SQLite<br/>Registry DB")]
+        ModuleHistory[("📋 Module<br/>History")]
+        ToolStats[("📈 Tool<br/>Statistics")]
+    end
+
+    subgraph Security["🔐 Security & Access"]
+        direction TB
+        CredManager[("🔐 Credential<br/>Manager")]
+        Encryption[("🛡️ AES-256<br/>Encryption")]
+        AuditTrails[("📝 Audit<br/>Trails")]
+    end
+
+    subgraph Runtime["⚡ Runtime Management"]
+        direction TB
+        ModuleLoader[("📦 Module<br/>Loader")]
+        FileWatcher[("👁️ File<br/>Watcher")]
+        ModuleCache[("💨 Module<br/>Cache")]
+    end
+
+    subgraph ToolModules["🛠️ Tool Modules - 61 Dynamic Tools"]
+        direction LR
+        RegTools[("🔥 Registry<br/>5 Tools")]
+        MemoryTools[("🧠 Memory CMDB<br/>8 Tools")]
+        NetworkTools[("🌐 Network<br/>9 Tools")]
+        ProxmoxTools[("🏗️ Proxmox<br/>10 Tools")]
+        SNMPTools[("📡 SNMP<br/>12 Tools")]
+        ZabbixTools[("🖥️ Zabbix<br/>7 Tools")]
+        NMAPTools[("🔍 NMAP<br/>5 Tools")]
+        CredTools[("🔐 Credentials<br/>5 Tools")]
+    end
+
+    %% Core connections
+    Tracker -.->|Persists to| SQLite
+    HotReload -.->|Watches| FileWatcher
+    Analytics -.->|Analyzes| ToolStats
+
+    %% Runtime connections
+    ModuleLoader -->|Loads| RegTools
+    ModuleLoader -->|Loads| MemoryTools
+    ModuleLoader -->|Loads| NetworkTools
+    ModuleLoader -->|Loads| ProxmoxTools
+    ModuleLoader -->|Loads| SNMPTools
+    ModuleLoader -->|Loads| ZabbixTools
+    ModuleLoader -->|Loads| NMAPTools
+    ModuleLoader -->|Loads| CredTools
+
+    %% Security connections
+    CredManager -.->|Encrypts with| Encryption
+    CredManager -.->|Logs to| AuditTrails
+
+    %% Persistence connections
+    SQLite -.->|Tracks| ModuleHistory
+    SQLite -.->|Stores| ToolStats
+
+    %% Hot-reload flow
+    FileWatcher -->|Triggers| HotReload
+    HotReload -->|Updates| ModuleCache
+    ModuleCache -->|Refreshes| ModuleLoader
+
+    %% Revolutionary features callout
+    classDef revolutionary fill:#ff6b6b,stroke:#d63031,stroke-width:3px,color:#fff
+    classDef dynamic fill:#00b894,stroke:#00a085,stroke-width:2px,color:#fff
+    classDef secure fill:#6c5ce7,stroke:#5f3dc4,stroke-width:2px,color:#fff
+    classDef perfect fill:#fdcb6e,stroke:#e17055,stroke-width:2px,color:#2d3436
+
+    class HotReload,RegTools revolutionary
+    class ModuleLoader,FileWatcher,ModuleCache dynamic
+    class CredManager,Encryption,AuditTrails secure
+    class Tracker,Analytics,SQLite perfect
