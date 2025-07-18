@@ -2,6 +2,57 @@
 
 ## Essential Commands
 
+### Memory Tools Quick Commands 🗄️
+
+```bash
+# Set a CI in memory with SQLite persistence
+curl -X POST http://localhost:3000/mcp -H "Content-Type: application/json" -d '{
+  "method": "tools/call",
+  "params": {
+    "name": "memory_set",
+    "arguments": {
+      "key": "ci:host:server1",
+      "value": {
+        "hostname": "server1",
+        "ip": "192.168.1.100",
+        "type": "server",
+        "os": "Ubuntu 22.04"
+      }
+    }
+  }
+}'
+
+# Get CI from memory
+curl -X POST http://localhost:3000/mcp -H "Content-Type: application/json" -d '{
+  "method": "tools/call",
+  "params": {
+    "name": "memory_get",
+    "arguments": {"key": "ci:host:server1"}
+  }
+}'
+
+# Query CIs with pattern matching
+curl -X POST http://localhost:3000/mcp -H "Content-Type: application/json" -d '{
+  "method": "tools/call",
+  "params": {
+    "name": "memory_query",
+    "arguments": {"pattern": "ci:host:*"}
+  }
+}'
+
+# Get enhanced memory statistics
+curl -X POST http://localhost:3000/mcp -H "Content-Type: application/json" -d '{
+  "method": "tools/call",
+  "params": {"name": "memory_stats"}
+}'
+
+# Rotate encryption keys
+curl -X POST http://localhost:3000/mcp -H "Content-Type: application/json" -d '{
+  "method": "tools/call",
+  "params": {"name": "memory_rotate_key"}
+}'
+```
+
 ### Deployment Commands
 
 ```powershell
