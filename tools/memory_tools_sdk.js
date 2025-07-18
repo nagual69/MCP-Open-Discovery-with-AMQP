@@ -1,22 +1,18 @@
 /**
- * Memory Tools Module for MCP Open Discovery - SDK Compatible
+ * Memory Tools Module for MCP Open Discovery - SDK Compatible with SQLite Persistence
  * 
  * This module provides tools for interacting with the persistent encrypted CMDB
- * using the official MCP SDK patterns with Zod schemas.
+ * using the official MCP SDK patterns with Zod schemas and SQLite persistence.
  */
 
 const { z } = require('zod');
-const { 
-  loadMemoryData, 
-  saveMemoryData, 
-  clearMemoryData, 
-  rotateMemoryKey, 
-  getMemoryStats,
-  auditLog 
-} = require('./memory_persistence');
+const { DynamicRegistryDB } = require('./dynamic_registry_db');
 
 // Reference to the in-memory CI store
 let ciMemory = {};
+
+// SQLite database instance
+let registryDB = null;
 
 // Auto-save configuration
 const AUTO_SAVE_ENABLED = process.env.MEMORY_AUTO_SAVE !== 'false';
@@ -24,44 +20,55 @@ const AUTO_SAVE_INTERVAL = parseInt(process.env.MEMORY_AUTO_SAVE_INTERVAL) || 30
 let autoSaveTimer = null;
 
 /**
- * Initialize the memory tools module with persistent storage
- * @param {Object} memoryStore - Reference to the server's memory store (optional, will load from disk)
+ * Initialize the memory tools module with SQLite persistence
+ * @param {Object} memoryStore - Reference to the server's memory store (optional, will load from SQLite)
  */
-function initialize(memoryStore) {
+async function initialize(memoryStore) {
   try {
-    // Load from persistent storage first
-    const persistentData = loadMemoryData();
+    // Initialize SQLite database
+    registryDB = new DynamicRegistryDB();
+    await registryDB.initialize();
+    
+    // Load from SQLite persistent storage first
+    const persistentData = await registryDB.loadMemoryStore();
     
     // Merge with any provided memory store, with persistent data taking precedence
     ciMemory = { ...memoryStore, ...persistentData };
     
-    console.log(`[MCP SDK] Memory tools initialized with ${Object.keys(ciMemory).length} CIs from persistent storage`);
+    console.log(`[MCP SDK] Memory tools initialized with ${Object.keys(ciMemory).length} CIs from SQLite persistence`);
     
     // Start auto-save if enabled
     if (AUTO_SAVE_ENABLED) {
       startAutoSave();
     }
     
-    auditLog('initialize', `Memory initialized with ${Object.keys(ciMemory).length} CIs`);
+    await registryDB.auditMemoryAction('initialize', `Memory initialized with ${Object.keys(ciMemory).length} CIs`);
   } catch (error) {
     console.error('[MCP SDK] Memory initialization failed:', error.message);
     ciMemory = memoryStore || {};
-    auditLog('initialize_error', `Memory initialization failed: ${error.message}`);
+    if (registryDB) {
+      await registryDB.auditMemoryAction('initialize_error', `Memory initialization failed: ${error.message}`, false);
+    }
   }
 }
 
 /**
- * Start automatic saving of memory data
+ * Start automatic saving of memory data to SQLite
  */
 function startAutoSave() {
   if (autoSaveTimer) {
     clearInterval(autoSaveTimer);
   }
   
-  autoSaveTimer = setInterval(() => {
+  autoSaveTimer = setInterval(async () => {
     try {
-      saveMemoryData(ciMemory);
-      console.log(`[Memory Auto-Save] Saved ${Object.keys(ciMemory).length} CIs to persistent storage`);
+      if (registryDB) {
+        // Save each CI to SQLite
+        for (const [ciKey, ciData] of Object.entries(ciMemory)) {
+          await registryDB.saveMemoryCI(ciKey, ciData, determineCIType(ciData));
+        }
+        console.log(`[Memory Auto-Save] Saved ${Object.keys(ciMemory).length} CIs to SQLite persistence`);
+      }
     } catch (error) {
       console.error('[Memory Auto-Save] Failed:', error.message);
     }
@@ -82,10 +89,37 @@ function stopAutoSave() {
 }
 
 /**
- * Manually trigger a save to persistent storage
+ * Manually trigger a save to SQLite persistence
  */
-function triggerSave() {
-  return saveMemoryData(ciMemory);
+async function triggerSave() {
+  if (!registryDB) {
+    throw new Error('SQLite database not initialized');
+  }
+  
+  try {
+    for (const [ciKey, ciData] of Object.entries(ciMemory)) {
+      await registryDB.saveMemoryCI(ciKey, ciData, determineCIType(ciData));
+    }
+    return { success: true, count: Object.keys(ciMemory).length };
+  } catch (error) {
+    console.error('[MCP SDK] Manual save failed:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Determine CI type from data structure
+ */
+function determineCIType(ciData) {
+  if (typeof ciData !== 'object' || ciData === null) return 'unknown';
+  
+  if (ciData.hostname || ciData.ip_address) return 'host';
+  if (ciData.cluster_name || ciData.proxmox_version) return 'cluster';
+  if (ciData.service_name || ciData.protocol) return 'service';
+  if (ciData.network_range || ciData.gateway) return 'network';
+  if (ciData.storage_type || ciData.total_capacity) return 'storage';
+  
+  return 'general';
 }
 
 /**
@@ -260,41 +294,6 @@ function registerMemoryTools(server) {
     }
   );
 
-  // Memory Save tool (manual save trigger)
-  server.tool(
-    'memory_save',
-    'Manually save all memory data to encrypted persistent storage',
-    {},
-    async () => {
-      try {
-        const saveSuccess = triggerSave();
-        const ciCount = Object.keys(ciMemory).length;
-        
-        return {
-          content: [
-            {
-              type: "text",
-              text: saveSuccess 
-                ? `Successfully saved ${ciCount} CIs to encrypted persistent storage`
-                : `Failed to save ${ciCount} CIs to persistent storage`
-            }
-          ],
-          isError: !saveSuccess
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error saving memory: ${error.message}`
-            }
-          ],
-          isError: true
-        };
-      }
-    }
-  );
-
   // Memory Clear tool
   server.tool(
     'memory_clear',
@@ -307,16 +306,16 @@ function registerMemoryTools(server) {
         // Clear in-memory data
         ciMemory = {};
         
-        // Clear persistent storage
-        const clearSuccess = clearMemoryData();
+        // Clear SQLite persistent storage
+        const clearSuccess = registryDB ? await registryDB.clearMemoryStore() : false;
         
         return {
           content: [
             {
               type: "text",
               text: clearSuccess 
-                ? `Successfully cleared ${ciCount} CIs from memory and persistent storage`
-                : `Cleared ${ciCount} CIs from memory, but failed to clear persistent storage`
+                ? `Successfully cleared ${ciCount} CIs from memory and SQLite persistent storage`
+                : `Cleared ${ciCount} CIs from memory, but failed to clear SQLite persistent storage`
             }
           ],
           isError: !clearSuccess
@@ -338,11 +337,11 @@ function registerMemoryTools(server) {
   // Memory Stats tool
   server.tool(
     'memory_stats',
-    'Get statistics about memory usage and persistent storage',
+    'Get statistics about memory usage and SQLite persistent storage',
     {},
     async () => {
       try {
-        const stats = getMemoryStats();
+        const stats = registryDB ? await registryDB.getMemoryStats() : {};
         const inMemoryCount = Object.keys(ciMemory).length;
         
         return {
@@ -352,8 +351,12 @@ function registerMemoryTools(server) {
               text: `Memory Statistics:
               
 In-Memory CIs: ${inMemoryCount}
-Persistent Store Exists: ${stats.storeExists}
-Encryption Key Exists: ${stats.keyExists}
+SQLite CIs: ${stats.memory_store?.total_cis || 0}
+Encrypted CIs: ${stats.memory_store?.encrypted_cis || 0}
+Active Keys: ${stats.encryption_keys?.total_keys || 0}
+Audit Entries: ${stats.audit_trail?.total_audit_entries || 0}
+Oldest CI: ${stats.memory_store?.oldest_ci || 'N/A'}
+Newest CI: ${stats.memory_store?.newest_ci || 'N/A'}
 Store Size: ${stats.storeSize} bytes
 Last Modified: ${stats.lastModified}
 Audit Log Entries: ${stats.auditEntries}
@@ -379,21 +382,24 @@ Auto-Save Interval: ${AUTO_SAVE_INTERVAL}ms`
   // Memory Key Rotation tool
   server.tool(
     'memory_rotate_key',
-    'Rotate the encryption key and re-encrypt all stored memory data',
+    'Rotate the encryption key and re-encrypt all stored memory data in SQLite',
     {
       newKey: z.string().optional().describe('New 32-byte key (base64). If not provided, generates a new random key.')
     },
     async ({ newKey }) => {
       try {
-        let keyBuffer = null;
+        if (!registryDB) {
+          throw new Error('SQLite database not initialized');
+        }
+        
         if (newKey) {
-          keyBuffer = Buffer.from(newKey, 'base64');
+          const keyBuffer = Buffer.from(newKey, 'base64');
           if (keyBuffer.length !== 32) {
             throw new Error('New key must be exactly 32 bytes when base64 decoded');
           }
         }
         
-        const rotateSuccess = rotateMemoryKey(keyBuffer);
+        const rotateSuccess = await registryDB.rotateMemoryKeys();
         
         return {
           content: [
@@ -420,7 +426,103 @@ Auto-Save Interval: ${AUTO_SAVE_INTERVAL}ms`
     }
   );
 
-  console.log('[MCP SDK] Registered 8 memory tools');
+  // Memory Save tool
+  server.tool(
+    'memory_save',
+    'Manually save all memory data to SQLite persistent storage',
+    {},
+    async () => {
+      try {
+        const result = await triggerSave();
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Successfully saved ${result.count} CIs to SQLite persistent storage`
+            }
+          ]
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error saving memory to SQLite: ${error.message}`
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Memory Migration tool  
+  server.tool(
+    'memory_migrate_from_filesystem',
+    'Migrate existing filesystem-based memory data to SQLite persistence',
+    {
+      oldDataPath: z.string().optional().describe('Path to old memory data file (optional)')
+    },
+    async ({ oldDataPath }) => {
+      try {
+        if (!registryDB) {
+          throw new Error('SQLite database not initialized');
+        }
+
+        const fs = require('fs');
+        const path = require('path');
+
+        // Default path for old memory data
+        const dataPath = oldDataPath || path.join(process.cwd(), 'memory_store.json');
+        
+        if (!fs.existsSync(dataPath)) {
+          return {
+            content: [
+              {
+                type: "text", 
+                text: `No old memory data found at ${dataPath}`
+              }
+            ]
+          };
+        }
+
+        // Load old data
+        const oldData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        let migratedCount = 0;
+
+        // Migrate each CI to SQLite
+        for (const [ciKey, ciData] of Object.entries(oldData)) {
+          await registryDB.saveMemoryCI(ciKey, ciData, determineCIType(ciData));
+          ciMemory[ciKey] = ciData; // Update in-memory store too
+          migratedCount++;
+        }
+
+        await registryDB.auditMemoryAction('filesystem_migration', `Migrated ${migratedCount} CIs from filesystem to SQLite`);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Successfully migrated ${migratedCount} CIs from filesystem to SQLite persistence`
+            }
+          ]
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error migrating memory data: ${error.message}`
+            }
+          ],
+          isError: true
+        };
+      }
+    }
+  );
+
+  console.log('[MCP SDK] Registered 10 memory tools with SQLite persistence');
 }
 
 /**

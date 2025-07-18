@@ -11,6 +11,11 @@ services:
       - ZABBIX_BASE_URL=http://172.20.0.22:8080
       - ZABBIX_USERNAME=Admin
       - ZABBIX_PASSWORD=OpenMCPD1sc0v3ry!
+    volumes:
+      # Persistent SQLite database storage
+      - mcp_data:/app/data
+      # Optional: Mount logs directory
+      - mcp_logs:/app/logs
     networks:
       - mcp-network
     restart: unless-stopped
@@ -94,3 +99,11 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+# Persistent volumes for data survival across container redeployments
+volumes:
+  mcp_data:
+    driver: local
+  mcp_logs:
+    driver: local

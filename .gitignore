@@ -29,3 +29,4 @@ proxmox_credentials.json
 archive/
 
 package-lock.json
+vscode-mcp-config.json

@@ -43,9 +43,11 @@ async function registerAllTools(server, options = {}) {
   try {
     console.log('[MCP SDK] Starting tool registration...');
     
-    // Initialize memory tools with CI store
+    // Initialize memory tools with CI store (now with SQLite persistence)
     if (options.ciMemory) {
-      initializeMemoryTools(options.ciMemory);
+      await initializeMemoryTools(options.ciMemory);
+    } else {
+      await initializeMemoryTools({});
     }
     
     // Register network tools (converted to SDK)
