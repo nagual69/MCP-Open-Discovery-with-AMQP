@@ -78,18 +78,47 @@ function removeCredential(id) {
 
 function rotateKey(newKey) {
   // Re-encrypt all credentials with a new key
+  if (!newKey) newKey = crypto.randomBytes(32);
   const store = loadCredsStore();
-  const oldKey = getCredsKey();
-  fs.writeFileSync(CREDS_KEY_PATH, newKey);
+  const oldKey = getCredsKey(); // Get old key first
+  
+  // Helper function to decrypt with old key
+  function decryptWithOldKey(data) {
+    const [ivB64, encrypted] = data.split(':');
+    const iv = Buffer.from(ivB64, 'base64');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', oldKey, iv);
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  }
+  
+  // Helper function to encrypt with new key
+  function encryptWithNewKey(text) {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', newKey, iv);
+    let encrypted = cipher.update(text, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    return iv.toString('base64') + ':' + encrypted;
+  }
+  
+  // Re-encrypt all credentials
   for (const id in store) {
     const c = store[id];
-    // Decrypt with old key, re-encrypt with new key
-    if (c.password) c.password = encrypt(decrypt(c.password));
-    if (c.apiKey) c.apiKey = encrypt(decrypt(c.apiKey));
-    if (c.sshKey) c.sshKey = encrypt(decrypt(c.sshKey));
-    if (c.oauthToken) c.oauthToken = encrypt(decrypt(c.oauthToken));
-    if (c.certificate) c.certificate = encrypt(decrypt(c.certificate));
+    try {
+      // Decrypt with old key, re-encrypt with new key
+      if (c.password) c.password = encryptWithNewKey(decryptWithOldKey(c.password));
+      if (c.apiKey) c.apiKey = encryptWithNewKey(decryptWithOldKey(c.apiKey));
+      if (c.sshKey) c.sshKey = encryptWithNewKey(decryptWithOldKey(c.sshKey));
+      if (c.oauthToken) c.oauthToken = encryptWithNewKey(decryptWithOldKey(c.oauthToken));
+      if (c.certificate) c.certificate = encryptWithNewKey(decryptWithOldKey(c.certificate));
+    } catch (error) {
+      console.error(`Failed to re-encrypt credential ${id}:`, error.message);
+      throw error;
+    }
   }
+  
+  // Only write new key after successful re-encryption
+  fs.writeFileSync(CREDS_KEY_PATH, newKey);
   saveCredsStore(store);
   auditLog('rotateKey', 'ALL', 'all');
 }

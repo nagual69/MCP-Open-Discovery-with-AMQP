@@ -17,8 +17,8 @@ const { registerRegistryTools } = require('./registry_tools_sdk');
 
 /**
  * Dynamic Tool Registration Tracker with Database Persistence & Hot-Reload
- *
- * Tracks tools as they register in real-time. This is Phase 1+2+3 of the
+ * 
+ * Tracks tools as they register in real-time. This is Phase 1+2+3 of the 
  * "Open MCP Dynamic Tools Registry" system that supports:
  * - ✅ Runtime tool counting and tracking
  * - ✅ SQLite persistence for module history and analytics
@@ -34,7 +34,7 @@ class ToolRegistrationTracker {
     this.currentModule = null;    // Track which module is currently registering
     this.db = new DynamicRegistryDB(); // SQLite persistence layer
     this.dbInitialized = false;
-
+    
     // Phase 3: Hot-reload capabilities
     this.moduleWatchers = new Map(); // file path -> watcher instance
     this.serverInstance = null;      // Reference to MCP server for dynamic updates
@@ -53,11 +53,11 @@ class ToolRegistrationTracker {
           this.db = new DynamicRegistryDB();
           console.log('[MCP SDK] [DEBUG] DynamicRegistryDB instance created');
         }
-
+        
         console.log('[MCP SDK] [DEBUG] Calling db.initialize()...');
         await this.db.initialize();
         console.log('[MCP SDK] [DEBUG] db.initialize() completed successfully');
-
+        
         this.dbInitialized = true;
         console.log('[MCP SDK] Dynamic Registry database initialized');
       } catch (error) {
@@ -66,10 +66,10 @@ class ToolRegistrationTracker {
         console.error('[MCP SDK] [DEBUG] Error stack:', error.stack);
         console.error('[MCP SDK] [DEBUG] Error name:', error.name);
         console.error('[MCP SDK] [DEBUG] Error code:', error.code);
-
+        
         this.dbInitialized = false;
         this.db = null;
-
+        
         console.warn('[MCP SDK] Failed to initialize database, continuing without persistence:', error.message);
         // Don't throw - continue without database
       }
@@ -82,17 +82,17 @@ class ToolRegistrationTracker {
    * @param {string} category - Category of tools (network, memory, etc.)
    */
   async startModule(moduleName, category) {
-    this.currentModule = {
-      name: moduleName,
-      category,
+    this.currentModule = { 
+      name: moduleName, 
+      category, 
       tools: new Set(),
       startTime: Date.now()
     };
-
+    
     if (!this.categories.has(category)) {
       this.categories.set(category, new Set());
     }
-
+    
     console.log(`[MCP SDK] Starting registration for ${moduleName} (${category})`);
   }
 
@@ -110,7 +110,7 @@ class ToolRegistrationTracker {
     this.categories.get(category).add(toolName);
     this.currentModule.tools.add(toolName);
     this.totalCount++;
-
+    
     console.log(`[MCP SDK] ✓ Registered tool: ${toolName}`);
   }
 
@@ -122,14 +122,14 @@ class ToolRegistrationTracker {
 
     const { name, category, tools, startTime } = this.currentModule;
     const loadDuration = Date.now() - startTime;
-
+    
     console.log(`[MCP SDK] [DEBUG] Finishing module ${name} with ${tools.size} tools`);
-
+    
     // Store in memory (enhanced for hot-reload)
     try {
-      this.modules.set(name, {
-        category,
-        tools: Array.from(tools),
+      this.modules.set(name, { 
+        category, 
+        tools: Array.from(tools), 
         active: true,
         loadedAt: new Date().toISOString(),
         loadDuration,
@@ -147,8 +147,8 @@ class ToolRegistrationTracker {
       console.log(`[MCP SDK] [DEBUG] Attempting database persistence for ${name}...`);
       try {
         const moduleId = await this.db.recordModuleRegistration(
-          name,
-          category,
+          name, 
+          category, 
           Array.from(tools)
         );
         console.log(`[MCP SDK] [DEBUG] Database persistence successful for ${name} (ID: ${moduleId})`);
@@ -158,7 +158,7 @@ class ToolRegistrationTracker {
         // Continue execution even if database operation fails
       }
     } else {
-      console.log(`[MCP SDK] [DEBUG] Skipping database persistence (initialized: ${this.dbInitialized}, db: ${!!this.db})`);    
+      console.log(`[MCP SDK] [DEBUG] Skipping database persistence (initialized: ${this.dbInitialized}, db: ${!!this.db})`);
     }
 
     // Phase 3: Hot-reload support - register module in cache
@@ -186,9 +186,9 @@ class ToolRegistrationTracker {
   async registerModuleWithTracking(server, moduleName, category, registerFunc) {
     // Wrap the server.tool method to intercept registrations
     const originalTool = server.tool.bind(server);
-
+    
     await this.startModule(moduleName, category);
-
+    
     server.tool = (name, description, inputSchema, handler) => {
       this.track(name);
       return originalTool(name, description, inputSchema, handler);
@@ -257,9 +257,9 @@ class ToolRegistrationTracker {
           total_registrations: stats.tools.total
         };
       } catch (error) {
-        report.database = {
-          enabled: true,
-          error: error.message
+        report.database = { 
+          enabled: true, 
+          error: error.message 
         };
       }
     } else {
@@ -274,7 +274,7 @@ class ToolRegistrationTracker {
    */
   async getModuleHistory(limit = 50) {
     if (!this.dbInitialized) return [];
-
+    
     try {
       return await this.db.getModuleHistory(limit);
     } catch (error) {
@@ -328,10 +328,10 @@ class ToolRegistrationTracker {
   initializeHotReload(server, options = {}) {
     this.serverInstance = server;
     this.hotReloadEnabled = options.enabled !== false;
-
+    
     if (this.hotReloadEnabled) {
       console.log('[MCP SDK] 🔥 Hot-reload capabilities initialized');
-
+      
       // Update database config for hot-reload
       if (this.dbInitialized) {
         this.db.updateConfig('hot_reload', 'true');
@@ -348,19 +348,19 @@ class ToolRegistrationTracker {
    */
   async loadModule(modulePath, moduleName, category, exportName) {
     console.log(`[MCP SDK] 🔄 Dynamically loading module: ${moduleName} from ${modulePath}`);
-
+    
     try {
       // Clear module from require cache for fresh reload
       delete require.cache[require.resolve(modulePath)];
-
+      
       // Import the module
       const moduleExports = require(modulePath);
       const registerFunction = moduleExports[exportName];
-
+      
       if (!registerFunction || typeof registerFunction !== 'function') {
         throw new Error(`Export function '${exportName}' not found in module ${modulePath}`);
       }
-
+      
       // Store in cache for future reloads
       this.moduleCache.set(moduleName, {
         path: modulePath,
@@ -368,26 +368,26 @@ class ToolRegistrationTracker {
         category,
         registerFunction
       });
-
+      
       // Register with tracking
       await this.registerModuleWithTracking(this.serverInstance, moduleName, category, registerFunction);
-
+      
       // Set up file watcher if hot-reload is enabled
       if (this.hotReloadEnabled && require('fs').existsSync(modulePath)) {
         this.setupModuleWatcher(modulePath, moduleName, category, exportName);
       }
-
+      
       console.log(`[MCP SDK] ✅ Module ${moduleName} loaded successfully with ${this.modules.get(moduleName)?.tools?.length || 0} tools`);
-
+      
       return true;
     } catch (error) {
       console.error(`[MCP SDK] ❌ Failed to load module ${moduleName}:`, error.message);
-
+      
       // Record failure in database
       if (this.dbInitialized) {
         await this.db.recordModuleUnload(moduleName, `Load failed: ${error.message}`);
       }
-
+      
       throw error;
     }
   }
@@ -398,13 +398,13 @@ class ToolRegistrationTracker {
    */
   async unloadModule(moduleName) {
     console.log(`[MCP SDK] 🔄 Unloading module: ${moduleName}`);
-
+    
     const moduleInfo = this.modules.get(moduleName);
     if (!moduleInfo) {
       console.warn(`[MCP SDK] Module ${moduleName} not found for unloading`);
       return false;
     }
-
+    
     try {
       // Remove tools from categories
       const { category, tools } = moduleInfo;
@@ -414,32 +414,32 @@ class ToolRegistrationTracker {
           categoryTools.delete(tool);
           this.totalCount--;
         });
-
+        
         // Remove category if empty
         if (categoryTools.size === 0) {
           this.categories.delete(category);
         }
       }
-
+      
       // Execute unload function if available
       if (moduleInfo.unloadFunc && typeof moduleInfo.unloadFunc === 'function') {
         await moduleInfo.unloadFunc();
       }
-
+      
       // Remove from modules
       this.modules.delete(moduleName);
-
+      
       // Stop file watcher
       if (this.moduleWatchers.has(moduleName)) {
         this.moduleWatchers.get(moduleName).close();
         this.moduleWatchers.delete(moduleName);
       }
-
+      
       // Record unload in database
       if (this.dbInitialized) {
         await this.db.recordModuleUnload(moduleName, 'Manual unload');
       }
-
+      
       console.log(`[MCP SDK] ✅ Module ${moduleName} unloaded successfully`);
       return true;
     } catch (error) {
@@ -454,15 +454,15 @@ class ToolRegistrationTracker {
    */
   async reloadModule(moduleName) {
     console.log(`[MCP SDK] 🔄 Reloading module: ${moduleName}`);
-
+    
     const cachedModule = this.moduleCache.get(moduleName);
     if (!cachedModule) {
       throw new Error(`Module ${moduleName} not found in cache - cannot reload`);
     }
-
+    
     // Unload first
     await this.unloadModule(moduleName);
-
+    
     // Load again
     await this.loadModule(
       cachedModule.path,
@@ -470,7 +470,7 @@ class ToolRegistrationTracker {
       cachedModule.category,
       cachedModule.exportName
     );
-
+    
     console.log(`[MCP SDK] ✅ Module ${moduleName} reloaded successfully`);
   }
 
@@ -483,17 +483,17 @@ class ToolRegistrationTracker {
    */
   setupModuleWatcher(filePath, moduleName, category, exportName) {
     if (!this.hotReloadEnabled) return;
-
+    
     try {
       const fs = require('fs');
       const watcher = fs.watch(filePath, { persistent: false }, (eventType) => {
         if (eventType === 'change') {
           console.log(`[MCP SDK] 🔥 File changed: ${filePath} - triggering hot-reload for ${moduleName}`);
-
+          
           // Debounce rapid file changes
           clearTimeout(this.reloadTimeouts?.get(moduleName));
           if (!this.reloadTimeouts) this.reloadTimeouts = new Map();
-
+          
           this.reloadTimeouts.set(moduleName, setTimeout(async () => {
             try {
               await this.reloadModule(moduleName);
@@ -504,7 +504,7 @@ class ToolRegistrationTracker {
           }, 500)); // 500ms debounce
         }
       });
-
+      
       this.moduleWatchers.set(moduleName, watcher);
       console.log(`[MCP SDK] 👁️ Watching ${filePath} for changes (${moduleName})`);
     } catch (error) {
@@ -525,7 +525,7 @@ class ToolRegistrationTracker {
       modules: {},
       categories: {}
     };
-
+    
     // Module details
     for (const [name, info] of this.modules) {
       status.modules[name] = {
@@ -538,12 +538,12 @@ class ToolRegistrationTracker {
         cached: this.moduleCache.has(name)
       };
     }
-
+    
     // Category summaries
     for (const [category, tools] of this.categories) {
       status.categories[category] = tools.size;
     }
-
+    
     return status;
   }
 
@@ -555,14 +555,14 @@ class ToolRegistrationTracker {
 
     const { name, category, tools, startTime } = this.currentModule;
     const loadDuration = Date.now() - startTime;
-
+    
     console.log(`[MCP SDK] [DEBUG] Finishing module ${name} with ${tools.size} tools`);
-
+    
     // Store in memory (this should always work)
     try {
-      this.modules.set(name, {
-        category,
-        tools: Array.from(tools),
+      this.modules.set(name, { 
+        category, 
+        tools: Array.from(tools), 
         active: true,
         loadedAt: new Date().toISOString(),
         loadDuration
@@ -577,8 +577,8 @@ class ToolRegistrationTracker {
       console.log(`[MCP SDK] [DEBUG] Attempting database persistence for ${name}...`);
       try {
         const moduleId = await this.db.recordModuleRegistration(
-          name,
-          category,
+          name, 
+          category, 
           Array.from(tools)
         );
         console.log(`[MCP SDK] [DEBUG] Database persistence successful for ${name} (ID: ${moduleId})`);
@@ -588,7 +588,7 @@ class ToolRegistrationTracker {
         // Continue execution even if database operation fails
       }
     } else {
-      console.log(`[MCP SDK] [DEBUG] Skipping database persistence (initialized: ${this.dbInitialized}, db: ${!!this.db})`);    
+      console.log(`[MCP SDK] [DEBUG] Skipping database persistence (initialized: ${this.dbInitialized}, db: ${!!this.db})`);
     }
 
     // Phase 3: Hot-reload support - register module in cache
@@ -616,9 +616,9 @@ const toolTracker = new ToolRegistrationTracker();
  */
 async function registerCredentialToolsWithTracking(server) {
   const originalTool = server.tool.bind(server);
-
+  
   await toolTracker.startModule('credentials_tools_sdk', 'credentials');
-
+  
   server.tool = (name, description, inputSchema, handler) => {
     toolTracker.track(name);
     return originalTool(name, description, inputSchema, handler);
@@ -646,13 +646,13 @@ async function registerCredentialToolsWithTracking(server) {
  */
 async function registerAllTools(server, options = {}) {
   console.log('[MCP SDK] Starting tool registration with dynamic tracking, database persistence & hot-reload...');
-
+  
   try {
     // Phase 3: Initialize hot-reload capabilities
     toolTracker.initializeHotReload(server, {
       enabled: options.hotReload !== false
     });
-
+    
     // Database persistence with enhanced error handling
     console.log('[MCP SDK] [DEBUG] Attempting database initialization...');
     try {
@@ -663,13 +663,13 @@ async function registerAllTools(server, options = {}) {
       console.error('[MCP SDK] [DEBUG] Stack trace:', dbError.stack);
       // Continue without database - don't let this crash the server
     }
-
+    
     // Initialize memory tools with CI store
     if (options.ciMemory) {
       const { initialize: initializeMemoryTools } = await import('./memory_tools_sdk.js');
       initializeMemoryTools(options.ciMemory);
     }
-
+    
     // Register each category with tracking (Phase 3: using instance method)
     await toolTracker.registerModuleWithTracking(server, 'network_tools_sdk', 'network',
       async (s) => {
@@ -678,7 +678,7 @@ async function registerAllTools(server, options = {}) {
       }
     );
 
-    await toolTracker.registerModuleWithTracking(server, 'memory_tools_sdk', 'memory',
+    await toolTracker.registerModuleWithTracking(server, 'memory_tools_sdk', 'memory', 
       async (s) => {
         const { registerMemoryTools } = await import('./memory_tools_sdk.js');
         registerMemoryTools(s);
@@ -729,7 +729,7 @@ async function registerAllTools(server, options = {}) {
     const report = await toolTracker.getRegistrationReport();
     console.log('[MCP SDK] Tool Registration Complete!');
     console.log(report);
-
+    
     // Phase 3: Show hot-reload status
     if (toolTracker.hotReloadEnabled) {
       const status = toolTracker.getModuleStatus();
@@ -739,9 +739,9 @@ async function registerAllTools(server, options = {}) {
         watchers: status.hot_reload.watched_modules
       });
     }
-
+    
     return report.summary.total;
-
+    
   } catch (error) {
     console.error(`[MCP SDK] Error during tool registration: ${error.message}`);
     const partialReport = await toolTracker.getRegistrationReport();
@@ -756,9 +756,9 @@ async function registerAllTools(server, options = {}) {
  * Uses dynamic tracking for real-time accuracy
  * @returns {Object} Tool counts by category
  */
-async function getToolCounts() {
+async function getToolCounts() {  
   const report = await toolTracker.getRegistrationReport();
-
+  
   // If tracker has data, use it; otherwise fall back to estimates
   if (report.summary.total > 0) {
     return {
@@ -767,7 +767,7 @@ async function getToolCounts() {
       database: report.database
     };
   }
-
+  
   // Fallback estimates (will be replaced by real counts after registration)
   return {
     network: 9,      // ✅ Updated: tcp_connect + whois (removed telnet)

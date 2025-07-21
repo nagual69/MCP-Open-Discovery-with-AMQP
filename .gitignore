@@ -30,3 +30,6 @@ archive/
 
 package-lock.json
 vscode-mcp-config.json
+
+backup_current/*
+reference/*
