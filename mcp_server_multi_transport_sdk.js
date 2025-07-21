@@ -11,7 +11,7 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const express = require('express');
 const { randomUUID } = require('node:crypto');
-const { registerAllTools, getToolCounts } = require('./tools/sdk_tool_registry');
+const { registerAllTools, getToolCounts, cleanup } = require('./tools/sdk_tool_registry');
 const { getResourceCounts } = require('./tools/resource_registry');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
 
@@ -27,7 +27,10 @@ const CONFIG = {
   TRANSPORT_MODE: process.env.TRANSPORT_MODE || (isRunningInContainer() ? 'http' : 'stdio'),
   // OAuth 2.1 configuration
   OAUTH_ENABLED: process.env.OAUTH_ENABLED === 'true' || false,
-  OAUTH_PROTECTED_ENDPOINTS: (process.env.OAUTH_PROTECTED_ENDPOINTS || '/mcp').split(',').map(p => p.trim())
+  OAUTH_PROTECTED_ENDPOINTS: (process.env.OAUTH_PROTECTED_ENDPOINTS || '/mcp').split(',').map(p => p.trim()),
+  // 🔥 Dynamic Registry Configuration
+  ENABLE_DYNAMIC_REGISTRY: process.env.ENABLE_DYNAMIC_REGISTRY === 'true' || false,
+  DYNAMIC_REGISTRY_DB: process.env.DYNAMIC_REGISTRY_DB || './data/dynamic_registry.db'
 };
 
 /**
@@ -141,7 +144,16 @@ async function createServer() {
 
   log('info', '[DEBUG] Starting tool registration');
   try {
-    await registerAllTools(server);
+    // Pass dynamic registry configuration
+    await registerAllTools(server, {
+      enableDynamicRegistry: CONFIG.ENABLE_DYNAMIC_REGISTRY,
+      dynamicDbPath: CONFIG.DYNAMIC_REGISTRY_DB,
+      ciMemory: {} // Default memory configuration
+    });
+    
+    if (CONFIG.ENABLE_DYNAMIC_REGISTRY) {
+      log('info', '[DEBUG] 🔥 Dynamic registry enabled with hot-reload capabilities');
+    }
     log('info', '[DEBUG] Tool registration complete');
   } catch (err) {
     console.error('[FATAL] Tool registration failed:', JSON.stringify(err, null, 2));
@@ -542,6 +554,14 @@ async function startHttpServer() {
   // Handle server shutdown
   process.on('SIGINT', async () => {
     log('info', 'Shutting down HTTP server...');
+    
+    // Clean up dynamic registry resources
+    try {
+      cleanup();
+    } catch (error) {
+      log('warn', 'Error during registry cleanup', { error: error.message });
+    }
+    
     // Close all active transports to properly clean up resources
     for (const sessionId in transports) {
       try {
