@@ -11,8 +11,7 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const express = require('express');
 const { randomUUID } = require('node:crypto');
-const { registerAllTools, getToolCounts, cleanup } = require('./tools/sdk_tool_registry');
-const { getResourceCounts } = require('./tools/resource_registry');
+const { registerAllTools, getToolCounts, cleanup, registerAllResources, getResourceCounts } = require('./tools/registry');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
 
 // Environment configuration with defaults
