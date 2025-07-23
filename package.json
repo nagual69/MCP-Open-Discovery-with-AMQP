@@ -40,9 +40,11 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "express": "^5.1.0",
+    "glob": "^11.0.3",
     "net-snmp": "^3.10.1",
     "node-fetch": "^2.7.0",
     "sqlite3": "^5.1.7",
+    "ws": "^8.18.3",
     "zod": "^3.25.64"
   }
 }
