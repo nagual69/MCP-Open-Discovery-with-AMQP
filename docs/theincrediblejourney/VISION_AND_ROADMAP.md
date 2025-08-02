@@ -33,21 +33,22 @@ A **unified, open source infrastructure management ecosystem** that combines:
 
 ### Implemented Features ✅
 
-- **52 Tools** across 7 categories ⬆️ **UPDATED**
+- **62 Tools** across 8 categories ⬆️ **UPDATED** (Registry migration complete)
 - **OAuth 2.1 Authentication** (optional)
-- **Encrypted Persistent Storage** (credentials & CMDB)
+- **Encrypted Persistent Storage** (credentials & CMDB) - _Mixed SQLite/JSON architecture_
 - **Multi-Transport Support** (HTTP, WebSocket, stdio)
 - **Enterprise Security Model**
 
 ### Tool Categories
 
-1. **Network Tools** (8) - ping, telnet, wget, arp, route, netstat, etc.
-2. **Memory/CMDB Tools** (8) - encrypted CI data management with persistence
+1. **Network Tools** (9) - ping, wget, nslookup, netstat, tcp_connect, route, ifconfig, arp, whois
+2. **Memory/CMDB Tools** (9) - encrypted CI data management with SQLite persistence
 3. **NMAP Tools** (5) - comprehensive network discovery and scanning
 4. **Proxmox Tools** (10) - open source virtualization management
 5. **SNMP Tools** (12) - network device monitoring and management
-6. **Zabbix Tools** (4) - enterprise monitoring and alerting 🆕 **NEW**
-7. **Credential Tools** (5) - secure credential storage and management
+6. **Zabbix Tools** (7) - enterprise monitoring and alerting ⬆️ **EXPANDED**
+7. **Credential Tools** (5) - secure credential storage and management (_JSON-based, SQLite migration planned_)
+8. **Registry Tools** (5) - dynamic module management and hot-reload 🆕 **NEW**
 
 ## 🚀 Roadmap to Infrastructure Management Suite
 
@@ -89,10 +90,29 @@ A **unified, open source infrastructure management ecosystem** that combines:
 - **Enterprise Value**: Professional-grade visualization and alerting
 - **Integration**: Auto-create dashboards from discovered infrastructure
 
+#### Database Architecture Modernization (Priority 3)
+
+- **Why**: Consolidate storage systems for better performance and consistency
+- **Current State**: Mixed architecture - Memory/CMDB uses SQLite, Credentials use JSON files
+- **Migration Planned**:
+  ```
+  - credentials_migrate_to_sqlite   (Migrate credentials from JSON to SQLite)
+  - credentials_sqlite_integration  (Update credential manager to use database layer)
+  - credentials_unified_audit       (Centralized audit trails in SQLite)
+  - database_consistency_check      (Validate data integrity across systems)
+  ```
+- **Enterprise Value**:
+  - Unified data persistence across all MCP systems
+  - Better performance and scalability for credential operations
+  - Centralized audit trails and compliance reporting
+  - Consistent backup and recovery procedures
+- **Integration**: Leverage existing DatabaseLayer infrastructure from registry system
+- **Status**: 📋 **PLANNED** - Foundation ready, migration design needed
+
 #### Expected Outcome
 
-- **Tool Count**: 48 → 52 tools ✅ **ACHIEVED** → Target 60+ tools
-- **Enterprise Capability**: Discovery + Monitoring + Visualization
+- **Tool Count**: 62 tools ✅ **CURRENT** → Target 70+ tools (including database migration + Grafana tools)
+- **Enterprise Capability**: Discovery + Monitoring + Visualization + Unified Data Architecture
 - **Market Position**: Competitive with basic SolarWinds/PRTG installations
 - **Current Status**: 🚀 Phase 1 development started July 2025
 
