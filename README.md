@@ -242,11 +242,11 @@ flowchart TB
 
 ### **🔧 Transport Status**
 
-| Transport | Status | Port/Config | Features |
-|-----------|--------|-------------|----------|
-| **HTTP** | ✅ Active | Port 3000 | Primary transport, health endpoint |
-| **AMQP** | ✅ Active | RabbitMQ:5672 | Auto-recovery, exponential backoff |
-| **gRPC** | 🚀 Ready | Port 50051 | Architecture prepared, Protocol Buffers ready |
+| Transport | Status    | Port/Config   | Features                                      |
+| --------- | --------- | ------------- | --------------------------------------------- |
+| **HTTP**  | ✅ Active | Port 3000     | Primary transport, health endpoint            |
+| **AMQP**  | ✅ Active | RabbitMQ:5672 | Auto-recovery, exponential backoff            |
+| **gRPC**  | 🚀 Ready  | Port 50051    | Architecture prepared, Protocol Buffers ready |
 
 ---
 
