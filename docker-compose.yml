@@ -11,6 +11,14 @@ services:
       - ZABBIX_BASE_URL=http://172.20.0.22:8080
       - ZABBIX_USERNAME=Admin
       - ZABBIX_PASSWORD=OpenMCPD1sc0v3ry!
+      # AMQP Transport Configuration
+      - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
+      - AMQP_ENABLED=true
+      - TRANSPORT_MODE=http,amqp
+      # AMQP Auto-Recovery Configuration
+      - AMQP_AUTO_RECOVERY=true
+      - AMQP_RETRY_INTERVAL=10000
+      - AMQP_MAX_RETRY_ATTEMPTS=50
     volumes:
       # Persistent SQLite database storage
       - mcp_data:/app/data
@@ -29,6 +37,33 @@ services:
       timeout: 10s
       retries: 3
       start_period: 5s
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  # RabbitMQ for AMQP Transport
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: mcp-rabbitmq
+    ports:
+      - "5672:5672"      # AMQP port
+      - "15672:15672"    # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=mcp
+      - RABBITMQ_DEFAULT_PASS=discovery
+      - RABBITMQ_DEFAULT_VHOST=/
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      mcp-network:
+        ipv4_address: 172.20.0.20
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # SNMP Test Servers for development and testing
 
@@ -106,4 +141,6 @@ volumes:
   mcp_data:
     driver: local
   mcp_logs:
+    driver: local
+  rabbitmq_data:
     driver: local

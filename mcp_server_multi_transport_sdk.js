@@ -28,14 +28,25 @@ const CONFIG = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   SECURITY_MODE: process.env.SECURITY_MODE || 'standard',
   HTTP_PORT: parseInt(process.env.HTTP_PORT) || 3000,
-  // Smart default: HTTP in containers, stdio otherwise
-  TRANSPORT_MODE: process.env.TRANSPORT_MODE || (isRunningInContainer() ? 'http' : 'stdio'),
+  // Smart default: HTTP + AMQP in containers, stdio otherwise
+  // Supported modes: stdio, http, amqp, grpc (future)
+  TRANSPORT_MODE: process.env.TRANSPORT_MODE || (isRunningInContainer() ? 'http,amqp' : 'stdio'),
   // OAuth 2.1 configuration
   OAUTH_ENABLED: process.env.OAUTH_ENABLED === 'true' || false,
   OAUTH_PROTECTED_ENDPOINTS: (process.env.OAUTH_PROTECTED_ENDPOINTS || '/mcp').split(',').map(p => p.trim()),
   // 🔥 Dynamic Registry Configuration
   ENABLE_DYNAMIC_REGISTRY: process.env.ENABLE_DYNAMIC_REGISTRY === 'true' || false,
-  DYNAMIC_REGISTRY_DB: process.env.DYNAMIC_REGISTRY_DB || './data/dynamic_registry.db'
+  DYNAMIC_REGISTRY_DB: process.env.DYNAMIC_REGISTRY_DB || './data/dynamic_registry.db',
+  // AMQP Transport Configuration
+  AMQP_ENABLED: process.env.AMQP_ENABLED !== 'false', // Enabled by default
+  AMQP_URL: process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',
+  AMQP_QUEUE_PREFIX: process.env.AMQP_QUEUE_PREFIX || 'mcp.discovery',
+  AMQP_EXCHANGE: process.env.AMQP_EXCHANGE || 'mcp.notifications',
+  // gRPC Transport Configuration (future implementation)
+  GRPC_ENABLED: process.env.GRPC_ENABLED !== 'false', // Enabled by default
+  GRPC_PORT: parseInt(process.env.GRPC_PORT) || 50051,
+  GRPC_MAX_CONNECTIONS: parseInt(process.env.GRPC_MAX_CONNECTIONS) || 1000,
+  GRPC_KEEPALIVE_TIME: parseInt(process.env.GRPC_KEEPALIVE_TIME) || 30000
 };
 
 /**
@@ -128,10 +139,40 @@ class RateLimiter {
 const rateLimiter = new RateLimiter();
 
 /**
- * Create and configure the MCP server instance (following official MCP SDK pattern)
+ * SINGLETON SERVER PATTERN (Architecture Fix)
+ * 
+ * This ensures only ONE server instance exists across all transports,
+ * eliminating the root cause of duplicate tool registration.
+ */
+let globalMcpServer = null;
+let serverInitialized = false;
+
+/**
+ * Create and configure the SINGLETON MCP server instance
+ * 
+ * This replaces the old pattern of creating multiple server instances.
+ * All transports (stdio, HTTP, AMQP) will share this single instance.
  */
 async function createServer() {
-  const server = new McpServer(
+  // Return existing instance if already created (SINGLETON PATTERN)
+  if (globalMcpServer && serverInitialized) {
+    log('debug', '[SINGLETON] Returning existing MCP server instance');
+    return globalMcpServer;
+  }
+
+  // Prevent concurrent initialization
+  if (globalMcpServer && !serverInitialized) {
+    log('debug', '[SINGLETON] Server initialization in progress, waiting...');
+    // Wait for initialization to complete
+    while (!serverInitialized) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return globalMcpServer;
+  }
+
+  log('info', '[SINGLETON] Creating new MCP server instance (ONE-TIME ONLY)');
+  
+  globalMcpServer = new McpServer(
     {
       name: 'mcp-open-discovery',
       version: '2.0.0',
@@ -147,42 +188,45 @@ async function createServer() {
     }
   );
 
-  log('info', '[DEBUG] Starting tool registration');
+  log('info', '[SINGLETON] Starting tool registration (ONE-TIME ONLY)');
   try {
     // Pass dynamic registry configuration
-    await registerAllTools(server, {
+    await registerAllTools(globalMcpServer, {
       enableDynamicRegistry: CONFIG.ENABLE_DYNAMIC_REGISTRY,
       dynamicDbPath: CONFIG.DYNAMIC_REGISTRY_DB,
       ciMemory: {} // Default memory configuration
     });
     
     if (CONFIG.ENABLE_DYNAMIC_REGISTRY) {
-      log('info', '[DEBUG] 🔥 Dynamic registry enabled with hot-reload capabilities');
+      log('info', '[SINGLETON] 🔥 Dynamic registry enabled with hot-reload capabilities');
     }
-    log('info', '[DEBUG] Tool registration complete');
+    log('info', '[SINGLETON] Tool registration complete');
   } catch (err) {
     console.error('[FATAL] Tool registration failed:', JSON.stringify(err, null, 2));
     if (err && err.stack) console.error(err.stack);
     process.exit(1);
   }
 
-  log('info', '[DEBUG] Starting prompt registration');
+  log('info', '[SINGLETON] Starting prompt registration');
   try {
     // If registerAllPrompts is async, await it
-    const maybePromise = registerAllPrompts(server);
+    const maybePromise = registerAllPrompts(globalMcpServer);
     if (maybePromise && typeof maybePromise.then === 'function') {
       await maybePromise;
     }
-    log('info', '[DEBUG] Prompt registration complete');
+    log('info', '[SINGLETON] Prompt registration complete');
   } catch (err) {
     console.error('[FATAL] Prompt registration failed:', JSON.stringify(err, null, 2));
     if (err && err.stack) console.error(err.stack);
     process.exit(1);
   }
 
+  serverInitialized = true;
+  log('info', '[SINGLETON] ✅ MCP server instance ready for all transports');
+
   // Add request/response logging and security middleware (same pattern as working server)
-  const originalHandleRequest = server.handleRequest;
-  server.handleRequest = async function(request) {
+  const originalHandleRequest = globalMcpServer.handleRequest;
+  globalMcpServer.handleRequest = async function(request) {
     const startTime = Date.now();
     const requestId = Math.random().toString(36).substring(2, 15);
     const identifier = requestId; // Use request ID as identifier for rate limiting
@@ -225,14 +269,14 @@ async function createServer() {
       throw error;
     }
   };
-  return server;
+  return globalMcpServer;
 }
 
 /**
  * Start the server with stdio transport
  */
 async function startStdioServer() {
-  const server = await createServer();
+  const server = await createServer(); // Uses singleton pattern
   const transport = new StdioServerTransport();
   
   await server.connect(transport);
@@ -245,6 +289,7 @@ async function startStdioServer() {
     transport: 'stdio',
     tools: toolCounts,
     resources: resourceCounts,
+    singleton: true, // Mark as using singleton pattern
     config: {
       maxConnections: CONFIG.MAX_CONNECTIONS,
       requestTimeout: CONFIG.REQUEST_TIMEOUT,
@@ -283,7 +328,7 @@ async function startHttpServer() {
   const app = express();
   app.use(express.json({ limit: '10mb' }));
   
-  // Create a single MCP server instance to be reused across all sessions
+  // Use the singleton MCP server instance (NO DUPLICATION)
   const mcpServer = await createServer();
   
   // Map to store transports by session ID
@@ -293,7 +338,17 @@ async function startHttpServer() {
   app.get('/health', (req, res) => {
     const toolCounts = getToolCounts();
     const resourceCounts = getResourceCounts();
-    res.json({
+    
+    // Get AMQP status if available
+    let amqpStatus = null;
+    try {
+      const { getAmqpStatus } = require('./tools/transports/amqp-transport-integration');
+      amqpStatus = getAmqpStatus();
+    } catch (error) {
+      // AMQP module not available or not loaded
+    }
+    
+    const healthResponse = {
       status: 'healthy',
       version: '2.0.0',
       transport: 'http',
@@ -306,7 +361,14 @@ async function startHttpServer() {
         realm: OAUTH_CONFIG.REALM,
         supportedScopes: OAUTH_CONFIG.SUPPORTED_SCOPES
       }
-    });
+    };
+    
+    // Add AMQP status if available
+    if (amqpStatus) {
+      healthResponse.amqp = amqpStatus;
+    }
+    
+    res.json(healthResponse);
   });
 
   // OAuth 2.1 Protected Resource Metadata endpoint (RFC 9728)
@@ -584,103 +646,223 @@ async function startHttpServer() {
 
 /**
  * Main server startup function
+ * 
+ * ARCHITECTURAL DESIGN: Multi-Transport Support (HTTP, AMQP, gRPC)
+ * 
+ * This function is designed to support multiple transports that all share
+ * the same singleton MCP server instance, preventing registration duplication.
  */
 async function startServer() {
   try {
-    // Initialize AMQP integration
-    initializeAmqpIntegration(log);
+    // Parse transport modes - supports: stdio, http, amqp, grpc
+    const transportModes = CONFIG.TRANSPORT_MODE.toLowerCase().split(',').map(m => m.trim()).filter(Boolean);
     
-    // Create server factory function for AMQP integration
-    const createServerFn = async () => {
-      const server = new McpServer(
-        {
-          name: 'mcp-open-discovery',
-          version: '2.0.0',
-          description: 'Networking Discovery tools exposed via Model Context Protocol - SDK Compatible with Multi-Transport Support'
-        },
-        {
-          capabilities: {
-            tools: {},
-            resources: {},
-            logging: {},
-            prompts: {}
-          }
+    log('info', `Starting server with transport modes: ${transportModes.join(', ')}`, {
+      originalValue: CONFIG.TRANSPORT_MODE,
+      envValue: process.env.TRANSPORT_MODE,
+      parsedModes: transportModes,
+      architecture: 'singleton-server-multi-transport'
+    });
+
+    // Initialize AMQP integration only if AMQP is requested
+    if (transportModes.includes('amqp')) {
+      initializeAmqpIntegration(log);
+    }
+    
+    // TODO: Initialize gRPC integration when gRPC transport is requested
+    if (transportModes.includes('grpc')) {
+      log('info', 'gRPC transport requested - will initialize when gRPC integration is available');
+      // Future: initializeGrpcIntegration(log);
+    }
+    
+    // Start each requested transport
+    const activeTransports = [];
+    const failedTransports = [];
+    
+    for (const mode of transportModes) {
+      try {
+        switch (mode) {
+          case 'stdio':
+            await startStdioServer();
+            activeTransports.push('stdio');
+            break;
+            
+          case 'http':
+            await startHttpServer();
+            activeTransports.push('http');
+            break;
+            
+          case 'amqp':
+            try {
+              // Only start AMQP if HTTP is also running (AMQP needs HTTP server)
+              if (!activeTransports.includes('http')) {
+                log('warn', 'AMQP transport requires HTTP transport, starting HTTP first');
+                await startHttpServer();
+                activeTransports.push('http');
+              }
+              
+              // ARCHITECTURAL FIX: Create transport-only function (NO SERVER DUPLICATION)
+              const createTransportOnlyFn = async () => {
+                log('info', '[AMQP] Using singleton server instance for transport');
+                return await createServer(); // Returns existing singleton instance
+              };
+              
+              const { startAmqpServer, startAmqpAutoRecovery } = require('./tools/transports/amqp-transport-integration');
+              
+              // Set up auto-recovery configuration (regardless of initial success)
+              const autoRecoveryConfig = {
+                enabled: process.env.AMQP_AUTO_RECOVERY !== 'false',
+                retryInterval: parseInt(process.env.AMQP_RETRY_INTERVAL) || 30000, // 30 seconds
+                maxRetries: parseInt(process.env.AMQP_MAX_RETRIES) || -1, // infinite by default
+                backoffMultiplier: parseFloat(process.env.AMQP_BACKOFF_MULTIPLIER) || 1.5,
+                maxRetryInterval: parseInt(process.env.AMQP_MAX_RETRY_INTERVAL) || 300000 // 5 minutes
+              };
+              
+              // Store auto-recovery configuration globally
+              process.amqpAutoRecoveryConfig = autoRecoveryConfig;
+              process.amqpCreateServerFn = createTransportOnlyFn; // Store transport-only function
+              
+              const amqpTransport = await startAmqpServer(createTransportOnlyFn, log);
+              activeTransports.push('amqp');
+              
+              // Store transport for graceful shutdown
+              process.amqpTransport = amqpTransport;
+              
+              if (autoRecoveryConfig.enabled) {
+                log('info', 'AMQP auto-recovery configured', {
+                  retryInterval: autoRecoveryConfig.retryInterval,
+                  maxRetries: autoRecoveryConfig.maxRetries === -1 ? 'infinite' : autoRecoveryConfig.maxRetries,
+                  status: 'standby',
+                  architecture: 'singleton-server'
+                });
+              }
+            } catch (amqpError) {
+              log('warn', 'AMQP transport failed to start, enabling auto-recovery', {
+                error: amqpError.message,
+                fallback: 'Server will continue without AMQP support and attempt auto-recovery'
+              });
+              failedTransports.push({ mode: 'amqp', error: amqpError.message });
+              
+              // Start auto-recovery service with transport-only function
+              const autoRecoveryConfig = {
+                enabled: process.env.AMQP_AUTO_RECOVERY !== 'false',
+                retryInterval: parseInt(process.env.AMQP_RETRY_INTERVAL) || 30000, // 30 seconds
+                maxRetries: parseInt(process.env.AMQP_MAX_RETRIES) || -1, // infinite by default
+                backoffMultiplier: parseFloat(process.env.AMQP_BACKOFF_MULTIPLIER) || 1.5,
+                maxRetryInterval: parseInt(process.env.AMQP_MAX_RETRY_INTERVAL) || 300000 // 5 minutes
+              };
+              
+              const createTransportOnlyFn = async () => {
+                log('info', '[AMQP RECOVERY] Using singleton server instance for recovery');
+                return await createServer(); // Returns existing singleton instance
+              };
+              
+              if (autoRecoveryConfig.enabled) {
+                startAmqpAutoRecovery(createTransportOnlyFn, log, autoRecoveryConfig);
+              } else {
+                log('info', 'AMQP auto-recovery disabled via AMQP_AUTO_RECOVERY=false');
+              }
+            }
+            break;
+            
+          case 'grpc':
+            try {
+              // FUTURE: gRPC Transport Integration
+              log('info', 'Starting gRPC transport with singleton server pattern...');
+              
+              // Create transport-only function (consistent with AMQP pattern)
+              const createTransportOnlyFn = async () => {
+                log('info', '[gRPC] Using singleton server instance for transport');
+                return await createServer(); // Returns existing singleton instance
+              };
+              
+              // TODO: Implement when gRPC integration is available
+              // const { startGrpcServer, startGrpcAutoRecovery } = require('./tools/transports/grpc-transport-integration');
+              // const grpcTransport = await startGrpcServer(createTransportOnlyFn, log);
+              // activeTransports.push('grpc');
+              
+              log('warn', 'gRPC transport not yet implemented - placeholder for future development');
+              failedTransports.push({ mode: 'grpc', error: 'Not yet implemented' });
+              
+            } catch (grpcError) {
+              log('warn', 'gRPC transport failed to start', {
+                error: grpcError.message,
+                fallback: 'Server will continue without gRPC support'
+              });
+              failedTransports.push({ mode: 'grpc', error: grpcError.message });
+            }
+            break;
+            
+          default:
+            log('warn', `Unknown transport mode: ${mode}`);
         }
-      );
-      
-      // Register all your tools (existing registry code)
-      await registerAllTools(server, {
-        enableDynamicRegistry: CONFIG.ENABLE_DYNAMIC_REGISTRY,
-        dynamicDbPath: CONFIG.DYNAMIC_REGISTRY_DB,
-        ciMemory: {}
+      } catch (transportError) {
+        log('error', `Failed to start ${mode} transport`, {
+          error: transportError.message,
+          stack: transportError.stack
+        });
+        failedTransports.push({ mode, error: transportError.message });
+      }
+    }
+    
+    // Report startup status
+    if (activeTransports.length > 0) {
+      log('info', 'MCP Server started successfully', {
+        activeTransports,
+        failedTransports: failedTransports.length > 0 ? failedTransports : 'none',
+        mode: transportModes.join(', '),
+        degradedOperation: failedTransports.length > 0
       });
       
-      await registerAllResources(server);
-      
-      // Register prompts
-      const maybePromise = registerAllPrompts(server);
-      if (maybePromise && typeof maybePromise.then === 'function') {
-        await maybePromise;
+      // Log warnings for failed transports
+      if (failedTransports.length > 0) {
+        log('warn', 'Server running in degraded mode - some transports failed', {
+          failedCount: failedTransports.length,
+          details: failedTransports
+        });
       }
+    } else {
+      log('error', 'All transports failed to start', { failedTransports });
+      throw new Error('No transports could be started');
+    }
+    
+    // Enhanced graceful shutdown
+    const gracefulShutdown = async (signal) => {
+      log('info', `Received ${signal}, shutting down gracefully...`);
       
-      // Add request/response logging and security middleware
-      const originalHandleRequest = server.handleRequest;
-      server.handleRequest = async function(request) {
-        const startTime = Date.now();
-        const requestId = Math.random().toString(36).substring(2, 15);
-        const identifier = requestId;
-        
-        try {
-          // Sanitize input
-          const sanitizedRequest = sanitizeInput(request);
-          
-          // Rate limiting
-          if (!rateLimiter.isAllowed(identifier)) {
-            throw new Error('Rate limit exceeded');
-          }
-          
-          log('debug', 'Processing request', {
-            id: requestId,
-            method: sanitizedRequest.method,
-            params: Object.keys(sanitizedRequest.params || {}),
-            clientInfo: this.clientInfo || {}
-          });
-          
-          const response = await originalHandleRequest.call(this, sanitizedRequest);
-          
-          const duration = Date.now() - startTime;
-          log('debug', 'Request completed', {
-            id: requestId,
-            duration: `${duration}ms`,
-            success: true
-          });
-          
-          return response;
-        } catch (error) {
-          const duration = Date.now() - startTime;
-          log('error', 'Request failed', {
-            id: requestId,
-            duration: `${duration}ms`,
-            error: error.message,
-            stack: CONFIG.LOG_LEVEL === 'debug' ? error.stack : undefined
-          });
-          throw error;
+      try {
+        // Stop AMQP auto-recovery if running
+        if (process.amqpRecovery) {
+          log('info', 'Stopping AMQP auto-recovery service...');
+          process.amqpRecovery.stop = true;
         }
-      };
-      
-      return server;
+        
+        // Close AMQP transport if active
+        if (process.amqpTransport) {
+          log('info', 'Closing AMQP transport...');
+          await process.amqpTransport.close();
+        }
+        
+        log('info', 'Graceful shutdown complete');
+        process.exit(0);
+      } catch (error) {
+        log('error', 'Error during graceful shutdown', {
+          error: error.message,
+          stack: error.stack
+        });
+        process.exit(1);
+      }
     };
     
-    // Enhanced startup with AMQP support
-    await startServerWithAmqp(
-      { startStdioServer, startHttpServer }, // Your existing functions
-      createServerFn,
-      log,
-      CONFIG
-    );
+    process.on('SIGINT', gracefulShutdown);
+    process.on('SIGTERM', gracefulShutdown);
     
   } catch (error) {
-    log('error', 'Server startup failed', { error: error.message });
+    log('error', 'Server startup failed', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     process.exit(1);
   }
 }

@@ -38,6 +38,8 @@ const { getCredentialTools } = require('../credentials_tools_sdk');
  * Global registry instance (singleton pattern for security)
  */
 let globalRegistry = null;
+let registrationInProgress = false;
+let registrationComplete = false;
 
 /**
  * Initialize the registry system
@@ -53,8 +55,29 @@ async function initializeRegistry() {
 
 /**
  * Main tool registration function - replaces old registerAllTools
+ * 
+ * ARCHITECTURAL FIX: Implements comprehensive deduplication to prevent
+ * the catastrophic tool registration issues identified in forensic analysis.
  */
 async function registerAllTools(server) {
+  // DEDUPLICATION GUARD: Prevent multiple concurrent registrations
+  if (registrationInProgress) {
+    console.log('[Registry] ⚠️  Registration already in progress, waiting...');
+    while (registrationInProgress) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    console.log('[Registry] ✅ Using existing registration results');
+    return globalRegistry ? { registry: globalRegistry, summary: globalRegistry.getToolCounts() } : null;
+  }
+
+  // DEDUPLICATION GUARD: Prevent re-registration if already complete
+  if (registrationComplete && globalRegistry) {
+    console.log('[Registry] ✅ Tools already registered, returning existing registry');
+    return { registry: globalRegistry, summary: globalRegistry.getToolCounts() };
+  }
+
+  registrationInProgress = true;
+  
   try {
     console.log('[Registry] ========================================');
     console.log('[Registry] 🚀 MCP Open Discovery Tool Registration');
@@ -130,8 +153,15 @@ async function registerAllTools(server) {
 
     console.log(`[Registry] 🔥 Hot-reload Status: ${JSON.stringify(registry.getStatus().hot_reload)}`);
     
+    // Mark registration as complete
+    registrationComplete = true;
+    registrationInProgress = false;
+    
+    console.log('[Registry] 🛡️  ARCHITECTURAL FIX: Deduplication guards active');
+    
     return { registry, summary };
   } catch (error) {
+    registrationInProgress = false; // Reset on error
     console.error('[Registry] Tool registration failed:', error.message);
     console.error('[Registry] Stack trace:', error.stack);
     throw error;
@@ -240,7 +270,12 @@ async function cleanup() {
   if (globalRegistry) {
     await globalRegistry.cleanup();
     globalRegistry = null;
-    console.log('[Registry] Registry cleanup completed');
+    
+    // Reset deduplication guards
+    registrationInProgress = false;
+    registrationComplete = false;
+    
+    console.log('[Registry] Registry cleanup completed (deduplication guards reset)');
   }
 }
 

@@ -54,6 +54,7 @@ RUN npm install --no-fund --no-audit
 # Copy application files
 COPY mcp_server_multi_transport_sdk.js ./
 COPY tools/ ./tools/
+COPY scripts/ ./scripts/
 
 # Set permissions
 RUN chown -R mcpuser:mcpuser /home/mcpuser/app

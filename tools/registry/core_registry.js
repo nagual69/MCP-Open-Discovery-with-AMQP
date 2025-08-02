@@ -30,13 +30,17 @@ class CoreRegistry {
     this.db = new DatabaseLayer();    // SQLite persistence layer
     this.dbInitialized = false;
     
+    // ARCHITECTURAL FIX: Add deduplication tracking
+    this.registeredTools = new Set(); // Track all registered tool names
+    this.serverInstances = new Set();  // Track MCP server instances to prevent duplicates
+    
     // Hot-reload capabilities
     this.moduleWatchers = new Map();  // file path -> watcher instance
     this.serverInstance = null;       // Reference to MCP server for dynamic updates
     this.hotReloadEnabled = true;     // Enable/disable hot-reload system-wide
     this.moduleCache = new Map();     // Cache module exports for reloading
     
-    console.log('[Core Registry] Initialized with hot-reload capabilities');
+    console.log('[Core Registry] Initialized with hot-reload capabilities and deduplication guards');
   }
 
   /**
@@ -70,15 +74,32 @@ class CoreRegistry {
 
   /**
    * Register a tool with the current module
+   * 
+   * ARCHITECTURAL FIX: Comprehensive deduplication to prevent the registration
+   * catastrophe identified in forensic analysis.
    */
   registerTool(toolName, server) {
     if (!this.currentModule) {
       throw new Error('No module started. Call startModule() first.');
     }
     
+    // DEDUPLICATION CHECK: Prevent duplicate tool registration
+    if (this.registeredTools.has(toolName)) {
+      console.log(`[Core Registry] ⚠️  SKIPPING duplicate tool: ${toolName} (already registered)`);
+      return; // Skip duplicate registration
+    }
+    
+    // Track the server instance to detect multi-server issues
+    this.serverInstances.add(server);
+    if (this.serverInstances.size > 1) {
+      console.warn(`[Core Registry] ⚠️  WARNING: Multiple server instances detected (${this.serverInstances.size})`);
+      console.warn(`[Core Registry] This should NOT happen with the singleton pattern!`);
+    }
+    
     console.log(`[Core Registry] ✓ Registered tool: ${toolName}`);
     this.currentModule.tools.add(toolName);
     this.categories.get(this.currentModule.category).add(toolName);
+    this.registeredTools.add(toolName); // Track for deduplication
     this.totalCount++;
   }
 
@@ -136,6 +157,13 @@ class CoreRegistry {
         enabled: this.hotReloadEnabled,
         watched_modules: this.moduleWatchers.size,
         cached_modules: this.moduleCache.size
+      },
+      // ARCHITECTURAL FIX: Add deduplication diagnostics
+      deduplication: {
+        uniqueTools: this.registeredTools.size,
+        totalRegistrations: this.totalCount,
+        serverInstances: this.serverInstances.size,
+        duplicateDetected: this.registeredTools.size !== this.totalCount
       },
       modules: {}
     };

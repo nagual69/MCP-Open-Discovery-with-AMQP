@@ -77,6 +77,50 @@ function parseTransportMode(mode) {
 }
 
 /**
+ * Start periodic health checks for AMQP connection
+ */
+function startAmqpHealthCheck(log, interval = 30000) {
+  if (global.amqpHealthCheckInterval) {
+    clearInterval(global.amqpHealthCheckInterval);
+  }
+  
+  global.amqpHealthCheckInterval = setInterval(async () => {
+    try {
+      const healthCheck = await testAmqpConnection();
+      
+      if (!healthCheck.healthy) {
+        log('warn', 'AMQP health check failed, connection appears unhealthy', {
+          reason: healthCheck.reason,
+          timestamp: healthCheck.timestamp
+        });
+        
+        // Trigger auto-recovery if enabled and no recovery already in progress
+        if (process.amqpAutoRecoveryConfig?.enabled && !process.amqpRecovery) {
+          log('warn', 'Triggering auto-recovery due to failed health check');
+          process.amqpTransport = null;
+          
+          if (process.amqpCreateServerFn) {
+            startAmqpAutoRecovery(process.amqpCreateServerFn, log, process.amqpAutoRecoveryConfig);
+          } else {
+            log('error', 'Cannot start auto-recovery: createServerFn not available');
+          }
+        } else if (process.amqpRecovery) {
+          log('debug', 'Auto-recovery already in progress, skipping trigger');
+        } else {
+          log('debug', 'Auto-recovery not enabled or not configured');
+        }
+      } else {
+        log('debug', 'AMQP health check passed');
+      }
+    } catch (error) {
+      log('warn', 'AMQP health check error', { error: error.message });
+    }
+  }, interval);
+  
+  log('info', 'AMQP health check started', { interval: `${interval}ms` });
+}
+
+/**
  * Start the server with AMQP transport
  */
 async function startAmqpServer(createServerFn, log) {
@@ -108,6 +152,19 @@ async function startAmqpServer(createServerFn, log) {
     
     transport.onclose = () => {
       log('info', 'AMQP transport closed');
+      
+      // Check if auto-recovery is configured and enabled
+      if (process.amqpAutoRecoveryConfig && process.amqpAutoRecoveryConfig.enabled) {
+        log('warn', 'AMQP connection lost, starting auto-recovery...');
+        process.amqpTransport = null;
+        
+        // Use the stored createServerFn if available
+        if (process.amqpCreateServerFn) {
+          startAmqpAutoRecovery(process.amqpCreateServerFn, log, process.amqpAutoRecoveryConfig);
+        } else {
+          log('warn', 'Cannot start auto-recovery: createServerFn not available');
+        }
+      }
     };
     
     // Connect server to transport
@@ -115,6 +172,9 @@ async function startAmqpServer(createServerFn, log) {
     
     // Start the transport
     await transport.start();
+    
+    // Start periodic health checks
+    startAmqpHealthCheck(log, 15000); // Check every 15 seconds
     
     // Set up registry integration for your revolutionary hot-reload system
     if (AMQP_CONFIG.REGISTRY_BROADCAST_ENABLED) {
@@ -151,8 +211,209 @@ async function startAmqpServer(createServerFn, log) {
 }
 
 /**
- * Enhanced server startup function with AMQP support
+ * Auto-recovery mechanism for AMQP connections
  */
+async function startAmqpAutoRecovery(createServerFn, log, retryConfig = {}) {
+  const config = {
+    enabled: retryConfig.enabled !== false,
+    maxRetries: retryConfig.maxRetries || -1, // -1 = infinite retries
+    retryInterval: retryConfig.retryInterval || 30000, // 30 seconds
+    backoffMultiplier: retryConfig.backoffMultiplier || 1.5,
+    maxRetryInterval: retryConfig.maxRetryInterval || 300000, // 5 minutes
+    ...retryConfig
+  };
+  
+  if (!config.enabled) {
+    log('info', 'AMQP auto-recovery disabled');
+    return null;
+  }
+  
+  let retryCount = 0;
+  let retryInterval = config.retryInterval;
+  let isRecovering = false;
+  
+  const recovery = {
+    stop: false,
+    retryCount: 0,
+    lastAttempt: null,
+    status: 'waiting'
+  };
+  
+  // Store recovery state globally for status checking
+  process.amqpRecovery = recovery;
+  
+  const attemptReconnection = async () => {
+    if (recovery.stop || isRecovering) return;
+    
+    isRecovering = true;
+    recovery.status = 'attempting';
+    recovery.lastAttempt = new Date().toISOString();
+    retryCount++;
+    recovery.retryCount = retryCount;
+    
+    log('info', `AMQP auto-recovery attempt ${retryCount}`, {
+      retryInterval: retryInterval,
+      maxRetries: config.maxRetries,
+      nextRetryIn: `${Math.round(retryInterval / 1000)}s`
+    });
+    
+    try {
+      const amqpTransport = await startAmqpServer(createServerFn, log);
+      
+      // Success! AMQP is back online
+      log('info', 'AMQP auto-recovery successful! 🎉', {
+        retriesAttempted: retryCount,
+        totalDowntime: recovery.lastAttempt ? 
+          Math.round((Date.now() - new Date(recovery.lastAttempt).getTime()) / 1000) + 's' : 'unknown'
+      });
+      
+      // Store the recovered transport
+      process.amqpTransport = amqpTransport;
+      recovery.status = 'connected';
+      
+      // Set up disconnect handler to restart auto-recovery if connection is lost again
+      if (amqpTransport.onclose) {
+        const originalOnClose = amqpTransport.onclose;
+        amqpTransport.onclose = () => {
+          originalOnClose();
+          log('warn', 'AMQP connection lost, restarting auto-recovery...');
+          process.amqpTransport = null;
+          recovery.status = 'waiting';
+          retryCount = 0;
+          retryInterval = config.retryInterval;
+          scheduleNextRetry();
+        };
+      }
+      
+      // Stop the recovery process
+      recovery.stop = true;
+      isRecovering = false;
+      return amqpTransport;
+      
+    } catch (error) {
+      recovery.status = 'failed';
+      log('debug', `AMQP auto-recovery attempt ${retryCount} failed`, {
+        error: error.message,
+        nextRetryIn: `${Math.round(retryInterval / 1000)}s`
+      });
+      
+      // Check if we should stop retrying
+      if (config.maxRetries > 0 && retryCount >= config.maxRetries) {
+        log('warn', 'AMQP auto-recovery stopped after maximum retries reached', {
+          maxRetries: config.maxRetries,
+          totalAttempts: retryCount
+        });
+        recovery.status = 'stopped';
+        isRecovering = false;
+        return null;
+      }
+      
+      // Exponential backoff
+      retryInterval = Math.min(
+        retryInterval * config.backoffMultiplier,
+        config.maxRetryInterval
+      );
+      
+      isRecovering = false;
+      scheduleNextRetry();
+    }
+  };
+  
+  const scheduleNextRetry = () => {
+    if (recovery.stop) return;
+    
+    recovery.status = 'waiting';
+    setTimeout(() => {
+      if (!recovery.stop) {
+        attemptReconnection();
+      }
+    }, retryInterval);
+  };
+  
+  // Start the recovery process
+  log('info', 'Starting AMQP auto-recovery service', {
+    retryInterval: `${config.retryInterval / 1000}s`,
+    maxRetries: config.maxRetries === -1 ? 'infinite' : config.maxRetries,
+    backoffMultiplier: config.backoffMultiplier,
+    maxRetryInterval: `${config.maxRetryInterval / 1000}s`
+  });
+  
+  scheduleNextRetry();
+  
+  return recovery;
+}
+
+/**
+ * Test AMQP connection health by sending a heartbeat message
+ */
+async function testAmqpConnection() {
+  if (!process.amqpTransport) {
+    return { healthy: false, reason: 'No transport available' };
+  }
+  
+  try {
+    // Try to send a simple test message to verify connection
+    const testChannel = await process.amqpTransport.connection.createChannel();
+    await testChannel.assertExchange('mcp.heartbeat', 'fanout', { durable: false });
+    await testChannel.publish('mcp.heartbeat', '', Buffer.from(JSON.stringify({
+      type: 'heartbeat',
+      timestamp: new Date().toISOString(),
+      source: 'mcp-open-discovery'
+    })));
+    await testChannel.close();
+    
+    return { healthy: true, timestamp: new Date().toISOString() };
+  } catch (error) {
+    return { 
+      healthy: false, 
+      reason: error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+/**
+ * Get AMQP connection status including auto-recovery information
+ */
+function getAmqpStatus() {
+  const status = {
+    connected: !!process.amqpTransport,
+    transport: !!process.amqpTransport,
+    autoRecovery: !!(process.amqpRecovery || (process.amqpAutoRecoveryConfig && process.amqpAutoRecoveryConfig.enabled)),
+    timestamp: new Date().toISOString()
+  };
+  
+  // Include auto-recovery configuration if available
+  if (process.amqpAutoRecoveryConfig) {
+    status.recovery = {
+      enabled: process.amqpAutoRecoveryConfig.enabled,
+      status: process.amqpRecovery ? process.amqpRecovery.status : 'standby',
+      retryInterval: process.amqpAutoRecoveryConfig.retryInterval,
+      maxRetries: process.amqpAutoRecoveryConfig.maxRetries
+    };
+    
+    // Add active recovery details if in progress
+    if (process.amqpRecovery) {
+      Object.assign(status.recovery, {
+        retryCount: process.amqpRecovery.retryCount || 0,
+        lastAttempt: process.amqpRecovery.lastAttempt,
+        nextRetry: process.amqpRecovery.nextRetry
+      });
+    }
+  } else if (process.amqpRecovery) {
+    status.recovery = {
+      enabled: true,
+      status: process.amqpRecovery.status,
+      retryCount: process.amqpRecovery.retryCount,
+      lastAttempt: process.amqpRecovery.lastAttempt,
+      stopped: process.amqpRecovery.stop
+    };
+  } else {
+    status.recovery = { enabled: false };
+  }
+  
+  return status;
+}
 async function startServerWithAmqp(originalStartServer, createServerFn, log, CONFIG) {
   try {
     const transportModes = parseTransportMode(CONFIG.TRANSPORT_MODE);
@@ -164,48 +425,120 @@ async function startServerWithAmqp(originalStartServer, createServerFn, log, CON
     });
     
     const activeTransports = [];
+    const failedTransports = [];
     
-    // Start each requested transport
+    // Start each requested transport with graceful degradation
     for (const mode of transportModes) {
-      switch (mode) {
-        case 'stdio':
-          if (originalStartServer.startStdioServer) {
-            await originalStartServer.startStdioServer();
-            activeTransports.push('stdio');
-          }
-          break;
-          
-        case 'http':
-          if (originalStartServer.startHttpServer) {
-            await originalStartServer.startHttpServer();
-            activeTransports.push('http');
-          }
-          break;
-          
-        case 'amqp':
-          const amqpTransport = await startAmqpServer(createServerFn, log);
-          activeTransports.push('amqp');
-          
-          // Store transport for graceful shutdown
-          process.amqpTransport = amqpTransport;
-          break;
-          
-        default:
-          log('warn', `Unknown transport mode: ${mode}`);
+      try {
+        switch (mode) {
+          case 'stdio':
+            if (originalStartServer.startStdioServer) {
+              await originalStartServer.startStdioServer();
+              activeTransports.push('stdio');
+            }
+            break;
+            
+          case 'http':
+            if (originalStartServer.startHttpServer) {
+              await originalStartServer.startHttpServer();
+              activeTransports.push('http');
+            }
+            break;
+            
+          case 'amqp':
+            try {
+              // Set up auto-recovery configuration first (regardless of initial connection success)
+              const autoRecoveryConfig = {
+                enabled: process.env.AMQP_AUTO_RECOVERY !== 'false',
+                retryInterval: parseInt(process.env.AMQP_RETRY_INTERVAL) || 30000, // 30 seconds
+                maxRetries: parseInt(process.env.AMQP_MAX_RETRIES) || -1, // infinite by default
+                backoffMultiplier: parseFloat(process.env.AMQP_BACKOFF_MULTIPLIER) || 1.5,
+                maxRetryInterval: parseInt(process.env.AMQP_MAX_RETRY_INTERVAL) || 300000 // 5 minutes
+              };
+              
+              // Store auto-recovery configuration globally
+              process.amqpAutoRecoveryConfig = autoRecoveryConfig;
+              
+              // Store createServerFn globally for auto-recovery
+              global.mcpCreateServerFn = createServerFn;
+              
+              const amqpTransport = await startAmqpServer(createServerFn, log);
+              activeTransports.push('amqp');
+              
+              // Store transport for graceful shutdown
+              process.amqpTransport = amqpTransport;
+              
+              if (autoRecoveryConfig.enabled) {
+                log('info', 'AMQP auto-recovery configured', {
+                  retryInterval: autoRecoveryConfig.retryInterval,
+                  maxRetries: autoRecoveryConfig.maxRetries === -1 ? 'infinite' : autoRecoveryConfig.maxRetries,
+                  status: 'standby'
+                });
+              }
+            } catch (amqpError) {
+              log('warn', 'AMQP transport failed to start, enabling auto-recovery', {
+                error: amqpError.message,
+                fallback: 'Server will continue without AMQP support and attempt auto-recovery'
+              });
+              failedTransports.push({ mode: 'amqp', error: amqpError.message });
+              
+              // Auto-recovery config should already be set above, just start recovery
+              if (process.amqpAutoRecoveryConfig && process.amqpAutoRecoveryConfig.enabled) {
+                startAmqpAutoRecovery(createServerFn, log, process.amqpAutoRecoveryConfig);
+                log('info', 'AMQP auto-recovery started after initial failure', {
+                  retryInterval: process.amqpAutoRecoveryConfig.retryInterval,
+                  maxRetries: process.amqpAutoRecoveryConfig.maxRetries === -1 ? 'infinite' : process.amqpAutoRecoveryConfig.maxRetries
+                });
+              } else {
+                log('info', 'AMQP auto-recovery disabled via AMQP_AUTO_RECOVERY=false');
+              }
+            }
+            break;
+            
+          default:
+            log('warn', `Unknown transport mode: ${mode}`);
+        }
+      } catch (transportError) {
+        log('error', `Failed to start ${mode} transport`, {
+          error: transportError.message,
+          stack: transportError.stack
+        });
+        failedTransports.push({ mode, error: transportError.message });
       }
     }
     
-    if (activeTransports.length === 0) {
-      throw new Error('No valid transport modes were started');
+    // Report startup status
+    if (activeTransports.length > 0) {
+      log('info', 'MCP Server with AMQP integration started successfully', {
+        activeTransports,
+        failedTransports: failedTransports.length > 0 ? failedTransports : 'none',
+        mode: transportModes.join(', '),
+        degradedOperation: failedTransports.length > 0
+      });
+      
+      // Log warnings for failed transports
+      if (failedTransports.length > 0) {
+        log('warn', 'Server running in degraded mode - some transports failed', {
+          failedCount: failedTransports.length,
+          details: failedTransports
+        });
+      }
+    } else {
+      log('error', 'All transports failed to start', { failedTransports });
+      throw new Error('No transports could be started');
     }
-    
-    log('info', `Server started successfully with transports: ${activeTransports.join(', ')}`);
     
     // Enhanced graceful shutdown
     const gracefulShutdown = async (signal) => {
       log('info', `Received ${signal}, shutting down gracefully...`);
       
       try {
+        // Stop AMQP auto-recovery if running
+        if (process.amqpRecovery) {
+          log('info', 'Stopping AMQP auto-recovery service...');
+          process.amqpRecovery.stop = true;
+        }
+        
         // Close AMQP transport if active
         if (process.amqpTransport) {
           log('info', 'Closing AMQP transport...');
@@ -237,16 +570,19 @@ async function startServerWithAmqp(originalStartServer, createServerFn, log, CON
 }
 
 /**
- * Health check enhancement with AMQP status
+ * Health check enhancement with AMQP status and auto-recovery information
  */
 function enhanceHealthCheck(originalHealthResponse) {
+  const amqpStatus = getAmqpStatus();
+  
   const enhanced = {
     ...originalHealthResponse,
     transports: {
       ...originalHealthResponse.transports,
       amqp: {
-        enabled: process.amqpTransport ? true : false,
-        connected: process.amqpTransport?.connectionState?.connected || false,
+        enabled: amqpStatus.connected,
+        connected: amqpStatus.connected,
+        autoRecovery: amqpStatus.recovery,
         config: {
           queuePrefix: AMQP_CONFIG.AMQP_QUEUE_PREFIX,
           exchangeName: AMQP_CONFIG.AMQP_EXCHANGE,
@@ -512,6 +848,10 @@ module.exports = {
   TOOL_CATEGORIES,
   parseTransportMode,
   startAmqpServer,
+  startAmqpAutoRecovery,
+  getAmqpStatus,
+  testAmqpConnection,
+  startAmqpHealthCheck,
   startServerWithAmqp,
   enhanceHealthCheck,
   enhanceHealthCheckWithRegistry,

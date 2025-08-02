@@ -1,0 +1,549 @@
+2025-08-02 18:08:20.192 | [2025-08-02T22:08:20.189Z] [INFO] Starting server with transport modes: http, amqp {
+2025-08-02 18:08:20.192 |   "originalValue": "http,amqp",
+2025-08-02 18:08:20.192 |   "envValue": "http,amqp",
+2025-08-02 18:08:20.192 |   "parsedModes": [
+2025-08-02 18:08:20.192 |     "http",
+2025-08-02 18:08:20.192 |     "amqp"
+2025-08-02 18:08:20.192 |   ],
+2025-08-02 18:08:20.192 |   "architecture": "singleton-server-multi-transport"
+2025-08-02 18:08:20.192 | }
+2025-08-02 18:08:20.192 | [2025-08-02T22:08:20.191Z] [INFO] Initializing AMQP integration... 
+2025-08-02 18:08:20.192 | [2025-08-02T22:08:20.192Z] [INFO] AMQP configuration validated for MCP Open Discovery Server v2.0 {
+2025-08-02 18:08:20.192 |   "amqpUrl": "amqp://mcp:discovery@rabbitmq:5672",
+2025-08-02 18:08:20.192 |   "queuePrefix": "mcp.discovery",
+2025-08-02 18:08:20.192 |   "exchangeName": "mcp.notifications",
+2025-08-02 18:08:20.192 |   "reconnectDelay": 5000,
+2025-08-02 18:08:20.192 |   "maxReconnectAttempts": 10,
+2025-08-02 18:08:20.192 |   "prefetchCount": 1,
+2025-08-02 18:08:20.192 |   "registryBroadcast": true,
+2025-08-02 18:08:20.192 |   "toolCategoryRouting": true,
+2025-08-02 18:08:20.192 |   "hotReloadSync": true
+2025-08-02 18:08:20.192 | }
+2025-08-02 18:08:20.196 | [2025-08-02T22:08:20.196Z] [INFO] [SINGLETON] Creating new MCP server instance (ONE-TIME ONLY) 
+2025-08-02 18:08:20.196 | [2025-08-02T22:08:20.196Z] [INFO] [SINGLETON] Starting tool registration (ONE-TIME ONLY) 
+2025-08-02 18:08:20.197 | [Registry] ========================================
+2025-08-02 18:08:20.197 | [Registry] 🚀 MCP Open Discovery Tool Registration
+2025-08-02 18:08:20.197 | [Registry] ========================================
+2025-08-02 18:08:20.197 | [Database Layer] Initialized with path: /home/mcpuser/app/data/dynamic_registry.db
+2025-08-02 18:08:20.198 | [Core Registry] Initialized with hot-reload capabilities and deduplication guards
+2025-08-02 18:08:20.198 | [Core Registry] [DEBUG] Initializing database layer...
+2025-08-02 18:08:20.198 | [Database Layer] Connecting to SQLite database
+2025-08-02 18:08:20.201 | [Database Layer] Connected to SQLite database
+2025-08-02 18:08:20.201 | [Database Layer] [DEBUG] Creating database schema...
+2025-08-02 18:08:20.202 | [Database Layer] [DEBUG] Starting schema creation...
+2025-08-02 18:08:20.202 | [Database Layer] [DEBUG] Creating 8 tables: [
+2025-08-02 18:08:20.202 |   'modules',
+2025-08-02 18:08:20.202 |   'tools',
+2025-08-02 18:08:20.202 |   'tool_stats',
+2025-08-02 18:08:20.202 |   'dependencies',
+2025-08-02 18:08:20.202 |   'registry_config',
+2025-08-02 18:08:20.202 |   'memory_store',
+2025-08-02 18:08:20.202 |   'memory_keys',
+2025-08-02 18:08:20.202 |   'memory_audit'
+2025-08-02 18:08:20.202 | ]
+2025-08-02 18:08:20.211 | [Database Layer] [DEBUG] Table created successfully: modules
+2025-08-02 18:08:20.218 | [Database Layer] [DEBUG] Table created successfully: tools
+2025-08-02 18:08:20.225 | [Database Layer] [DEBUG] Table created successfully: tool_stats
+2025-08-02 18:08:20.231 | [Database Layer] [DEBUG] Table created successfully: dependencies
+2025-08-02 18:08:20.238 | [Database Layer] [DEBUG] Table created successfully: registry_config
+2025-08-02 18:08:20.244 | [Database Layer] [DEBUG] Table created successfully: memory_store
+2025-08-02 18:08:20.250 | [Database Layer] [DEBUG] Table created successfully: memory_keys
+2025-08-02 18:08:20.259 | [Database Layer] [DEBUG] Table created successfully: memory_audit
+2025-08-02 18:08:20.259 | [Database Layer] [DEBUG] Starting configuration initialization...
+2025-08-02 18:08:20.259 | [Database Layer] [DEBUG] Inserting 4 default config entries...
+2025-08-02 18:08:20.259 | [Database Layer] [DEBUG] Processing config entry 1 : registry_version
+2025-08-02 18:08:20.264 | [Database Layer] [DEBUG] Config entry successful for registry_version
+2025-08-02 18:08:20.264 | [Database Layer] [DEBUG] Processing config entry 2 : auto_discovery
+2025-08-02 18:08:20.269 | [Database Layer] [DEBUG] Config entry successful for auto_discovery
+2025-08-02 18:08:20.269 | [Database Layer] [DEBUG] Processing config entry 3 : hot_reload
+2025-08-02 18:08:20.273 | [Database Layer] [DEBUG] Config entry successful for hot_reload
+2025-08-02 18:08:20.273 | [Database Layer] [DEBUG] Processing config entry 4 : max_module_history
+2025-08-02 18:08:20.279 | [Database Layer] [DEBUG] Config entry successful for max_module_history
+2025-08-02 18:08:20.279 | [Database Layer] [DEBUG] Configuration initialization completed
+2025-08-02 18:08:20.279 | [Database Layer] [DEBUG] Configuration initialized
+2025-08-02 18:08:20.279 | [Database Layer] Schema created successfully
+2025-08-02 18:08:20.279 | [Database Layer] Schema created successfully
+2025-08-02 18:08:20.279 | [Core Registry] Database layer initialized successfully
+2025-08-02 18:08:20.279 | [Registry] Global registry initialized
+2025-08-02 18:08:20.279 | [Registry] Starting registration for network_tools_sdk (network)
+2025-08-02 18:08:20.282 | [Core Registry] Starting registration for network_tools_sdk (network)
+2025-08-02 18:08:20.282 | [Core Registry] ✓ Registered tool: ping
+2025-08-02 18:08:20.282 | [Core Registry] ✓ Registered tool: wget
+2025-08-02 18:08:20.282 | [Core Registry] ✓ Registered tool: nslookup
+2025-08-02 18:08:20.282 | [Core Registry] ✓ Registered tool: netstat
+2025-08-02 18:08:20.283 | [Core Registry] ✓ Registered tool: tcp_connect
+2025-08-02 18:08:20.283 | [Core Registry] ✓ Registered tool: route
+2025-08-02 18:08:20.283 | [Core Registry] ✓ Registered tool: ifconfig
+2025-08-02 18:08:20.283 | [Core Registry] ✓ Registered tool: arp
+2025-08-02 18:08:20.283 | [Core Registry] ✓ Registered tool: whois
+2025-08-02 18:08:20.284 | [Database Layer] [DEBUG] Recording module registration: network_tools_sdk
+2025-08-02 18:08:20.289 | [Database Layer] [DEBUG] Module inserted with ID 1, updating load duration...
+2025-08-02 18:08:20.289 | [Database Layer] [DEBUG] Load duration updated for network_tools_sdk
+2025-08-02 18:08:20.289 | [Database Layer] [DEBUG] Recording 9 tools for network_tools_sdk...
+2025-08-02 18:08:20.289 | [Database Layer] [DEBUG] Inserting tool: ping
+2025-08-02 18:08:20.293 | [Database Layer] [DEBUG] Tool inserted successfully: ping
+2025-08-02 18:08:20.293 | [Database Layer] [DEBUG] Inserting tool: wget
+2025-08-02 18:08:20.298 | [Database Layer] [DEBUG] Tool inserted successfully: wget
+2025-08-02 18:08:20.298 | [Database Layer] [DEBUG] Inserting tool: nslookup
+2025-08-02 18:08:20.302 | [Database Layer] [DEBUG] Tool inserted successfully: nslookup
+2025-08-02 18:08:20.302 | [Database Layer] [DEBUG] Inserting tool: netstat
+2025-08-02 18:08:20.308 | [Database Layer] [DEBUG] Tool inserted successfully: netstat
+2025-08-02 18:08:20.308 | [Database Layer] [DEBUG] Inserting tool: tcp_connect
+2025-08-02 18:08:20.312 | [Database Layer] [DEBUG] Tool inserted successfully: tcp_connect
+2025-08-02 18:08:20.312 | [Database Layer] [DEBUG] Inserting tool: route
+2025-08-02 18:08:20.319 | [Database Layer] [DEBUG] Tool inserted successfully: route
+2025-08-02 18:08:20.319 | [Database Layer] [DEBUG] Inserting tool: ifconfig
+2025-08-02 18:08:20.323 | [Database Layer] [DEBUG] Tool inserted successfully: ifconfig
+2025-08-02 18:08:20.323 | [Database Layer] [DEBUG] Inserting tool: arp
+2025-08-02 18:08:20.328 | [Database Layer] [DEBUG] Tool inserted successfully: arp
+2025-08-02 18:08:20.328 | [Database Layer] [DEBUG] Inserting tool: whois
+2025-08-02 18:08:20.332 | [Database Layer] [DEBUG] Tool inserted successfully: whois
+2025-08-02 18:08:20.332 | [Database Layer] [DEBUG] All tools recorded for network_tools_sdk
+2025-08-02 18:08:20.332 | [Core Registry] [DEBUG] Database persistence successful for network_tools_sdk
+2025-08-02 18:08:20.332 | [Core Registry] [DEBUG] Cached network_tools_sdk for hot-reload
+2025-08-02 18:08:20.332 | [Core Registry] ✅ Completed network_tools_sdk: 9 network tools (2ms)
+2025-08-02 18:08:20.332 | [Registry] Registered 9 network tools
+2025-08-02 18:08:20.332 | [Registry] Starting registration for memory_tools_sdk (memory)
+2025-08-02 18:08:20.334 | [Core Registry] Starting registration for memory_tools_sdk (memory)
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_get
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_set
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_merge
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_query
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_clear
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_stats
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_rotate_key
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_save
+2025-08-02 18:08:20.334 | [Core Registry] ✓ Registered tool: memory_migrate_from_filesystem
+2025-08-02 18:08:20.334 | [Database Layer] [DEBUG] Recording module registration: memory_tools_sdk
+2025-08-02 18:08:20.339 | [Database Layer] [DEBUG] Module inserted with ID 2, updating load duration...
+2025-08-02 18:08:20.340 | [Database Layer] [DEBUG] Load duration updated for memory_tools_sdk
+2025-08-02 18:08:20.340 | [Database Layer] [DEBUG] Recording 9 tools for memory_tools_sdk...
+2025-08-02 18:08:20.340 | [Database Layer] [DEBUG] Inserting tool: memory_get
+2025-08-02 18:08:20.343 | [Database Layer] [DEBUG] Tool inserted successfully: memory_get
+2025-08-02 18:08:20.343 | [Database Layer] [DEBUG] Inserting tool: memory_set
+2025-08-02 18:08:20.348 | [Database Layer] [DEBUG] Tool inserted successfully: memory_set
+2025-08-02 18:08:20.348 | [Database Layer] [DEBUG] Inserting tool: memory_merge
+2025-08-02 18:08:20.352 | [Database Layer] [DEBUG] Tool inserted successfully: memory_merge
+2025-08-02 18:08:20.352 | [Database Layer] [DEBUG] Inserting tool: memory_query
+2025-08-02 18:08:20.357 | [Database Layer] [DEBUG] Tool inserted successfully: memory_query
+2025-08-02 18:08:20.357 | [Database Layer] [DEBUG] Inserting tool: memory_clear
+2025-08-02 18:08:20.362 | [Database Layer] [DEBUG] Tool inserted successfully: memory_clear
+2025-08-02 18:08:20.362 | [Database Layer] [DEBUG] Inserting tool: memory_stats
+2025-08-02 18:08:20.368 | [Database Layer] [DEBUG] Tool inserted successfully: memory_stats
+2025-08-02 18:08:20.368 | [Database Layer] [DEBUG] Inserting tool: memory_rotate_key
+2025-08-02 18:08:20.372 | [Database Layer] [DEBUG] Tool inserted successfully: memory_rotate_key
+2025-08-02 18:08:20.372 | [Database Layer] [DEBUG] Inserting tool: memory_save
+2025-08-02 18:08:20.378 | [Database Layer] [DEBUG] Tool inserted successfully: memory_save
+2025-08-02 18:08:20.378 | [Database Layer] [DEBUG] Inserting tool: memory_migrate_from_filesystem
+2025-08-02 18:08:20.382 | [Database Layer] [DEBUG] Tool inserted successfully: memory_migrate_from_filesystem
+2025-08-02 18:08:20.382 | [Database Layer] [DEBUG] All tools recorded for memory_tools_sdk
+2025-08-02 18:08:20.382 | [Core Registry] [DEBUG] Database persistence successful for memory_tools_sdk
+2025-08-02 18:08:20.382 | [Core Registry] [DEBUG] Cached memory_tools_sdk for hot-reload
+2025-08-02 18:08:20.382 | [Core Registry] ✅ Completed memory_tools_sdk: 9 memory tools (1ms)
+2025-08-02 18:08:20.382 | [Registry] Registered 9 memory tools
+2025-08-02 18:08:20.382 | [Registry] Starting registration for nmap_tools_sdk (nmap)
+2025-08-02 18:08:20.383 | [Core Registry] Starting registration for nmap_tools_sdk (nmap)
+2025-08-02 18:08:20.383 | [Core Registry] ✓ Registered tool: nmap_ping_scan
+2025-08-02 18:08:20.383 | [Core Registry] ✓ Registered tool: nmap_tcp_syn_scan
+2025-08-02 18:08:20.383 | [Core Registry] ✓ Registered tool: nmap_tcp_connect_scan
+2025-08-02 18:08:20.383 | [Core Registry] ✓ Registered tool: nmap_udp_scan
+2025-08-02 18:08:20.383 | [Core Registry] ✓ Registered tool: nmap_version_scan
+2025-08-02 18:08:20.384 | [Database Layer] [DEBUG] Recording module registration: nmap_tools_sdk
+2025-08-02 18:08:20.388 | [Database Layer] [DEBUG] Module inserted with ID 3, updating load duration...
+2025-08-02 18:08:20.389 | [Database Layer] [DEBUG] Load duration updated for nmap_tools_sdk
+2025-08-02 18:08:20.389 | [Database Layer] [DEBUG] Recording 5 tools for nmap_tools_sdk...
+2025-08-02 18:08:20.389 | [Database Layer] [DEBUG] Inserting tool: nmap_ping_scan
+2025-08-02 18:08:20.392 | [Database Layer] [DEBUG] Tool inserted successfully: nmap_ping_scan
+2025-08-02 18:08:20.392 | [Database Layer] [DEBUG] Inserting tool: nmap_tcp_syn_scan
+2025-08-02 18:08:20.398 | [Database Layer] [DEBUG] Tool inserted successfully: nmap_tcp_syn_scan
+2025-08-02 18:08:20.398 | [Database Layer] [DEBUG] Inserting tool: nmap_tcp_connect_scan
+2025-08-02 18:08:20.402 | [Database Layer] [DEBUG] Tool inserted successfully: nmap_tcp_connect_scan
+2025-08-02 18:08:20.403 | [Database Layer] [DEBUG] Inserting tool: nmap_udp_scan
+2025-08-02 18:08:20.408 | [Database Layer] [DEBUG] Tool inserted successfully: nmap_udp_scan
+2025-08-02 18:08:20.408 | [Database Layer] [DEBUG] Inserting tool: nmap_version_scan
+2025-08-02 18:08:20.412 | [Database Layer] [DEBUG] Tool inserted successfully: nmap_version_scan
+2025-08-02 18:08:20.412 | [Database Layer] [DEBUG] All tools recorded for nmap_tools_sdk
+2025-08-02 18:08:20.412 | [Core Registry] [DEBUG] Database persistence successful for nmap_tools_sdk
+2025-08-02 18:08:20.412 | [Core Registry] [DEBUG] Cached nmap_tools_sdk for hot-reload
+2025-08-02 18:08:20.412 | [Core Registry] ✅ Completed nmap_tools_sdk: 5 nmap tools (0ms)
+2025-08-02 18:08:20.412 | [Registry] Registered 5 nmap tools
+2025-08-02 18:08:20.412 | [Registry] Starting registration for proxmox_tools_sdk (proxmox)
+2025-08-02 18:08:20.415 | [Core Registry] Starting registration for proxmox_tools_sdk (proxmox)
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_list_nodes
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_get_node_details
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_list_vms
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_get_vm_details
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_list_containers
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_get_container_details
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_list_storage
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_list_networks
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_cluster_resources
+2025-08-02 18:08:20.415 | [Core Registry] ✓ Registered tool: proxmox_get_metrics
+2025-08-02 18:08:20.415 | [Database Layer] [DEBUG] Recording module registration: proxmox_tools_sdk
+2025-08-02 18:08:20.420 | [Database Layer] [DEBUG] Module inserted with ID 4, updating load duration...
+2025-08-02 18:08:20.421 | [Database Layer] [DEBUG] Load duration updated for proxmox_tools_sdk
+2025-08-02 18:08:20.421 | [Database Layer] [DEBUG] Recording 10 tools for proxmox_tools_sdk...
+2025-08-02 18:08:20.421 | [Database Layer] [DEBUG] Inserting tool: proxmox_list_nodes
+2025-08-02 18:08:20.427 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_list_nodes
+2025-08-02 18:08:20.427 | [Database Layer] [DEBUG] Inserting tool: proxmox_get_node_details
+2025-08-02 18:08:20.430 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_get_node_details
+2025-08-02 18:08:20.430 | [Database Layer] [DEBUG] Inserting tool: proxmox_list_vms
+2025-08-02 18:08:20.436 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_list_vms
+2025-08-02 18:08:20.436 | [Database Layer] [DEBUG] Inserting tool: proxmox_get_vm_details
+2025-08-02 18:08:20.439 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_get_vm_details
+2025-08-02 18:08:20.439 | [Database Layer] [DEBUG] Inserting tool: proxmox_list_containers
+2025-08-02 18:08:20.443 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_list_containers
+2025-08-02 18:08:20.443 | [Database Layer] [DEBUG] Inserting tool: proxmox_get_container_details
+2025-08-02 18:08:20.448 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_get_container_details
+2025-08-02 18:08:20.448 | [Database Layer] [DEBUG] Inserting tool: proxmox_list_storage
+2025-08-02 18:08:20.453 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_list_storage
+2025-08-02 18:08:20.453 | [Database Layer] [DEBUG] Inserting tool: proxmox_list_networks
+2025-08-02 18:08:20.459 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_list_networks
+2025-08-02 18:08:20.459 | [Database Layer] [DEBUG] Inserting tool: proxmox_cluster_resources
+2025-08-02 18:08:20.465 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_cluster_resources
+2025-08-02 18:08:20.465 | [Database Layer] [DEBUG] Inserting tool: proxmox_get_metrics
+2025-08-02 18:08:20.469 | [Database Layer] [DEBUG] Tool inserted successfully: proxmox_get_metrics
+2025-08-02 18:08:20.469 | [Database Layer] [DEBUG] All tools recorded for proxmox_tools_sdk
+2025-08-02 18:08:20.469 | [Core Registry] [DEBUG] Database persistence successful for proxmox_tools_sdk
+2025-08-02 18:08:20.469 | [Core Registry] [DEBUG] Cached proxmox_tools_sdk for hot-reload
+2025-08-02 18:08:20.469 | [Core Registry] ✅ Completed proxmox_tools_sdk: 10 proxmox tools (0ms)
+2025-08-02 18:08:20.469 | [Registry] Registered 10 proxmox tools
+2025-08-02 18:08:20.469 | [Registry] Starting registration for snmp_tools_sdk (snmp)
+2025-08-02 18:08:20.472 | SNMP Tools SDK: Running inside container
+2025-08-02 18:08:20.472 | [Core Registry] Starting registration for snmp_tools_sdk (snmp)
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_create_session
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_close_session
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_get
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_get_next
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_walk
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_table
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_discover
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_device_inventory
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_interface_discovery
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_system_health
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_service_discovery
+2025-08-02 18:08:20.472 | [Core Registry] ✓ Registered tool: snmp_network_topology
+2025-08-02 18:08:20.472 | [Database Layer] [DEBUG] Recording module registration: snmp_tools_sdk
+2025-08-02 18:08:20.478 | [Database Layer] [DEBUG] Module inserted with ID 5, updating load duration...
+2025-08-02 18:08:20.479 | [Database Layer] [DEBUG] Load duration updated for snmp_tools_sdk
+2025-08-02 18:08:20.479 | [Database Layer] [DEBUG] Recording 12 tools for snmp_tools_sdk...
+2025-08-02 18:08:20.479 | [Database Layer] [DEBUG] Inserting tool: snmp_create_session
+2025-08-02 18:08:20.483 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_create_session
+2025-08-02 18:08:20.483 | [Database Layer] [DEBUG] Inserting tool: snmp_close_session
+2025-08-02 18:08:20.487 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_close_session
+2025-08-02 18:08:20.487 | [Database Layer] [DEBUG] Inserting tool: snmp_get
+2025-08-02 18:08:20.492 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_get
+2025-08-02 18:08:20.492 | [Database Layer] [DEBUG] Inserting tool: snmp_get_next
+2025-08-02 18:08:20.497 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_get_next
+2025-08-02 18:08:20.497 | [Database Layer] [DEBUG] Inserting tool: snmp_walk
+2025-08-02 18:08:20.501 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_walk
+2025-08-02 18:08:20.501 | [Database Layer] [DEBUG] Inserting tool: snmp_table
+2025-08-02 18:08:20.507 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_table
+2025-08-02 18:08:20.507 | [Database Layer] [DEBUG] Inserting tool: snmp_discover
+2025-08-02 18:08:20.511 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_discover
+2025-08-02 18:08:20.511 | [Database Layer] [DEBUG] Inserting tool: snmp_device_inventory
+2025-08-02 18:08:20.517 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_device_inventory
+2025-08-02 18:08:20.517 | [Database Layer] [DEBUG] Inserting tool: snmp_interface_discovery
+2025-08-02 18:08:20.522 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_interface_discovery
+2025-08-02 18:08:20.522 | [Database Layer] [DEBUG] Inserting tool: snmp_system_health
+2025-08-02 18:08:20.527 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_system_health
+2025-08-02 18:08:20.527 | [Database Layer] [DEBUG] Inserting tool: snmp_service_discovery
+2025-08-02 18:08:20.532 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_service_discovery
+2025-08-02 18:08:20.532 | [Database Layer] [DEBUG] Inserting tool: snmp_network_topology
+2025-08-02 18:08:20.538 | [Database Layer] [DEBUG] Tool inserted successfully: snmp_network_topology
+2025-08-02 18:08:20.538 | [Database Layer] [DEBUG] All tools recorded for snmp_tools_sdk
+2025-08-02 18:08:20.538 | [Core Registry] [DEBUG] Database persistence successful for snmp_tools_sdk
+2025-08-02 18:08:20.538 | [Core Registry] [DEBUG] Cached snmp_tools_sdk for hot-reload
+2025-08-02 18:08:20.538 | [Core Registry] ✅ Completed snmp_tools_sdk: 12 snmp tools (0ms)
+2025-08-02 18:08:20.538 | [Registry] Registered 12 snmp tools
+2025-08-02 18:08:20.538 | [Registry] Starting registration for zabbix_tools_sdk (zabbix)
+2025-08-02 18:08:20.540 | [Core Registry] Starting registration for zabbix_tools_sdk (zabbix)
+2025-08-02 18:08:20.540 | [Core Registry] ✓ Registered tool: zabbix_host_discover
+2025-08-02 18:08:20.540 | [Core Registry] ✓ Registered tool: zabbix_get_metrics
+2025-08-02 18:08:20.540 | [Core Registry] ✓ Registered tool: zabbix_get_alerts
+2025-08-02 18:08:20.540 | [Core Registry] ✓ Registered tool: zabbix_get_inventory
+2025-08-02 18:08:20.540 | [Core Registry] ✓ Registered tool: zabbix_get_problems
+2025-08-02 18:08:20.540 | [Core Registry] ✓ Registered tool: zabbix_get_events
+2025-08-02 18:08:20.540 | [Core Registry] ✓ Registered tool: zabbix_get_triggers
+2025-08-02 18:08:20.540 | [Database Layer] [DEBUG] Recording module registration: zabbix_tools_sdk
+2025-08-02 18:08:20.546 | [Database Layer] [DEBUG] Module inserted with ID 6, updating load duration...
+2025-08-02 18:08:20.546 | [Database Layer] [DEBUG] Load duration updated for zabbix_tools_sdk
+2025-08-02 18:08:20.546 | [Database Layer] [DEBUG] Recording 7 tools for zabbix_tools_sdk...
+2025-08-02 18:08:20.546 | [Database Layer] [DEBUG] Inserting tool: zabbix_host_discover
+2025-08-02 18:08:20.550 | [Database Layer] [DEBUG] Tool inserted successfully: zabbix_host_discover
+2025-08-02 18:08:20.550 | [Database Layer] [DEBUG] Inserting tool: zabbix_get_metrics
+2025-08-02 18:08:20.555 | [Database Layer] [DEBUG] Tool inserted successfully: zabbix_get_metrics
+2025-08-02 18:08:20.555 | [Database Layer] [DEBUG] Inserting tool: zabbix_get_alerts
+2025-08-02 18:08:20.559 | [Database Layer] [DEBUG] Tool inserted successfully: zabbix_get_alerts
+2025-08-02 18:08:20.559 | [Database Layer] [DEBUG] Inserting tool: zabbix_get_inventory
+2025-08-02 18:08:20.564 | [Database Layer] [DEBUG] Tool inserted successfully: zabbix_get_inventory
+2025-08-02 18:08:20.564 | [Database Layer] [DEBUG] Inserting tool: zabbix_get_problems
+2025-08-02 18:08:20.569 | [Database Layer] [DEBUG] Tool inserted successfully: zabbix_get_problems
+2025-08-02 18:08:20.569 | [Database Layer] [DEBUG] Inserting tool: zabbix_get_events
+2025-08-02 18:08:20.573 | [Database Layer] [DEBUG] Tool inserted successfully: zabbix_get_events
+2025-08-02 18:08:20.573 | [Database Layer] [DEBUG] Inserting tool: zabbix_get_triggers
+2025-08-02 18:08:20.578 | [Database Layer] [DEBUG] Tool inserted successfully: zabbix_get_triggers
+2025-08-02 18:08:20.578 | [Database Layer] [DEBUG] All tools recorded for zabbix_tools_sdk
+2025-08-02 18:08:20.578 | [Core Registry] [DEBUG] Database persistence successful for zabbix_tools_sdk
+2025-08-02 18:08:20.578 | [Core Registry] [DEBUG] Cached zabbix_tools_sdk for hot-reload
+2025-08-02 18:08:20.578 | [Core Registry] ✅ Completed zabbix_tools_sdk: 7 zabbix tools (0ms)
+2025-08-02 18:08:20.578 | [Registry] Registered 7 zabbix tools
+2025-08-02 18:08:20.578 | [Registry] Starting registration for credentials_tools_sdk (credentials)
+2025-08-02 18:08:20.578 | [Core Registry] Starting registration for credentials_tools_sdk (credentials)
+2025-08-02 18:08:20.578 | [Core Registry] ✓ Registered tool: credentials_add
+2025-08-02 18:08:20.578 | [Core Registry] ✓ Registered tool: credentials_get
+2025-08-02 18:08:20.578 | [Core Registry] ✓ Registered tool: credentials_list
+2025-08-02 18:08:20.578 | [Core Registry] ✓ Registered tool: credentials_remove
+2025-08-02 18:08:20.578 | [Core Registry] ✓ Registered tool: credentials_rotate_key
+2025-08-02 18:08:20.578 | [Database Layer] [DEBUG] Recording module registration: credentials_tools_sdk
+2025-08-02 18:08:20.582 | [Database Layer] [DEBUG] Module inserted with ID 7, updating load duration...
+2025-08-02 18:08:20.583 | [Database Layer] [DEBUG] Load duration updated for credentials_tools_sdk
+2025-08-02 18:08:20.583 | [Database Layer] [DEBUG] Recording 5 tools for credentials_tools_sdk...
+2025-08-02 18:08:20.583 | [Database Layer] [DEBUG] Inserting tool: credentials_add
+2025-08-02 18:08:20.588 | [Database Layer] [DEBUG] Tool inserted successfully: credentials_add
+2025-08-02 18:08:20.588 | [Database Layer] [DEBUG] Inserting tool: credentials_get
+2025-08-02 18:08:20.592 | [Database Layer] [DEBUG] Tool inserted successfully: credentials_get
+2025-08-02 18:08:20.592 | [Database Layer] [DEBUG] Inserting tool: credentials_list
+2025-08-02 18:08:20.598 | [Database Layer] [DEBUG] Tool inserted successfully: credentials_list
+2025-08-02 18:08:20.598 | [Database Layer] [DEBUG] Inserting tool: credentials_remove
+2025-08-02 18:08:20.602 | [Database Layer] [DEBUG] Tool inserted successfully: credentials_remove
+2025-08-02 18:08:20.602 | [Database Layer] [DEBUG] Inserting tool: credentials_rotate_key
+2025-08-02 18:08:20.608 | [Database Layer] [DEBUG] Tool inserted successfully: credentials_rotate_key
+2025-08-02 18:08:20.608 | [Database Layer] [DEBUG] All tools recorded for credentials_tools_sdk
+2025-08-02 18:08:20.608 | [Core Registry] [DEBUG] Database persistence successful for credentials_tools_sdk
+2025-08-02 18:08:20.608 | [Core Registry] [DEBUG] Cached credentials_tools_sdk for hot-reload
+2025-08-02 18:08:20.608 | [Core Registry] ✅ Completed credentials_tools_sdk: 5 credentials tools (0ms)
+2025-08-02 18:08:20.608 | [Registry] Registered 5 credentials tools
+2025-08-02 18:08:20.608 | [Registry] Starting registration for registry_management (registry)
+2025-08-02 18:08:20.608 | [Core Registry] Starting registration for registry_management (registry)
+2025-08-02 18:08:20.608 | [Management Tools] 🔧 Registering dynamic module management tools...
+2025-08-02 18:08:20.608 | [Management Tools] ✅ Registered 5 dynamic module management tools
+2025-08-02 18:08:20.608 | [Core Registry] ✓ Registered tool: registry_get_status
+2025-08-02 18:08:20.608 | [Core Registry] ✓ Registered tool: registry_load_module
+2025-08-02 18:08:20.608 | [Core Registry] ✓ Registered tool: registry_unload_module
+2025-08-02 18:08:20.608 | [Core Registry] ✓ Registered tool: registry_reload_module
+2025-08-02 18:08:20.608 | [Core Registry] ✓ Registered tool: registry_toggle_hotreload
+2025-08-02 18:08:20.608 | [Database Layer] [DEBUG] Recording module registration: registry_management
+2025-08-02 18:08:20.613 | [Database Layer] [DEBUG] Module inserted with ID 8, updating load duration...
+2025-08-02 18:08:20.613 | [Database Layer] [DEBUG] Load duration updated for registry_management
+2025-08-02 18:08:20.613 | [Database Layer] [DEBUG] Recording 5 tools for registry_management...
+2025-08-02 18:08:20.613 | [Database Layer] [DEBUG] Inserting tool: registry_get_status
+2025-08-02 18:08:20.618 | [Database Layer] [DEBUG] Tool inserted successfully: registry_get_status
+2025-08-02 18:08:20.618 | [Database Layer] [DEBUG] Inserting tool: registry_load_module
+2025-08-02 18:08:20.621 | [Database Layer] [DEBUG] Tool inserted successfully: registry_load_module
+2025-08-02 18:08:20.621 | [Database Layer] [DEBUG] Inserting tool: registry_unload_module
+2025-08-02 18:08:20.627 | [Database Layer] [DEBUG] Tool inserted successfully: registry_unload_module
+2025-08-02 18:08:20.627 | [Database Layer] [DEBUG] Inserting tool: registry_reload_module
+2025-08-02 18:08:20.631 | [Database Layer] [DEBUG] Tool inserted successfully: registry_reload_module
+2025-08-02 18:08:20.631 | [Database Layer] [DEBUG] Inserting tool: registry_toggle_hotreload
+2025-08-02 18:08:20.638 | [Database Layer] [DEBUG] Tool inserted successfully: registry_toggle_hotreload
+2025-08-02 18:08:20.638 | [Database Layer] [DEBUG] All tools recorded for registry_management
+2025-08-02 18:08:20.638 | [Core Registry] [DEBUG] Database persistence successful for registry_management
+2025-08-02 18:08:20.638 | [Core Registry] [DEBUG] Cached registry_management for hot-reload
+2025-08-02 18:08:20.638 | [Core Registry] ✅ Completed registry_management: 5 registry tools (0ms)
+2025-08-02 18:08:20.638 | [Registry] Tool Registration Complete!
+2025-08-02 18:08:20.641 | {
+2025-08-02 18:08:20.641 |   "summary": {
+2025-08-02 18:08:20.641 |     "total": 62,
+2025-08-02 18:08:20.641 |     "modules": 8,
+2025-08-02 18:08:20.641 |     "categories": 9
+2025-08-02 18:08:20.641 |   },
+2025-08-02 18:08:20.641 |   "categories": {
+2025-08-02 18:08:20.641 |     "network": 9,
+2025-08-02 18:08:20.641 |     "memory": 9,
+2025-08-02 18:08:20.641 |     "nmap": 5,
+2025-08-02 18:08:20.641 |     "proxmox": 10,
+2025-08-02 18:08:20.641 |     "snmp": 12,
+2025-08-02 18:08:20.641 |     "zabbix": 7,
+2025-08-02 18:08:20.641 |     "credentials": 5,
+2025-08-02 18:08:20.641 |     "registry": 5
+2025-08-02 18:08:20.641 |   },
+2025-08-02 18:08:20.641 |   "modules": {
+2025-08-02 18:08:20.641 |     "network_tools_sdk": {
+2025-08-02 18:08:20.641 |       "category": "network",
+2025-08-02 18:08:20.641 |       "tools": 9,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.283Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 2
+2025-08-02 18:08:20.641 |     },
+2025-08-02 18:08:20.641 |     "memory_tools_sdk": {
+2025-08-02 18:08:20.641 |       "category": "memory",
+2025-08-02 18:08:20.641 |       "tools": 9,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.334Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 1
+2025-08-02 18:08:20.641 |     },
+2025-08-02 18:08:20.641 |     "nmap_tools_sdk": {
+2025-08-02 18:08:20.641 |       "category": "nmap",
+2025-08-02 18:08:20.641 |       "tools": 5,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.383Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 0
+2025-08-02 18:08:20.641 |     },
+2025-08-02 18:08:20.641 |     "proxmox_tools_sdk": {
+2025-08-02 18:08:20.641 |       "category": "proxmox",
+2025-08-02 18:08:20.641 |       "tools": 10,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.415Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 0
+2025-08-02 18:08:20.641 |     },
+2025-08-02 18:08:20.641 |     "snmp_tools_sdk": {
+2025-08-02 18:08:20.641 |       "category": "snmp",
+2025-08-02 18:08:20.641 |       "tools": 12,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.472Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 0
+2025-08-02 18:08:20.641 |     },
+2025-08-02 18:08:20.641 |     "zabbix_tools_sdk": {
+2025-08-02 18:08:20.641 |       "category": "zabbix",
+2025-08-02 18:08:20.641 |       "tools": 7,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.540Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 0
+2025-08-02 18:08:20.641 |     },
+2025-08-02 18:08:20.641 |     "credentials_tools_sdk": {
+2025-08-02 18:08:20.641 |       "category": "credentials",
+2025-08-02 18:08:20.641 |       "tools": 5,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.578Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 0
+2025-08-02 18:08:20.641 |     },
+2025-08-02 18:08:20.641 |     "registry_management": {
+2025-08-02 18:08:20.641 |       "category": "registry",
+2025-08-02 18:08:20.641 |       "tools": 5,
+2025-08-02 18:08:20.641 |       "active": true,
+2025-08-02 18:08:20.641 |       "loadedAt": "2025-08-02T22:08:20.608Z",
+2025-08-02 18:08:20.641 |       "loadDuration": 0
+2025-08-02 18:08:20.641 |     }
+2025-08-02 18:08:20.641 |   },
+2025-08-02 18:08:20.641 |   "timestamp": "2025-08-02T22:08:20.638Z",
+2025-08-02 18:08:20.641 |   "database": {
+2025-08-02 18:08:20.641 |     "enabled": true,
+2025-08-02 18:08:20.641 |     "stats": {
+2025-08-02 18:08:20.641 |       "enabled": true,
+2025-08-02 18:08:20.641 |       "current_session": {
+2025-08-02 18:08:20.641 |         "modules": 8,
+2025-08-02 18:08:20.641 |         "tools": 62,
+2025-08-02 18:08:20.641 |         "categories": 8
+2025-08-02 18:08:20.641 |       },
+2025-08-02 18:08:20.641 |       "database": {
+2025-08-02 18:08:20.641 |         "modules": {
+2025-08-02 18:08:20.641 |           "total": 8,
+2025-08-02 18:08:20.641 |           "active": 8
+2025-08-02 18:08:20.641 |         },
+2025-08-02 18:08:20.641 |         "tools": {
+2025-08-02 18:08:20.641 |           "total": 62,
+2025-08-02 18:08:20.641 |           "active": 62
+2025-08-02 18:08:20.641 |         },
+2025-08-02 18:08:20.641 |         "categories": {
+2025-08-02 18:08:20.641 |           "credentials": 5,
+2025-08-02 18:08:20.641 |           "memory": 9,
+2025-08-02 18:08:20.641 |           "network": 9,
+2025-08-02 18:08:20.641 |           "nmap": 5,
+2025-08-02 18:08:20.641 |           "proxmox": 10,
+2025-08-02 18:08:20.641 |           "registry": 5,
+2025-08-02 18:08:20.641 |           "snmp": 12,
+2025-08-02 18:08:20.641 |           "zabbix": 7
+2025-08-02 18:08:20.641 |         },
+2025-08-02 18:08:20.641 |         "generated_at": "2025-08-02T22:08:20.640Z"
+2025-08-02 18:08:20.641 |       }
+2025-08-02 18:08:20.641 |     }
+2025-08-02 18:08:20.641 |   }
+2025-08-02 18:08:20.641 | }
+2025-08-02 18:08:20.641 | [Registry] 🔥 Hot-reload Status: {"enabled":true,"watched_modules":0,"cached_modules":8}
+2025-08-02 18:08:20.641 | [Registry] 🛡️  ARCHITECTURAL FIX: Deduplication guards active
+2025-08-02 18:08:20.641 | [2025-08-02T22:08:20.640Z] [INFO] [SINGLETON] Tool registration complete 
+2025-08-02 18:08:20.641 | [2025-08-02T22:08:20.641Z] [INFO] [SINGLETON] Starting prompt registration 
+2025-08-02 18:08:20.641 | [MCP SDK] Starting prompt registration...
+2025-08-02 18:08:20.643 | [MCP SDK] Registered 5 prompts successfully
+2025-08-02 18:08:20.643 | [2025-08-02T22:08:20.642Z] [INFO] [SINGLETON] Prompt registration complete 
+2025-08-02 18:08:20.643 | [2025-08-02T22:08:20.643Z] [INFO] [SINGLETON] ✅ MCP server instance ready for all transports 
+2025-08-02 18:08:20.644 | [2025-08-02T22:08:20.644Z] [INFO] OAuth 2.1 authentication disabled 
+2025-08-02 18:08:20.647 | [2025-08-02T22:08:20.647Z] [INFO] Starting AMQP transport... 
+2025-08-02 18:08:20.647 | [2025-08-02T22:08:20.647Z] [INFO] [AMQP] Using singleton server instance for transport 
+2025-08-02 18:08:20.676 | [2025-08-02T22:08:20.675Z] [INFO] MCP Open Discovery Server (SDK) started successfully {
+2025-08-02 18:08:20.676 |   "version": "2.0.0",
+2025-08-02 18:08:20.676 |   "transport": "http",
+2025-08-02 18:08:20.676 |   "port": 3000,
+2025-08-02 18:08:20.676 |   "tools": {
+2025-08-02 18:08:20.676 |     "total": 62,
+2025-08-02 18:08:20.676 |     "categories": {
+2025-08-02 18:08:20.676 |       "network": 9,
+2025-08-02 18:08:20.676 |       "memory": 9,
+2025-08-02 18:08:20.676 |       "nmap": 5,
+2025-08-02 18:08:20.676 |       "proxmox": 10,
+2025-08-02 18:08:20.676 |       "snmp": 12,
+2025-08-02 18:08:20.676 |       "zabbix": 7,
+2025-08-02 18:08:20.676 |       "credentials": 5,
+2025-08-02 18:08:20.676 |       "registry": 5
+2025-08-02 18:08:20.676 |     }
+2025-08-02 18:08:20.676 |   },
+2025-08-02 18:08:20.676 |   "resources": {
+2025-08-02 18:08:20.676 |     "credentials": 1,
+2025-08-02 18:08:20.676 |     "total": 1
+2025-08-02 18:08:20.676 |   },
+2025-08-02 18:08:20.676 |   "prompts": {
+2025-08-02 18:08:20.676 |     "infrastructure": 5,
+2025-08-02 18:08:20.676 |     "total": 5
+2025-08-02 18:08:20.676 |   },
+2025-08-02 18:08:20.676 |   "config": {
+2025-08-02 18:08:20.676 |     "maxConnections": 100,
+2025-08-02 18:08:20.676 |     "requestTimeout": 30000,
+2025-08-02 18:08:20.676 |     "rateLimiting": true,
+2025-08-02 18:08:20.676 |     "securityMode": "standard",
+2025-08-02 18:08:20.676 |     "logLevel": "info",
+2025-08-02 18:08:20.676 |     "oauth": {
+2025-08-02 18:08:20.676 |       "enabled": false,
+2025-08-02 18:08:20.676 |       "realm": "mcp-open-discovery",
+2025-08-02 18:08:20.676 |       "supportedScopes": [
+2025-08-02 18:08:20.676 |         "mcp:read",
+2025-08-02 18:08:20.676 |         "mcp:tools",
+2025-08-02 18:08:20.676 |         "mcp:resources"
+2025-08-02 18:08:20.676 |       ],
+2025-08-02 18:08:20.676 |       "authorizationServer": null
+2025-08-02 18:08:20.676 |     }
+2025-08-02 18:08:20.676 |   }
+2025-08-02 18:08:20.676 | }
+2025-08-02 18:08:20.676 | [2025-08-02T22:08:20.675Z] [INFO] HTTP server listening on port 3000 
+2025-08-02 18:08:20.676 | [2025-08-02T22:08:20.675Z] [INFO] Health endpoint: http://localhost:3000/health 
+2025-08-02 18:08:20.676 | [2025-08-02T22:08:20.675Z] [INFO] MCP endpoint: http://localhost:3000/mcp 
+2025-08-02 18:08:20.810 | [2025-08-02T22:08:20.810Z] [INFO] AMQP health check started {
+2025-08-02 18:08:20.810 |   "interval": "15000ms"
+2025-08-02 18:08:20.810 | }
+2025-08-02 18:08:20.810 | [2025-08-02T22:08:20.810Z] [INFO] Setting up MCP Open Discovery registry integration over AMQP... 
+2025-08-02 18:08:20.811 | [2025-08-02T22:08:20.810Z] [WARN] Registry not available, skipping registry integration 
+2025-08-02 18:08:20.811 | [2025-08-02T22:08:20.811Z] [INFO] Setting up tool category routing for MCP Open Discovery tools... 
+2025-08-02 18:08:20.811 | [2025-08-02T22:08:20.811Z] [INFO] Tool category routing configured for 8 categories {
+2025-08-02 18:08:20.811 |   "categories": [
+2025-08-02 18:08:20.811 |     "memory",
+2025-08-02 18:08:20.811 |     "network",
+2025-08-02 18:08:20.811 |     "nmap",
+2025-08-02 18:08:20.811 |     "proxmox",
+2025-08-02 18:08:20.811 |     "snmp",
+2025-08-02 18:08:20.811 |     "zabbix",
+2025-08-02 18:08:20.811 |     "credentials",
+2025-08-02 18:08:20.811 |     "registry"
+2025-08-02 18:08:20.811 |   ],
+2025-08-02 18:08:20.811 |   "totalTools": 17
+2025-08-02 18:08:20.811 | }
+2025-08-02 18:08:20.811 | [2025-08-02T22:08:20.811Z] [INFO] AMQP transport started successfully with MCP Open Discovery v2.0 enhancements {
+2025-08-02 18:08:20.811 |   "amqpUrl": "amqp://mcp:discovery@rabbitmq:5672",
+2025-08-02 18:08:20.811 |   "queuePrefix": "mcp.discovery",
+2025-08-02 18:08:20.811 |   "exchangeName": "mcp.notifications",
+2025-08-02 18:08:20.811 |   "prefetchCount": 1
+2025-08-02 18:08:20.811 | }
+2025-08-02 18:08:20.811 | [2025-08-02T22:08:20.811Z] [INFO] AMQP auto-recovery configured {
+2025-08-02 18:08:20.811 |   "retryInterval": 10000,
+2025-08-02 18:08:20.811 |   "maxRetries": "infinite",
+2025-08-02 18:08:20.811 |   "status": "standby",
+2025-08-02 18:08:20.811 |   "architecture": "singleton-server"
+2025-08-02 18:08:20.811 | }
+2025-08-02 18:08:20.811 | [2025-08-02T22:08:20.811Z] [INFO] MCP Server started successfully {
+2025-08-02 18:08:20.811 |   "activeTransports": [
+2025-08-02 18:08:20.811 |     "http",
+2025-08-02 18:08:20.811 |     "amqp"
+2025-08-02 18:08:20.811 |   ],
+2025-08-02 18:08:20.811 |   "failedTransports": "none",
+2025-08-02 18:08:20.811 |   "mode": "http, amqp",
+2025-08-02 18:08:20.811 |   "degradedOperation": false
+2025-08-02 18:08:20.811 | }
