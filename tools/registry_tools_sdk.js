@@ -15,6 +15,249 @@
 const path = require('path');
 
 /**
+ * Tools definition array for the new hot-reload registry system
+ */
+const tools = [
+  {
+    name: 'registry_get_status',
+    description: 'Get comprehensive status of the dynamic tool registry including hot-reload info',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
+    name: 'registry_load_module',
+    description: 'Dynamically load a new module into the registry at runtime',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        modulePath: {
+          type: 'string',
+          description: 'Path to the module file (relative to tools/ directory)'
+        },
+        moduleName: {
+          type: 'string',
+          description: 'Name for the module'
+        },
+        category: {
+          type: 'string',
+          description: 'Category of tools (e.g., network, memory, custom)'
+        },
+        exportName: {
+          type: 'string',
+          description: 'Name of the export function to call'
+        }
+      },
+      required: ['modulePath', 'moduleName', 'category', 'exportName']
+    }
+  },
+  {
+    name: 'registry_unload_module',
+    description: 'Unload a module and remove its tools from the registry',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        moduleName: {
+          type: 'string',
+          description: 'Name of the module to unload'
+        }
+      },
+      required: ['moduleName']
+    }
+  },
+  {
+    name: 'registry_reload_module',
+    description: 'Hot-reload a module with fresh code from disk',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        moduleName: {
+          type: 'string',
+          description: 'Name of the module to reload'
+        }
+      },
+      required: ['moduleName']
+    }
+  },
+  {
+    name: 'registry_toggle_hotreload',
+    description: 'Enable or disable hot-reload system-wide',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        enabled: {
+          type: 'boolean',
+          description: 'Whether to enable or disable hot-reload'
+        }
+      },
+      required: ['enabled']
+    }
+  }
+];
+
+/**
+ * Central tool call handler for all registry tools
+ */
+async function handleToolCall(toolName, args) {
+  // Get the global tool tracker instance - we need access to it
+  const { toolTracker } = require('./sdk_tool_registry');
+  
+  switch (toolName) {
+    case 'registry_get_status':
+      try {
+        const status = toolTracker.getModuleStatus();
+        const analytics = await toolTracker.getAnalytics();
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              registry_status: status,
+              analytics: analytics,
+              timestamp: new Date().toISOString()
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error getting registry status: ${error.message}`
+          }],
+          isError: true
+        };
+      }
+
+    case 'registry_load_module':
+      try {
+        const fullPath = path.resolve(__dirname, args.modulePath);
+        const success = await toolTracker.loadModule(
+          fullPath,
+          args.moduleName,
+          args.category,
+          args.exportName
+        );
+
+        const moduleInfo = toolTracker.modules.get(args.moduleName);
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success,
+              module: args.moduleName,
+              category: args.category,
+              tools_loaded: moduleInfo?.tools?.length || 0,
+              hot_reload_enabled: toolTracker.hotReloadEnabled,
+              message: `Module ${args.moduleName} loaded successfully`
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error loading module: ${error.message}`
+          }],
+          isError: true
+        };
+      }
+
+    case 'registry_unload_module':
+      try {
+        const moduleInfo = toolTracker.modules.get(args.moduleName);
+        const toolCount = moduleInfo?.tools?.length || 0;
+
+        const success = await toolTracker.unloadModule(args.moduleName);
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success,
+              module: args.moduleName,
+              tools_removed: toolCount,
+              message: success ?
+                `Module ${args.moduleName} unloaded successfully` :
+                `Failed to unload module ${args.moduleName}`
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error unloading module: ${error.message}`
+          }],
+          isError: true
+        };
+      }
+
+    case 'registry_reload_module':
+      try {
+        const success = await toolTracker.reloadModule(args.moduleName);
+        const moduleInfo = toolTracker.modules.get(args.moduleName);
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success,
+              module: args.moduleName,
+              tools: moduleInfo?.tools?.length || 0,
+              message: success ?
+                `Module ${args.moduleName} reloaded successfully` :
+                `Failed to reload module ${args.moduleName}`
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error reloading module: ${error.message}`
+          }],
+          isError: true
+        };
+      }
+
+    case 'registry_toggle_hotreload':
+      try {
+        toolTracker.hotReloadEnabled = args.enabled;
+        
+        // Optionally persist to database if available
+        if (toolTracker.dbInitialized && toolTracker.db) {
+          await toolTracker.db.setConfig('hot_reload', args.enabled.toString());
+        }
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              hot_reload_enabled: toolTracker.hotReloadEnabled,
+              watchers_active: toolTracker.moduleWatchers.size,
+              message: `Hot-reload ${args.enabled ? 'enabled' : 'disabled'} system-wide`
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error toggling hot-reload: ${error.message}`
+          }],
+          isError: true
+        };
+      }
+
+    default:
+      throw new Error(`Unknown registry tool: ${toolName}`);
+  }
+}
+
+/**
  * Register all registry management tools with the MCP server
  * @param {McpServer} server - The MCP server instance
  * @param {ToolRegistrationTracker} toolTracker - The global tool tracker instance
@@ -278,6 +521,11 @@ function getRegistryToolNames() {
 }
 
 module.exports = {
+  // New hot-reload registry format
+  tools,
+  handleToolCall,
+  
+  // Legacy backwards compatibility
   registerRegistryTools,
   getRegistryToolNames
 };

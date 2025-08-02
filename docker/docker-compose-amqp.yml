@@ -1,0 +1,143 @@
+# Enhanced Docker Compose with AMQP/RabbitMQ Support
+# 
+# This extends the existing MCP Open Discovery Docker Compose setup
+# to include RabbitMQ for AMQP transport functionality.
+
+version: '3.8'
+
+services:
+  # Existing MCP Open Discovery Server (enhanced with AMQP support)
+  mcp-server:
+    build: .
+    container_name: mcp-discovery-amqp
+    ports:
+      - "3000:3000"    # HTTP transport
+    environment:
+      # Enhanced transport mode with AMQP
+      - TRANSPORT_MODE=http,amqp
+      - HTTP_PORT=3000
+      - LOG_LEVEL=info
+      
+      # AMQP Configuration
+      - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
+      - AMQP_QUEUE_PREFIX=mcp.discovery
+      - AMQP_EXCHANGE=mcp.notifications
+      - AMQP_RECONNECT_DELAY=5000
+      - AMQP_MAX_RECONNECT_ATTEMPTS=10
+      - AMQP_PREFETCH_COUNT=1
+      - AMQP_MESSAGE_TTL=3600000
+      - AMQP_QUEUE_TTL=7200000
+      
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: mcp-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP port
+      - "15672:15672"   # Management UI port
+    environment:
+      RABBITMQ_DEFAULT_USER: mcp
+      RABBITMQ_DEFAULT_PASS: discovery
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_MANAGEMENT_PATH_PREFIX: /rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      mcp-network:
+        ipv4_address: 172.20.0.30
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # Existing SNMP Test Agents (unchanged)
+  snmp-agent-1:
+    image: tandrup/snmp-simulator
+    container_name: mcp-snmp-agent-1
+    ports:
+      - "1161:161/udp"
+    environment:
+      - SNMP_COMMUNITY=public
+      - SNMP_LOCATION=Docker Test Lab
+      - SNMP_CONTACT=admin@example.com
+    networks:
+      mcp-network:
+        ipv4_address: 172.20.0.10
+    restart: unless-stopped
+
+  snmp-agent-2:
+    image: tandrup/snmp-simulator
+    container_name: mcp-snmp-agent-2
+    ports:
+      - "2161:161/udp"
+    environment:
+      - SNMP_COMMUNITY=public
+      - SNMP_LOCATION=Docker Test Lab 2
+      - SNMP_CONTACT=admin@example.com
+    networks:
+      mcp-network:
+        ipv4_address: 172.20.0.11
+    restart: unless-stopped
+
+  snmp-agent-3:
+    image: tandrup/snmp-simulator
+    container_name: mcp-snmp-agent-3
+    ports:
+      - "3161:161/udp"
+    environment:
+      - SNMP_COMMUNITY=public
+      - SNMP_LOCATION=Docker Test Lab 3
+      - SNMP_CONTACT=admin@example.com
+    networks:
+      mcp-network:
+        ipv4_address: 172.20.0.12
+    restart: unless-stopped
+
+  # AMQP Test Client (for testing AMQP transport)
+  amqp-test-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.amqp-client
+    container_name: mcp-amqp-client
+    environment:
+      - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
+      - SERVER_QUEUE_PREFIX=mcp.discovery
+      - EXCHANGE_NAME=mcp.notifications
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mcp-server:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    profiles:
+      - testing
+    restart: "no"
+
+volumes:
+  rabbitmq_data:
+    driver: local
+
+networks:
+  mcp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

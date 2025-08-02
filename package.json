@@ -39,6 +39,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "@types/amqplib": "^0.10.7",
+    "amqplib": "^0.10.8",
     "express": "^5.1.0",
     "glob": "^11.0.3",
     "net-snmp": "^3.10.1",

@@ -302,7 +302,8 @@ async function testIndividualToolModules() {
     './tools/nmap_tools_sdk',
     './tools/proxmox_tools_sdk',
     './tools/snmp_tools_sdk',
-    './tools/nagios_tools_sdk',
+    './tools/zabbix_tools_sdk',
+    './tools/registry_tools_sdk',
     './tools/credentials_tools_sdk'
   ];
   

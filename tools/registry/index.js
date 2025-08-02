@@ -4,12 +4,13 @@
  * This is the single entry point for the consolidated registry system.
  * Replaces the previous scattered registry files with a clean, secure architecture:
  * 
- * OLD ARCHITECTURE (REMOVED):
- * - sdk_tool_registry.js (791 lines, complex dependencies)
- * - tool_registration_tracker.js (318 lines, redundant functionality) 
- * - registry_tools_sdk.js (284 lines, mixed concerns)
- * - resource_registry.js (84 lines, simple wrapper)
- * - module_loader.js (deprecated)
+ * OLD ARCHITECTURE (✅ MOVED TO deprecated/):
+ * - sdk_tool_registry.js (791 lines, complex dependencies) → ✅ deprecated/old_registry_system/
+ * - tool_registration_tracker.js (318 lines, redundant functionality) → ✅ deprecated/old_registry_system/
+ * - registry_tools_sdk.js (284 lines, mixed concerns) → ✅ converted to new format
+ * - resource_registry.js (84 lines, simple wrapper) → ✅ deprecated/old_registry_system/
+ * - module_loader.js (deprecated) → ✅ deprecated/old_registry_system/
+ * - dynamic_registry_db.js (complex SQLite layer) → ✅ deprecated/old_registry_system/
  * 
  * NEW ARCHITECTURE (ORGANIZED):
  * - registry/core_registry.js - Main registry logic

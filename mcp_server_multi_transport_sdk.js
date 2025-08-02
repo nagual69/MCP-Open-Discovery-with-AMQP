@@ -14,6 +14,12 @@ const { randomUUID } = require('node:crypto');
 const { registerAllTools, getToolCounts, cleanup, registerAllResources, getResourceCounts } = require('./tools/registry');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
 
+// Add after your existing imports
+const { 
+  startServerWithAmqp, 
+  initializeAmqpIntegration 
+} = require('./tools/transports/amqp-transport-integration');
+
 // Environment configuration with defaults
 const CONFIG = {
   MAX_CONNECTIONS: parseInt(process.env.MAX_CONNECTIONS) || 100,
@@ -581,32 +587,100 @@ async function startHttpServer() {
  */
 async function startServer() {
   try {
-    const mode = CONFIG.TRANSPORT_MODE.toLowerCase().trim();
+    // Initialize AMQP integration
+    initializeAmqpIntegration(log);
     
-    log('info', `Starting server with transport mode: "${mode}"`, {
-      originalValue: CONFIG.TRANSPORT_MODE,
-      envValue: process.env.TRANSPORT_MODE
-    });
+    // Create server factory function for AMQP integration
+    const createServerFn = async () => {
+      const server = new McpServer(
+        {
+          name: 'mcp-open-discovery',
+          version: '2.0.0',
+          description: 'Networking Discovery tools exposed via Model Context Protocol - SDK Compatible with Multi-Transport Support'
+        },
+        {
+          capabilities: {
+            tools: {},
+            resources: {},
+            logging: {},
+            prompts: {}
+          }
+        }
+      );
+      
+      // Register all your tools (existing registry code)
+      await registerAllTools(server, {
+        enableDynamicRegistry: CONFIG.ENABLE_DYNAMIC_REGISTRY,
+        dynamicDbPath: CONFIG.DYNAMIC_REGISTRY_DB,
+        ciMemory: {}
+      });
+      
+      await registerAllResources(server);
+      
+      // Register prompts
+      const maybePromise = registerAllPrompts(server);
+      if (maybePromise && typeof maybePromise.then === 'function') {
+        await maybePromise;
+      }
+      
+      // Add request/response logging and security middleware
+      const originalHandleRequest = server.handleRequest;
+      server.handleRequest = async function(request) {
+        const startTime = Date.now();
+        const requestId = Math.random().toString(36).substring(2, 15);
+        const identifier = requestId;
+        
+        try {
+          // Sanitize input
+          const sanitizedRequest = sanitizeInput(request);
+          
+          // Rate limiting
+          if (!rateLimiter.isAllowed(identifier)) {
+            throw new Error('Rate limit exceeded');
+          }
+          
+          log('debug', 'Processing request', {
+            id: requestId,
+            method: sanitizedRequest.method,
+            params: Object.keys(sanitizedRequest.params || {}),
+            clientInfo: this.clientInfo || {}
+          });
+          
+          const response = await originalHandleRequest.call(this, sanitizedRequest);
+          
+          const duration = Date.now() - startTime;
+          log('debug', 'Request completed', {
+            id: requestId,
+            duration: `${duration}ms`,
+            success: true
+          });
+          
+          return response;
+        } catch (error) {
+          const duration = Date.now() - startTime;
+          log('error', 'Request failed', {
+            id: requestId,
+            duration: `${duration}ms`,
+            error: error.message,
+            stack: CONFIG.LOG_LEVEL === 'debug' ? error.stack : undefined
+          });
+          throw error;
+        }
+      };
+      
+      return server;
+    };
     
-    if (mode === 'stdio' || mode === 'both') {
-      await startStdioServer();
-    }
-    
-    if (mode === 'http' || mode === 'both') {
-      await startHttpServer();
-    }
-    
-    if (mode !== 'stdio' && mode !== 'http' && mode !== 'both') {
-      log('error', `Invalid TRANSPORT_MODE: "${mode}". Use "stdio", "http", or "both"`);
-      process.exit(1);
-    }
+    // Enhanced startup with AMQP support
+    await startServerWithAmqp(
+      { startStdioServer, startHttpServer }, // Your existing functions
+      createServerFn,
+      log,
+      CONFIG
+    );
     
   } catch (error) {
-    log('error', 'Failed to start server', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
+    log('error', 'Server startup failed', { error: error.message });
     process.exit(1);
   }
 }

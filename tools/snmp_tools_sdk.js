@@ -771,7 +771,451 @@ function formatSnmpError(error) {
   };
 }
 
+// New hot-reload registry format
+const tools = [
+  {
+    name: "snmp_create_session",
+    description: "Creates an SNMP session with a target device for further operations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        host: {
+          type: "string",
+          description: "Hostname or IP address of target device",
+        },
+        community: {
+          type: "string",
+          description: "SNMP community string",
+        },
+        version: {
+          type: "string",
+          enum: ["1", "2c", "3"],
+          description: "SNMP version",
+        },
+        port: {
+          type: "number",
+          description: "SNMP port (default: 161)",
+        },
+        timeout: {
+          type: "number",
+          description: "Timeout in ms (default: 5000)",
+        },
+        retries: {
+          type: "number",
+          description: "Retry count (default: 1)",
+        },
+        user: {
+          type: "string",
+          description: "SNMPv3 username (v3 only)",
+        },
+        authProtocol: {
+          type: "string",
+          enum: ["md5", "sha", "sha224", "sha256", "sha384", "sha512"],
+          description: "SNMPv3 auth protocol (v3 only)",
+        },
+        authKey: {
+          type: "string",
+          description: "SNMPv3 auth key (v3 only)",
+        },
+        privProtocol: {
+          type: "string",
+          enum: ["des", "aes", "aes128", "aes192", "aes256"],
+          description: "SNMPv3 privacy protocol (v3 only)",
+        },
+        privKey: {
+          type: "string",
+          description: "SNMPv3 privacy key (v3 only)",
+        },
+      },
+      required: ["host"],
+    },
+  },
+  {
+    name: "snmp_close_session",
+    description: "Closes an SNMP session.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sessionId: {
+          type: "string",
+          description: "Session ID from snmp_create_session",
+        },
+      },
+      required: ["sessionId"],
+    },
+  },
+  {
+    name: "snmp_get",
+    description: "Performs an SNMP GET operation to retrieve specific OID values.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sessionId: {
+          type: "string",
+          description: "Session ID from snmp_create_session",
+        },
+        oids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of OIDs to retrieve",
+        },
+      },
+      required: ["sessionId", "oids"],
+    },
+  },
+  {
+    name: "snmp_get_next",
+    description: "Performs an SNMP GETNEXT operation for OIDs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sessionId: {
+          type: "string",
+          description: "Session ID from snmp_create_session",
+        },
+        oids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of OIDs to start from",
+        },
+      },
+      required: ["sessionId", "oids"],
+    },
+  },
+  {
+    name: "snmp_walk",
+    description: "Performs an SNMP WALK operation to retrieve a subtree of OIDs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sessionId: {
+          type: "string",
+          description: "Session ID from snmp_create_session",
+        },
+        oid: {
+          type: "string",
+          description: "Base OID for the walk",
+        },
+      },
+      required: ["sessionId", "oid"],
+    },
+  },
+  {
+    name: "snmp_table",
+    description: "Retrieves an SNMP table.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        sessionId: {
+          type: "string",
+          description: "Session ID from snmp_create_session",
+        },
+        oid: {
+          type: "string",
+          description: "Base OID for the table",
+        },
+      },
+      required: ["sessionId", "oid"],
+    },
+  },
+  {
+    name: "snmp_discover",
+    description: "Discovers SNMP-enabled devices in the specified network range.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        targetRange: {
+          type: "string",
+          description: "Network range in CIDR notation (e.g., 192.168.1.0/24)",
+        },
+        community: {
+          type: "string",
+          description: "SNMP community string",
+        },
+        version: {
+          type: "string",
+          enum: ["1", "2c", "3"],
+          description: "SNMP version",
+        },
+        port: {
+          type: "number",
+          description: "SNMP port (default: 161)",
+        },
+        timeout: {
+          type: "number",
+          description: "Timeout in ms (default: 5000)",
+        },
+      },
+      required: ["targetRange"],
+    },
+  },
+  {
+    name: "snmp_device_inventory",
+    description: "Performs a comprehensive device inventory via SNMP including system info, interfaces, and storage.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        host: {
+          type: "string",
+          description: "Hostname or IP address of target device",
+        },
+        community: {
+          type: "string",
+          description: "SNMP community string",
+        },
+        version: {
+          type: "string",
+          enum: ["1", "2c", "3"],
+          description: "SNMP version",
+        },
+      },
+      required: ["host"],
+    },
+  },
+  {
+    name: "snmp_interface_discovery",
+    description: "Discovers and details all network interfaces on a device via SNMP.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        host: {
+          type: "string",
+          description: "Hostname or IP address of target device",
+        },
+        community: {
+          type: "string",
+          description: "SNMP community string",
+        },
+        version: {
+          type: "string",
+          enum: ["1", "2c", "3"],
+          description: "SNMP version",
+        },
+      },
+      required: ["host"],
+    },
+  },
+  {
+    name: "snmp_system_health",
+    description: "Checks system health metrics via SNMP including CPU, memory, storage, and interfaces.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        host: {
+          type: "string",
+          description: "Hostname or IP address of target device",
+        },
+        community: {
+          type: "string",
+          description: "SNMP community string",
+        },
+        version: {
+          type: "string",
+          enum: ["1", "2c", "3"],
+          description: "SNMP version",
+        },
+      },
+      required: ["host"],
+    },
+  },
+  {
+    name: "snmp_service_discovery",
+    description: "Discovers running services and listening ports via SNMP.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        host: {
+          type: "string",
+          description: "Hostname or IP address of target device",
+        },
+        community: {
+          type: "string",
+          description: "SNMP community string",
+        },
+        version: {
+          type: "string",
+          enum: ["1", "2c", "3"],
+          description: "SNMP version",
+        },
+      },
+      required: ["host"],
+    },
+  },
+  {
+    name: "snmp_network_topology",
+    description: "Maps network topology using CDP/LLDP and other protocols via SNMP.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        networkRange: {
+          type: "string",
+          description: "Network range in CIDR notation (e.g., 192.168.1.0/24)",
+        },
+        community: {
+          type: "string",
+          description: "SNMP community string",
+        },
+        version: {
+          type: "string",
+          enum: ["1", "2c", "3"],
+          description: "SNMP version",
+        },
+      },
+      required: ["networkRange"],
+    },
+  },
+];
+
+// New hot-reload handleToolCall function
+async function handleToolCall(name, args) {
+  switch (name) {
+    case "snmp_create_session":
+      try {
+        const options = {
+          community: args.community || 'public',
+          version: args.version || '2c',
+          port: args.port || 161,
+          timeout: args.timeout || 5000,
+          retries: args.retries || 1
+        };
+        
+        // Add SNMPv3 options if specified
+        if (args.version === '3') {
+          options.user = args.user;
+          options.authProtocol = args.authProtocol;
+          options.authKey = args.authKey;
+          options.privProtocol = args.privProtocol;
+          options.privKey = args.privKey;
+        }
+        
+        const sessionId = await snmpTools.createSnmpSession(args.host, options);
+        return formatSnmpResult({ sessionId }, `SNMP session created for ${args.host}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_close_session":
+      try {
+        await snmpTools.closeSnmpSession(args.sessionId);
+        return formatSnmpResult({ success: true }, `SNMP session ${args.sessionId} closed`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_get":
+      try {
+        const result = await snmpTools.snmpGet(args.sessionId, args.oids);
+        return formatSnmpResult(result, `SNMP GET results for ${args.oids.length} OID(s)`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_get_next":
+      try {
+        const result = await snmpTools.snmpGetNext(args.sessionId, args.oids);
+        return formatSnmpResult(result, `SNMP GETNEXT results for ${args.oids.length} OID(s)`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_walk":
+      try {
+        const result = await snmpTools.snmpWalk(args.sessionId, args.oid);
+        return formatSnmpResult(result, `SNMP WALK results for OID ${args.oid}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_table":
+      try {
+        const result = await snmpTools.snmpTable(args.sessionId, args.oid);
+        return formatSnmpResult(result, `SNMP TABLE results for OID ${args.oid}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_discover":
+      try {
+        const options = {
+          community: args.community || 'public',
+          version: args.version || '2c',
+          port: args.port || 161,
+          timeout: args.timeout || 5000
+        };
+        
+        const result = await snmpTools.snmpDiscover(args.targetRange, options);
+        return formatSnmpResult(result, `SNMP Discovery results for ${args.targetRange}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_device_inventory":
+      try {
+        const options = {
+          community: args.community || 'public',
+          version: args.version || '2c'
+        };
+        const result = await snmpTools.snmpDeviceInventory(args.host, options);
+        return formatSnmpResult(result, `Device inventory for ${args.host}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_interface_discovery":
+      try {
+        const options = {
+          community: args.community || 'public',
+          version: args.version || '2c'
+        };
+        const result = await snmpTools.snmpInterfaceDiscovery(args.host, options);
+        return formatSnmpResult(result, `Interface discovery for ${args.host}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_system_health":
+      try {
+        const options = {
+          community: args.community || 'public',
+          version: args.version || '2c'
+        };
+        const result = await snmpTools.snmpSystemHealthCheck(args.host, options);
+        return formatSnmpResult(result, `System health for ${args.host}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_service_discovery":
+      try {
+        const options = {
+          community: args.community || 'public',
+          version: args.version || '2c'
+        };
+        const result = await snmpTools.snmpServiceDiscovery(args.host, options);
+        return formatSnmpResult(result, `Service discovery for ${args.host}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    case "snmp_network_topology":
+      try {
+        const options = {
+          community: args.community || 'public',
+          version: args.version || '2c'
+        };
+        const result = await snmpTools.snmpNetworkTopologyMapper(args.networkRange, options);
+        return formatSnmpResult(result, `Network topology for ${args.networkRange}`);
+      } catch (error) {
+        return formatSnmpError(error);
+      }
+
+    default:
+      throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
 /**
+ * Legacy register function for backwards compatibility
  * Register all SNMP tools with the MCP server
  * @param {McpServer} server - The MCP server instance
  */
@@ -1055,4 +1499,25 @@ function registerSnmpTools(server) {
   console.log('[MCP SDK] Registered 12 SNMP tools');
 }
 
-module.exports = { registerSnmpTools };
+module.exports = { 
+  tools, 
+  handleToolCall, 
+  registerSnmpTools,
+  // Utility functions for external use
+  executeSnmpCommand,
+  parseSnmpResponse,
+  formatSnmpResult,
+  formatSnmpError,
+  createSnmpSession,
+  closeSnmpSession,
+  snmpGet,
+  snmpGetNext,
+  snmpWalk,
+  snmpTable,
+  snmpDiscover,
+  snmpDeviceInventory,
+  snmpInterfaceDiscovery,
+  snmpSystemHealthCheck,
+  snmpServiceDiscovery,
+  snmpNetworkTopologyMapper
+};

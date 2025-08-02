@@ -242,7 +242,293 @@ function formatProxmoxError(error) {
   };
 }
 
+// New hot-reload registry format
+const tools = [
+  {
+    name: "proxmox_list_nodes",
+    description: "Returns all nodes in the Proxmox cluster.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "proxmox_get_node_details",
+    description: "Returns details for a given Proxmox node.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node"],
+    },
+  },
+  {
+    name: "proxmox_list_vms",
+    description: "Returns all VMs for a Proxmox node.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node"],
+    },
+  },
+  {
+    name: "proxmox_get_vm_details",
+    description: "Returns config/details for a given VM.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        vmid: {
+          type: "string",
+          description: "VM ID",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node", "vmid"],
+    },
+  },
+  {
+    name: "proxmox_list_containers",
+    description: "Returns all LXC containers for a Proxmox node.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node"],
+    },
+  },
+  {
+    name: "proxmox_get_container_details",
+    description: "Returns config/details for a given container.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        vmid: {
+          type: "string",
+          description: "Container ID",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node", "vmid"],
+    },
+  },
+  {
+    name: "proxmox_list_storage",
+    description: "Returns storage resources for a Proxmox node.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node"],
+    },
+  },
+  {
+    name: "proxmox_list_networks",
+    description: "Returns network config for a Proxmox node.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node"],
+    },
+  },
+  {
+    name: "proxmox_cluster_resources",
+    description: "Returns a summary of all cluster resources.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+    },
+  },
+  {
+    name: "proxmox_get_metrics",
+    description: "Returns metrics for a node or VM (if vmid is provided).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node: {
+          type: "string",
+          description: "Node name",
+        },
+        vmid: {
+          type: "string",
+          description: "VM ID (optional)",
+        },
+        creds_id: {
+          type: "string",
+          description: "Credential ID to use (optional)",
+        },
+      },
+      required: ["node"],
+    },
+  },
+];
+
+// New hot-reload handleToolCall function
+async function handleToolCall(name, args) {
+  switch (name) {
+    case "proxmox_list_nodes":
+      try {
+        const nodes = await proxmoxApiRequest('/api2/json/nodes', 'GET', null, args.creds_id);
+        return formatProxmoxResult(nodes, 'Proxmox Cluster Nodes:');
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_get_node_details":
+      try {
+        const nodeDetails = await proxmoxApiRequest(`/api2/json/nodes/${args.node}/status`, 'GET', null, args.creds_id);
+        return formatProxmoxResult(nodeDetails, `Node Details for ${args.node}:`);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_list_vms":
+      try {
+        const vms = await proxmoxApiRequest(`/api2/json/nodes/${args.node}/qemu`, 'GET', null, args.creds_id);
+        return formatProxmoxResult(vms, `VMs on node ${args.node}:`);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_get_vm_details":
+      try {
+        const vmDetails = await proxmoxApiRequest(`/api2/json/nodes/${args.node}/qemu/${args.vmid}/config`, 'GET', null, args.creds_id);
+        return formatProxmoxResult(vmDetails, `VM ${args.vmid} details on node ${args.node}:`);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_list_containers":
+      try {
+        const containers = await proxmoxApiRequest(`/api2/json/nodes/${args.node}/lxc`, 'GET', null, args.creds_id);
+        return formatProxmoxResult(containers, `LXC containers on node ${args.node}:`);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_get_container_details":
+      try {
+        const containerDetails = await proxmoxApiRequest(`/api2/json/nodes/${args.node}/lxc/${args.vmid}/config`, 'GET', null, args.creds_id);
+        return formatProxmoxResult(containerDetails, `Container ${args.vmid} details on node ${args.node}:`);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_list_storage":
+      try {
+        const storage = await proxmoxApiRequest(`/api2/json/nodes/${args.node}/storage`, 'GET', null, args.creds_id);
+        return formatProxmoxResult(storage, `Storage resources on node ${args.node}:`);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_list_networks":
+      try {
+        const networks = await proxmoxApiRequest(`/api2/json/nodes/${args.node}/network`, 'GET', null, args.creds_id);
+        return formatProxmoxResult(networks, `Network configuration for node ${args.node}:`);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_cluster_resources":
+      try {
+        const resources = await proxmoxApiRequest('/api2/json/cluster/resources', 'GET', null, args.creds_id);
+        return formatProxmoxResult(resources, 'Proxmox Cluster Resources:');
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    case "proxmox_get_metrics":
+      try {
+        let endpoint;
+        let description;
+        
+        if (args.vmid) {
+          endpoint = `/api2/json/nodes/${args.node}/qemu/${args.vmid}/status/current`;
+          description = `Metrics for VM ${args.vmid} on node ${args.node}:`;
+        } else {
+          endpoint = `/api2/json/nodes/${args.node}/status`;
+          description = `Metrics for node ${args.node}:`;
+        }
+        
+        const metrics = await proxmoxApiRequest(endpoint, 'GET', null, args.creds_id);
+        return formatProxmoxResult(metrics, description);
+      } catch (error) {
+        return formatProxmoxError(error);
+      }
+
+    default:
+      throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
 /**
+ * Legacy register function for backwards compatibility
  * Register all Proxmox tools with the MCP server
  * @param {McpServer} server - The MCP server instance
  */
@@ -463,4 +749,13 @@ function registerProxmoxTools(server) {
   console.log('[MCP SDK] Registered 10 Proxmox tools');
 }
 
-module.exports = { registerProxmoxTools };
+module.exports = { 
+  tools, 
+  handleToolCall, 
+  registerProxmoxTools,
+  // Utility functions for external use
+  proxmoxApiRequest,
+  formatProxmoxResult,
+  formatProxmoxError,
+  formatProxmoxObject 
+};
