@@ -11,7 +11,7 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const express = require('express');
 const { randomUUID } = require('node:crypto');
-const { registerAllTools, getToolCounts, cleanup, registerAllResources, getResourceCounts } = require('./tools/registry');
+const { registerAllTools, getToolCounts, cleanup, registerAllResources, getResourceCounts } = require('./tools/registry/index');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
 
 // Add after your existing imports
@@ -203,6 +203,16 @@ async function createServer() {
     log('info', '[SINGLETON] Tool registration complete');
   } catch (err) {
     console.error('[FATAL] Tool registration failed:', JSON.stringify(err, null, 2));
+    if (err && err.stack) console.error(err.stack);
+    process.exit(1);
+  }
+
+  log('info', '[SINGLETON] Starting resource registration');
+  try {
+    await registerAllResources(globalMcpServer);
+    log('info', '[SINGLETON] Resource registration complete');
+  } catch (err) {
+    console.error('[FATAL] Resource registration failed:', JSON.stringify(err, null, 2));
     if (err && err.stack) console.error(err.stack);
     process.exit(1);
   }

@@ -77,7 +77,7 @@ const validationSteps = [
     name: 'Check Integration Module',
     check: async () => {
       try {
-        const integration = require('./tools/transports/amqp-transport-integration.js');
+        const integration = require('../tools/transports/amqp-transport-integration.js');
         const requiredExports = [
           'AMQP_CONFIG',
           'parseTransportMode', 
@@ -181,7 +181,7 @@ const validationSteps = [
     name: 'Test Client Transport',
     check: async () => {
       try {
-        const { RabbitMQClientTransport } = require('./tools/transports/amqp-client-transport.js');
+        const { RabbitMQClientTransport } = require('../tools/transports/amqp-client-transport.js');
         
         const transport = new RabbitMQClientTransport({
           amqpUrl: process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',

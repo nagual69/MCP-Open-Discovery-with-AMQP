@@ -272,7 +272,7 @@ async function testResourceRegistry() {
  */
 async function testCredentialManager() {
   try {
-    const credentialsManager = require('./tools/credentials_manager');
+    const credentialsManager = require('../tools/credentials_manager');
     
     if (typeof credentialsManager.listCredentials !== 'function') {
       throw new Error('credentialsManager.listCredentials is not a function');

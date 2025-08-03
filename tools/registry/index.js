@@ -30,6 +30,7 @@ const { CoreRegistry } = require('./core_registry');
 const { DatabaseLayer } = require('./database_layer');
 const { registerManagementTools, getManagementToolNames } = require('./management_tools');
 const { registerAllResources, getResourceCounts } = require('./resource_manager');
+const { z } = require('zod');
 
 // Tool modules for registration
 const { getCredentialTools } = require('../credentials_tools_sdk');
@@ -169,6 +170,75 @@ async function registerAllTools(server) {
 }
 
 /**
+ * Convert JSON Schema properties to Zod schema object
+ * This bridges the gap between our JSON Schema tool definitions and MCP SDK's Zod requirements
+ */
+function jsonSchemaToZod(jsonSchema) {
+  if (!jsonSchema || !jsonSchema.properties) {
+    return {};
+  }
+  
+  const zodObj = {};
+  
+  for (const [propName, propDef] of Object.entries(jsonSchema.properties)) {
+    let zodField;
+    
+    switch (propDef.type) {
+      case 'string':
+        zodField = z.string();
+        if (propDef.description) {
+          zodField = zodField.describe(propDef.description);
+        }
+        break;
+        
+      case 'number':
+        zodField = z.number();
+        if (propDef.minimum !== undefined) {
+          zodField = zodField.min(propDef.minimum);
+        }
+        if (propDef.maximum !== undefined) {
+          zodField = zodField.max(propDef.maximum);
+        }
+        if (propDef.description) {
+          zodField = zodField.describe(propDef.description);
+        }
+        break;
+        
+      case 'boolean':
+        zodField = z.boolean();
+        if (propDef.description) {
+          zodField = zodField.describe(propDef.description);
+        }
+        break;
+        
+      case 'array':
+        // Basic array support - can be enhanced later
+        zodField = z.array(z.any());
+        if (propDef.description) {
+          zodField = zodField.describe(propDef.description);
+        }
+        break;
+        
+      default:
+        // Fallback to any for unsupported types
+        zodField = z.any();
+        if (propDef.description) {
+          zodField = zodField.describe(propDef.description);
+        }
+    }
+    
+    // Handle optional vs required fields
+    if (!jsonSchema.required || !jsonSchema.required.includes(propName)) {
+      zodField = zodField.optional();
+    }
+    
+    zodObj[propName] = zodField;
+  }
+  
+  return zodObj;
+}
+
+/**
  * Register a single tool module with the registry
  */
 async function registerToolModule(server, registry, moduleConfig) {
@@ -186,9 +256,17 @@ async function registerToolModule(server, registry, moduleConfig) {
     // Start module tracking
     registry.startModule(moduleConfig.name, moduleConfig.category);
 
-    // Register each tool
+    // Register each tool using the modern MCP SDK registerTool API
     for (const tool of tools) {
-      server.tool(tool.name, tool.description, tool.inputSchema, async (args) => {
+      // Convert JSON Schema to Zod schema for MCP SDK compatibility
+      const zodInputSchema = jsonSchemaToZod(tool.inputSchema);
+      
+      const toolConfig = {
+        description: tool.description,
+        inputSchema: zodInputSchema  // Now using Zod schema
+      };
+      
+      server.registerTool(tool.name, toolConfig, async (args) => {
         return await handleToolCall(tool.name, args);
       });
       

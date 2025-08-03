@@ -292,7 +292,7 @@ const auditLogResource = {
   name: 'Credential Audit Log',
   description: 'Audit log of all credential operations',
   mimeType: 'application/json',
-  getContent: async (params) => {
+  getContent: async (uri) => {
     try {
       const fs = require('fs');
       const path = require('path');
@@ -300,9 +300,11 @@ const auditLogResource = {
       
       if (!fs.existsSync(AUDIT_LOG_PATH)) {
         return {
-          content: [{ type: 'text', text: 'No audit log entries found' }],
-          structuredContent: [],
-          isError: false,
+          contents: [{
+            uri: uri.href,
+            mimeType: 'application/json',
+            text: JSON.stringify([], null, 2)
+          }]
         };
       }
       
@@ -312,15 +314,19 @@ const auditLogResource = {
         .map(line => JSON.parse(line));
       
       return {
-        content: [{ type: 'json', json: logData }],
-        structuredContent: logData,
-        isError: false,
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(logData, null, 2)
+        }]
       };
     } catch (error) {
       return {
-        isError: true,
-        content: [{ type: 'text', text: `Audit log error: ${error.message}` }],
-        structuredContent: { error: error.message },
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify({ error: error.message }, null, 2)
+        }]
       };
     }
   },

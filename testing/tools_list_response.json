@@ -1,0 +1,1523 @@
+{
+  "result": {
+    "tools": [
+      {
+        "name": "ping",
+        "description": "Send ICMP echo requests to network hosts",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Target hostname or IP address"
+            },
+            "count": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "Number of packets to send (1-10)"
+            },
+            "timeout": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 30,
+              "description": "Timeout in seconds (1-30)"
+            },
+            "size": {
+              "type": "number",
+              "minimum": 56,
+              "maximum": 1024,
+              "description": "Packet size in bytes (56-1024)"
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "wget",
+        "description": "Download content from HTTP/HTTPS URLs",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "HTTP/HTTPS URL to fetch"
+            },
+            "output_document": {
+              "type": "string",
+              "description": "Filename to save the content (optional)"
+            },
+            "timeout": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 300,
+              "description": "Request timeout in seconds (1-300)"
+            },
+            "user_agent": {
+              "type": "string",
+              "description": "Custom User-Agent string (optional)"
+            },
+            "max_redirect": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "Maximum redirects to follow (0-10)"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "nslookup",
+        "description": "Perform DNS lookups for hostnames and IP addresses",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname or IP address to lookup"
+            },
+            "type": {
+              "type": "string",
+              "description": "DNS record type to query"
+            },
+            "server": {
+              "type": "string",
+              "description": "DNS server to query (optional)"
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "netstat",
+        "description": "Display network connections and listening ports",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "listening": {
+              "type": "boolean",
+              "description": "Show only listening ports"
+            },
+            "numeric": {
+              "type": "boolean",
+              "description": "Show numerical addresses instead of resolving hosts"
+            },
+            "programs": {
+              "type": "boolean",
+              "description": "Show PID and process names"
+            },
+            "protocol": {
+              "type": "string",
+              "description": "Protocol to filter by"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "tcp_connect",
+        "description": "Test TCP connectivity to a specific host and port",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Target hostname or IP address"
+            },
+            "port": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 65535,
+              "description": "Target port number"
+            },
+            "timeout": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 60,
+              "description": "Connection timeout in seconds"
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "route",
+        "description": "Display and manipulate network routing table",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "destination": {
+              "type": "string",
+              "description": "Show route to specific destination (optional)"
+            },
+            "numeric": {
+              "type": "boolean",
+              "description": "Show numerical addresses instead of resolving hosts"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "ifconfig",
+        "description": "Display network interface configuration",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "interface": {
+              "type": "string",
+              "description": "Specific interface to display (optional)"
+            },
+            "all": {
+              "type": "boolean",
+              "description": "Show all interfaces including inactive ones"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "arp",
+        "description": "Display and modify ARP (Address Resolution Protocol) cache",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Specific host to lookup in ARP table (optional)"
+            },
+            "numeric": {
+              "type": "boolean",
+              "description": "Show numerical addresses instead of resolving hosts"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "whois",
+        "description": "Query WHOIS databases for domain and IP information",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Domain name or IP address to lookup"
+            },
+            "server": {
+              "type": "string",
+              "description": "Specific WHOIS server to query (optional)"
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_get",
+        "description": "Get a CI object from MCP memory by key",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "Unique CI key (e.g., ci:host:192.168.1.10)"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_set",
+        "description": "Set a CI object in MCP memory by key",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "Unique CI key (e.g., ci:host:192.168.1.10)"
+            },
+            "value": {
+              "description": "CI object to store"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_merge",
+        "description": "Merge new data into an existing CI in MCP memory",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "Unique CI key (e.g., ci:host:192.168.1.10)"
+            },
+            "value": {
+              "description": "Partial CI data to merge"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_query",
+        "description": "Query MCP memory for CIs matching a pattern or incomplete CIs",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "pattern": {
+              "type": "string",
+              "description": "Pattern for CI keys (optional, e.g., ci:host:*)"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_clear",
+        "description": "Clear all memory data (both in-memory and persistent storage)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_stats",
+        "description": "Get statistics about memory usage and SQLite persistent storage",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_rotate_key",
+        "description": "Rotate the encryption key and re-encrypt all stored memory data in SQLite",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "newKey": {
+              "type": "string",
+              "description": "New 32-byte key (base64). If not provided, generates a new random key."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_save",
+        "description": "Manually save all memory data to SQLite persistent storage",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "memory_migrate_from_filesystem",
+        "description": "Migrate existing filesystem-based memory data to SQLite persistence",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "oldDataPath": {
+              "type": "string",
+              "description": "Path to old memory data file (optional)"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "nmap_ping_scan",
+        "description": "Nmap Ping Scan (-sn): Discovers online hosts without port scanning.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "nmap_tcp_syn_scan",
+        "description": "Nmap TCP SYN Scan (-sS): Stealthy scan for open TCP ports. Requires root/administrator privileges.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)"
+            },
+            "ports": {
+              "type": "string",
+              "description": "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000)."
+            },
+            "fast_scan": {
+              "type": "boolean",
+              "description": "Fast mode (-F): Scan fewer ports than the default scan."
+            },
+            "timing_template": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            "reason": {
+              "type": "boolean",
+              "description": "Display the reason a port is in a particular state (--reason)."
+            },
+            "open_only": {
+              "type": "boolean",
+              "description": "Only show open (or possibly open) ports (--open)."
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "nmap_tcp_connect_scan",
+        "description": "Nmap TCP Connect Scan (-sT): Scans for open TCP ports using the connect() system call. Does not require special privileges.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)"
+            },
+            "ports": {
+              "type": "string",
+              "description": "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000)."
+            },
+            "timing_template": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            "reason": {
+              "type": "boolean",
+              "description": "Display the reason a port is in a particular state (--reason)."
+            },
+            "open_only": {
+              "type": "boolean",
+              "description": "Only show open (or possibly open) ports (--open)."
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "nmap_udp_scan",
+        "description": "Nmap UDP Scan (-sU): Scans for open UDP ports. Can be very slow as UDP is connectionless. Requires root/administrator privileges.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)"
+            },
+            "ports": {
+              "type": "string",
+              "description": "Ports to scan (e.g., 'U:53,161', '1-1024'). Default is Nmap's default for UDP (often common UDP ports)."
+            },
+            "top_ports": {
+              "type": "number",
+              "description": "Scan the <number> most common UDP ports (--top-ports <number>). Cannot be used with ports."
+            },
+            "timing_template": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            "reason": {
+              "type": "boolean",
+              "description": "Display the reason a port is in a particular state (--reason)."
+            },
+            "open_only": {
+              "type": "boolean",
+              "description": "Only show open (or possibly open) ports (--open)."
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "nmap_version_scan",
+        "description": "Nmap Version Detection (-sV): Probes open ports to determine service/version info.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)"
+            },
+            "ports": {
+              "type": "string",
+              "description": "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000 TCP and UDP)."
+            },
+            "intensity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 9,
+              "description": "Version scan intensity (--version-intensity <0-9>): Higher is more likely to identify services but takes longer. Default 7."
+            },
+            "light_mode": {
+              "type": "boolean",
+              "description": "Enable light mode (--version-light): Faster, less comprehensive version scan. Alias for --version-intensity 2."
+            },
+            "all_ports": {
+              "type": "boolean",
+              "description": "Try all probes for every port (--version-all): Slower, more comprehensive. Alias for --version-intensity 9."
+            },
+            "timing_template": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster."
+            },
+            "reason": {
+              "type": "boolean",
+              "description": "Display the reason a port is in a particular state (--reason)."
+            },
+            "open_only": {
+              "type": "boolean",
+              "description": "Only show open (or possibly open) ports (--open)."
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_list_nodes",
+        "description": "Returns all nodes in the Proxmox cluster.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_get_node_details",
+        "description": "Returns details for a given Proxmox node.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_list_vms",
+        "description": "Returns all VMs for a Proxmox node.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_get_vm_details",
+        "description": "Returns config/details for a given VM.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "vmid": {
+              "type": "string",
+              "description": "VM ID"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node",
+            "vmid"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_list_containers",
+        "description": "Returns all LXC containers for a Proxmox node.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_get_container_details",
+        "description": "Returns config/details for a given container.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "vmid": {
+              "type": "string",
+              "description": "Container ID"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node",
+            "vmid"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_list_storage",
+        "description": "Returns storage resources for a Proxmox node.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_list_networks",
+        "description": "Returns network config for a Proxmox node.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_cluster_resources",
+        "description": "Returns a summary of all cluster resources.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "proxmox_get_metrics",
+        "description": "Returns metrics for a node or VM (if vmid is provided).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "node": {
+              "type": "string",
+              "description": "Node name"
+            },
+            "vmid": {
+              "type": "string",
+              "description": "VM ID (optional)"
+            },
+            "creds_id": {
+              "type": "string",
+              "description": "Credential ID to use (optional)"
+            }
+          },
+          "required": [
+            "node"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_create_session",
+        "description": "Creates an SNMP session with a target device for further operations.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname or IP address of target device"
+            },
+            "community": {
+              "type": "string",
+              "description": "SNMP community string"
+            },
+            "version": {
+              "type": "string",
+              "description": "SNMP version"
+            },
+            "port": {
+              "type": "number",
+              "description": "SNMP port (default: 161)"
+            },
+            "timeout": {
+              "type": "number",
+              "description": "Timeout in ms (default: 5000)"
+            },
+            "retries": {
+              "type": "number",
+              "description": "Retry count (default: 1)"
+            },
+            "user": {
+              "type": "string",
+              "description": "SNMPv3 username (v3 only)"
+            },
+            "authProtocol": {
+              "type": "string",
+              "description": "SNMPv3 auth protocol (v3 only)"
+            },
+            "authKey": {
+              "type": "string",
+              "description": "SNMPv3 auth key (v3 only)"
+            },
+            "privProtocol": {
+              "type": "string",
+              "description": "SNMPv3 privacy protocol (v3 only)"
+            },
+            "privKey": {
+              "type": "string",
+              "description": "SNMPv3 privacy key (v3 only)"
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_close_session",
+        "description": "Closes an SNMP session.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "Session ID from snmp_create_session"
+            }
+          },
+          "required": [
+            "sessionId"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_get",
+        "description": "Performs an SNMP GET operation to retrieve specific OID values.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "Session ID from snmp_create_session"
+            },
+            "oids": {
+              "type": "array",
+              "description": "Array of OIDs to retrieve"
+            }
+          },
+          "required": [
+            "sessionId",
+            "oids"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_get_next",
+        "description": "Performs an SNMP GETNEXT operation for OIDs.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "Session ID from snmp_create_session"
+            },
+            "oids": {
+              "type": "array",
+              "description": "Array of OIDs to start from"
+            }
+          },
+          "required": [
+            "sessionId",
+            "oids"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_walk",
+        "description": "Performs an SNMP WALK operation to retrieve a subtree of OIDs.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "Session ID from snmp_create_session"
+            },
+            "oid": {
+              "type": "string",
+              "description": "Base OID for the walk"
+            }
+          },
+          "required": [
+            "sessionId",
+            "oid"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_table",
+        "description": "Retrieves an SNMP table.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "sessionId": {
+              "type": "string",
+              "description": "Session ID from snmp_create_session"
+            },
+            "oid": {
+              "type": "string",
+              "description": "Base OID for the table"
+            }
+          },
+          "required": [
+            "sessionId",
+            "oid"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_discover",
+        "description": "Discovers SNMP-enabled devices in the specified network range.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "targetRange": {
+              "type": "string",
+              "description": "Network range in CIDR notation (e.g., 192.168.1.0/24)"
+            },
+            "community": {
+              "type": "string",
+              "description": "SNMP community string"
+            },
+            "version": {
+              "type": "string",
+              "description": "SNMP version"
+            },
+            "port": {
+              "type": "number",
+              "description": "SNMP port (default: 161)"
+            },
+            "timeout": {
+              "type": "number",
+              "description": "Timeout in ms (default: 5000)"
+            }
+          },
+          "required": [
+            "targetRange"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_device_inventory",
+        "description": "Performs a comprehensive device inventory via SNMP including system info, interfaces, and storage.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname or IP address of target device"
+            },
+            "community": {
+              "type": "string",
+              "description": "SNMP community string"
+            },
+            "version": {
+              "type": "string",
+              "description": "SNMP version"
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_interface_discovery",
+        "description": "Discovers and details all network interfaces on a device via SNMP.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname or IP address of target device"
+            },
+            "community": {
+              "type": "string",
+              "description": "SNMP community string"
+            },
+            "version": {
+              "type": "string",
+              "description": "SNMP version"
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_system_health",
+        "description": "Checks system health metrics via SNMP including CPU, memory, storage, and interfaces.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname or IP address of target device"
+            },
+            "community": {
+              "type": "string",
+              "description": "SNMP community string"
+            },
+            "version": {
+              "type": "string",
+              "description": "SNMP version"
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_service_discovery",
+        "description": "Discovers running services and listening ports via SNMP.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string",
+              "description": "Hostname or IP address of target device"
+            },
+            "community": {
+              "type": "string",
+              "description": "SNMP community string"
+            },
+            "version": {
+              "type": "string",
+              "description": "SNMP version"
+            }
+          },
+          "required": [
+            "host"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "snmp_network_topology",
+        "description": "Maps network topology using CDP/LLDP and other protocols via SNMP.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "networkRange": {
+              "type": "string",
+              "description": "Network range in CIDR notation (e.g., 192.168.1.0/24)"
+            },
+            "community": {
+              "type": "string",
+              "description": "SNMP community string"
+            },
+            "version": {
+              "type": "string",
+              "description": "SNMP version"
+            }
+          },
+          "required": [
+            "networkRange"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "zabbix_host_discover",
+        "description": "Discover and retrieve hosts from Zabbix monitoring system",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "Zabbix server base URL (e.g., http://zabbix.company.com)"
+            },
+            "username": {
+              "type": "string",
+              "description": "Zabbix username for authentication"
+            },
+            "password": {
+              "type": "string",
+              "description": "Zabbix password for authentication"
+            },
+            "groupFilter": {
+              "type": "string",
+              "description": "Filter hosts by group name (optional)"
+            },
+            "templateFilter": {
+              "type": "string",
+              "description": "Filter hosts by template name (optional)"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of hosts to return (default: 100)"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "zabbix_get_metrics",
+        "description": "Retrieve performance metrics and historical data from Zabbix",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "Zabbix server base URL"
+            },
+            "username": {
+              "type": "string",
+              "description": "Zabbix username for authentication"
+            },
+            "password": {
+              "type": "string",
+              "description": "Zabbix password for authentication"
+            },
+            "hostName": {
+              "type": "string",
+              "description": "Hostname to retrieve metrics for"
+            },
+            "itemFilter": {
+              "type": "string",
+              "description": "Filter items by name pattern (optional)"
+            },
+            "timeFrom": {
+              "type": "string",
+              "description": "Start time for historical data (e.g., \"1h\", \"1d\", \"2024-01-01 00:00:00\")"
+            },
+            "timeTill": {
+              "type": "string",
+              "description": "End time for historical data (optional, defaults to now)"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of items to return"
+            }
+          },
+          "required": [
+            "hostName"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "zabbix_get_alerts",
+        "description": "Retrieve alerts and notifications from Zabbix",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "Zabbix server base URL"
+            },
+            "username": {
+              "type": "string",
+              "description": "Zabbix username for authentication"
+            },
+            "password": {
+              "type": "string",
+              "description": "Zabbix password for authentication"
+            },
+            "hostFilter": {
+              "type": "string",
+              "description": "Filter alerts by hostname (optional)"
+            },
+            "actionIds": {
+              "type": "array",
+              "description": "Return only alerts generated by specific actions"
+            },
+            "eventIds": {
+              "type": "array",
+              "description": "Return only alerts generated by specific events"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of alerts to return"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "zabbix_get_inventory",
+        "description": "Retrieve detailed inventory information for hosts from Zabbix",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "Zabbix server base URL"
+            },
+            "username": {
+              "type": "string",
+              "description": "Zabbix username for authentication"
+            },
+            "password": {
+              "type": "string",
+              "description": "Zabbix password for authentication"
+            },
+            "hostFilter": {
+              "type": "string",
+              "description": "Filter hosts by name pattern (optional)"
+            },
+            "inventoryMode": {
+              "type": "string",
+              "description": "Filter by inventory mode"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of hosts to return"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "zabbix_get_problems",
+        "description": "Retrieve current active problems from Zabbix",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "Zabbix server base URL"
+            },
+            "username": {
+              "type": "string",
+              "description": "Zabbix username for authentication"
+            },
+            "password": {
+              "type": "string",
+              "description": "Zabbix password for authentication"
+            },
+            "hostFilter": {
+              "type": "string",
+              "description": "Filter problems by hostname (optional)"
+            },
+            "severityFilter": {
+              "type": "string",
+              "description": "Filter by severity level"
+            },
+            "acknowledged": {
+              "type": "boolean",
+              "description": "Filter by acknowledgment status (true=acknowledged, false=unacknowledged)"
+            },
+            "recent": {
+              "type": "boolean",
+              "description": "Show only recent problems (last 24 hours)"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of problems to return"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "zabbix_get_events",
+        "description": "Retrieve historical events from Zabbix for audit and analysis",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "Zabbix server base URL"
+            },
+            "username": {
+              "type": "string",
+              "description": "Zabbix username for authentication"
+            },
+            "password": {
+              "type": "string",
+              "description": "Zabbix password for authentication"
+            },
+            "hostFilter": {
+              "type": "string",
+              "description": "Filter events by hostname (optional)"
+            },
+            "eventType": {
+              "type": "string",
+              "description": "Filter by event source type"
+            },
+            "timeFrom": {
+              "type": "string",
+              "description": "Start time for events (e.g., \"1h\", \"1d\", \"2024-01-01 00:00:00\")"
+            },
+            "timeTill": {
+              "type": "string",
+              "description": "End time for events (optional, defaults to now)"
+            },
+            "acknowledged": {
+              "type": "boolean",
+              "description": "Filter by acknowledgment status"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of events to return"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "zabbix_get_triggers",
+        "description": "Retrieve and manage trigger configurations from Zabbix",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "Zabbix server base URL"
+            },
+            "username": {
+              "type": "string",
+              "description": "Zabbix username for authentication"
+            },
+            "password": {
+              "type": "string",
+              "description": "Zabbix password for authentication"
+            },
+            "hostFilter": {
+              "type": "string",
+              "description": "Filter triggers by hostname (optional)"
+            },
+            "statusFilter": {
+              "type": "string",
+              "description": "Filter by trigger status"
+            },
+            "severityFilter": {
+              "type": "string",
+              "description": "Filter by trigger severity"
+            },
+            "activeOnly": {
+              "type": "boolean",
+              "description": "Show only triggers with active problems"
+            },
+            "templated": {
+              "type": "boolean",
+              "description": "Include templated triggers (true=only templated, false=only host triggers)"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of triggers to return"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "credentials_add",
+        "description": "Add a new encrypted credential to the secure store. Valid types: \"password\", \"apiKey\", \"sshKey\", \"oauthToken\", \"certificate\", \"custom\"",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "credentials_get",
+        "description": "Retrieve and decrypt a credential from the secure store",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "credentials_list",
+        "description": "List all stored credentials (IDs, types, usernames only - no sensitive data)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "credentials_remove",
+        "description": "Remove a credential from the secure store",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "credentials_rotate_key",
+        "description": "Rotate the encryption key and re-encrypt all stored credentials",
+        "inputSchema": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        }
+      },
+      {
+        "name": "registry_get_status",
+        "description": "Get comprehensive status of the dynamic tool registry including hot-reload info",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "registry_load_module",
+        "description": "Dynamically load a new module into the registry at runtime",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "registry_unload_module",
+        "description": "Unload a module and remove its tools from the registry",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "registry_reload_module",
+        "description": "Hot-reload a module with updated code",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      {
+        "name": "registry_toggle_hotreload",
+        "description": "Enable or disable hot-reload capabilities system-wide",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 2
+}
