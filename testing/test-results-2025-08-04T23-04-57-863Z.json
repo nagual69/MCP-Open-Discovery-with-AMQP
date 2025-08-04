@@ -1,0 +1,310 @@
+{
+  "summary": {
+    "totalTools": 62,
+    "passed": 6,
+    "failed": 3,
+    "skipped": 0,
+    "successRate": 9.67741935483871
+  },
+  "categories": {
+    "memory": {
+      "total": 9,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "network": {
+      "total": 9,
+      "passed": 6,
+      "failed": 3,
+      "skipped": 0
+    },
+    "nmap": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "snmp": {
+      "total": 12,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "proxmox": {
+      "total": 10,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "zabbix": {
+      "total": 7,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "credentials": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "registry": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "transports": {
+    "http": {
+      "total": 9,
+      "passed": 6,
+      "failed": 3,
+      "categories": {
+        "network": {
+          "total": 9,
+          "passed": 6,
+          "failed": 3,
+          "skipped": 0,
+          "tools": {
+            "ping": {
+              "status": "passed",
+              "duration": 1045,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "PING 8.8.8.8 (8.8.8.8): 56 data bytes\n64 bytes from 8.8.8.8: seq=0 ttl=42 time=19.842 ms\n64 bytes from 8.8.8.8: seq=1 ttl=42 time=23.409 ms\n\n--- 8.8.8.8 ping statistics ---\n2 packets transmitted, 2 packets received, 0% packet loss\nround-trip min/avg/max = 19.842/21.625/23.409 ms\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "nslookup": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754348694728,
+                "error": {
+                  "code": -32602,
+                  "message": "MCP error -32602: Invalid arguments for tool nslookup: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"host\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: MCP error -32602: Invalid arguments for tool nslookup: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"host\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: MCP error -32602: Invalid arguments for tool nslookup: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"host\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+            },
+            "netstat": {
+              "status": "passed",
+              "duration": 2894,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Active Internet connections (servers and established)\nProto Recv-Q Send-Q Local Address           Foreign Address         State       \ntcp        0      0 127.0.0.11:35455        0.0.0.0:*               LISTEN      \ntcp        0      0 e4be4b76d487:53302      mcp-rabbitmq.mcp-open-discovery_mcp-network:amqp ESTABLISHED \ntcp        0      0 e4be4b76d487:53314      mcp-rabbitmq.mcp-open-discovery_mcp-network:amqp ESTABLISHED \ntcp        0      0 :::3000                 :::*                    LISTEN      \ntcp        0      0 localhost:43258         localhost:3000          TIME_WAIT   \ntcp        0      0 e4be4b76d487:3000       ::ffff:172.20.0.1:46638 ESTABLISHED \ntcp        0      0 e4be4b76d487:3000       ::ffff:172.20.0.1:39290 ESTABLISHED \ntcp        0      0 localhost:40502         localhost:3000          TIME_WAIT   \nudp        0      0 127.0.0.11:47062        0.0.0.0:*                           \nActive UNIX domain sockets (servers and established)\nProto RefCnt Flags       Type       State         I-Node Path\nunix  3      [ ]         STREAM     CONNECTED     104808 \nunix  3      [ ]         STREAM     CONNECTED     104807 \nunix  3      [ ]         STREAM     CONNECTED     104803 \nunix  3      [ ]         STREAM     CONNECTED     104805 \nunix  3      [ ]         STREAM     CONNECTED     104804 \nunix  3      [ ]         STREAM     CONNECTED     104806 \n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "ifconfig": {
+              "status": "passed",
+              "duration": 10,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "eth0      Link encap:Ethernet  HWaddr 5A:A8:70:BD:E8:7B  \n          inet addr:172.20.0.2  Bcast:172.20.255.255  Mask:255.255.0.0\n          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1\n          RX packets:703 errors:0 dropped:0 overruns:0 frame:0\n          TX packets:742 errors:0 dropped:0 overruns:0 carrier:0\n          collisions:0 txqueuelen:0 \n          RX bytes:59112 (57.7 KiB)  TX bytes:122356 (119.4 KiB)\n\nlo        Link encap:Local Loopback  \n          inet addr:127.0.0.1  Mask:255.0.0.0\n          inet6 addr: ::1/128 Scope:Host\n          UP LOOPBACK RUNNING  MTU:65536  Metric:1\n          RX packets:408 errors:0 dropped:0 overruns:0 frame:0\n          TX packets:408 errors:0 dropped:0 overruns:0 carrier:0\n          collisions:0 txqueuelen:1000 \n          RX bytes:44352 (43.3 KiB)  TX bytes:44352 (43.3 KiB)\n\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "route": {
+              "status": "passed",
+              "duration": 10,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Kernel IP routing table\nDestination     Gateway         Genmask         Flags Metric Ref    Use Iface\ndefault         172.20.0.1      0.0.0.0         UG    0      0        0 eth0\n172.20.0.0      *               255.255.0.0     U     0      0        0 eth0\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "arp": {
+              "status": "passed",
+              "duration": 12,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "mcp-rabbitmq.mcp-open-discovery_mcp-network (172.20.0.20) at da:6d:a8:06:cc:5f [ether]  on eth0\n? (172.20.0.1) at 16:c2:7a:dd:7a:7d [ether]  on eth0\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "tcp_connect": {
+              "status": "failed",
+              "duration": 4,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754348697660,
+                "error": {
+                  "code": -32602,
+                  "message": "MCP error -32602: Invalid arguments for tool tcp_connect: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"host\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"port\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: MCP error -32602: Invalid arguments for tool tcp_connect: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"host\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"port\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: MCP error -32602: Invalid arguments for tool tcp_connect: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"host\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"port\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+            },
+            "wget": {
+              "status": "passed",
+              "duration": 192,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\": \"identity\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"Wget/1.25.0\", \n    \"X-Amzn-Trace-Id\": \"Root=1-68913c9b-09949bdc7ace7a76662279df\"\n  }, \n  \"origin\": \"73.55.3.125\", \n  \"url\": \"http://httpbin.org/get\"\n}\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "whois": {
+              "status": "failed",
+              "duration": 5,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754348697857,
+                "error": {
+                  "code": -32602,
+                  "message": "MCP error -32602: Invalid arguments for tool whois: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"query\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: MCP error -32602: Invalid arguments for tool whois: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"query\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: MCP error -32602: Invalid arguments for tool whois: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"query\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+            }
+          }
+        }
+      }
+    }
+  },
+  "details": [],
+  "errors": [],
+  "infrastructure": {
+    "health": {
+      "mcp": {
+        "status": "healthy",
+        "details": {
+          "status": "healthy",
+          "version": "2.0.0",
+          "transport": "http",
+          "tools": {
+            "total": 62,
+            "categories": {
+              "network": 9,
+              "memory": 9,
+              "nmap": 5,
+              "proxmox": 10,
+              "snmp": 12,
+              "zabbix": 7,
+              "credentials": 5,
+              "registry": 5
+            }
+          },
+          "resources": {
+            "credentials": 1,
+            "total": 1
+          },
+          "uptime": 1122.02842288,
+          "timestamp": "2025-08-04T23:04:48.665Z",
+          "oauth": {
+            "enabled": false,
+            "realm": "mcp-open-discovery",
+            "supportedScopes": [
+              "mcp:read",
+              "mcp:tools",
+              "mcp:resources"
+            ]
+          },
+          "amqp": {
+            "connected": true,
+            "transport": true,
+            "autoRecovery": true,
+            "timestamp": "2025-08-04T23:04:48.665Z",
+            "recovery": {
+              "enabled": true,
+              "status": "standby",
+              "retryInterval": 10000,
+              "maxRetries": -1
+            }
+          }
+        }
+      },
+      "proxmox": {
+        "status": "unreachable",
+        "error": "Protocol \"https:\" not supported. Expected \"http:\"",
+        "endpoint": "192.168.200.10:8006"
+      },
+      "zabbix": {
+        "status": "unreachable",
+        "error": "Health check timeout",
+        "endpoint": "http://172.20.0.23:8080"
+      },
+      "snmp": {
+        "agents": {
+          "172.20.0.10": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.11": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.12": {
+            "status": "available",
+            "community": "public"
+          }
+        }
+      }
+    },
+    "connectivity": {}
+  }
+}

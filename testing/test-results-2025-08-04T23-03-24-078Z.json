@@ -1,0 +1,146 @@
+{
+  "summary": {
+    "totalTools": 62,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "successRate": 0
+  },
+  "categories": {
+    "memory": {
+      "total": 9,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "network": {
+      "total": 9,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nmap": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "snmp": {
+      "total": 12,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "proxmox": {
+      "total": 10,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "zabbix": {
+      "total": 7,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "credentials": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "registry": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "transports": {},
+  "details": [],
+  "errors": [
+    {
+      "transport": "http",
+      "error": "Invalid JSON response: Unexpected token 'e', \"event: mes\"... is not valid JSON"
+    }
+  ],
+  "infrastructure": {
+    "health": {
+      "mcp": {
+        "status": "healthy",
+        "details": {
+          "status": "healthy",
+          "version": "2.0.0",
+          "transport": "http",
+          "tools": {
+            "total": 62,
+            "categories": {
+              "network": 9,
+              "memory": 9,
+              "nmap": 5,
+              "proxmox": 10,
+              "snmp": 12,
+              "zabbix": 7,
+              "credentials": 5,
+              "registry": 5
+            }
+          },
+          "resources": {
+            "credentials": 1,
+            "total": 1
+          },
+          "uptime": 1032.405150359,
+          "timestamp": "2025-08-04T23:03:19.049Z",
+          "oauth": {
+            "enabled": false,
+            "realm": "mcp-open-discovery",
+            "supportedScopes": [
+              "mcp:read",
+              "mcp:tools",
+              "mcp:resources"
+            ]
+          },
+          "amqp": {
+            "connected": true,
+            "transport": true,
+            "autoRecovery": true,
+            "timestamp": "2025-08-04T23:03:19.049Z",
+            "recovery": {
+              "enabled": true,
+              "status": "standby",
+              "retryInterval": 10000,
+              "maxRetries": -1
+            }
+          }
+        }
+      },
+      "proxmox": {
+        "status": "unreachable",
+        "error": "Protocol \"https:\" not supported. Expected \"http:\"",
+        "endpoint": "192.168.200.10:8006"
+      },
+      "zabbix": {
+        "status": "unreachable",
+        "error": "Health check timeout",
+        "endpoint": "http://172.20.0.23:8080"
+      },
+      "snmp": {
+        "agents": {
+          "172.20.0.10": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.11": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.12": {
+            "status": "available",
+            "community": "public"
+          }
+        }
+      }
+    },
+    "connectivity": {}
+  }
+}
