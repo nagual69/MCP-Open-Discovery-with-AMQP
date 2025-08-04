@@ -43,23 +43,47 @@ function zodToJsonSchema(zodSchema) {
   if (def.typeName === 'ZodObject') {
     const properties = {};
     const required = [];
-    const shape = def.shape();
     
-    for (const [key, value] of Object.entries(shape)) {
-      if (value && value._def) {
-        properties[key] = convertZodType(value);
-        if (!value.isOptional()) {
-          required.push(key);
+    // ZodObject properties are stored in _def.shape (can be function or property)
+    let shape;
+    if (typeof def.shape === 'function') {
+      shape = def.shape();  // Call the function to get the shape
+    } else {
+      shape = def.shape;    // Use the property directly
+    }
+    
+    if (shape && typeof shape === 'object') {
+      for (const [key, value] of Object.entries(shape)) {
+        if (value && value._def) {
+          properties[key] = convertZodType(value);
+          
+          // Check if field is required (not optional and no default)
+          if (value._def.typeName !== 'ZodOptional' && value._def.typeName !== 'ZodDefault') {
+            // Check if the field is wrapped in ZodOptional
+            let isOptional = false;
+            if (value.isOptional && typeof value.isOptional === 'function') {
+              isOptional = value.isOptional();
+            }
+            if (!isOptional) {
+              required.push(key);
+            }
+          }
         }
       }
     }
     
-    return {
+    const jsonSchema = {
       type: 'object',
       properties,
-      required: required.length > 0 ? required : undefined,
       additionalProperties: true // for .passthrough()
     };
+    
+    // Only add required if there are actually required fields
+    if (required.length > 0) {
+      jsonSchema.required = required;
+    }
+    
+    return jsonSchema;
   }
   
   return convertZodType(zodSchema);
@@ -77,18 +101,57 @@ function convertZodType(zodType) {
   
   switch (def.typeName) {
     case 'ZodString':
-      return {
+      const stringSchema = {
         type: 'string',
         description: def.description
       };
       
+      // Handle string validations
+      if (def.checks) {
+        for (const check of def.checks) {
+          switch (check.kind) {
+            case 'min':
+              stringSchema.minLength = check.value;
+              break;
+            case 'max':
+              stringSchema.maxLength = check.value;
+              break;
+            case 'email':
+              stringSchema.format = 'email';
+              break;
+            case 'url':
+              stringSchema.format = 'uri';
+              break;
+          }
+        }
+      }
+      
+      return stringSchema;
+      
     case 'ZodNumber':
-      return {
+      const numberSchema = {
         type: 'number',
-        description: def.description,
-        minimum: def.checks?.find(c => c.kind === 'min')?.value,
-        maximum: def.checks?.find(c => c.kind === 'max')?.value
+        description: def.description
       };
+      
+      // Handle number validations
+      if (def.checks) {
+        for (const check of def.checks) {
+          switch (check.kind) {
+            case 'min':
+              numberSchema.minimum = check.value;
+              break;
+            case 'max':
+              numberSchema.maximum = check.value;
+              break;
+            case 'int':
+              numberSchema.type = 'integer';
+              break;
+          }
+        }
+      }
+      
+      return numberSchema;
       
     case 'ZodBoolean':
       return {
@@ -111,10 +174,35 @@ function convertZodType(zodType) {
       result.default = def.defaultValue();
       return result;
       
-    default:
+    case 'ZodEnum':
       return {
         type: 'string',
+        enum: def.values,
         description: def.description
+      };
+      
+    case 'ZodLiteral':
+      return {
+        type: typeof def.value,
+        const: def.value,
+        description: def.description
+      };
+      
+    case 'ZodAny':
+      return {
+        description: def.description || 'Any value allowed'
+      };
+      
+    case 'ZodUnknown':
+      return {
+        description: def.description || 'Unknown value type'
+      };
+      
+    default:
+      console.warn(`[Registry] Unknown Zod type: ${def.typeName}, falling back to string`);
+      return {
+        type: 'string',
+        description: def.description || `Unknown type: ${def.typeName}`
       };
   }
 }
@@ -280,23 +368,42 @@ async function registerToolModule(server, registry, moduleConfig) {
 
     // Register each tool using the modern MCP SDK registerTool API
     for (const tool of tools) {
-      // Convert Zod schema to JSON Schema for MCP SDK compatibility
+      // FIXED: Handle array parameters that cause MCP SDK registration issues
       let inputSchema;
       if (tool.inputSchema && typeof tool.inputSchema === 'object' && tool.inputSchema._def) {
-        try {
-          // Convert Zod to JSON Schema to ensure MCP compliance
-          inputSchema = zodToJsonSchema(tool.inputSchema);
-        } catch (error) {
-          console.error(`[Registry] Failed to convert Zod schema for ${tool.name}:`, error);
-          throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} has invalid Zod schema: ${error.message}`);
+        if (tool.inputSchema._def.typeName === 'ZodObject') {
+          // Extract the shape from ZodObject
+          const shape = typeof tool.inputSchema._def.shape === 'function' 
+            ? tool.inputSchema._def.shape() 
+            : tool.inputSchema._def.shape;
+          
+          // Check if any parameters are ZodArray types that need special handling
+          const hasArrayParams = Object.values(shape).some(paramType => {
+            if (!paramType || !paramType._def) return false;
+            if (paramType._def.typeName === 'ZodArray') return true;
+            if (paramType._def.typeName === 'ZodOptional' && paramType._def.innerType?._def?.typeName === 'ZodArray') return true;
+            return false;
+          });
+          
+          if (hasArrayParams) {
+            // For array parameters, pass the original ZodObject - the SDK will handle conversion
+            console.log(`[Registry] [DEBUG] Tool ${tool.name} has array parameters, using ZodObject schema`);
+            inputSchema = tool.inputSchema;
+          } else {
+            // Use ZodRawShape extraction for simple types
+            inputSchema = shape;
+          }
+          
+          console.log(`[Registry] [DEBUG] Schema for ${tool.name}:`, hasArrayParams ? 'ZodObject' : 'ZodRawShape', Object.keys(hasArrayParams ? tool.inputSchema._def.shape : shape));
+        } else {
+          inputSchema = tool.inputSchema;
         }
       } else {
         throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} must have a valid Zod schema`);
       }
       
       const toolConfig = {
-        description: tool.description,
-        inputSchema: inputSchema  // JSON Schema for MCP SDK compatibility
+        description: tool.description
       };
       
       // All tools must use centralized handleToolCall function (standardized pattern)
@@ -307,7 +414,28 @@ async function registerToolModule(server, registry, moduleConfig) {
       // Use centralized handleToolCall function
       const toolHandler = async (args) => await handleToolCall(tool.name, args);
       
-      server.registerTool(tool.name, toolConfig, toolHandler);
+      // FIXED: Use the hasArrayParams flag to determine registration method
+      // Check if this tool has array parameters based on our earlier detection
+      const hasArrayParams = tool.inputSchema._def.typeName === 'ZodObject' && 
+        Object.values(typeof tool.inputSchema._def.shape === 'function' 
+          ? tool.inputSchema._def.shape() 
+          : tool.inputSchema._def.shape).some(paramType => {
+            if (!paramType || !paramType._def) return false;
+            if (paramType._def.typeName === 'ZodArray') return true;
+            if (paramType._def.typeName === 'ZodOptional' && paramType._def.innerType?._def?.typeName === 'ZodArray') return true;
+            return false;
+          });
+          
+      if (hasArrayParams) {
+        // Array parameter tools - use server.tool() with original ZodObject
+        console.log(`[Registry] [DEBUG] Registering ${tool.name} with server.tool() for array parameters`);
+        server.tool(tool.name, tool.description, tool.inputSchema, toolHandler);
+      } else {
+        // Simple parameter tools - use server.registerTool() with shape
+        console.log(`[Registry] [DEBUG] Registering ${tool.name} with server.registerTool() for simple parameters`);
+        toolConfig.inputSchema = inputSchema;
+        server.registerTool(tool.name, toolConfig, toolHandler);
+      }
       registry.registerTool(tool.name, server);
     }
 
@@ -408,5 +536,7 @@ module.exports = {
   initializeRegistry,
   getRegistryInstance,
   registerAllResources,
-  getResourceCounts
+  getResourceCounts,
+  zodToJsonSchema,
+  convertZodType
 };
