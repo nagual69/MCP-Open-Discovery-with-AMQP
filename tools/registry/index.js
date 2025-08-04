@@ -189,14 +189,24 @@ async function registerToolModule(server, registry, moduleConfig) {
 
     // Register each tool using the modern MCP SDK registerTool API
     for (const tool of tools) {
-      // All tools must now use native Zod schemas - no conversion support
-      if (!tool.inputSchema || typeof tool.inputSchema !== 'object' || !tool.inputSchema._def) {
-        throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} must use native Zod schema (z.object()...)`);
+      // Convert z.object() schemas to ZodRawShape for MCP SDK compatibility
+      let inputSchema;
+      if (tool.inputSchema && typeof tool.inputSchema === 'object' && tool.inputSchema._def) {
+        // Extract the shape from z.object() schema
+        if (tool.inputSchema.shape) {
+          inputSchema = tool.inputSchema.shape;
+        } else if (tool.inputSchema._def && tool.inputSchema._def.shape) {
+          inputSchema = tool.inputSchema._def.shape();
+        } else {
+          throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} has invalid Zod schema structure`);
+        }
+      } else {
+        throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} must use z.object() Zod schema`);
       }
       
       const toolConfig = {
         description: tool.description,
-        inputSchema: tool.inputSchema  // Native Zod schema only
+        inputSchema: inputSchema  // ZodRawShape for MCP SDK
       };
       
       // All tools must use centralized handleToolCall function (standardized pattern)

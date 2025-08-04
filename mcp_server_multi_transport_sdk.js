@@ -13,8 +13,6 @@ const express = require('express');
 const { randomUUID } = require('node:crypto');
 const { registerAllTools, getToolCounts, cleanup, registerAllResources, getResourceCounts } = require('./tools/registry/index');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
-
-// Add after your existing imports
 const { 
   startServerWithAmqp, 
   initializeAmqpIntegration 

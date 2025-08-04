@@ -9,8 +9,8 @@ const path = require('path');
 async function testStdioTransport() {
   console.log('Testing MCP stdio transport...');
   
-  // Start our server
-  const serverPath = path.join(__dirname, 'mcp_server_multi_transport_sdk.js');
+  // Start our server - correct path to root directory
+  const serverPath = path.join(__dirname, '..', 'mcp_server_multi_transport_sdk.js');
   const server = spawn('node', [serverPath], {
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, TRANSPORT_MODE: 'stdio' }

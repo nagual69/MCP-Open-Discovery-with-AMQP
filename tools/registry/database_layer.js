@@ -25,7 +25,7 @@ const SCHEMA = {
   modules: `
     CREATE TABLE IF NOT EXISTS modules (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
+      name TEXT NOT NULL UNIQUE,
       category TEXT NOT NULL,
       version TEXT DEFAULT '1.0.0',
       file_path TEXT,
@@ -248,21 +248,20 @@ class DatabaseLayer {
     console.log('[Database Layer] [DEBUG] Recording module registration:', moduleName);
     
     try {
-      // Insert module record
+      // First, deactivate any existing module with the same name (for hot-reload scenarios)
+      await this.executeQuery(
+        `UPDATE modules SET active = 0, unloaded_at = CURRENT_TIMESTAMP WHERE name = ? AND active = 1`,
+        [moduleName]
+      );
+
+      // Insert new module record
       const result = await this.executeQuery(
-        `INSERT INTO modules (name, category, load_duration_ms, tool_count) VALUES (?, ?, ?, ?)`,
+        `INSERT INTO modules (name, category, load_duration_ms, tool_count, active) VALUES (?, ?, ?, ?, 1)`,
         [moduleName, category, loadDuration, tools.length]
       );
       
       const moduleId = result.id;
-      console.log(`[Database Layer] [DEBUG] Module inserted with ID ${moduleId}, updating load duration...`);
-      
-      // Update load duration
-      await this.executeQuery(
-        `UPDATE modules SET load_duration_ms = ? WHERE id = ?`,
-        [loadDuration, moduleId]
-      );
-      console.log(`[Database Layer] [DEBUG] Load duration updated for ${moduleName}`);
+      console.log(`[Database Layer] [DEBUG] Module inserted with ID ${moduleId}, tool_count: ${tools.length}`);
 
       // Record individual tools
       console.log(`[Database Layer] [DEBUG] Recording ${tools.length} tools for ${moduleName}...`);
