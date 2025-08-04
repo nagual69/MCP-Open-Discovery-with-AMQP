@@ -147,7 +147,7 @@ const tools = [
       count: z.number().min(1).max(10).optional().describe("Number of packets to send (1-10)"),
       timeout: z.number().min(1).max(30).optional().describe("Timeout in seconds (1-30)"),
       size: z.number().min(56).max(1024).optional().describe("Packet size in bytes (56-1024)")
-    }).passthrough(),
+    }),
   },
   {
     name: 'wget',
@@ -158,7 +158,7 @@ const tools = [
       timeout: z.number().min(1).max(300).optional().describe("Request timeout in seconds (1-300)"),
       user_agent: z.string().optional().describe("Custom User-Agent string (optional)"),
       max_redirect: z.number().min(0).max(10).optional().describe("Maximum redirects to follow (0-10)")
-    }).passthrough(),
+    }),
   },
   {
     name: 'nslookup',
@@ -167,7 +167,7 @@ const tools = [
       host: z.string().describe("Hostname or IP address to lookup"),
       type: z.enum(["A", "AAAA", "MX", "NS", "TXT", "CNAME", "PTR", "SOA"]).default("A").describe("DNS record type to query").optional(),
       server: z.string().describe("DNS server to query (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'netstat',
@@ -177,7 +177,7 @@ const tools = [
       numeric: z.boolean().default(true).describe("Show numerical addresses instead of resolving hosts").optional(),
       programs: z.boolean().default(false).describe("Show PID and process names").optional(),
       protocol: z.enum(["tcp", "udp", "all"]).default("all").describe("Protocol to filter by").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'tcp_connect',
@@ -186,7 +186,7 @@ const tools = [
       host: z.string().describe("Target hostname or IP address"),
       port: z.number().min(1).max(65535).describe("Target port number"),
       timeout: z.number().min(1).max(60).default(10).describe("Connection timeout in seconds").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'route',
@@ -194,7 +194,7 @@ const tools = [
     inputSchema: z.object({
       destination: z.string().describe("Show route to specific destination (optional)").optional(),
       numeric: z.boolean().default(true).describe("Show numerical addresses instead of resolving hosts").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'ifconfig',
@@ -202,7 +202,7 @@ const tools = [
     inputSchema: z.object({
       interface: z.string().describe("Specific interface to display (optional)").optional(),
       all: z.boolean().default(true).describe("Show all interfaces including inactive ones").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'arp',
@@ -210,7 +210,7 @@ const tools = [
     inputSchema: z.object({
       host: z.string().describe("Specific host to lookup in ARP table (optional)").optional(),
       numeric: z.boolean().default(false).describe("Show numerical addresses instead of resolving hosts").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'whois',
@@ -218,7 +218,7 @@ const tools = [
     inputSchema: z.object({
       query: z.string().describe("Domain name or IP address to lookup"),
       server: z.string().describe("Specific WHOIS server to query (optional)").optional()
-    }).passthrough(),
+    }),
   }
 ];
 

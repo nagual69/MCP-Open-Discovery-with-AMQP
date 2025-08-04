@@ -177,7 +177,7 @@ const tools = [
     description: 'Get a CI object from MCP memory by key',
     inputSchema: z.object({
       key: z.string().describe('Unique CI key (e.g., ci:host:192.168.1.10)')
-    }).passthrough(),
+    }),
   },
   {
     name: 'memory_set',
@@ -185,7 +185,7 @@ const tools = [
     inputSchema: z.object({
       key: z.string().describe('Unique CI key (e.g., ci:host:192.168.1.10)'),
       value: z.any().describe('CI object to store')
-    }).passthrough(),
+    }),
   },
   {
     name: 'memory_merge',
@@ -193,43 +193,43 @@ const tools = [
     inputSchema: z.object({
       key: z.string().describe('Unique CI key (e.g., ci:host:192.168.1.10)'),
       value: z.any().describe('Partial CI data to merge')
-    }).passthrough(),
+    }),
   },
   {
     name: 'memory_query',
     description: 'Query MCP memory for CIs matching a pattern or incomplete CIs',
     inputSchema: z.object({
       pattern: z.string().describe('Pattern for CI keys (optional, e.g., ci:host:*)').optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'memory_clear',
     description: 'Clear all memory data (both in-memory and persistent storage)',
-    inputSchema: z.object({}).passthrough(),
+    inputSchema: z.object({}),
   },
   {
     name: 'memory_stats',
     description: 'Get statistics about memory usage and SQLite persistent storage',
-    inputSchema: z.object({}).passthrough(),
+    inputSchema: z.object({}),
   },
   {
     name: 'memory_rotate_key',
     description: 'Rotate the encryption key and re-encrypt all stored memory data in SQLite',
     inputSchema: z.object({
       newKey: z.string().describe('New 32-byte key (base64). If not provided, generates a new random key.').optional()
-    }).passthrough(),
+    }),
   },
   {
     name: 'memory_save',
     description: 'Manually save all memory data to SQLite persistent storage',
-    inputSchema: z.object({}).passthrough(),
+    inputSchema: z.object({}),
   },
   {
     name: 'memory_migrate_from_filesystem',
     description: 'Migrate existing filesystem-based memory data to SQLite persistence',
     inputSchema: z.object({
       oldDataPath: z.string().describe('Path to old memory data file (optional)').optional()
-    }).passthrough(),
+    }),
   }
 ];
 

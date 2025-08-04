@@ -788,14 +788,14 @@ const tools = [
       authKey: z.string().describe("SNMPv3 auth key (v3 only)").optional(),
       privProtocol: z.enum(["des", "aes", "aes128", "aes192", "aes256"]).describe("SNMPv3 privacy protocol (v3 only)").optional(),
       privKey: z.string().describe("SNMPv3 privacy key (v3 only)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_close_session",
     description: "Closes an SNMP session.",
     inputSchema: z.object({
       sessionId: z.string().describe("Session ID from snmp_create_session")
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_get",
@@ -803,7 +803,7 @@ const tools = [
     inputSchema: z.object({
       sessionId: z.string().describe("Session ID from snmp_create_session"),
       oids: z.array(z.string()).describe("Array of OIDs to retrieve")
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_get_next",
@@ -811,7 +811,7 @@ const tools = [
     inputSchema: z.object({
       sessionId: z.string().describe("Session ID from snmp_create_session"),
       oids: z.array(z.string()).describe("Array of OIDs to start from")
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_walk",
@@ -819,7 +819,7 @@ const tools = [
     inputSchema: z.object({
       sessionId: z.string().describe("Session ID from snmp_create_session"),
       oid: z.string().describe("Base OID for the walk")
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_table",
@@ -827,7 +827,7 @@ const tools = [
     inputSchema: z.object({
       sessionId: z.string().describe("Session ID from snmp_create_session"),
       oid: z.string().describe("Base OID for the table")
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_discover",
@@ -838,7 +838,7 @@ const tools = [
       version: z.enum(["1", "2c", "3"]).describe("SNMP version").optional(),
       port: z.number().describe("SNMP port (default: 161)").optional(),
       timeout: z.number().describe("Timeout in ms (default: 5000)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_device_inventory",
@@ -847,7 +847,7 @@ const tools = [
       host: z.string().describe("Hostname or IP address of target device"),
       community: z.string().describe("SNMP community string").optional(),
       version: z.enum(["1", "2c", "3"]).describe("SNMP version").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_interface_discovery",
@@ -856,7 +856,7 @@ const tools = [
       host: z.string().describe("Hostname or IP address of target device"),
       community: z.string().describe("SNMP community string").optional(),
       version: z.enum(["1", "2c", "3"]).describe("SNMP version").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_system_health",
@@ -865,7 +865,7 @@ const tools = [
       host: z.string().describe("Hostname or IP address of target device"),
       community: z.string().describe("SNMP community string").optional(),
       version: z.enum(["1", "2c", "3"]).describe("SNMP version").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_service_discovery",
@@ -874,7 +874,7 @@ const tools = [
       host: z.string().describe("Hostname or IP address of target device"),
       community: z.string().describe("SNMP community string").optional(),
       version: z.enum(["1", "2c", "3"]).describe("SNMP version").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "snmp_network_topology",
@@ -883,7 +883,7 @@ const tools = [
       networkRange: z.string().describe("Network range in CIDR notation (e.g., 192.168.1.0/24)"),
       community: z.string().describe("SNMP community string").optional(),
       version: z.enum(["1", "2c", "3"]).describe("SNMP version").optional()
-    }).passthrough(),
+    }),
   },
 ];
 

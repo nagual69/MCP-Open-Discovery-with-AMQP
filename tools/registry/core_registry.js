@@ -276,6 +276,243 @@ class CoreRegistry {
   }
 
   /**
+   * Unload a module and remove its tools from the registry
+   */
+  async unloadModule(moduleName, options = {}) {
+    const { force = false, preserve_config = true } = options;
+    
+    if (!this.modules.has(moduleName)) {
+      throw new Error(`Module ${moduleName} is not loaded`);
+    }
+    
+    const module = this.modules.get(moduleName);
+    
+    // Check if module is safe to unload (if not forced)
+    if (!force && module.active) {
+      console.warn(`[Core Registry] Module ${moduleName} is active - use force=true to unload`);
+      throw new Error(`Module ${moduleName} is active and cannot be safely unloaded`);
+    }
+    
+    try {
+      // Remove tools from categories
+      for (const toolName of module.tools) {
+        this.categories.get(module.category)?.delete(toolName);
+        this.registeredTools.delete(toolName);
+        this.totalCount--;
+      }
+      
+      // Clear file watcher
+      if (this.moduleWatchers.has(moduleName)) {
+        const filePath = this.moduleWatchers.get(moduleName);
+        fs.unwatchFile(filePath);
+        this.moduleWatchers.delete(moduleName);
+      }
+      
+      // Clear module cache
+      this.moduleCache.delete(moduleName);
+      
+      // Mark module as inactive
+      module.active = false;
+      module.unloadedAt = new Date().toISOString();
+      
+      // Remove from modules map
+      this.modules.delete(moduleName);
+      
+      // Update database if configured
+      if (this.dbInitialized && preserve_config) {
+        await this.db.markModuleUnloaded(moduleName);
+      }
+      
+      console.log(`[Core Registry] ✅ Module ${moduleName} unloaded successfully`);
+      
+      return {
+        tools_removed: module.tools.length,
+        watchers_cleared: 1,
+        cache_cleared: true,
+        config_preserved: preserve_config
+      };
+      
+    } catch (error) {
+      console.error(`[Core Registry] Failed to unload module ${moduleName}:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Enhanced reload module with proper implementation
+   */
+  async reloadModule(moduleName, options = {}) {
+    const { clear_cache = true, validate_tools = true } = options;
+    
+    if (!this.modules.has(moduleName)) {
+      throw new Error(`Module ${moduleName} is not loaded`);
+    }
+    
+    const module = this.modules.get(moduleName);
+    
+    try {
+      console.log(`[Core Registry] [Hot-Reload] Starting reload of module: ${moduleName}`);
+      
+      // Clear require cache if requested
+      if (clear_cache && this.moduleCache.has(moduleName)) {
+        const cachedPath = this.moduleCache.get(moduleName);
+        delete require.cache[require.resolve(cachedPath)];
+        console.log(`[Core Registry] [Hot-Reload] Cleared cache for ${moduleName}`);
+      }
+      
+      // Get the module file path from watcher or cache
+      let modulePath = this.moduleWatchers.get(moduleName) || this.moduleCache.get(moduleName);
+      
+      if (!modulePath) {
+        throw new Error(`Module path not found for ${moduleName} - cannot reload`);
+      }
+      
+      // Validate module file exists
+      if (!fs.existsSync(modulePath)) {
+        throw new Error(`Module file not found: ${modulePath}`);
+      }
+      
+      // Store old tool count for comparison
+      const oldToolCount = module.tools.length;
+      
+      // Temporarily unload the module
+      await this.unloadModule(moduleName, { force: true, preserve_config: true });
+      
+      // Start fresh module registration
+      this.startModule(moduleName, module.category);
+      
+      // Reload the module
+      const moduleExports = require(modulePath);
+      
+      if (!moduleExports.tools || !moduleExports.handleToolCall) {
+        throw new Error('Module must export tools array and handleToolCall function');
+      }
+      
+      // Validate tools if requested
+      if (validate_tools) {
+        for (const tool of moduleExports.tools) {
+          if (!tool.name || !tool.description || !tool.inputSchema) {
+            throw new Error(`Invalid tool definition in ${moduleName}: missing required properties`);
+          }
+        }
+      }
+      
+      // Re-register tools with the server
+      const server = global.mcpServerInstance;
+      if (!server) {
+        throw new Error('MCP server instance not available for reload');
+      }
+      
+      for (const tool of moduleExports.tools) {
+        const inputSchema = tool.inputSchema?.shape || tool.inputSchema;
+        server.registerTool(tool.name, tool.description, inputSchema, 
+          async (args) => await moduleExports.handleToolCall(tool.name, args)
+        );
+        this.registerTool(tool.name, server);
+      }
+      
+      // Complete module registration
+      await this.completeModule();
+      
+      // Re-enable hot-reload watching
+      if (this.hotReloadEnabled) {
+        this.enableHotReload(moduleName, modulePath);
+      }
+      
+      // Update cache
+      this.moduleCache.set(moduleName, modulePath);
+      
+      console.log(`[Core Registry] [Hot-Reload] ✅ Module ${moduleName} reloaded successfully`);
+      
+      return {
+        success: true,
+        old_tool_count: oldToolCount,
+        new_tool_count: moduleExports.tools.length,
+        cache_cleared: clear_cache,
+        tools_validated: validate_tools,
+        reload_time: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      console.error(`[Core Registry] [Hot-Reload] Failed to reload ${moduleName}:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Toggle hot-reload for specific modules
+   */
+  async toggleModuleHotReload(moduleNames, enabled) {
+    const results = {};
+    
+    for (const moduleName of moduleNames) {
+      try {
+        if (!this.modules.has(moduleName)) {
+          results[moduleName] = { success: false, error: 'Module not found' };
+          continue;
+        }
+        
+        if (enabled) {
+          // Enable watching for this module
+          const modulePath = this.moduleCache.get(moduleName);
+          if (modulePath) {
+            this.enableHotReload(moduleName, modulePath);
+            results[moduleName] = { success: true, watching: true };
+          } else {
+            results[moduleName] = { success: false, error: 'Module path not found' };
+          }
+        } else {
+          // Disable watching for this module
+          if (this.moduleWatchers.has(moduleName)) {
+            const filePath = this.moduleWatchers.get(moduleName);
+            fs.unwatchFile(filePath);
+            this.moduleWatchers.delete(moduleName);
+            results[moduleName] = { success: true, watching: false };
+          } else {
+            results[moduleName] = { success: true, watching: false, note: 'Was not being watched' };
+          }
+        }
+      } catch (error) {
+        results[moduleName] = { success: false, error: error.message };
+      }
+    }
+    
+    return {
+      enabled,
+      modules: results,
+      global_enabled: this.hotReloadEnabled
+    };
+  }
+
+  /**
+   * Restart all file watchers
+   */
+  async restartFileWatchers() {
+    console.log('[Core Registry] [Hot-Reload] Restarting all file watchers...');
+    
+    // Store current watchers
+    const watchersToRestart = new Map(this.moduleWatchers);
+    
+    // Clear all watchers
+    for (const [moduleName, filePath] of this.moduleWatchers) {
+      fs.unwatchFile(filePath);
+    }
+    this.moduleWatchers.clear();
+    
+    // Restart watchers
+    for (const [moduleName, filePath] of watchersToRestart) {
+      this.enableHotReload(moduleName, filePath);
+    }
+    
+    console.log(`[Core Registry] [Hot-Reload] ✅ Restarted ${watchersToRestart.size} file watchers`);
+    
+    return {
+      restarted_count: watchersToRestart.size,
+      active_watchers: this.moduleWatchers.size
+    };
+  }
+
+  /**
    * Cleanup resources
    */
   async cleanup() {

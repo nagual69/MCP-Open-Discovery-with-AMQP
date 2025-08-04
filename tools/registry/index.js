@@ -28,7 +28,98 @@
 
 const { CoreRegistry } = require('./core_registry');
 const { DatabaseLayer } = require('./database_layer');
+
+/**
+ * Convert Zod schema to JSON Schema for MCP SDK compatibility
+ * Handles common Zod types that cause MCP validation issues
+ */
+function zodToJsonSchema(zodSchema) {
+  if (!zodSchema || !zodSchema._def) {
+    throw new Error('Invalid Zod schema - missing _def property');
+  }
+
+  const def = zodSchema._def;
+  
+  if (def.typeName === 'ZodObject') {
+    const properties = {};
+    const required = [];
+    const shape = def.shape();
+    
+    for (const [key, value] of Object.entries(shape)) {
+      if (value && value._def) {
+        properties[key] = convertZodType(value);
+        if (!value.isOptional()) {
+          required.push(key);
+        }
+      }
+    }
+    
+    return {
+      type: 'object',
+      properties,
+      required: required.length > 0 ? required : undefined,
+      additionalProperties: true // for .passthrough()
+    };
+  }
+  
+  return convertZodType(zodSchema);
+}
+
+/**
+ * Convert individual Zod types to JSON Schema
+ */
+function convertZodType(zodType) {
+  if (!zodType || !zodType._def) {
+    return { type: 'string' }; // fallback
+  }
+
+  const def = zodType._def;
+  
+  switch (def.typeName) {
+    case 'ZodString':
+      return {
+        type: 'string',
+        description: def.description
+      };
+      
+    case 'ZodNumber':
+      return {
+        type: 'number',
+        description: def.description,
+        minimum: def.checks?.find(c => c.kind === 'min')?.value,
+        maximum: def.checks?.find(c => c.kind === 'max')?.value
+      };
+      
+    case 'ZodBoolean':
+      return {
+        type: 'boolean',
+        description: def.description
+      };
+      
+    case 'ZodArray':
+      return {
+        type: 'array',
+        items: convertZodType(def.type),
+        description: def.description
+      };
+      
+    case 'ZodOptional':
+      return convertZodType(def.innerType);
+      
+    case 'ZodDefault':
+      const result = convertZodType(def.innerType);
+      result.default = def.defaultValue();
+      return result;
+      
+    default:
+      return {
+        type: 'string',
+        description: def.description
+      };
+  }
+}
 const { registerManagementTools, getManagementToolNames } = require('./management_tools');
+const managementToolsModule = require('./management_tools');
 const { registerAllResources, getResourceCounts } = require('./resource_manager');
 const { z } = require('zod');
 
@@ -189,24 +280,23 @@ async function registerToolModule(server, registry, moduleConfig) {
 
     // Register each tool using the modern MCP SDK registerTool API
     for (const tool of tools) {
-      // Convert z.object() schemas to ZodRawShape for MCP SDK compatibility
+      // Convert Zod schema to JSON Schema for MCP SDK compatibility
       let inputSchema;
       if (tool.inputSchema && typeof tool.inputSchema === 'object' && tool.inputSchema._def) {
-        // Extract the shape from z.object() schema
-        if (tool.inputSchema.shape) {
-          inputSchema = tool.inputSchema.shape;
-        } else if (tool.inputSchema._def && tool.inputSchema._def.shape) {
-          inputSchema = tool.inputSchema._def.shape();
-        } else {
-          throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} has invalid Zod schema structure`);
+        try {
+          // Convert Zod to JSON Schema to ensure MCP compliance
+          inputSchema = zodToJsonSchema(tool.inputSchema);
+        } catch (error) {
+          console.error(`[Registry] Failed to convert Zod schema for ${tool.name}:`, error);
+          throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} has invalid Zod schema: ${error.message}`);
         }
       } else {
-        throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} must use z.object() Zod schema`);
+        throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} must have a valid Zod schema`);
       }
       
       const toolConfig = {
         description: tool.description,
-        inputSchema: inputSchema  // ZodRawShape for MCP SDK
+        inputSchema: inputSchema  // JSON Schema for MCP SDK compatibility
       };
       
       // All tools must use centralized handleToolCall function (standardized pattern)
@@ -239,19 +329,18 @@ async function registerManagementModule(server, registry) {
   try {
     console.log('[Registry] Starting registration for registry_management (registry)');
     
-    // Start management module tracking
-    registry.startModule('registry_management', 'registry');
+    // Store global references for management tools
+    global.mcpCoreRegistry = registry;
+    global.mcpServerInstance = server;
     
-    // Register management tools
-    const toolNames = registerManagementTools(server, registry);
+    // Register management tools using the same pattern as other modules
+    const managementModuleConfig = {
+      name: 'registry_management',
+      category: 'registry',
+      loader: () => managementToolsModule
+    };
     
-    // Track each tool
-    for (const toolName of toolNames) {
-      registry.registerTool(toolName, server);
-    }
-    
-    // Complete module registration
-    await registry.completeModule();
+    await registerToolModule(server, registry, managementModuleConfig);
     
   } catch (error) {
     console.error('[Registry] Failed to register management tools:', error.message);

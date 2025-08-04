@@ -116,7 +116,7 @@ const tools = [
     description: 'Nmap Ping Scan (-sn): Discovers online hosts without port scanning.',
     inputSchema: z.object({
       target: z.string().describe('Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)')
-    }).passthrough(),
+    }),
   },
   {
     name: 'nmap_tcp_syn_scan',
@@ -128,7 +128,7 @@ const tools = [
       timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
       reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
       open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
-    }).passthrough(),
+    }),
   },
   {
     name: 'nmap_tcp_connect_scan',
@@ -139,7 +139,7 @@ const tools = [
       timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
       reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
       open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
-    }).passthrough(),
+    }),
   },
   {
     name: 'nmap_udp_scan',
@@ -151,7 +151,7 @@ const tools = [
       timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
       reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
       open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
-    }).passthrough(),
+    }),
   },
   {
     name: 'nmap_version_scan',
@@ -165,7 +165,7 @@ const tools = [
       timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
       reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
       open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
-    }).passthrough(),
+    }),
   }
 ];
 

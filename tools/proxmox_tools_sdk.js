@@ -249,7 +249,7 @@ const tools = [
     description: "Returns all nodes in the Proxmox cluster.",
     inputSchema: z.object({
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_get_node_details",
@@ -257,7 +257,7 @@ const tools = [
     inputSchema: z.object({
       node: z.string().describe("Node name"),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_list_vms",
@@ -265,7 +265,7 @@ const tools = [
     inputSchema: z.object({
       node: z.string().describe("Node name"),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_get_vm_details",
@@ -274,7 +274,7 @@ const tools = [
       node: z.string().describe("Node name"),
       vmid: z.string().describe("VM ID"),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_list_containers",
@@ -282,7 +282,7 @@ const tools = [
     inputSchema: z.object({
       node: z.string().describe("Node name"),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_get_container_details",
@@ -291,7 +291,7 @@ const tools = [
       node: z.string().describe("Node name"),
       vmid: z.string().describe("Container ID"),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_list_storage",
@@ -299,7 +299,7 @@ const tools = [
     inputSchema: z.object({
       node: z.string().describe("Node name"),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_list_networks",
@@ -307,14 +307,14 @@ const tools = [
     inputSchema: z.object({
       node: z.string().describe("Node name"),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_cluster_resources",
     description: "Returns a summary of all cluster resources.",
     inputSchema: z.object({
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
   {
     name: "proxmox_get_metrics",
@@ -323,7 +323,7 @@ const tools = [
       node: z.string().describe("Node name"),
       vmid: z.string().describe("VM ID (optional)").optional(),
       creds_id: z.string().describe("Credential ID to use (optional)").optional()
-    }).passthrough(),
+    }),
   },
 ];
 

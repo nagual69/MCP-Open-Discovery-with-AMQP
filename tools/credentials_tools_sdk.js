@@ -26,35 +26,35 @@ const tools = [
       customField1: z.string().optional().describe("Custom field 1 (use with type=\"custom\")"),
       customField2: z.string().optional().describe("Custom field 2 (use with type=\"custom\")"),
       notes: z.string().optional().describe("Notes about this credential"),
-    }).passthrough(),
+    }),
   },
   {
     name: 'credentials_get',
     description: 'Retrieve and decrypt a credential from the secure store',
     inputSchema: z.object({
       id: z.string().describe("Credential ID to retrieve"),
-    }).passthrough(),
+    }),
   },
   {
     name: 'credentials_list',
     description: 'List all stored credentials (IDs, types, usernames only - no sensitive data)',
     inputSchema: z.object({
       type: z.enum(CREDENTIAL_TYPES).optional().describe("Filter by credential type"),
-    }).passthrough(),
+    }),
   },
   {
     name: 'credentials_remove',
     description: 'Remove a credential from the secure store',
     inputSchema: z.object({
       id: z.string().describe("Credential ID to remove"),
-    }).passthrough(),
+    }),
   },
   {
     name: 'credentials_rotate_key',
     description: 'Rotate the encryption key and re-encrypt all stored credentials',
     inputSchema: z.object({
       newKey: z.string().optional().describe("New 32-byte key (base64). If not provided, generates a new random key."),
-    }).passthrough(),
+    }),
   },
 ];
 
