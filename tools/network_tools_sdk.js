@@ -142,226 +142,83 @@ const tools = [
   {
     name: 'ping',
     description: 'Send ICMP echo requests to network hosts',
-    inputSchema: {
-      type: "object",
-      properties: {
-        host: {
-          type: "string",
-          description: "Target hostname or IP address"
-        },
-        count: {
-          type: "number",
-          minimum: 1,
-          maximum: 10,
-          default: 4,
-          description: "Number of packets to send (1-10)"
-        },
-        timeout: {
-          type: "number",
-          minimum: 1,
-          maximum: 30,
-          default: 5,
-          description: "Timeout in seconds (1-30)"
-        },
-        size: {
-          type: "number",
-          minimum: 56,
-          maximum: 1024,
-          default: 56,
-          description: "Packet size in bytes (56-1024)"
-        }
-      },
-      required: ["host"]
-    }
+    inputSchema: z.object({
+      host: z.string().describe("Target hostname or IP address"),
+      count: z.number().min(1).max(10).optional().describe("Number of packets to send (1-10)"),
+      timeout: z.number().min(1).max(30).optional().describe("Timeout in seconds (1-30)"),
+      size: z.number().min(56).max(1024).optional().describe("Packet size in bytes (56-1024)")
+    }).passthrough(),
   },
   {
     name: 'wget',
     description: 'Download content from HTTP/HTTPS URLs',
-    inputSchema: {
-      type: "object",
-      properties: {
-        url: {
-          type: "string",
-          description: "HTTP/HTTPS URL to fetch"
-        },
-        output_document: {
-          type: "string",
-          description: "Filename to save the content (optional)"
-        },
-        timeout: {
-          type: "number",
-          minimum: 1,
-          maximum: 300,
-          default: 30,
-          description: "Request timeout in seconds (1-300)"
-        },
-        user_agent: {
-          type: "string",
-          description: "Custom User-Agent string (optional)"
-        },
-        max_redirect: {
-          type: "number",
-          minimum: 0,
-          maximum: 10,
-          default: 5,
-          description: "Maximum redirects to follow (0-10)"
-        }
-      },
-      required: ["url"]
-    }
+    inputSchema: z.object({
+      url: z.string().describe("HTTP/HTTPS URL to fetch"),
+      output_document: z.string().optional().describe("Filename to save the content (optional)"),
+      timeout: z.number().min(1).max(300).optional().describe("Request timeout in seconds (1-300)"),
+      user_agent: z.string().optional().describe("Custom User-Agent string (optional)"),
+      max_redirect: z.number().min(0).max(10).optional().describe("Maximum redirects to follow (0-10)")
+    }).passthrough(),
   },
   {
     name: 'nslookup',
     description: 'Perform DNS lookups for hostnames and IP addresses',
-    inputSchema: {
-      type: "object",
-      properties: {
-        host: {
-          type: "string",
-          description: "Hostname or IP address to lookup"
-        },
-        type: {
-          type: "string",
-          enum: ["A", "AAAA", "MX", "NS", "TXT", "CNAME", "PTR", "SOA"],
-          default: "A",
-          description: "DNS record type to query"
-        },
-        server: {
-          type: "string",
-          description: "DNS server to query (optional)"
-        }
-      },
-      required: ["host"]
-    }
+    inputSchema: z.object({
+      host: z.string().describe("Hostname or IP address to lookup"),
+      type: z.enum(["A", "AAAA", "MX", "NS", "TXT", "CNAME", "PTR", "SOA"]).default("A").describe("DNS record type to query").optional(),
+      server: z.string().describe("DNS server to query (optional)").optional()
+    }).passthrough(),
   },
   {
     name: 'netstat',
     description: 'Display network connections and listening ports',
-    inputSchema: {
-      type: "object",
-      properties: {
-        listening: {
-          type: "boolean",
-          default: false,
-          description: "Show only listening ports"
-        },
-        numeric: {
-          type: "boolean",
-          default: true,
-          description: "Show numerical addresses instead of resolving hosts"
-        },
-        programs: {
-          type: "boolean",
-          default: false,
-          description: "Show PID and process names"
-        },
-        protocol: {
-          type: "string",
-          enum: ["tcp", "udp", "all"],
-          default: "all",
-          description: "Protocol to filter by"
-        }
-      }
-    }
+    inputSchema: z.object({
+      listening: z.boolean().default(false).describe("Show only listening ports").optional(),
+      numeric: z.boolean().default(true).describe("Show numerical addresses instead of resolving hosts").optional(),
+      programs: z.boolean().default(false).describe("Show PID and process names").optional(),
+      protocol: z.enum(["tcp", "udp", "all"]).default("all").describe("Protocol to filter by").optional()
+    }).passthrough(),
   },
   {
     name: 'tcp_connect',
     description: 'Test TCP connectivity to a specific host and port',
-    inputSchema: {
-      type: "object",
-      properties: {
-        host: {
-          type: "string",
-          description: "Target hostname or IP address"
-        },
-        port: {
-          type: "number",
-          minimum: 1,
-          maximum: 65535,
-          description: "Target port number"
-        },
-        timeout: {
-          type: "number",
-          minimum: 1,
-          maximum: 60,
-          default: 10,
-          description: "Connection timeout in seconds"
-        }
-      },
-      required: ["host", "port"]
-    }
+    inputSchema: z.object({
+      host: z.string().describe("Target hostname or IP address"),
+      port: z.number().min(1).max(65535).describe("Target port number"),
+      timeout: z.number().min(1).max(60).default(10).describe("Connection timeout in seconds").optional()
+    }).passthrough(),
   },
   {
     name: 'route',
     description: 'Display and manipulate network routing table',
-    inputSchema: {
-      type: "object",
-      properties: {
-        destination: {
-          type: "string",
-          description: "Show route to specific destination (optional)"
-        },
-        numeric: {
-          type: "boolean",
-          default: true,
-          description: "Show numerical addresses instead of resolving hosts"
-        }
-      }
-    }
+    inputSchema: z.object({
+      destination: z.string().describe("Show route to specific destination (optional)").optional(),
+      numeric: z.boolean().default(true).describe("Show numerical addresses instead of resolving hosts").optional()
+    }).passthrough(),
   },
   {
     name: 'ifconfig',
     description: 'Display network interface configuration',
-    inputSchema: {
-      type: "object",
-      properties: {
-        interface: {
-          type: "string",
-          description: "Specific interface to display (optional)"
-        },
-        all: {
-          type: "boolean",
-          default: true,
-          description: "Show all interfaces including inactive ones"
-        }
-      }
-    }
+    inputSchema: z.object({
+      interface: z.string().describe("Specific interface to display (optional)").optional(),
+      all: z.boolean().default(true).describe("Show all interfaces including inactive ones").optional()
+    }).passthrough(),
   },
   {
     name: 'arp',
     description: 'Display and modify ARP (Address Resolution Protocol) cache',
-    inputSchema: {
-      type: "object",
-      properties: {
-        host: {
-          type: "string",
-          description: "Specific host to lookup in ARP table (optional)"
-        },
-        numeric: {
-          type: "boolean",
-          default: false,
-          description: "Show numerical addresses instead of resolving hosts"
-        }
-      }
-    }
+    inputSchema: z.object({
+      host: z.string().describe("Specific host to lookup in ARP table (optional)").optional(),
+      numeric: z.boolean().default(false).describe("Show numerical addresses instead of resolving hosts").optional()
+    }).passthrough(),
   },
   {
     name: 'whois',
     description: 'Query WHOIS databases for domain and IP information',
-    inputSchema: {
-      type: "object",
-      properties: {
-        query: {
-          type: "string",
-          description: "Domain name or IP address to lookup"
-        },
-        server: {
-          type: "string",
-          description: "Specific WHOIS server to query (optional)"
-        }
-      },
-      required: ["query"]
-    }
+    inputSchema: z.object({
+      query: z.string().describe("Domain name or IP address to lookup"),
+      server: z.string().describe("Specific WHOIS server to query (optional)").optional()
+    }).passthrough(),
   }
 ];
 

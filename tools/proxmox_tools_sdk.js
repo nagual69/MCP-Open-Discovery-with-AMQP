@@ -247,184 +247,83 @@ const tools = [
   {
     name: "proxmox_list_nodes",
     description: "Returns all nodes in the Proxmox cluster.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-    },
+    inputSchema: z.object({
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_get_node_details",
     description: "Returns details for a given Proxmox node.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_list_vms",
     description: "Returns all VMs for a Proxmox node.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_get_vm_details",
     description: "Returns config/details for a given VM.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        vmid: {
-          type: "string",
-          description: "VM ID",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node", "vmid"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      vmid: z.string().describe("VM ID"),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_list_containers",
     description: "Returns all LXC containers for a Proxmox node.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_get_container_details",
     description: "Returns config/details for a given container.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        vmid: {
-          type: "string",
-          description: "Container ID",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node", "vmid"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      vmid: z.string().describe("Container ID"),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_list_storage",
     description: "Returns storage resources for a Proxmox node.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_list_networks",
     description: "Returns network config for a Proxmox node.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_cluster_resources",
     description: "Returns a summary of all cluster resources.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-    },
+    inputSchema: z.object({
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
   {
     name: "proxmox_get_metrics",
     description: "Returns metrics for a node or VM (if vmid is provided).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        node: {
-          type: "string",
-          description: "Node name",
-        },
-        vmid: {
-          type: "string",
-          description: "VM ID (optional)",
-        },
-        creds_id: {
-          type: "string",
-          description: "Credential ID to use (optional)",
-        },
-      },
-      required: ["node"],
-    },
+    inputSchema: z.object({
+      node: z.string().describe("Node name"),
+      vmid: z.string().describe("VM ID (optional)").optional(),
+      creds_id: z.string().describe("Credential ID to use (optional)").optional()
+    }).passthrough(),
   },
 ];
 
@@ -527,232 +426,9 @@ async function handleToolCall(name, args) {
   }
 }
 
-/**
- * Legacy register function for backwards compatibility
- * Register all Proxmox tools with the MCP server
- * @param {McpServer} server - The MCP server instance
- */
-function registerProxmoxTools(server) {
-  // Proxmox List Nodes
-  server.tool(
-    'proxmox_list_nodes',
-    'Returns all nodes in the Proxmox cluster.',
-    {
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ creds_id }) => {
-      try {
-        const nodes = await proxmoxApiRequest('/api2/json/nodes', 'GET', null, creds_id);
-        return formatProxmoxResult(nodes, 'Proxmox Cluster Nodes:');
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox Get Node Details
-  server.tool(
-    'proxmox_get_node_details',
-    'Returns details for a given Proxmox node.',
-    {
-      node: z.string().describe('Node name'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, creds_id }) => {
-      try {
-        const nodeDetails = await proxmoxApiRequest(`/api2/json/nodes/${node}/status`, 'GET', null, creds_id);
-        return formatProxmoxResult(nodeDetails, `Node Details for ${node}:`);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox List VMs
-  server.tool(
-    'proxmox_list_vms',
-    'Returns all VMs for a Proxmox node.',
-    {
-      node: z.string().describe('Node name'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, creds_id }) => {
-      try {
-        const vms = await proxmoxApiRequest(`/api2/json/nodes/${node}/qemu`, 'GET', null, creds_id);
-        return formatProxmoxResult(vms, `VMs on node ${node}:`);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox Get VM Details
-  server.tool(
-    'proxmox_get_vm_details',
-    'Returns config/details for a given VM.',
-    {
-      node: z.string().describe('Node name'),
-      vmid: z.string().describe('VM ID'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, vmid, creds_id }) => {
-      try {
-        const vmDetails = await proxmoxApiRequest(`/api2/json/nodes/${node}/qemu/${vmid}/config`, 'GET', null, creds_id);
-        return formatProxmoxResult(vmDetails, `VM ${vmid} details on node ${node}:`);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox List Containers
-  server.tool(
-    'proxmox_list_containers',
-    'Returns all LXC containers for a Proxmox node.',
-    {
-      node: z.string().describe('Node name'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, creds_id }) => {
-      try {
-        const containers = await proxmoxApiRequest(`/api2/json/nodes/${node}/lxc`, 'GET', null, creds_id);
-        return formatProxmoxResult(containers, `LXC containers on node ${node}:`);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox Get Container Details
-  server.tool(
-    'proxmox_get_container_details',
-    'Returns config/details for a given container.',
-    {
-      node: z.string().describe('Node name'),
-      vmid: z.string().describe('Container ID'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, vmid, creds_id }) => {
-      try {
-        const containerDetails = await proxmoxApiRequest(`/api2/json/nodes/${node}/lxc/${vmid}/config`, 'GET', null, creds_id);
-        return formatProxmoxResult(containerDetails, `Container ${vmid} details on node ${node}:`);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox List Storage
-  server.tool(
-    'proxmox_list_storage',
-    'Returns storage resources for a Proxmox node.',
-    {
-      node: z.string().describe('Node name'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, creds_id }) => {
-      try {
-        const storage = await proxmoxApiRequest(`/api2/json/nodes/${node}/storage`, 'GET', null, creds_id);
-        return formatProxmoxResult(storage, `Storage resources on node ${node}:`);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox List Networks
-  server.tool(
-    'proxmox_list_networks',
-    'Returns network config for a Proxmox node.',
-    {
-      node: z.string().describe('Node name'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, creds_id }) => {
-      try {
-        const networks = await proxmoxApiRequest(`/api2/json/nodes/${node}/network`, 'GET', null, creds_id);
-        return formatProxmoxResult(networks, `Network configuration for node ${node}:`);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox Cluster Resources
-  server.tool(
-    'proxmox_cluster_resources',
-    'Returns a summary of all cluster resources.',
-    {
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ creds_id }) => {
-      try {
-        const resources = await proxmoxApiRequest('/api2/json/cluster/resources', 'GET', null, creds_id);
-        return formatProxmoxResult(resources, 'Proxmox Cluster Resources:');
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Proxmox Get Metrics
-  server.tool(
-    'proxmox_get_metrics',
-    'Returns metrics for a node or VM (if vmid is provided).',
-    {
-      node: z.string().describe('Node name'),
-      vmid: z.string().optional().describe('VM ID (optional)'),
-      creds_id: z.string().optional().describe('Credential ID to use (optional)')
-    },
-    async ({ node, vmid, creds_id }) => {
-      try {
-        let endpoint;
-        let description;
-        
-        if (vmid) {
-          endpoint = `/api2/json/nodes/${node}/qemu/${vmid}/status/current`;
-          description = `Metrics for VM ${vmid} on node ${node}:`;
-        } else {
-          endpoint = `/api2/json/nodes/${node}/status`;
-          description = `Metrics for node ${node}:`;
-        }
-        
-        const metrics = await proxmoxApiRequest(endpoint, 'GET', null, creds_id);
-        return formatProxmoxResult(metrics, description);
-      } catch (error) {
-        return formatProxmoxError(error);
-      }
-    }
-  );
-
-  // Note: Proxmox credential management is now handled by the unified credential system.
-  // Use the following tools for credential management:
-  // - credentials_add (with type="password") to add Proxmox credentials
-  // - credentials_list (with type="password" filter) to list Proxmox credentials  
-  // - credentials_remove to remove Proxmox credentials
-  //
-  // Example for adding Proxmox credentials:
-  // credentials_add({
-  //   id: "proxmox1", 
-  //   type: "password",
-  //   username: "root",
-  //   password: "secret",
-  //   url: "https://pve.example.com:8006",
-  //   notes: "Proxmox VE cluster primary, realm:pam, verify_ssl:true"
-  // })
-  //
-  // The system will auto-detect Proxmox credentials by:
-  // 1. URL containing port 8006
-  // 2. Notes containing "proxmox" 
-  // 3. ID containing "proxmox"
-
-  console.log('[MCP SDK] Registered 10 Proxmox tools');
-}
-
 module.exports = { 
   tools, 
   handleToolCall, 
-  registerProxmoxTools,
   // Utility functions for external use
   proxmoxApiRequest,
   formatProxmoxResult,

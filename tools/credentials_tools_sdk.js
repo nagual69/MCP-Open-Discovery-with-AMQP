@@ -2,289 +2,270 @@
 // MCP SDK tools for credential management
 // Provides secure add, get, list, remove, and rotate operations for multiple credential types
 
-const { z } = require('zod');
 const credentialsManager = require('./credentials_manager');
+const { z } = require('zod');
 
 // Schema for credential types - using enum with clear description
 const CREDENTIAL_TYPES = ['password', 'apiKey', 'sshKey', 'oauthToken', 'certificate', 'custom'];
-const CredentialTypeSchema = z.enum(CREDENTIAL_TYPES)
-  .describe('Type of credential. Valid values: password, apiKey, sshKey, oauthToken, certificate, custom');
 
-// MCP Tool: Add Credential
-const addCredentialTool = {
-  name: 'credentials_add',
-  description: 'Add a new encrypted credential to the secure store. Valid types: "password", "apiKey", "sshKey", "oauthToken", "certificate", "custom"',
-  inputSchema: z.object({
-    id: z.string().describe('Unique credential ID'),
-    type: CredentialTypeSchema,
-    username: z.string().optional().describe('Username (if applicable)'),
-    url: z.string().optional().describe('URL/endpoint (if applicable)'),
-    password: z.string().optional().describe('Password to encrypt (use with type="password")'),
-    apiKey: z.string().optional().describe('API key to encrypt (use with type="apiKey")'),
-    sshKey: z.string().optional().describe('SSH private key to encrypt (use with type="sshKey")'),
-    oauthToken: z.string().optional().describe('OAuth token to encrypt (use with type="oauthToken")'),
-    certificate: z.string().optional().describe('Certificate/cert data to encrypt (use with type="certificate")'),
-    customField1: z.string().optional().describe('Custom field 1 (use with type="custom")'),
-    customField2: z.string().optional().describe('Custom field 2 (use with type="custom")'),
-    notes: z.string().optional().describe('Notes about this credential'),
-  }),
-  outputSchema: z.any(),
-  handler: async ({ id, type, ...data }) => {
-    try {
-      // Validate required parameters
-      if (!id || !type) {
-        return {
-          isError: true,
-          content: [{ 
-            type: 'text', 
-            text: 'Failed to add credential: id and type are required parameters' 
-          }],
-          structuredContent: { 
-            success: false, 
-            error: 'id and type are required parameters' 
-          },
-        };
-      }
-      
-      credentialsManager.addCredential(id, type, data);
-      return {
-        content: [{ 
-          type: 'text', 
-          text: `Successfully added credential '${id}' of type '${type}'` 
-        }],
-        structuredContent: { 
-          success: true, 
-          id, 
-          type, 
-          message: 'Credential added successfully' 
-        },
-        isError: false,
-      };
-    } catch (error) {
+// MCP Tools array with native Zod schemas
+const tools = [
+  {
+    name: 'credentials_add',
+    description: 'Add a new encrypted credential to the secure store. Valid types: "password", "apiKey", "sshKey", "oauthToken", "certificate", "custom"',
+    inputSchema: z.object({
+      id: z.string().describe("Unique credential ID"),
+      type: z.enum(CREDENTIAL_TYPES).describe("Type of credential"),
+      username: z.string().optional().describe("Username (if applicable)"),
+      url: z.string().optional().describe("URL/endpoint (if applicable)"),
+      password: z.string().optional().describe("Password to encrypt (use with type=\"password\")"),
+      apiKey: z.string().optional().describe("API key to encrypt (use with type=\"apiKey\")"),
+      sshKey: z.string().optional().describe("SSH private key to encrypt (use with type=\"sshKey\")"),
+      oauthToken: z.string().optional().describe("OAuth token to encrypt (use with type=\"oauthToken\")"),
+      certificate: z.string().optional().describe("Certificate/cert data to encrypt (use with type=\"certificate\")"),
+      customField1: z.string().optional().describe("Custom field 1 (use with type=\"custom\")"),
+      customField2: z.string().optional().describe("Custom field 2 (use with type=\"custom\")"),
+      notes: z.string().optional().describe("Notes about this credential"),
+    }).passthrough(),
+  },
+  {
+    name: 'credentials_get',
+    description: 'Retrieve and decrypt a credential from the secure store',
+    inputSchema: z.object({
+      id: z.string().describe("Credential ID to retrieve"),
+    }).passthrough(),
+  },
+  {
+    name: 'credentials_list',
+    description: 'List all stored credentials (IDs, types, usernames only - no sensitive data)',
+    inputSchema: z.object({
+      type: z.enum(CREDENTIAL_TYPES).optional().describe("Filter by credential type"),
+    }).passthrough(),
+  },
+  {
+    name: 'credentials_remove',
+    description: 'Remove a credential from the secure store',
+    inputSchema: z.object({
+      id: z.string().describe("Credential ID to remove"),
+    }).passthrough(),
+  },
+  {
+    name: 'credentials_rotate_key',
+    description: 'Rotate the encryption key and re-encrypt all stored credentials',
+    inputSchema: z.object({
+      newKey: z.string().optional().describe("New 32-byte key (base64). If not provided, generates a new random key."),
+    }).passthrough(),
+  },
+];
+
+async function handleToolCall(name, args) {
+  switch (name) {
+    case 'credentials_add':
+      return await addCredential(args);
+    case 'credentials_get':
+      return await getCredential(args);
+    case 'credentials_list':
+      return await listCredentials(args);
+    case 'credentials_remove':
+      return await removeCredential(args);
+    case 'credentials_rotate_key':
+      return await rotateKey(args);
+    default:
+      throw new Error(`Unknown credentials tool: ${name}`);
+  }
+}
+
+async function addCredential({ id, type, ...data }) {
+  try {
+    // Validate required parameters
+    if (!id || !type) {
       return {
         isError: true,
         content: [{ 
           type: 'text', 
-          text: `Failed to add credential: ${error.message}` 
+          text: 'Failed to add credential: id and type are required parameters' 
         }],
         structuredContent: { 
           success: false, 
-          error: error.message 
+          error: 'id and type are required parameters' 
         },
       };
     }
-  },
-  annotations: {
-    title: 'Add Credential',
-    readOnlyHint: false,
-    openWorldHint: true,
-  },
-};
+    
+    credentialsManager.addCredential(id, type, data);
+    return {
+      content: [{ 
+        type: 'text', 
+        text: `Successfully added credential: ${id}` 
+      }],
+      structuredContent: { 
+        success: true, 
+        id, 
+        type 
+      },
+      isError: false,
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{ 
+        type: 'text', 
+        text: `Failed to add credential: ${error.message}` 
+      }],
+      structuredContent: { 
+        success: false, 
+        error: error.message 
+      },
+    };
+  }
+}
 
-// MCP Tool: Get Credential (with decrypted values)
-const getCredentialTool = {
-  name: 'credentials_get',
-  description: 'Retrieve and decrypt a credential from the secure store',
-  inputSchema: z.object({
-    id: z.string().describe('Credential ID to retrieve'),
-  }),
-  outputSchema: z.any(),
-  handler: async ({ id }) => {
-    try {
-      // Validate required parameters
-      if (!id) {
-        return {
-          isError: true,
-          content: [{ 
-            type: 'text', 
-            text: 'Failed to get credential: id is a required parameter' 
-          }],
-          structuredContent: { 
-            success: false, 
-            error: 'id is a required parameter' 
-          },
-        };
-      }
-      
-      const credential = credentialsManager.getCredential(id);
-      return {
-        content: [{ 
-          type: 'text', 
-          text: JSON.stringify(credential, null, 2)
-        }],
-        structuredContent: { 
-          success: true, 
-          credential 
-        },
-        isError: false,
-      };
-    } catch (error) {
+async function getCredential({ id }) {
+  try {
+    // Validate required parameters
+    if (!id) {
       return {
         isError: true,
         content: [{ 
           type: 'text', 
-          text: `Failed to get credential: ${error.message}` 
+          text: 'Failed to get credential: id is a required parameter' 
         }],
         structuredContent: { 
           success: false, 
-          error: error.message 
+          error: 'id is a required parameter' 
         },
       };
     }
-  },
-  annotations: {
-    title: 'Get Credential',
-    readOnlyHint: true,
-    openWorldHint: true,
-  },
-};
+    
+    const credential = credentialsManager.getCredential(id);
+    return {
+      content: [{ 
+        type: 'text', 
+        text: JSON.stringify(credential, null, 2)
+      }],
+      structuredContent: { 
+        success: true, 
+        credential 
+      },
+      isError: false,
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{ 
+        type: 'text', 
+        text: `Failed to get credential: ${error.message}` 
+      }],
+      structuredContent: { 
+        success: false, 
+        error: error.message 
+      },
+    };
+  }
+}
 
-// MCP Tool: List Credentials (safe - no sensitive data)
-const listCredentialsTool = {
-  name: 'credentials_list',
-  description: 'List all stored credentials (IDs, types, usernames only - no sensitive data)',
-  inputSchema: z.object({
-    type: CredentialTypeSchema.optional().describe('Filter by credential type'),
-  }),
-  outputSchema: z.any(),
-  handler: async ({ type }) => {
-    try {
-      const credentials = credentialsManager.listCredentials(type);
-      return {
-        content: [{ 
-          type: 'text', 
-          text: JSON.stringify(credentials, null, 2)
-        }],
-        structuredContent: { 
-          success: true, 
-          credentials, 
-          count: credentials.length 
-        },
-        isError: false,
-      };
-    } catch (error) {
+async function listCredentials({ type }) {
+  try {
+    const credentials = credentialsManager.listCredentials(type);
+    return {
+      content: [{ 
+        type: 'text', 
+        text: JSON.stringify(credentials, null, 2)
+      }],
+      structuredContent: { 
+        success: true, 
+        credentials 
+      },
+      isError: false,
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{ 
+        type: 'text', 
+        text: `Failed to list credentials: ${error.message}` 
+      }],
+      structuredContent: { 
+        success: false, 
+        error: error.message 
+      },
+    };
+  }
+}
+
+async function removeCredential({ id }) {
+  try {
+    // Validate required parameters
+    if (!id) {
       return {
         isError: true,
         content: [{ 
           type: 'text', 
-          text: `Failed to list credentials: ${error.message}` 
+          text: 'Failed to remove credential: id is a required parameter' 
         }],
         structuredContent: { 
           success: false, 
-          error: error.message 
+          error: 'id is a required parameter' 
         },
       };
     }
-  },
-  annotations: {
-    title: 'List Credentials',
-    readOnlyHint: true,
-    openWorldHint: true,
-  },
-};
+    
+    credentialsManager.removeCredential(id);
+    return {
+      content: [{ 
+        type: 'text', 
+        text: `Successfully removed credential: ${id}` 
+      }],
+      structuredContent: { 
+        success: true, 
+        id 
+      },
+      isError: false,
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{ 
+        type: 'text', 
+        text: `Failed to remove credential: ${error.message}` 
+      }],
+      structuredContent: { 
+        success: false, 
+        error: error.message 
+      },
+    };
+  }
+}
 
-// MCP Tool: Remove Credential
-const removeCredentialTool = {
-  name: 'credentials_remove',
-  description: 'Remove a credential from the secure store',
-  inputSchema: z.object({
-    id: z.string().describe('Credential ID to remove'),
-  }),
-  outputSchema: z.any(),
-  handler: async ({ id }) => {
-    try {
-      // Validate required parameters
-      if (!id) {
-        return {
-          isError: true,
-          content: [{ 
-            type: 'text', 
-            text: 'Failed to remove credential: id is a required parameter' 
-          }],
-          structuredContent: { 
-            success: false, 
-            error: 'id is a required parameter' 
-          },
-        };
-      }
-      
-      credentialsManager.removeCredential(id);
-      return {
-        content: [{ 
-          type: 'text', 
-          text: `Successfully removed credential '${id}'` 
-        }],
-        structuredContent: { 
-          success: true, 
-          id, 
-          message: 'Credential removed successfully' 
-        },
-        isError: false,
-      };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ 
-          type: 'text', 
-          text: `Failed to remove credential: ${error.message}` 
-        }],
-        structuredContent: { 
-          success: false, 
-          error: error.message 
-        },
-      };
-    }
-  },
-  annotations: {
-    title: 'Remove Credential',
-    readOnlyHint: false,
-    openWorldHint: true,
-  },
-};
-
-// MCP Tool: Rotate Encryption Key
-const rotateKeyTool = {
-  name: 'credentials_rotate_key',
-  description: 'Rotate the encryption key and re-encrypt all stored credentials',
-  inputSchema: z.object({
-    newKey: z.string().optional().describe('New 32-byte key (base64). If not provided, generates a new random key.'),
-  }),
-  outputSchema: z.any(),
-  handler: async ({ newKey }) => {
-    try {
-      const key = newKey ? Buffer.from(newKey, 'base64') : require('crypto').randomBytes(32);
-      credentialsManager.rotateKey(key);
-      return {
-        content: [{ 
-          type: 'text', 
-          text: 'Successfully rotated encryption key and re-encrypted all credentials' 
-        }],
-        structuredContent: { 
-          success: true, 
-          message: 'Key rotation completed successfully' 
-        },
-        isError: false,
-      };
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ 
-          type: 'text', 
-          text: `Failed to rotate key: ${error.message}` 
-        }],
-        structuredContent: { 
-          success: false, 
-          error: error.message 
-        },
-      };
-    }
-  },
-  annotations: {
-    title: 'Rotate Encryption Key',
-    readOnlyHint: false,
-    openWorldHint: true,
-  },
-};
+async function rotateKey({ newKey }) {
+  try {
+    const key = newKey ? Buffer.from(newKey, 'base64') : require('crypto').randomBytes(32);
+    credentialsManager.rotateKey(key);
+    return {
+      content: [{ 
+        type: 'text', 
+        text: 'Successfully rotated encryption key and re-encrypted all credentials' 
+      }],
+      structuredContent: { 
+        success: true, 
+        message: 'Key rotation completed successfully' 
+      },
+      isError: false,
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [{ 
+        type: 'text', 
+        text: `Failed to rotate key: ${error.message}` 
+      }],
+      structuredContent: { 
+        success: false, 
+        error: error.message 
+      },
+    };
+  }
+}
 
 // Resource: Audit Log
 const auditLogResource = {
@@ -298,20 +279,18 @@ const auditLogResource = {
       const path = require('path');
       const AUDIT_LOG_PATH = path.join(process.cwd(), 'data', 'mcp_creds_audit.log');
       
-      if (!fs.existsSync(AUDIT_LOG_PATH)) {
-        return {
-          contents: [{
-            uri: uri.href,
-            mimeType: 'application/json',
-            text: JSON.stringify([], null, 2)
-          }]
-        };
+      let logData = [];
+      if (fs.existsSync(AUDIT_LOG_PATH)) {
+        const logContent = fs.readFileSync(AUDIT_LOG_PATH, 'utf8');
+        const lines = logContent.trim().split('\n').filter(line => line.trim());
+        logData = lines.map(line => {
+          try {
+            return JSON.parse(line);
+          } catch {
+            return { raw: line };
+          }
+        });
       }
-      
-      const logData = fs.readFileSync(AUDIT_LOG_PATH, 'utf-8')
-        .split('\n')
-        .filter(line => line.trim())
-        .map(line => JSON.parse(line));
       
       return {
         contents: [{
@@ -332,21 +311,12 @@ const auditLogResource = {
   },
 };
 
-function getCredentialTools() {
-  return [
-    addCredentialTool,
-    getCredentialTool,
-    listCredentialsTool,
-    removeCredentialTool,
-    rotateKeyTool,
-  ];
-}
-
 function getCredentialResources() {
   return [auditLogResource];
 }
 
 module.exports = {
-  getCredentialTools,
+  tools,
+  handleToolCall,
   getCredentialResources,
 };

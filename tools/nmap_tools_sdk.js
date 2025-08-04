@@ -114,182 +114,58 @@ const tools = [
   {
     name: 'nmap_ping_scan',
     description: 'Nmap Ping Scan (-sn): Discovers online hosts without port scanning.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        target: {
-          type: 'string',
-          description: 'Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'
-        }
-      },
-      required: ['target']
-    }
+    inputSchema: z.object({
+      target: z.string().describe('Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)')
+    }).passthrough(),
   },
   {
     name: 'nmap_tcp_syn_scan',
     description: 'Nmap TCP SYN Scan (-sS): Stealthy scan for open TCP ports. Requires root/administrator privileges.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        target: {
-          type: 'string',
-          description: 'Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'
-        },
-        ports: {
-          type: 'string',
-          description: "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000)."
-        },
-        fast_scan: {
-          type: 'boolean',
-          default: false,
-          description: 'Fast mode (-F): Scan fewer ports than the default scan.'
-        },
-        timing_template: {
-          type: 'number',
-          minimum: 0,
-          maximum: 5,
-          default: 3,
-          description: 'Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'
-        },
-        reason: {
-          type: 'boolean',
-          default: false,
-          description: 'Display the reason a port is in a particular state (--reason).'
-        },
-        open_only: {
-          type: 'boolean',
-          default: false,
-          description: 'Only show open (or possibly open) ports (--open).'
-        }
-      },
-      required: ['target']
-    }
+    inputSchema: z.object({
+      target: z.string().describe('Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'),
+      ports: z.string().optional().describe("Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000)."),
+      fast_scan: z.boolean().optional().describe('Fast mode (-F): Scan fewer ports than the default scan.'),
+      timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
+      reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
+      open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
+    }).passthrough(),
   },
   {
     name: 'nmap_tcp_connect_scan',
     description: 'Nmap TCP Connect Scan (-sT): Scans for open TCP ports using the connect() system call. Does not require special privileges.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        target: {
-          type: 'string',
-          description: 'Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'
-        },
-        ports: {
-          type: 'string',
-          description: "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000)."
-        },
-        timing_template: {
-          type: 'number',
-          minimum: 0,
-          maximum: 5,
-          default: 3,
-          description: 'Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'
-        },
-        reason: {
-          type: 'boolean',
-          default: false,
-          description: 'Display the reason a port is in a particular state (--reason).'
-        },
-        open_only: {
-          type: 'boolean',
-          default: false,
-          description: 'Only show open (or possibly open) ports (--open).'
-        }
-      },
-      required: ['target']
-    }
+    inputSchema: z.object({
+      target: z.string().describe('Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'),
+      ports: z.string().optional().describe("Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000)."),
+      timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
+      reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
+      open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
+    }).passthrough(),
   },
   {
     name: 'nmap_udp_scan',
     description: 'Nmap UDP Scan (-sU): Scans for open UDP ports. Can be very slow as UDP is connectionless. Requires root/administrator privileges.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        target: {
-          type: 'string',
-          description: 'Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'
-        },
-        ports: {
-          type: 'string',
-          description: "Ports to scan (e.g., 'U:53,161', '1-1024'). Default is Nmap's default for UDP (often common UDP ports)."
-        },
-        top_ports: {
-          type: 'number',
-          description: 'Scan the <number> most common UDP ports (--top-ports <number>). Cannot be used with ports.'
-        },
-        timing_template: {
-          type: 'number',
-          minimum: 0,
-          maximum: 5,
-          default: 3,
-          description: 'Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'
-        },
-        reason: {
-          type: 'boolean',
-          default: false,
-          description: 'Display the reason a port is in a particular state (--reason).'
-        },
-        open_only: {
-          type: 'boolean',
-          default: false,
-          description: 'Only show open (or possibly open) ports (--open).'
-        }
-      },
-      required: ['target']
-    }
+    inputSchema: z.object({
+      target: z.string().describe('Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'),
+      ports: z.string().optional().describe("Ports to scan (e.g., 'U:53,161', '1-1024'). Default is Nmap's default for UDP (often common UDP ports)."),
+      top_ports: z.number().optional().describe('Scan the <number> most common UDP ports (--top-ports <number>). Cannot be used with ports.'),
+      timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
+      reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
+      open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
+    }).passthrough(),
   },
   {
     name: 'nmap_version_scan',
     description: 'Nmap Version Detection (-sV): Probes open ports to determine service/version info.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        target: {
-          type: 'string',
-          description: 'Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'
-        },
-        ports: {
-          type: 'string',
-          description: "Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000 TCP and UDP)."
-        },
-        intensity: {
-          type: 'number',
-          minimum: 0,
-          maximum: 9,
-          default: 7,
-          description: 'Version scan intensity (--version-intensity <0-9>): Higher is more likely to identify services but takes longer. Default 7.'
-        },
-        light_mode: {
-          type: 'boolean',
-          default: false,
-          description: 'Enable light mode (--version-light): Faster, less comprehensive version scan. Alias for --version-intensity 2.'
-        },
-        all_ports: {
-          type: 'boolean',
-          default: false,
-          description: 'Try all probes for every port (--version-all): Slower, more comprehensive. Alias for --version-intensity 9.'
-        },
-        timing_template: {
-          type: 'number',
-          minimum: 0,
-          maximum: 5,
-          default: 3,
-          description: 'Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'
-        },
-        reason: {
-          type: 'boolean',
-          default: false,
-          description: 'Display the reason a port is in a particular state (--reason).'
-        },
-        open_only: {
-          type: 'boolean',
-          default: false,
-          description: 'Only show open (or possibly open) ports (--open).'
-        }
-      },
-      required: ['target']
-    }
+    inputSchema: z.object({
+      target: z.string().describe('Target specification (hostname, IP, network, e.g., scanme.nmap.org, 192.168.1.0/24)'),
+      ports: z.string().optional().describe("Ports to scan (e.g., '80,443', '1-1024'). Default is Nmap's default (usually top 1000 TCP and UDP)."),
+      intensity: z.number().min(0).max(9).optional().describe('Version scan intensity (--version-intensity <0-9>): Higher is more likely to identify services but takes longer. Default 7.'),
+      light_mode: z.boolean().optional().describe('Enable light mode (--version-light): Faster, less comprehensive version scan. Alias for --version-intensity 2.'),
+      all_ports: z.boolean().optional().describe('Try all probes for every port (--version-all): Slower, more comprehensive. Alias for --version-intensity 9.'),
+      timing_template: z.number().min(0).max(5).optional().describe('Timing template (-T<0-5>): 0 (paranoid), 1 (sneaky), 2 (polite), 3 (normal), 4 (aggressive), 5 (insane). Higher is faster.'),
+      reason: z.boolean().optional().describe('Display the reason a port is in a particular state (--reason).'),
+      open_only: z.boolean().optional().describe('Only show open (or possibly open) ports (--open).')
+    }).passthrough(),
   }
 ];
 
@@ -453,33 +329,12 @@ async function handleToolCall(name, args) {
   }
 }
 
-// ========== BACKWARDS COMPATIBILITY ==========
-
-/**
- * Legacy registerNmapTools function for backwards compatibility
- * @param {McpServer} server - The MCP server instance
- */
-function registerNmapTools(server) {
-  console.log('[MCP SDK] [DEPRECATED] Using legacy registerNmapTools - please update to new registry format');
-  
-  for (const tool of tools) {
-    server.tool(tool.name, tool.description, tool.inputSchema, async (args) => {
-      return await handleToolCall(tool.name, args);
-    });
-  }
-  
-  console.log('[MCP SDK] Registered 5 NMAP tools (legacy mode)');
-}
-
 // ========== EXPORTS ==========
 
 module.exports = {
   // NEW FORMAT: For hot-reload registry system
   tools,
   handleToolCall,
-  
-  // LEGACY FORMAT: For backwards compatibility
-  registerNmapTools,
   
   // UTILITY FUNCTIONS
   sanitizeHost,

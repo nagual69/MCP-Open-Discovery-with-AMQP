@@ -175,121 +175,61 @@ const tools = [
   {
     name: 'memory_get',
     description: 'Get a CI object from MCP memory by key',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Unique CI key (e.g., ci:host:192.168.1.10)'
-        }
-      },
-      required: ['key']
-    }
+    inputSchema: z.object({
+      key: z.string().describe('Unique CI key (e.g., ci:host:192.168.1.10)')
+    }).passthrough(),
   },
   {
     name: 'memory_set',
     description: 'Set a CI object in MCP memory by key',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Unique CI key (e.g., ci:host:192.168.1.10)'
-        },
-        value: {
-          type: 'object',
-          description: 'CI object to store'
-        }
-      },
-      required: ['key', 'value']
-    }
+    inputSchema: z.object({
+      key: z.string().describe('Unique CI key (e.g., ci:host:192.168.1.10)'),
+      value: z.any().describe('CI object to store')
+    }).passthrough(),
   },
   {
     name: 'memory_merge',
     description: 'Merge new data into an existing CI in MCP memory',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-          description: 'Unique CI key (e.g., ci:host:192.168.1.10)'
-        },
-        value: {
-          type: 'object',
-          description: 'Partial CI data to merge'
-        }
-      },
-      required: ['key', 'value']
-    }
+    inputSchema: z.object({
+      key: z.string().describe('Unique CI key (e.g., ci:host:192.168.1.10)'),
+      value: z.any().describe('Partial CI data to merge')
+    }).passthrough(),
   },
   {
     name: 'memory_query',
     description: 'Query MCP memory for CIs matching a pattern or incomplete CIs',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        pattern: {
-          type: 'string',
-          description: 'Pattern for CI keys (optional, e.g., ci:host:*)'
-        }
-      },
-      required: []
-    }
+    inputSchema: z.object({
+      pattern: z.string().describe('Pattern for CI keys (optional, e.g., ci:host:*)').optional()
+    }).passthrough(),
   },
   {
     name: 'memory_clear',
     description: 'Clear all memory data (both in-memory and persistent storage)',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-      required: []
-    }
+    inputSchema: z.object({}).passthrough(),
   },
   {
     name: 'memory_stats',
     description: 'Get statistics about memory usage and SQLite persistent storage',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-      required: []
-    }
+    inputSchema: z.object({}).passthrough(),
   },
   {
     name: 'memory_rotate_key',
     description: 'Rotate the encryption key and re-encrypt all stored memory data in SQLite',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        newKey: {
-          type: 'string',
-          description: 'New 32-byte key (base64). If not provided, generates a new random key.'
-        }
-      },
-      required: []
-    }
+    inputSchema: z.object({
+      newKey: z.string().describe('New 32-byte key (base64). If not provided, generates a new random key.').optional()
+    }).passthrough(),
   },
   {
     name: 'memory_save',
     description: 'Manually save all memory data to SQLite persistent storage',
-    inputSchema: {
-      type: 'object',
-      properties: {},
-      required: []
-    }
+    inputSchema: z.object({}).passthrough(),
   },
   {
     name: 'memory_migrate_from_filesystem',
     description: 'Migrate existing filesystem-based memory data to SQLite persistence',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        oldDataPath: {
-          type: 'string',
-          description: 'Path to old memory data file (optional)'
-        }
-      },
-      required: []
-    }
+    inputSchema: z.object({
+      oldDataPath: z.string().describe('Path to old memory data file (optional)').optional()
+    }).passthrough(),
   }
 ];
 
@@ -617,31 +557,12 @@ ${typeBreakdown}`
 
 // ========== BACKWARDS COMPATIBILITY ==========
 
-/**
- * Legacy registerMemoryTools function for backwards compatibility
- * @param {McpServer} server - The MCP server instance
- */
-function registerMemoryTools(server) {
-  console.log('[MCP SDK] [DEPRECATED] Using legacy registerMemoryTools - please update to new registry format');
-  
-  for (const tool of tools) {
-    server.tool(tool.name, tool.description, tool.inputSchema, async (args) => {
-      return await handleToolCall(tool.name, args);
-    });
-  }
-  
-  console.log('[MCP SDK] Registered 9 memory tools with SQLite persistence (legacy mode)');
-}
-
 // ========== EXPORTS ==========
 
 module.exports = {
   // NEW FORMAT: For hot-reload registry system
   tools,
   handleToolCall,
-  
-  // LEGACY FORMAT: For backwards compatibility
-  registerMemoryTools,
   
   // UTILITY FUNCTIONS
   initialize,

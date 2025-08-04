@@ -32,9 +32,6 @@ const { registerManagementTools, getManagementToolNames } = require('./managemen
 const { registerAllResources, getResourceCounts } = require('./resource_manager');
 const { z } = require('zod');
 
-// Tool modules for registration
-const { getCredentialTools } = require('../credentials_tools_sdk');
-
 /**
  * Global registry instance (singleton pattern for security)
  */
@@ -122,7 +119,7 @@ async function registerAllTools(server) {
       { 
         name: 'credentials_tools_sdk', 
         category: 'credentials',
-        loader: () => ({ tools: getCredentialTools() })
+        loader: () => require('../credentials_tools_sdk')
       }
     ];
 
@@ -169,74 +166,8 @@ async function registerAllTools(server) {
   }
 }
 
-/**
- * Convert JSON Schema properties to Zod schema object
- * This bridges the gap between our JSON Schema tool definitions and MCP SDK's Zod requirements
- */
-function jsonSchemaToZod(jsonSchema) {
-  if (!jsonSchema || !jsonSchema.properties) {
-    return {};
-  }
-  
-  const zodObj = {};
-  
-  for (const [propName, propDef] of Object.entries(jsonSchema.properties)) {
-    let zodField;
-    
-    switch (propDef.type) {
-      case 'string':
-        zodField = z.string();
-        if (propDef.description) {
-          zodField = zodField.describe(propDef.description);
-        }
-        break;
-        
-      case 'number':
-        zodField = z.number();
-        if (propDef.minimum !== undefined) {
-          zodField = zodField.min(propDef.minimum);
-        }
-        if (propDef.maximum !== undefined) {
-          zodField = zodField.max(propDef.maximum);
-        }
-        if (propDef.description) {
-          zodField = zodField.describe(propDef.description);
-        }
-        break;
-        
-      case 'boolean':
-        zodField = z.boolean();
-        if (propDef.description) {
-          zodField = zodField.describe(propDef.description);
-        }
-        break;
-        
-      case 'array':
-        // Basic array support - can be enhanced later
-        zodField = z.array(z.any());
-        if (propDef.description) {
-          zodField = zodField.describe(propDef.description);
-        }
-        break;
-        
-      default:
-        // Fallback to any for unsupported types
-        zodField = z.any();
-        if (propDef.description) {
-          zodField = zodField.describe(propDef.description);
-        }
-    }
-    
-    // Handle optional vs required fields
-    if (!jsonSchema.required || !jsonSchema.required.includes(propName)) {
-      zodField = zodField.optional();
-    }
-    
-    zodObj[propName] = zodField;
-  }
-  
-  return zodObj;
-}
+// JSON Schema to Zod conversion system REMOVED
+// All tools must now use native Zod schemas for consistency and reliability
 
 /**
  * Register a single tool module with the registry
@@ -258,18 +189,25 @@ async function registerToolModule(server, registry, moduleConfig) {
 
     // Register each tool using the modern MCP SDK registerTool API
     for (const tool of tools) {
-      // Convert JSON Schema to Zod schema for MCP SDK compatibility
-      const zodInputSchema = jsonSchemaToZod(tool.inputSchema);
+      // All tools must now use native Zod schemas - no conversion support
+      if (!tool.inputSchema || typeof tool.inputSchema !== 'object' || !tool.inputSchema._def) {
+        throw new Error(`Tool ${tool.name} in module ${moduleConfig.name} must use native Zod schema (z.object()...)`);
+      }
       
       const toolConfig = {
         description: tool.description,
-        inputSchema: zodInputSchema  // Now using Zod schema
+        inputSchema: tool.inputSchema  // Native Zod schema only
       };
       
-      server.registerTool(tool.name, toolConfig, async (args) => {
-        return await handleToolCall(tool.name, args);
-      });
+      // All tools must use centralized handleToolCall function (standardized pattern)
+      if (!handleToolCall || typeof handleToolCall !== 'function') {
+        throw new Error(`Module ${moduleConfig.name} must export a handleToolCall function`);
+      }
       
+      // Use centralized handleToolCall function
+      const toolHandler = async (args) => await handleToolCall(tool.name, args);
+      
+      server.registerTool(tool.name, toolConfig, toolHandler);
       registry.registerTool(tool.name, server);
     }
 
