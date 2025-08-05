@@ -415,7 +415,7 @@ class InfrastructureHealthChecker {
     const { host, port } = CONFIG.infrastructure.proxmox;
     try {
       // Simple TCP connectivity test
-      const response = await this.makeHttpRequest(`https://${host}:${port}/api2/json/version`, { timeout: 5000 });
+      const response = await this.makeHttpRequest(`http://${host}:${port}/api2/json/version`, { timeout: 5000 });
       results.infrastructure.health.proxmox = {
         status: 'reachable',
         endpoint: `${host}:${port}`
@@ -498,10 +498,43 @@ class ToolTestRunner {
   constructor(client, transport) {
     this.client = client;
     this.transport = transport;
+    this.credentialsSetup = false;
+  }
+
+  async setupCredentials() {
+    if (this.credentialsSetup) return;
+
+    log('info', 'Setting up infrastructure credentials...');
+
+    try {
+      // Add Proxmox credentials from .env
+      const { host, port, username, password, realm } = CONFIG.infrastructure.proxmox;
+      if (password) {
+        const proxmoxUrl = `https://${host}:${port}`;
+        await this.client.callTool('credentials_add', {
+          id: 'proxmox-env',
+          type: 'password',
+          username: username,
+          password: password,
+          url: proxmoxUrl,
+          notes: `realm:${realm},verify_ssl:false,auto-added from .env file`
+        });
+        log('success', 'Proxmox credentials added from .env file (SSL verification disabled)');
+      }
+
+      this.credentialsSetup = true;
+    } catch (error) {
+      log('warn', 'Failed to setup credentials', error.message);
+    }
   }
 
   async runCategoryTests(category) {
     log('category', `Testing ${category} tools via ${this.transport} transport`);
+    
+    // Setup credentials before testing Proxmox tools
+    if (category === 'proxmox') {
+      await this.setupCredentials();
+    }
     
     const tools = TOOL_CATEGORIES[category];
     if (!tools) {
@@ -633,24 +666,67 @@ class ToolTestRunner {
         if (toolName === 'snmp_create_session') {
           params.host = agents[0];
           params.community = CONFIG.infrastructure.snmp.community;
+        } else if (toolName === 'snmp_close_session') {
+          params.sessionId = 'test-session-id';
         } else if (toolName === 'snmp_get') {
           params.sessionId = 'test-session';
           params.oids = ['1.3.6.1.2.1.1.1.0'];
+        } else if (toolName === 'snmp_get_next') {
+          params.sessionId = 'test-session';
+          params.oids = ['1.3.6.1.2.1.1.1.0'];
+        } else if (toolName === 'snmp_walk') {
+          params.sessionId = 'test-session';
+          params.oid = '1.3.6.1.2.1.1';
+        } else if (toolName === 'snmp_table') {
+          params.sessionId = 'test-session';
+          params.oid = '1.3.6.1.2.1.2.2';
         } else if (toolName === 'snmp_discover') {
           params.targetRange = '172.20.0.0/24';
+          params.community = CONFIG.infrastructure.snmp.community;
+        } else if (toolName === 'snmp_device_inventory') {
+          params.host = agents[0];
+          params.community = CONFIG.infrastructure.snmp.community;
+        } else if (toolName === 'snmp_interface_discovery') {
+          params.host = agents[0];
+          params.community = CONFIG.infrastructure.snmp.community;
+        } else if (toolName === 'snmp_service_discovery') {
+          params.host = agents[0];
+          params.community = CONFIG.infrastructure.snmp.community;
+        } else if (toolName === 'snmp_system_health') {
+          params.host = agents[0];
+          params.community = CONFIG.infrastructure.snmp.community;
+        } else if (toolName === 'snmp_network_topology') {
+          params.networkRange = '172.20.0.0/24';
           params.community = CONFIG.infrastructure.snmp.community;
         }
         break;
 
       case 'proxmox':
-        if (toolName.includes('list') || toolName.includes('get')) {
-          // These tools use credentials from environment
+        if (toolName === 'proxmox_get_node_details') {
+          params.node = 'proxmox-test';
+        } else if (toolName === 'proxmox_list_vms') {
+          params.node = 'proxmox-test';
+        } else if (toolName === 'proxmox_get_vm_details') {
+          params.node = 'proxmox-test';
+          params.vmid = '100';
+        } else if (toolName === 'proxmox_list_containers') {
+          params.node = 'proxmox-test';
+        } else if (toolName === 'proxmox_get_container_details') {
+          params.node = 'proxmox-test';
+          params.vmid = '100';
+        } else if (toolName === 'proxmox_list_storage') {
+          params.node = 'proxmox-test';
+        } else if (toolName === 'proxmox_list_networks') {
+          params.node = 'proxmox-test';
+        } else if (toolName === 'proxmox_get_metrics') {
+          params.node = 'proxmox-test';
         }
         break;
 
       case 'zabbix':
-        if (toolName.includes('get') || toolName.includes('discover')) {
-          // These tools use Zabbix configuration from environment
+        if (toolName === 'zabbix_get_metrics') {
+          params.hostName = 'Zabbix server';
+          params.itemKey = 'system.cpu.load[all,avg1]';
         }
         break;
 
@@ -662,6 +738,18 @@ class ToolTestRunner {
           params.password = 'testpass123';
         } else if (toolName === 'credentials_get') {
           params.id = 'test-credential';
+        } else if (toolName === 'credentials_remove') {
+          params.id = 'test-credential';
+        }
+      case 'registry':
+        if (toolName === 'registry_load_module') {
+          params.module_path = './test_module.js';
+          params.module_name = 'test_module';
+          params.category = 'testing';
+        } else if (toolName === 'registry_unload_module') {
+          params.module_name = 'test_module';
+        } else if (toolName === 'registry_reload_module') {
+          params.module_name = 'test_module';
         }
         break;
     }
