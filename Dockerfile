@@ -73,4 +73,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start the server
-CMD ["node", "mcp_server_multi_transport_sdk.js"]
+CMD ["node","--use-system-ca", "mcp_server_multi_transport_sdk.js"]
