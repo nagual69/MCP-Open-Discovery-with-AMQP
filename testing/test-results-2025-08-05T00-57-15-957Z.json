@@ -1,0 +1,68 @@
+{
+  "summary": {
+    "totalTools": 62,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "successRate": 0
+  },
+  "categories": {
+    "memory": {
+      "total": 9,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "network": {
+      "total": 9,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nmap": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "snmp": {
+      "total": 12,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "proxmox": {
+      "total": 10,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "zabbix": {
+      "total": 7,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "credentials": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    },
+    "registry": {
+      "total": 5,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "transports": {},
+  "infrastructure": {
+    "mcp": "healthy",
+    "proxmox": "reachable",
+    "zabbix": "unreachable: Health check timeout",
+    "snmp": "available"
+  },
+  "timestamp": "2025-08-05T00:57:10.892Z",
+  "details": {}
+}
