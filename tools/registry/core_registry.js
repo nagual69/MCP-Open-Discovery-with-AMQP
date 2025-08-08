@@ -1,14 +1,17 @@
 /**
- * Core Registry - MCP Open Discovery Dynamic Tool Registry
+ * Core Registry - MCP Open Discovery Tool Registry (REFACTORED)
  * 
- * Consolidated registry orchestrator that manages:
- * - Tool registration and tracking across all modules
- * - Hot-reload capabilities with file watching
- * - Module lifecycle management (load/unload/reload)
- * - Integration with database persistence layer
+ * Clean, focused registry manager with clear separation of concerns:
+ * - Tool lifecycle management (register/unregister/reload)
+ * - Database persistence coordination
+ * - State tracking and validation
+ * - Hot-reload capabilities
  * 
- * Security: Single entry point for all registry operations
- * Maintainability: Clear separation of concerns with database layer
+ * DESIGN PRINCIPLES:
+ * - Single Responsibility: Each method has one clear purpose
+ * - Fail Fast: Validate inputs and state early
+ * - Immutable State: Use defensive copying where needed
+ * - Clear Error Messages: Descriptive error handling
  */
 
 const fs = require('fs');
@@ -16,67 +19,84 @@ const path = require('path');
 const { DatabaseLayer } = require('./database_layer');
 
 /**
- * Core Dynamic Tool Registration System
- * 
- * Manages the complete lifecycle of MCP tools with hot-reload capabilities.
- * This replaces the previous scattered registry files with a unified approach.
+ * Registry states for lifecycle management
+ */
+const REGISTRY_STATES = {
+  UNINITIALIZED: 'uninitialized',
+  INITIALIZING: 'initializing', 
+  READY: 'ready',
+  LOADING_FROM_DB: 'loading_from_db',
+  REGISTERING_TOOLS: 'registering_tools',
+  ERROR: 'error'
+};
+
+/**
+ * Core Registry - Clean implementation
  */
 class CoreRegistry {
   constructor() {
-    this.categories = new Map();      // category -> Set of tool names
-    this.modules = new Map();         // module -> { category, tools, active, server, unloadFunc }
-    this.totalCount = 0;
-    this.currentModule = null;        // Track which module is currently registering
-    this.db = new DatabaseLayer();    // SQLite persistence layer
+    // Core state tracking
+    this.state = REGISTRY_STATES.UNINITIALIZED;
+    this.registeredTools = new Set();
+    this.categories = new Map(); // category -> Set<toolName>
+    this.modules = new Map();    // moduleName -> ModuleInfo
+    
+    // Database layer
+    this.db = new DatabaseLayer();
     this.dbInitialized = false;
     
-    // ARCHITECTURAL FIX: Add deduplication tracking
-    this.registeredTools = new Set(); // Track all registered tool names
-    this.serverInstances = new Set();  // Track MCP server instances to prevent duplicates
-    
     // Hot-reload capabilities
-    this.moduleWatchers = new Map();  // file path -> watcher instance
-    this.serverInstance = null;       // Reference to MCP server for dynamic updates
-    this.hotReloadEnabled = true;     // Enable/disable hot-reload system-wide
-    this.moduleCache = new Map();     // Cache module exports for reloading
+    this.hotReloadEnabled = true;
+    this.moduleWatchers = new Map();
+    this.moduleCache = new Map();
     
-    console.log('[Core Registry] Initialized with hot-reload capabilities and deduplication guards');
+    // Current operation tracking
+    this.currentModule = null;
+    
+    console.log('[Core Registry] Initialized - Clean Architecture v2.0');
   }
 
   /**
-   * Initialize database connection
+   * Initialize the registry and database
+   * @returns {Promise<void>}
    */
-  async initializeDB() {
-    if (!this.dbInitialized) {
-      try {
-        console.log('[Core Registry] [DEBUG] Initializing database layer...');
-        await this.db.initialize();
-        this.dbInitialized = true;
-        console.log('[Core Registry] Database layer initialized successfully');
-      } catch (error) {
-        console.error('[Core Registry] Database initialization failed:', error.message);
-        throw error;
-      }
+  async initialize() {
+    if (this.state !== REGISTRY_STATES.UNINITIALIZED) {
+      console.log(`[Core Registry] Already initialized (state: ${this.state})`);
+      return;
+    }
+
+    this.state = REGISTRY_STATES.INITIALIZING;
+    
+    try {
+      console.log('[Core Registry] Initializing database connection...');
+      await this.db.initialize();
+      this.dbInitialized = true;
+      
+      this.state = REGISTRY_STATES.READY;
+      console.log('[Core Registry] ✅ Initialization complete');
+    } catch (error) {
+      this.state = REGISTRY_STATES.ERROR;
+      console.error('[Core Registry] ❌ Initialization failed:', error.message);
+      throw new Error(`Registry initialization failed: ${error.message}`);
     }
   }
 
   /**
-   * Check if tools are already registered in the database
-   * @returns {Promise<boolean>} True if tools exist in database
+   * Check if tools already exist in the database
+   * @returns {Promise<boolean>}
    */
-  async areToolsAlreadyRegistered() {
-    if (!this.dbInitialized) {
-      return false;
-    }
-
+  async hasExistingTools() {
+    this._ensureInitialized();
+    
     try {
       const modules = await this.db.getModules();
       const tools = await this.db.getTools();
       
-      console.log(`[Core Registry] Database check: ${modules.length} modules, ${tools.length} tools found`);
+      const hasData = modules.length > 0 && tools.length > 0;
+      console.log(`[Core Registry] Database check: ${modules.length} modules, ${tools.length} tools - ${hasData ? 'EXISTS' : 'EMPTY'}`);
       
-      // Consider tools registered if we have at least one module with tools
-      return modules.length > 0 && tools.length > 0;
+      return hasData;
     } catch (error) {
       console.error('[Core Registry] Error checking existing tools:', error.message);
       return false;
@@ -84,535 +104,438 @@ class CoreRegistry {
   }
 
   /**
-   * Load tools from database instead of re-registering
+   * Alternative method name for compatibility with old registry
+   * @returns {Promise<boolean>}
+   */
+  async areToolsAlreadyRegistered() {
+    return this.hasExistingTools();
+  }
+
+  /**
+   * Load existing tools from database and register them with MCP server
    * @param {Object} server - MCP server instance
-   * @returns {Promise<Object>} Registry status
+   * @returns {Promise<LoadResult>}
    */
   async loadToolsFromDatabase(server) {
-    if (!this.dbInitialized) {
-      throw new Error('Database not initialized');
-    }
-
+    this._ensureInitialized();
+    this.state = REGISTRY_STATES.LOADING_FROM_DB;
+    
     try {
-      console.log('[Core Registry] Loading tools from existing database...');
+      console.log('[Core Registry] 📂 Loading and registering tools from database...');
       
       const modules = await this.db.getModules();
       const tools = await this.db.getTools();
       
-      // Reconstruct registry state from database
-      for (const module of modules) {
-        const moduleData = {
-          name: module.module_name,
-          category: module.category,
-          tools: new Set(),
-          loadedAt: new Date(module.created_at),
-          loadDuration: 0, // Unknown from DB
-          active: true
-        };
-        
-        this.modules.set(module.module_name, moduleData);
-        
-        if (!this.categories.has(module.category)) {
-          this.categories.set(module.category, new Set());
-        }
-      }
+      // Rebuild internal state from database
+      await this._rebuildStateFromDatabase(modules, tools);
       
-      // Add tools to registry state
-      for (const tool of tools) {
-        this.registeredTools.add(tool.tool_name);
-        
-        const module = this.modules.get(tool.module_name);
-        if (module) {
-          module.tools.add(tool.tool_name);
-          this.categories.get(module.category).add(tool.tool_name);
-        }
-      }
+      // Register tools with MCP server (this is the missing piece)
+      await this._registerDatabaseToolsWithServer(server, modules, tools);
       
-      console.log(`[Core Registry] ✅ Loaded ${modules.length} modules with ${tools.length} tools from database`);
+      this.state = REGISTRY_STATES.READY;
       
-      return {
+      const result = {
         modules: modules.length,
         tools: tools.length,
+        categories: this.categories.size,
         loadedFromDatabase: true
       };
       
+      console.log(`[Core Registry] ✅ Loaded and registered ${result.modules} modules with ${result.tools} tools from database`);
+      
+      return result;
     } catch (error) {
-      console.error('[Core Registry] Error loading tools from database:', error.message);
+      this.state = REGISTRY_STATES.ERROR;
+      console.error('[Core Registry] ❌ Failed to load from database:', error.message);
       throw error;
     }
   }
 
   /**
-   * Start tracking a new module
+   * Load existing tools from database instead of re-registering
+   * @returns {Promise<LoadResult>}
+   */
+  async loadFromDatabase() {
+    this._ensureInitialized();
+    this.state = REGISTRY_STATES.LOADING_FROM_DB;
+    
+    try {
+      console.log('[Core Registry] 📂 Loading tools from database...');
+      
+      const modules = await this.db.getModules();
+      const tools = await this.db.getTools();
+      
+      // Rebuild internal state from database
+      await this._rebuildStateFromDatabase(modules, tools);
+      
+      this.state = REGISTRY_STATES.READY;
+      
+      const result = {
+        modules: modules.length,
+        tools: tools.length,
+        categories: this.categories.size,
+        loadedFromDatabase: true
+      };
+      
+      console.log(`[Core Registry] ✅ Loaded ${result.modules} modules with ${result.tools} tools from database`);
+      
+      return result;
+    } catch (error) {
+      this.state = REGISTRY_STATES.ERROR;
+      console.error('[Core Registry] ❌ Failed to load from database:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Start registering a new module
+   * @param {string} moduleName - Name of the module
+   * @param {string} category - Module category
    */
   startModule(moduleName, category) {
-    console.log(`[Core Registry] Starting registration for ${moduleName} (${category})`);
-    this.currentModule = { name: moduleName, category, tools: new Set(), startTime: Date.now() };
+    this._ensureInitialized();
     
+    if (this.currentModule) {
+      throw new Error(`Cannot start module ${moduleName}: module ${this.currentModule.name} is still in progress`);
+    }
+    
+    console.log(`[Core Registry] 🔄 Starting module: ${moduleName} (${category})`);
+    
+    this.currentModule = {
+      name: moduleName,
+      category,
+      tools: new Set(),
+      startTime: Date.now()
+    };
+    
+    // Initialize category if new
     if (!this.categories.has(category)) {
       this.categories.set(category, new Set());
     }
   }
 
   /**
-   * Register a tool with the current module
-   * 
-   * ARCHITECTURAL FIX: Comprehensive deduplication to prevent the registration
-   * catastrophe identified in forensic analysis.
+   * Register a tool within the current module
+   * @param {string} toolName - Name of the tool
    */
-  registerTool(toolName, server) {
-    if (!this.currentModule) {
-      throw new Error('No module started. Call startModule() first.');
-    }
+  registerTool(toolName) {
+    this._ensureCurrentModule();
     
-    // DEDUPLICATION CHECK: Prevent duplicate tool registration
+    // Check for duplicates
     if (this.registeredTools.has(toolName)) {
-      console.log(`[Core Registry] ⚠️  SKIPPING duplicate tool: ${toolName} (already registered)`);
-      return; // Skip duplicate registration
+      console.log(`[Core Registry] ⚠️  Skipping duplicate tool: ${toolName}`);
+      return;
     }
     
-    // Track the server instance to detect multi-server issues
-    this.serverInstances.add(server);
-    if (this.serverInstances.size > 1) {
-      console.warn(`[Core Registry] ⚠️  WARNING: Multiple server instances detected (${this.serverInstances.size})`);
-      console.warn(`[Core Registry] This should NOT happen with the singleton pattern!`);
-    }
-    
-    console.log(`[Core Registry] ✓ Registered tool: ${toolName}`);
+    // Register the tool
+    this.registeredTools.add(toolName);
     this.currentModule.tools.add(toolName);
     this.categories.get(this.currentModule.category).add(toolName);
-    this.registeredTools.add(toolName); // Track for deduplication
-    this.totalCount++;
+    
+    console.log(`[Core Registry] ✅ Registered tool: ${toolName}`);
   }
 
   /**
-   * Complete module registration with persistence
+   * Complete the current module registration
+   * @returns {Promise<void>}
    */
   async completeModule() {
-    if (!this.currentModule) {
-      throw new Error('No module to complete');
-    }
-
+    this._ensureCurrentModule();
+    
     const duration = Date.now() - this.currentModule.startTime;
-    const module = {
+    const moduleInfo = {
+      name: this.currentModule.name,
       category: this.currentModule.category,
       tools: Array.from(this.currentModule.tools),
-      active: true,
-      loadedAt: new Date().toISOString(),
-      loadDuration: duration
+      toolCount: this.currentModule.tools.size,
+      loadedAt: new Date(),
+      loadDuration: duration,
+      active: true
     };
-
-    this.modules.set(this.currentModule.name, module);
-
-    // Persist to database if initialized
+    
+    // Store in registry
+    this.modules.set(this.currentModule.name, moduleInfo);
+    
+    // Persist to database
     if (this.dbInitialized) {
       try {
         await this.db.recordModuleRegistration(
-          this.currentModule.name, 
-          this.currentModule.category,
-          Array.from(this.currentModule.tools),
+          moduleInfo.name,
+          moduleInfo.category,
+          moduleInfo.tools,
           duration
         );
-        console.log(`[Core Registry] [DEBUG] Database persistence successful for ${this.currentModule.name}`);
+        console.log(`[Core Registry] 💾 Persisted ${moduleInfo.name} to database`);
       } catch (error) {
-        console.error(`[Core Registry] [ERROR] Database persistence failed for ${this.currentModule.name}:`, error.message);
+        console.error(`[Core Registry] ❌ Database persistence failed for ${moduleInfo.name}:`, error.message);
       }
     }
-
-    // Cache for hot-reload if enabled
+    
+    // Cache for hot-reload
     if (this.hotReloadEnabled) {
-      this.moduleCache.set(this.currentModule.name, module);
-      console.log(`[Core Registry] [DEBUG] Cached ${this.currentModule.name} for hot-reload`);
+      this.moduleCache.set(moduleInfo.name, moduleInfo);
     }
-
-    console.log(`[Core Registry] ✅ Completed ${this.currentModule.name}: ${this.currentModule.tools.size} ${this.currentModule.category} tools (${duration}ms)`);
+    
+    console.log(`[Core Registry] ✅ Completed ${moduleInfo.name}: ${moduleInfo.toolCount} tools (${duration}ms)`);
     
     this.currentModule = null;
   }
 
   /**
-   * Get comprehensive registry status
+   * Get current registry statistics
+   * @returns {Object} Registry statistics
    */
-  getStatus() {
-    const status = {
-      hot_reload: {
-        enabled: this.hotReloadEnabled,
-        watched_modules: this.moduleWatchers.size,
-        cached_modules: this.moduleCache.size
-      },
-      // ARCHITECTURAL FIX: Add deduplication diagnostics
-      deduplication: {
-        uniqueTools: this.registeredTools.size,
-        totalRegistrations: this.totalCount,
-        serverInstances: this.serverInstances.size,
-        duplicateDetected: this.registeredTools.size !== this.totalCount
-      },
-      modules: {}
+  getStats() {
+    const stats = {
+      state: this.state,
+      modules: this.modules.size,
+      tools: this.registeredTools.size,
+      categories: this.categories.size,
+      dbInitialized: this.dbInitialized,
+      hotReloadEnabled: this.hotReloadEnabled
     };
-
-    // Convert modules to status format
-    for (const [name, module] of this.modules) {
-      status.modules[name] = {
-        category: module.category,
-        tools: module.tools.length,
-        active: module.active,
-        loaded_at: module.loadedAt,
-        duration: module.loadDuration,
-        watchable: this.moduleWatchers.has(name),
-        cached: this.moduleCache.has(name)
-      };
+    
+    // Add category breakdown
+    stats.categoryBreakdown = {};
+    for (const [category, tools] of this.categories) {
+      stats.categoryBreakdown[category] = tools.size;
     }
-
-    return status;
+    
+    return stats;
   }
 
   /**
-   * Get analytics with database statistics
-   */
-  async getAnalytics() {
-    const analytics = {
-      enabled: true,
-      current_session: {
-        modules: this.modules.size,
-        tools: this.totalCount,
-        categories: this.categories.size
-      }
-    };
-
-    if (this.dbInitialized) {
-      try {
-        const dbStats = await this.db.getRegistryStats();
-        analytics.database = dbStats;
-      } catch (error) {
-        console.error('[Core Registry] Failed to get database analytics:', error.message);
-        analytics.database = { error: error.message };
-      }
-    }
-
-    return analytics;
-  }
-
-  /**
-   * Get tool counts by category
+   * Get tool counts in legacy format for compatibility
+   * @returns {Object} Tool counts
    */
   getToolCounts() {
-    const counts = {};
+    const categories = {};
     for (const [category, tools] of this.categories) {
-      counts[category] = tools.size;
+      categories[category] = tools.size;
     }
+    
     return {
-      total: this.totalCount,
-      categories: counts
+      total: this.registeredTools.size,
+      categories
     };
   }
 
   /**
-   * Enable hot-reload file watching for a module
+   * Get hot-reload status
+   * @returns {Object} Hot-reload status
    */
-  enableHotReload(moduleName, filePath) {
-    if (!this.hotReloadEnabled || this.moduleWatchers.has(moduleName)) {
-      return;
-    }
-
-    try {
-      const watcher = fs.watchFile(filePath, { interval: 1000 }, (curr, prev) => {
-        if (curr.mtime > prev.mtime) {
-          console.log(`[Core Registry] [Hot-Reload] File changed: ${filePath}`);
-          this.reloadModule(moduleName).catch(error => {
-            console.error(`[Core Registry] [Hot-Reload] Failed to reload ${moduleName}:`, error.message);
-          });
-        }
-      });
-      
-      this.moduleWatchers.set(moduleName, filePath);
-      console.log(`[Core Registry] [Hot-Reload] Watching ${moduleName} at ${filePath}`);
-    } catch (error) {
-      console.error(`[Core Registry] [Hot-Reload] Failed to watch ${moduleName}:`, error.message);
-    }
+  getHotReloadStatus() {
+    return {
+      enabled: this.hotReloadEnabled,
+      watchedModules: this.moduleWatchers.size,
+      cachedModules: this.moduleCache.size
+    };
   }
 
   /**
-   * Reload a module (placeholder for future implementation)
+   * Get analytics for database
+   * @returns {Promise<Object>} Analytics data
    */
-  async reloadModule(moduleName) {
-    console.log(`[Core Registry] [Hot-Reload] Reloading module: ${moduleName}`);
-    // Future implementation will handle module reloading
-    return { success: true, message: `Module ${moduleName} reload requested` };
-  }
-
-  /**
-   * Toggle hot-reload system-wide
-   */
-  toggleHotReload(enabled) {
-    this.hotReloadEnabled = enabled;
-    if (!enabled) {
-      // Clear all watchers
-      for (const [moduleName, filePath] of this.moduleWatchers) {
-        fs.unwatchFile(filePath);
-      }
-      this.moduleWatchers.clear();
-      console.log('[Core Registry] Hot-reload disabled and all watchers cleared');
-    }
-    console.log(`[Core Registry] Hot-reload ${enabled ? 'enabled' : 'disabled'}`);
-    return { hotReloadEnabled: this.hotReloadEnabled };
-  }
-
-  /**
-   * Unload a module and remove its tools from the registry
-   */
-  async unloadModule(moduleName, options = {}) {
-    const { force = false, preserve_config = true } = options;
-    
-    if (!this.modules.has(moduleName)) {
-      throw new Error(`Module ${moduleName} is not loaded`);
-    }
-    
-    const module = this.modules.get(moduleName);
-    
-    // Check if module is safe to unload (if not forced)
-    if (!force && module.active) {
-      console.warn(`[Core Registry] Module ${moduleName} is active - use force=true to unload`);
-      throw new Error(`Module ${moduleName} is active and cannot be safely unloaded`);
+  async getAnalytics() {
+    if (!this.dbInitialized) {
+      return { error: 'Database not initialized' };
     }
     
     try {
-      // Remove tools from categories
-      for (const toolName of module.tools) {
-        this.categories.get(module.category)?.delete(toolName);
-        this.registeredTools.delete(toolName);
-        this.totalCount--;
-      }
-      
-      // Clear file watcher
-      if (this.moduleWatchers.has(moduleName)) {
-        const filePath = this.moduleWatchers.get(moduleName);
-        fs.unwatchFile(filePath);
-        this.moduleWatchers.delete(moduleName);
-      }
-      
-      // Clear module cache
-      this.moduleCache.delete(moduleName);
-      
-      // Mark module as inactive
-      module.active = false;
-      module.unloadedAt = new Date().toISOString();
-      
-      // Remove from modules map
-      this.modules.delete(moduleName);
-      
-      // Update database if configured
-      if (this.dbInitialized && preserve_config) {
-        await this.db.markModuleUnloaded(moduleName);
-      }
-      
-      console.log(`[Core Registry] ✅ Module ${moduleName} unloaded successfully`);
-      
+      const stats = await this.db.getRegistryStats();
       return {
-        tools_removed: module.tools.length,
-        watchers_cleared: 1,
-        cache_cleared: true,
-        config_preserved: preserve_config
+        enabled: true,
+        current_session: this.getStats(),
+        database: stats
       };
-      
     } catch (error) {
-      console.error(`[Core Registry] Failed to unload module ${moduleName}:`, error.message);
-      throw error;
+      console.error('[Core Registry] Analytics error:', error.message);
+      return { error: error.message };
     }
   }
 
   /**
-   * Enhanced reload module with proper implementation
+   * Clean shutdown
+   * @returns {Promise<void>}
    */
-  async reloadModule(moduleName, options = {}) {
-    const { clear_cache = true, validate_tools = true } = options;
+  async cleanup() {
+    console.log('[Core Registry] 🧹 Starting cleanup...');
     
-    if (!this.modules.has(moduleName)) {
-      throw new Error(`Module ${moduleName} is not loaded`);
-    }
-    
-    const module = this.modules.get(moduleName);
-    
-    try {
-      console.log(`[Core Registry] [Hot-Reload] Starting reload of module: ${moduleName}`);
-      
-      // Clear require cache if requested
-      if (clear_cache && this.moduleCache.has(moduleName)) {
-        const cachedPath = this.moduleCache.get(moduleName);
-        delete require.cache[require.resolve(cachedPath)];
-        console.log(`[Core Registry] [Hot-Reload] Cleared cache for ${moduleName}`);
-      }
-      
-      // Get the module file path from watcher or cache
-      let modulePath = this.moduleWatchers.get(moduleName) || this.moduleCache.get(moduleName);
-      
-      if (!modulePath) {
-        throw new Error(`Module path not found for ${moduleName} - cannot reload`);
-      }
-      
-      // Validate module file exists
-      if (!fs.existsSync(modulePath)) {
-        throw new Error(`Module file not found: ${modulePath}`);
-      }
-      
-      // Store old tool count for comparison
-      const oldToolCount = module.tools.length;
-      
-      // Temporarily unload the module
-      await this.unloadModule(moduleName, { force: true, preserve_config: true });
-      
-      // Start fresh module registration
-      this.startModule(moduleName, module.category);
-      
-      // Reload the module
-      const moduleExports = require(modulePath);
-      
-      if (!moduleExports.tools || !moduleExports.handleToolCall) {
-        throw new Error('Module must export tools array and handleToolCall function');
-      }
-      
-      // Validate tools if requested
-      if (validate_tools) {
-        for (const tool of moduleExports.tools) {
-          if (!tool.name || !tool.description || !tool.inputSchema) {
-            throw new Error(`Invalid tool definition in ${moduleName}: missing required properties`);
-          }
-        }
-      }
-      
-      // Re-register tools with the server
-      const server = global.mcpServerInstance;
-      if (!server) {
-        throw new Error('MCP server instance not available for reload');
-      }
-      
-      for (const tool of moduleExports.tools) {
-        const inputSchema = tool.inputSchema?.shape || tool.inputSchema;
-        server.registerTool(tool.name, tool.description, inputSchema, 
-          async (args) => await moduleExports.handleToolCall(tool.name, args)
-        );
-        this.registerTool(tool.name, server);
-      }
-      
-      // Complete module registration
-      await this.completeModule();
-      
-      // Re-enable hot-reload watching
-      if (this.hotReloadEnabled) {
-        this.enableHotReload(moduleName, modulePath);
-      }
-      
-      // Update cache
-      this.moduleCache.set(moduleName, modulePath);
-      
-      console.log(`[Core Registry] [Hot-Reload] ✅ Module ${moduleName} reloaded successfully`);
-      
-      return {
-        success: true,
-        old_tool_count: oldToolCount,
-        new_tool_count: moduleExports.tools.length,
-        cache_cleared: clear_cache,
-        tools_validated: validate_tools,
-        reload_time: new Date().toISOString()
-      };
-      
-    } catch (error) {
-      console.error(`[Core Registry] [Hot-Reload] Failed to reload ${moduleName}:`, error.message);
-      throw error;
-    }
-  }
-
-  /**
-   * Toggle hot-reload for specific modules
-   */
-  async toggleModuleHotReload(moduleNames, enabled) {
-    const results = {};
-    
-    for (const moduleName of moduleNames) {
+    // Clear hot-reload watchers
+    for (const [moduleName, watcher] of this.moduleWatchers) {
       try {
-        if (!this.modules.has(moduleName)) {
-          results[moduleName] = { success: false, error: 'Module not found' };
+        watcher.close();
+        console.log(`[Core Registry] Stopped watching: ${moduleName}`);
+      } catch (error) {
+        console.warn(`[Core Registry] Failed to close watcher for ${moduleName}:`, error.message);
+      }
+    }
+    this.moduleWatchers.clear();
+    
+    // Close database connection
+    if (this.dbInitialized) {
+      try {
+        await this.db.close();
+        console.log('[Core Registry] Database connection closed');
+      } catch (error) {
+        console.warn('[Core Registry] Database close error:', error.message);
+      }
+    }
+    
+    this.state = REGISTRY_STATES.UNINITIALIZED;
+    console.log('[Core Registry] ✅ Cleanup complete');
+  }
+
+  // ========== PRIVATE METHODS ==========
+
+  /**
+   * Ensure registry is initialized
+   * @private
+   */
+  _ensureInitialized() {
+    if (this.state === REGISTRY_STATES.UNINITIALIZED) {
+      throw new Error('Registry not initialized. Call initialize() first.');
+    }
+    if (this.state === REGISTRY_STATES.ERROR) {
+      throw new Error('Registry is in error state. Restart required.');
+    }
+  }
+
+  /**
+   * Ensure there's a current module
+   * @private
+   */
+  _ensureCurrentModule() {
+    this._ensureInitialized();
+    if (!this.currentModule) {
+      throw new Error('No module in progress. Call startModule() first.');
+    }
+  }
+
+  /**
+   * Rebuild internal state from database data
+   * @param {Array} modules - Module records from database
+   * @param {Array} tools - Tool records from database
+   * @private
+   */
+  async _rebuildStateFromDatabase(modules, tools) {
+    console.log('[Core Registry] 🔄 Rebuilding state from database...');
+    
+    // Clear current state
+    this.registeredTools.clear();
+    this.categories.clear();
+    this.modules.clear();
+    
+    // Rebuild modules
+    for (const moduleRecord of modules) {
+      const moduleInfo = {
+        name: moduleRecord.module_name,
+        category: moduleRecord.category,
+        tools: [],
+        toolCount: 0,
+        loadedAt: new Date(moduleRecord.created_at),
+        loadDuration: 0,
+        active: true,
+        loadedFromDatabase: true
+      };
+      
+      this.modules.set(moduleRecord.module_name, moduleInfo);
+      
+      if (!this.categories.has(moduleRecord.category)) {
+        this.categories.set(moduleRecord.category, new Set());
+      }
+    }
+    
+    // Rebuild tools
+    for (const toolRecord of tools) {
+      this.registeredTools.add(toolRecord.tool_name);
+      
+      const module = this.modules.get(toolRecord.module_name);
+      if (module) {
+        module.tools.push(toolRecord.tool_name);
+        module.toolCount++;
+        this.categories.get(module.category).add(toolRecord.tool_name);
+      }
+    }
+    
+    console.log('[Core Registry] ✅ State rebuild complete');
+  }
+
+  /**
+   * Register tools from database with MCP server
+   * This requires reloading the actual modules to get tool definitions
+   * @param {Object} server - MCP server instance
+   * @param {Array} modules - Module records from database
+   * @param {Array} tools - Tool records from database
+   * @private
+   */
+  async _registerDatabaseToolsWithServer(server, modules, tools) {
+    console.log('[Core Registry] 🔄 Registering database tools with MCP server...');
+    
+    // Group tools by module
+    const moduleTools = new Map();
+    for (const moduleRecord of modules) {
+      moduleTools.set(moduleRecord.module_name, {
+        category: moduleRecord.category,
+        tools: tools.filter(t => t.module_name === moduleRecord.module_name)
+      });
+    }
+    
+    // Load each module and register its tools
+    for (const [moduleName, moduleData] of moduleTools) {
+      try {
+        console.log(`[Core Registry] 🔄 Loading module: ${moduleName}`);
+        
+        // Dynamically load the module
+        const moduleExports = require(`../${moduleName}`);
+        const { tools: moduleToolDefs, handleToolCall, initialize } = moduleExports;
+        
+        if (!moduleToolDefs || !Array.isArray(moduleToolDefs)) {
+          console.warn(`[Core Registry] ⚠️  Module ${moduleName} has no tools array, skipping`);
           continue;
         }
         
-        if (enabled) {
-          // Enable watching for this module
-          const modulePath = this.moduleCache.get(moduleName);
-          if (modulePath) {
-            this.enableHotReload(moduleName, modulePath);
-            results[moduleName] = { success: true, watching: true };
-          } else {
-            results[moduleName] = { success: false, error: 'Module path not found' };
-          }
-        } else {
-          // Disable watching for this module
-          if (this.moduleWatchers.has(moduleName)) {
-            const filePath = this.moduleWatchers.get(moduleName);
-            fs.unwatchFile(filePath);
-            this.moduleWatchers.delete(moduleName);
-            results[moduleName] = { success: true, watching: false };
-          } else {
-            results[moduleName] = { success: true, watching: false, note: 'Was not being watched' };
+        // Special initialization for memory tools
+        if (moduleName === 'memory_tools_sdk' && typeof initialize === 'function') {
+          console.log(`[Core Registry] 🔧 Initializing ${moduleName}...`);
+          await initialize();
+        }
+        
+        // Register tools that exist in database
+        for (const toolDef of moduleToolDefs) {
+          const toolInDB = moduleData.tools.find(t => t.tool_name === toolDef.name);
+          if (toolInDB) {
+            try {
+              // Convert Zod schema to JSON Schema if needed
+              let jsonSchema = toolDef.inputSchema;
+              if (toolDef.inputSchema && toolDef.inputSchema._def) {
+                // This would need the zodToJsonSchema converter
+                console.log(`[Core Registry] ⚠️  Tool ${toolDef.name} has Zod schema - conversion needed`);
+                jsonSchema = { type: 'object', properties: {}, additionalProperties: true };
+              }
+              
+              // Register with MCP server
+              server.tool(toolDef.name, toolDef.description, jsonSchema, async (args) => {
+                return handleToolCall(toolDef.name, args);
+              });
+              
+              console.log(`[Core Registry] ✅ Registered database tool: ${toolDef.name}`);
+            } catch (error) {
+              console.error(`[Core Registry] ❌ Failed to register tool ${toolDef.name}:`, error.message);
+            }
           }
         }
+        
       } catch (error) {
-        results[moduleName] = { success: false, error: error.message };
+        console.error(`[Core Registry] ❌ Failed to load module ${moduleName}:`, error.message);
       }
     }
     
-    return {
-      enabled,
-      modules: results,
-      global_enabled: this.hotReloadEnabled
-    };
-  }
-
-  /**
-   * Restart all file watchers
-   */
-  async restartFileWatchers() {
-    console.log('[Core Registry] [Hot-Reload] Restarting all file watchers...');
-    
-    // Store current watchers
-    const watchersToRestart = new Map(this.moduleWatchers);
-    
-    // Clear all watchers
-    for (const [moduleName, filePath] of this.moduleWatchers) {
-      fs.unwatchFile(filePath);
-    }
-    this.moduleWatchers.clear();
-    
-    // Restart watchers
-    for (const [moduleName, filePath] of watchersToRestart) {
-      this.enableHotReload(moduleName, filePath);
-    }
-    
-    console.log(`[Core Registry] [Hot-Reload] ✅ Restarted ${watchersToRestart.size} file watchers`);
-    
-    return {
-      restarted_count: watchersToRestart.size,
-      active_watchers: this.moduleWatchers.size
-    };
-  }
-
-  /**
-   * Cleanup resources
-   */
-  async cleanup() {
-    // Clear all file watchers
-    for (const [moduleName, filePath] of this.moduleWatchers) {
-      fs.unwatchFile(filePath);
-    }
-    this.moduleWatchers.clear();
-
-    // Close database connection
-    if (this.dbInitialized) {
-      await this.db.close();
-    }
-    
-    console.log('[Core Registry] Cleanup completed');
+    console.log('[Core Registry] ✅ Database tools registered with MCP server');
   }
 }
 
 module.exports = {
-  CoreRegistry
+  CoreRegistry,
+  REGISTRY_STATES
 };
