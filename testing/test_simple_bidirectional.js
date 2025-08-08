@@ -75,6 +75,9 @@ async function testSimpleBidirectional() {
 
     await client.close();
     await transport.close();
+    
+    console.log('✅ Test completed successfully!');
+    process.exit(0);
 
   } catch (error) {
     console.error('\n❌ Test failed:');

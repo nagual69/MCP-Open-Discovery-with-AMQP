@@ -5,40 +5,16 @@
  * through RabbitMQ/AMQP message queues for distributed network discovery operations.
  */
 
-/**
- * Transport interface (compatible with MCP SDK)
- */
-class Transport {
-  constructor() {
-    this.onclose = null;
-    this.onerror = null;
-    this.onmessage = null;
-  }
-  
-  async start() {
-    throw new Error('start() must be implemented');
-  }
-  
-  async send(message) {
-    throw new Error('send() must be implemented');
-  }
-  
-  async close() {
-    throw new Error('close() must be implemented');
-  }
-}
+const { BaseAMQPTransport } = require('./base-amqp-transport.js');
 
 /**
  * AMQP client transport for connecting to MCP Open Discovery Server
  */
-class AMQPClientTransport extends Transport {
+class AMQPClientTransport extends BaseAMQPTransport {
   constructor(options) {
-    super();
+    super(options);
     
-    // Validate required options
-    if (!options.amqpUrl) {
-      throw new Error('amqpUrl is required');
-    }
+    // Validate client-specific required options
     if (!options.serverQueuePrefix) {
       throw new Error('serverQueuePrefix is required');
     }
@@ -46,6 +22,7 @@ class AMQPClientTransport extends Transport {
       throw new Error('exchangeName is required');
     }
     
+    // Client-specific options (inherits connection, channel, connectionState, sessionId from base)
     this.options = {
       responseTimeout: 30000,
       reconnectDelay: 5000,
@@ -53,18 +30,16 @@ class AMQPClientTransport extends Transport {
       ...options
     };
     
-    // Generate unique session ID for MCP bidirectional routing
-    this.sessionId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    this.connection = null;
-    this.channel = null;
+    // Client-specific properties
     this.responseQueue = null;
     this.pendingRequests = new Map();
-    this.connectionState = {
-      connected: false,
-      reconnectAttempts: 0,
-      lastError: null
-    };
+  }
+
+  /**
+   * Get transport type for logging and identification
+   */
+  getTransportType() {
+    return 'Client';
   }
 
   async start() {
@@ -137,77 +112,27 @@ class AMQPClientTransport extends Transport {
     });
   }
 
+  /**
+   * Override close method to clear pending requests
+   */
   async close() {
-    this.connectionState.connected = false;
-    
     // Clear all pending requests
     for (const [correlationId, timeoutId] of this.pendingRequests) {
       clearTimeout(timeoutId);
     }
     this.pendingRequests.clear();
     
-    try {
-      if (this.channel) {
-        await this.channel.close();
-        this.channel = null;
-      }
-      
-      if (this.connection) {
-        await this.connection.close();
-        this.connection = null;
-      }
-    } catch (error) {
-      // Ignore errors during cleanup
-    }
-    
-    if (this.onclose) {
-      this.onclose();
-    }
+    // Call base class close method
+    await super.close();
   }
 
   async connect() {
-    // Dynamic import to handle environments where amqplib might not be available
-    let amqp;
-    try {
-      amqp = require('amqplib');
-    } catch (error) {
-      throw new Error('amqplib package not found. Please install with: npm install amqplib');
-    }
-    
-    // Create connection
-    this.connection = await amqp.connect(this.options.amqpUrl);
-    
-    // Set up connection error handling
-    this.connection.on('error', (error) => {
-      this.connectionState.connected = false;
-      this.connectionState.lastError = error;
-      if (this.onerror) {
-        this.onerror(error);
-      }
-      this.scheduleReconnect();
-    });
-
-    this.connection.on('close', () => {
-      this.connectionState.connected = false;
-      this.scheduleReconnect();
-    });
-
-    // Create channel
-    this.channel = await this.connection.createChannel();
-
-    // Set up channel error handling
-    this.channel.on('error', (error) => {
-      console.error('[AMQP Client] Channel error:', error);
-      if (this.onerror) {
-        this.onerror(error);
-      }
-    });
+    // Use base class connection initialization
+    await this.initializeConnection(this.options.amqpUrl);
 
     // Assert the MCP bidirectional routing exchange (needed for new routing system)
     const mcpExchangeName = `${this.options.exchangeName}.mcp.routing`;
-    await this.channel.assertExchange(mcpExchangeName, 'topic', {
-      durable: true
-    });
+    await this.assertExchange(mcpExchangeName, 'topic');
 
     // Create exclusive response queue for this client session  
     const responseQueueResult = await this.channel.assertQueue('', {
@@ -377,36 +302,6 @@ class AMQPClientTransport extends Transport {
    * Detect message type following MCP v2025-06-18 specification
    * 
    * JSON-RPC 2.0 message type detection:
-   * - Response: Has 'id' and ('result' OR 'error')
-   * - Request: Has 'id' and 'method' (but no result/error)
-   * - Notification: Has 'method' but no 'id'
-   */
-  detectMessageType(message) {
-    // Priority 1: Check for response (id + result/error)
-    if (message.id !== undefined && (message.result !== undefined || message.error !== undefined)) {
-      return 'response';
-    }
-    
-    // Priority 2: Check for request (id + method, but no result/error)
-    if (message.id !== undefined && message.method !== undefined) {
-      return 'request';
-    }
-    
-    // Priority 3: Check for notification (method only, no id)
-    if (message.method !== undefined && message.id === undefined) {
-      return 'notification';
-    }
-    
-    // Fallback for malformed messages
-    console.warn('[AMQP Client] Unknown message type, treating as notification:', message);
-    return 'notification';
-  }
-
-  // Legacy compatibility method
-  getMessageType(message) {
-    return this.detectMessageType(message);
-  }
-
   getTargetQueueName(message) {
     // Legacy method - kept for reference but not used in MCP bidirectional routing
     return `${this.options.serverQueuePrefix}.requests`;
@@ -428,29 +323,8 @@ class AMQPClientTransport extends Transport {
     // Fallback for other message types
     return 'mcp.request.general';
   }
-
-  /**
-   * Determine tool category for routing (matches server-side categories)
-   */
-  getToolCategory(method) {
-    if (method.startsWith('nmap_')) return 'nmap';
-    if (method.startsWith('snmp_')) return 'snmp';
-    if (method.startsWith('proxmox_')) return 'proxmox';
-    if (method.startsWith('zabbix_')) return 'zabbix';
-    if (['ping', 'telnet', 'wget', 'netstat', 'ifconfig', 'arp', 'route', 'nslookup'].includes(method)) return 'network';
-    if (method.startsWith('memory_') || method.startsWith('cmdb_')) return 'memory';
-    if (method.startsWith('credentials_')) return 'credentials';
-    if (method.startsWith('registry_')) return 'registry';
-    return 'general';
-  }
-
-  generateCorrelationId() {
-    // Include session ID in correlation ID so server can route responses back
-    return `${this.sessionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 }
 
 module.exports = {
-  AMQPClientTransport,
-  Transport
+  AMQPClientTransport
 };
