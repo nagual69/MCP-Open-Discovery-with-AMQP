@@ -16,7 +16,7 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const express = require('express');
 const { randomUUID } = require('node:crypto');
-const { registerAllTools, registerAllResources, getResourceCounts, getRegistry, getHotReloadManager, getValidationManager, cleanup } = require('./tools/registry/index_refactored');
+const { registerAllTools, registerAllResources, getResourceCounts, getRegistry, getHotReloadManager, getValidationManager, cleanup } = require('./tools/registry/index');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
 // AMQP integration (using original files - properly fixed)
 const { 

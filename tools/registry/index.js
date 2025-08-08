@@ -539,11 +539,6 @@ async function _registerFreshTools(server, registry, validator) {
     }
   }
 
-  // Register management tools (registry control)
-  console.log('[Registry] 🔧 Registering management tools...');
-  await registerManagementModule(server, registry);
-  console.log('[Registry] ✅ Management tools registered');
-
   return {
     success: true,
     source: 'fresh_registration',
@@ -555,94 +550,6 @@ async function _registerFreshTools(server, registry, validator) {
     categories: results,
     validationResults
   };
-}
-
-/**
- * Register registry management tools
- * EXTRACTED FROM ORIGINAL: Provides runtime registry control and monitoring
- */
-async function registerManagementModule(server, registry) {
-  try {
-    console.log('[Registry] Starting registration for registry_management (registry)');
-    
-    // Store global references for management tools
-    global.mcpCoreRegistry = registry;
-    global.mcpServerInstance = server;
-    
-    // Load management tools module
-    const managementToolsModule = require('./management_tools');
-    
-    // Register management tools using the same pattern as other modules
-    const managementModuleConfig = {
-      name: 'registry_management',
-      category: 'registry',
-      loader: () => managementToolsModule
-    };
-    
-    // Register management tools directly
-    const module = managementToolsModule;
-    
-    if (!module.tools || !Array.isArray(module.tools)) {
-      throw new Error('Management tools module must export tools array');
-    }
-
-    if (!module.handleToolCall || typeof module.handleToolCall !== 'function') {
-      throw new Error('Management tools module must export handleToolCall function');
-    }
-
-    // Start module tracking
-    registry.startModule('registry_management', 'registry');
-
-    // Register each management tool
-    for (const tool of module.tools) {
-      // Management tools don't go through validation since they're internal
-      console.log(`[Registry] [DEBUG] Registering management tool: ${tool.name}`);
-      
-      const paramAnalysis = analyzeParameters(tool);
-      const hasArrays = hasArrayParameters(tool);
-      const registrationMethod = getRegistrationMethod(tool);
-      
-      let registrationSchema = getRegistrationSchema(tool);
-      
-      // Convert Zod to JSON Schema if needed
-      if (!hasArrays && tool.inputSchema && tool.inputSchema._def) {
-        try {
-          registrationSchema = zodToJsonSchema(tool.inputSchema);
-        } catch (error) {
-          console.warn(`[Registry] ⚠️  Failed to convert Zod schema for ${tool.name}:`, error.message);
-          registrationSchema = { type: 'object', properties: {}, additionalProperties: true };
-        }
-      }
-      
-      // Register using the appropriate MCP SDK method
-      if (registrationMethod === 'server.tool') {
-        server.tool(tool.name, tool.description, registrationSchema, async (args) => {
-          return module.handleToolCall(tool.name, args);
-        });
-      } else {
-        const toolConfig = {
-          description: tool.description,
-          inputSchema: registrationSchema
-        };
-        
-        server.registerTool(tool.name, toolConfig, async (args) => {
-          return module.handleToolCall(tool.name, args);
-        });
-      }
-      
-      // Register with our registry
-      registry.registerTool(tool.name);
-    }
-
-    // Complete module registration
-    await registry.completeModule();
-    
-    console.log('[Registry] ✅ Registry management tools registered successfully');
-    
-  } catch (error) {
-    console.error('[Registry] Failed to register management tools:', error.message);
-    throw error;
-  }
 }
 
 /**
