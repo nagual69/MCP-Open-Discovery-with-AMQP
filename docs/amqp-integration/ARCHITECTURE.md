@@ -152,11 +152,11 @@ node mcp_server_multi_transport_sdk.js
 
 ```javascript
 const {
-  RabbitMQClientTransport,
+  AMQPClientTransport,
 } = require("./tools/transports/amqp-client-transport");
 
 // Connect to distributed discovery platform
-const transport = new RabbitMQClientTransport({
+const transport = new AMQPClientTransport({
   amqpUrl: "amqp://mcp:discovery@localhost:5672",
   serverQueuePrefix: "mcp.discovery",
   exchangeName: "mcp.notifications",

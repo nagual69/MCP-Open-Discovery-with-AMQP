@@ -121,12 +121,45 @@ function startAmqpHealthCheck(log, interval = 30000) {
 }
 
 /**
- * Start the server with AMQP transport
+ * Enhanced AMQP server with full orchestration capabilities
+ * Includes multi-transport mode support, auto-recovery, and graceful shutdown
  */
-async function startAmqpServer(createServerFn, log) {
-  log('info', 'Starting AMQP transport...');
+async function startAmqpServer(createServerFn, log, options = {}) {
+  log('info', 'Starting enhanced AMQP server for MCP Open Discovery v2.0...');
   
   try {
+    // Initialize configuration
+    initializeAmqpIntegration(log);
+    
+    // Parse transport modes (migrated from startServerWithAmqp)
+    const transportMode = options.transportMode || process.env.MCP_TRANSPORT_MODE || 'amqp';
+    const transportModes = parseTransportMode(transportMode);
+    
+    log('info', 'Enhanced AMQP server startup initiated', {
+      requestedModes: transportModes,
+      degradedModeAllowed: true,
+      autoRecoveryEnabled: process.env.AMQP_AUTO_RECOVERY !== 'false'
+    });
+    
+    // Enhanced auto-recovery configuration (migrated from startServerWithAmqp)
+    const autoRecoveryEnabled = process.env.AMQP_AUTO_RECOVERY !== 'false';
+    if (autoRecoveryEnabled) {
+      process.amqpAutoRecoveryConfig = {
+        enabled: true,
+        retryInterval: parseInt(process.env.AMQP_RETRY_INTERVAL) || 30000,
+        maxRetries: parseInt(process.env.AMQP_MAX_RETRY_ATTEMPTS) || -1,
+        exponentialBackoff: process.env.AMQP_EXPONENTIAL_BACKOFF !== 'false',
+        maxRetryInterval: parseInt(process.env.AMQP_MAX_RETRY_INTERVAL) || 300000
+      };
+      
+      log('info', 'AMQP auto-recovery configured', process.amqpAutoRecoveryConfig);
+    } else {
+      log('info', 'AMQP auto-recovery disabled via AMQP_AUTO_RECOVERY=false');
+    }
+    
+    // Store createServerFn for auto-recovery
+    process.amqpCreateServerFn = createServerFn;
+    
     // Create the MCP server instance
     const mcpServer = await createServerFn();
     
@@ -142,19 +175,30 @@ async function startAmqpServer(createServerFn, log) {
       queueTTL: AMQP_CONFIG.AMQP_QUEUE_TTL
     });
     
-    // Set up transport event handlers
+    // Store transport globally for health checks and shutdown handling
+    process.amqpTransport = transport;
+    
+    // Enhanced error handling (migrated from startServerWithAmqp)
     transport.onerror = (error) => {
-      log('error', 'AMQP transport error', {
+      log('error', 'AMQP transport error - attempting recovery', {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
+        autoRecoveryEnabled: autoRecoveryEnabled
       });
+      
+      // Trigger auto-recovery if enabled
+      if (autoRecoveryEnabled && process.amqpAutoRecoveryConfig?.enabled) {
+        log('info', 'Triggering AMQP auto-recovery after transport error');
+        process.amqpTransport = null;
+        startAmqpAutoRecovery(createServerFn, log, process.amqpAutoRecoveryConfig);
+      }
     };
     
     transport.onclose = () => {
-      log('info', 'AMQP transport closed');
+      log('warn', 'AMQP transport connection closed - checking auto-recovery status');
       
       // Check if auto-recovery is configured and enabled
-      if (process.amqpAutoRecoveryConfig && process.amqpAutoRecoveryConfig.enabled) {
+      if (autoRecoveryEnabled && process.amqpAutoRecoveryConfig?.enabled) {
         log('warn', 'AMQP connection lost, starting auto-recovery...');
         process.amqpTransport = null;
         
@@ -168,13 +212,78 @@ async function startAmqpServer(createServerFn, log) {
     };
     
     // Connect server to transport
-    await mcpServer.connect(transport);
+    console.log('[AMQP] Connecting MCP server to AMQP transport...');
     
-    // Start the transport
-    await transport.start();
+    // CRITICAL FIX: Let MCP SDK manage transport lifecycle completely
+    // The SDK calls transport.start() automatically during connect()
+    // Manual start() calls interfere with SDK's transport ownership
+    console.log('[AMQP] Allowing SDK to start transport automatically...');
+    
+    // Connect the server - SDK will call transport.start() internally
+    await mcpServer.connect(transport);
+    console.log('[AMQP] MCP server connected to AMQP transport successfully');
+    
+    // Verify the connection by checking transport properties
+    console.log('[AMQP] Post-connection transport verification:', {
+      hasTransport: !!mcpServer.server._transport,
+      transportType: mcpServer.server._transport ? mcpServer.server._transport.constructor.name : 'none',
+      sessionId: mcpServer.server._transport ? mcpServer.server._transport.sessionId : 'none',
+      isConnected: !!mcpServer.server._transport,
+      hasSendMethod: mcpServer.server._transport ? typeof mcpServer.server._transport.send === 'function' : false,
+      sendMethodName: mcpServer.server._transport && mcpServer.server._transport.send ? mcpServer.server._transport.send.name : 'none',
+      transportObjectId: mcpServer.server._transport ? mcpServer.server._transport.sessionId : 'none',
+      ourTransportId: transport.sessionId,
+      transportMatches: mcpServer.server._transport === transport
+    });
+    
+    // Start auto-recovery if enabled
+    if (autoRecoveryEnabled && process.amqpAutoRecoveryConfig?.enabled) {
+      // Note: Auto-recovery is now handled by transport events above
+      log('info', 'AMQP auto-recovery service configured', {
+        retryInterval: process.amqpAutoRecoveryConfig.retryInterval,
+        maxRetries: process.amqpAutoRecoveryConfig.maxRetries === -1 ? 'infinite' : process.amqpAutoRecoveryConfig.maxRetries
+      });
+    }
     
     // Start periodic health checks
     startAmqpHealthCheck(log, 15000); // Check every 15 seconds
+    
+    // Enhanced graceful shutdown handling (migrated from startServerWithAmqp)
+    const gracefulShutdown = async (signal) => {
+      log('info', `Received ${signal}, shutting down enhanced AMQP server gracefully...`);
+      
+      try {
+        // Stop AMQP auto-recovery if running
+        if (process.amqpRecovery) {
+          log('info', 'Stopping AMQP auto-recovery service...');
+          process.amqpRecovery.stop = true;
+        }
+        
+        // Close AMQP transport if active
+        if (process.amqpTransport) {
+          log('info', 'Closing AMQP transport...');
+          if (typeof process.amqpTransport.close === 'function') {
+            await process.amqpTransport.close();
+          }
+        }
+        
+        log('info', 'Enhanced AMQP server graceful shutdown complete');
+        return true; // Allow other shutdown handlers to continue
+      } catch (error) {
+        log('error', 'Error during enhanced AMQP server shutdown', {
+          error: error.message,
+          stack: error.stack
+        });
+        throw error;
+      }
+    };
+    
+    // Register shutdown handlers (only if not already registered)
+    if (!process._amqpShutdownHandlersRegistered) {
+      process.on('SIGINT', () => gracefulShutdown('SIGINT').catch(() => process.exit(1)));
+      process.on('SIGTERM', () => gracefulShutdown('SIGTERM').catch(() => process.exit(1)));
+      process._amqpShutdownHandlersRegistered = true;
+    }
     
     // Set up registry integration for your revolutionary hot-reload system
     if (AMQP_CONFIG.REGISTRY_BROADCAST_ENABLED) {
@@ -186,18 +295,22 @@ async function startAmqpServer(createServerFn, log) {
       await setupToolCategoryRouting(transport, log);
     }
     
-    log('info', 'AMQP transport started successfully with MCP Open Discovery v2.0 enhancements', {
+    log('info', 'Enhanced AMQP server started successfully with MCP Open Discovery v2.0 enhancements', {
       amqpUrl: AMQP_CONFIG.AMQP_URL,
       queuePrefix: AMQP_CONFIG.AMQP_QUEUE_PREFIX,
       exchangeName: AMQP_CONFIG.AMQP_EXCHANGE,
-      prefetchCount: AMQP_CONFIG.AMQP_PREFETCH_COUNT
+      prefetchCount: AMQP_CONFIG.AMQP_PREFETCH_COUNT,
+      autoRecovery: autoRecoveryEnabled,
+      registryIntegration: AMQP_CONFIG.REGISTRY_BROADCAST_ENABLED,
+      categoryRouting: AMQP_CONFIG.TOOL_CATEGORY_ROUTING,
+      gracefulShutdown: true
     });
     
     // Return transport for management
     return transport;
     
   } catch (error) {
-    log('error', 'Failed to start AMQP transport', {
+    log('error', 'Failed to start enhanced AMQP server', {
       error: error.message,
       stack: error.stack,
       config: {
@@ -206,6 +319,14 @@ async function startAmqpServer(createServerFn, log) {
         exchangeName: AMQP_CONFIG.AMQP_EXCHANGE
       }
     });
+    
+    // Start auto-recovery on initial failure if enabled
+    const autoRecoveryEnabled = process.env.AMQP_AUTO_RECOVERY !== 'false';
+    if (autoRecoveryEnabled && process.amqpAutoRecoveryConfig?.enabled) {
+      log('info', 'Initial enhanced AMQP server start failed - starting auto-recovery');
+      startAmqpAutoRecovery(createServerFn, log, process.amqpAutoRecoveryConfig);
+    }
+    
     throw error;
   }
 }
@@ -414,161 +535,6 @@ function getAmqpStatus() {
   
   return status;
 }
-async function startServerWithAmqp(originalStartServer, createServerFn, log, CONFIG) {
-  try {
-    const transportModes = parseTransportMode(CONFIG.TRANSPORT_MODE);
-    
-    log('info', `Starting server with transport modes: ${transportModes.join(', ')}`, {
-      originalValue: CONFIG.TRANSPORT_MODE,
-      envValue: process.env.TRANSPORT_MODE,
-      parsedModes: transportModes
-    });
-    
-    const activeTransports = [];
-    const failedTransports = [];
-    
-    // Start each requested transport with graceful degradation
-    for (const mode of transportModes) {
-      try {
-        switch (mode) {
-          case 'stdio':
-            if (originalStartServer.startStdioServer) {
-              await originalStartServer.startStdioServer();
-              activeTransports.push('stdio');
-            }
-            break;
-            
-          case 'http':
-            if (originalStartServer.startHttpServer) {
-              await originalStartServer.startHttpServer();
-              activeTransports.push('http');
-            }
-            break;
-            
-          case 'amqp':
-            try {
-              // Set up auto-recovery configuration first (regardless of initial connection success)
-              const autoRecoveryConfig = {
-                enabled: process.env.AMQP_AUTO_RECOVERY !== 'false',
-                retryInterval: parseInt(process.env.AMQP_RETRY_INTERVAL) || 30000, // 30 seconds
-                maxRetries: parseInt(process.env.AMQP_MAX_RETRIES) || -1, // infinite by default
-                backoffMultiplier: parseFloat(process.env.AMQP_BACKOFF_MULTIPLIER) || 1.5,
-                maxRetryInterval: parseInt(process.env.AMQP_MAX_RETRY_INTERVAL) || 300000 // 5 minutes
-              };
-              
-              // Store auto-recovery configuration globally
-              process.amqpAutoRecoveryConfig = autoRecoveryConfig;
-              
-              // Store createServerFn globally for auto-recovery
-              global.mcpCreateServerFn = createServerFn;
-              
-              const amqpTransport = await startAmqpServer(createServerFn, log);
-              activeTransports.push('amqp');
-              
-              // Store transport for graceful shutdown
-              process.amqpTransport = amqpTransport;
-              
-              if (autoRecoveryConfig.enabled) {
-                log('info', 'AMQP auto-recovery configured', {
-                  retryInterval: autoRecoveryConfig.retryInterval,
-                  maxRetries: autoRecoveryConfig.maxRetries === -1 ? 'infinite' : autoRecoveryConfig.maxRetries,
-                  status: 'standby'
-                });
-              }
-            } catch (amqpError) {
-              log('warn', 'AMQP transport failed to start, enabling auto-recovery', {
-                error: amqpError.message,
-                fallback: 'Server will continue without AMQP support and attempt auto-recovery'
-              });
-              failedTransports.push({ mode: 'amqp', error: amqpError.message });
-              
-              // Auto-recovery config should already be set above, just start recovery
-              if (process.amqpAutoRecoveryConfig && process.amqpAutoRecoveryConfig.enabled) {
-                startAmqpAutoRecovery(createServerFn, log, process.amqpAutoRecoveryConfig);
-                log('info', 'AMQP auto-recovery started after initial failure', {
-                  retryInterval: process.amqpAutoRecoveryConfig.retryInterval,
-                  maxRetries: process.amqpAutoRecoveryConfig.maxRetries === -1 ? 'infinite' : process.amqpAutoRecoveryConfig.maxRetries
-                });
-              } else {
-                log('info', 'AMQP auto-recovery disabled via AMQP_AUTO_RECOVERY=false');
-              }
-            }
-            break;
-            
-          default:
-            log('warn', `Unknown transport mode: ${mode}`);
-        }
-      } catch (transportError) {
-        log('error', `Failed to start ${mode} transport`, {
-          error: transportError.message,
-          stack: transportError.stack
-        });
-        failedTransports.push({ mode, error: transportError.message });
-      }
-    }
-    
-    // Report startup status
-    if (activeTransports.length > 0) {
-      log('info', 'MCP Server with AMQP integration started successfully', {
-        activeTransports,
-        failedTransports: failedTransports.length > 0 ? failedTransports : 'none',
-        mode: transportModes.join(', '),
-        degradedOperation: failedTransports.length > 0
-      });
-      
-      // Log warnings for failed transports
-      if (failedTransports.length > 0) {
-        log('warn', 'Server running in degraded mode - some transports failed', {
-          failedCount: failedTransports.length,
-          details: failedTransports
-        });
-      }
-    } else {
-      log('error', 'All transports failed to start', { failedTransports });
-      throw new Error('No transports could be started');
-    }
-    
-    // Enhanced graceful shutdown
-    const gracefulShutdown = async (signal) => {
-      log('info', `Received ${signal}, shutting down gracefully...`);
-      
-      try {
-        // Stop AMQP auto-recovery if running
-        if (process.amqpRecovery) {
-          log('info', 'Stopping AMQP auto-recovery service...');
-          process.amqpRecovery.stop = true;
-        }
-        
-        // Close AMQP transport if active
-        if (process.amqpTransport) {
-          log('info', 'Closing AMQP transport...');
-          await process.amqpTransport.close();
-        }
-        
-        log('info', 'Graceful shutdown complete');
-        process.exit(0);
-      } catch (error) {
-        log('error', 'Error during graceful shutdown', {
-          error: error.message,
-          stack: error.stack
-        });
-        process.exit(1);
-      }
-    };
-    
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    
-  } catch (error) {
-    log('error', 'Failed to start server', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    process.exit(1);
-  }
-}
-
 /**
  * Health check enhancement with AMQP status and auto-recovery information
  */
@@ -852,7 +818,6 @@ module.exports = {
   getAmqpStatus,
   testAmqpConnection,
   startAmqpHealthCheck,
-  startServerWithAmqp,
   enhanceHealthCheck,
   enhanceHealthCheckWithRegistry,
   validateAmqpConfig,

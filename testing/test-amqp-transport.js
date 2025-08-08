@@ -10,7 +10,7 @@
  * - Production-grade error handling
  */
 
-const { RabbitMQClientTransport } = require('./amqp-client-transport.js');
+const { AMQPClientTransport } = require('../tools/transports/amqp-client-transport.js');
 
 /**
  * Test configuration for MCP Open Discovery Server v2.0
@@ -57,7 +57,7 @@ function log(level, message, data = null) {
 async function testAmqpConnection() {
   log('info', 'Testing AMQP transport connection to MCP Open Discovery Server v2.0...');
   
-  const transport = new RabbitMQClientTransport(TEST_CONFIG);
+  const transport = new AMQPClientTransport(TEST_CONFIG);
 
   let connected = false;
   

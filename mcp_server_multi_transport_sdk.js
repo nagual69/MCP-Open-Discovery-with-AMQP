@@ -1,5 +1,10 @@
 /**
- * MCP Open Discovery Server - Multi-Transport (SDK Compatible)
+ * MCP Ope# AMQP integration (using original files - properly fixed)
+const { 
+  startAmqpServer, 
+  initializeAmqpIntegration,
+  getAmqpStatus
+} = require('./tools/transports/amqp-transport-integration');overy Server - Multi-Transport (SDK Compatible)
  * 
  * This is an enhanced server implementation using the official MCP TypeScript SDK
  * that supports both stdio and HTTP transports, making it suitable for both
@@ -13,9 +18,11 @@ const express = require('express');
 const { randomUUID } = require('node:crypto');
 const { registerAllTools, getToolCounts, cleanup, registerAllResources, getResourceCounts } = require('./tools/registry/index');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
+// AMQP integration (using original files - properly fixed)
 const { 
-  startServerWithAmqp, 
-  initializeAmqpIntegration 
+  startAmqpServer, 
+  initializeAmqpIntegration,
+  getAmqpStatus
 } = require('./tools/transports/amqp-transport-integration');
 
 // Environment configuration with defaults
@@ -350,7 +357,7 @@ async function startHttpServer() {
     // Get AMQP status if available
     let amqpStatus = null;
     try {
-      const { getAmqpStatus } = require('./tools/transports/amqp-transport-integration');
+      // Use the fixed AMQP status
       amqpStatus = getAmqpStatus();
     } catch (error) {
       // AMQP module not available or not loaded
@@ -702,74 +709,28 @@ async function startServer() {
             
           case 'amqp':
             try {
-              // Only start AMQP if HTTP is also running (AMQP needs HTTP server)
-              if (!activeTransports.includes('http')) {
-                log('warn', 'AMQP transport requires HTTP transport, starting HTTP first');
-                await startHttpServer();
-                activeTransports.push('http');
-              }
-              
-              // ARCHITECTURAL FIX: Create transport-only function (NO SERVER DUPLICATION)
-              const createTransportOnlyFn = async () => {
-                log('info', '[AMQP] Using singleton server instance for transport');
+              // Enhanced AMQP server with full orchestration capabilities
+              const createServerFn = async () => {
+                log('info', '[AMQP Enhanced] Using singleton server instance for transport');
                 return await createServer(); // Returns existing singleton instance
               };
               
-              const { startAmqpServer, startAmqpAutoRecovery } = require('./tools/transports/amqp-transport-integration');
-              
-              // Set up auto-recovery configuration (regardless of initial success)
-              const autoRecoveryConfig = {
-                enabled: process.env.AMQP_AUTO_RECOVERY !== 'false',
-                retryInterval: parseInt(process.env.AMQP_RETRY_INTERVAL) || 30000, // 30 seconds
-                maxRetries: parseInt(process.env.AMQP_MAX_RETRIES) || -1, // infinite by default
-                backoffMultiplier: parseFloat(process.env.AMQP_BACKOFF_MULTIPLIER) || 1.5,
-                maxRetryInterval: parseInt(process.env.AMQP_MAX_RETRY_INTERVAL) || 300000 // 5 minutes
-              };
-              
-              // Store auto-recovery configuration globally
-              process.amqpAutoRecoveryConfig = autoRecoveryConfig;
-              process.amqpCreateServerFn = createTransportOnlyFn; // Store transport-only function
-              
-              const amqpTransport = await startAmqpServer(createTransportOnlyFn, log);
+              // Use the enhanced AMQP server with consolidated functionality
+              const amqpTransport = await startAmqpServer(createServerFn, log, {
+                transportMode: CONFIG.TRANSPORT_MODE
+              });
               activeTransports.push('amqp');
               
-              // Store transport for graceful shutdown
-              process.amqpTransport = amqpTransport;
-              
-              if (autoRecoveryConfig.enabled) {
-                log('info', 'AMQP auto-recovery configured', {
-                  retryInterval: autoRecoveryConfig.retryInterval,
-                  maxRetries: autoRecoveryConfig.maxRetries === -1 ? 'infinite' : autoRecoveryConfig.maxRetries,
-                  status: 'standby',
-                  architecture: 'singleton-server'
-                });
-              }
+              log('info', 'Enhanced AMQP server started successfully', {
+                sessionId: amqpTransport.sessionId || 'unknown',
+                hasTransport: !!amqpTransport
+              });
             } catch (amqpError) {
-              log('warn', 'AMQP transport failed to start, enabling auto-recovery', {
+              log('warn', 'Enhanced AMQP server failed to start', {
                 error: amqpError.message,
-                fallback: 'Server will continue without AMQP support and attempt auto-recovery'
+                fallback: 'Server will continue without AMQP support'
               });
               failedTransports.push({ mode: 'amqp', error: amqpError.message });
-              
-              // Start auto-recovery service with transport-only function
-              const autoRecoveryConfig = {
-                enabled: process.env.AMQP_AUTO_RECOVERY !== 'false',
-                retryInterval: parseInt(process.env.AMQP_RETRY_INTERVAL) || 30000, // 30 seconds
-                maxRetries: parseInt(process.env.AMQP_MAX_RETRIES) || -1, // infinite by default
-                backoffMultiplier: parseFloat(process.env.AMQP_BACKOFF_MULTIPLIER) || 1.5,
-                maxRetryInterval: parseInt(process.env.AMQP_MAX_RETRY_INTERVAL) || 300000 // 5 minutes
-              };
-              
-              const createTransportOnlyFn = async () => {
-                log('info', '[AMQP RECOVERY] Using singleton server instance for recovery');
-                return await createServer(); // Returns existing singleton instance
-              };
-              
-              if (autoRecoveryConfig.enabled) {
-                startAmqpAutoRecovery(createTransportOnlyFn, log, autoRecoveryConfig);
-              } else {
-                log('info', 'AMQP auto-recovery disabled via AMQP_AUTO_RECOVERY=false');
-              }
             }
             break;
             

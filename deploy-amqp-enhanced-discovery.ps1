@@ -132,8 +132,8 @@ if ($Environment -eq "production") {
 if (-not $SkipValidation) {
     Write-Host "`n✅ Step 4: Validating AMQP Integration..." -ForegroundColor Green
     
-    if (Test-Path "validate-amqp-integration.js") {
-        node validate-amqp-integration.js
+    if (Test-Path "testing/validate-amqp-integration.js") {
+        node "testing/validate-amqp-integration.js"
         if ($LASTEXITCODE -ne 0) {
             Write-Error "AMQP integration validation failed. Please check the errors above."
             exit 1
@@ -161,7 +161,7 @@ Write-Host "`n🔥 Ready to start server with command:" -ForegroundColor Yellow
 Write-Host "   TRANSPORT_MODE=$($transportModes[$Mode]) node mcp_server_multi_transport_sdk.js" -ForegroundColor White
 
 Write-Host "`n📋 Testing Commands:" -ForegroundColor Cyan
-Write-Host "   • Test AMQP transport: node test-amqp-transport.js" -ForegroundColor White
+Write-Host "   • Test AMQP transport: node testing/test-amqp-transport.js" -ForegroundColor White
 Write-Host "   • Run example client: node examples/amqp-discovery-client.js" -ForegroundColor White
 Write-Host "   • Monitor discoveries: node examples/amqp-discovery-client.js monitor" -ForegroundColor White
 

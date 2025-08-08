@@ -49,9 +49,9 @@ const validationSteps = [
     name: 'Check Transport Files',
     check: async () => {
       const requiredFiles = [
-        'tools/transports/amqp-server-transport.js',
-        'tools/transports/amqp-client-transport.js', 
-        'tools/transports/amqp-transport-integration.js'
+        '../tools/transports/amqp-server-transport.js',
+        '../tools/transports/amqp-client-transport.js', 
+        '../tools/transports/amqp-transport-integration.js'
       ];
       
       const missingFiles = [];
@@ -82,7 +82,6 @@ const validationSteps = [
           'AMQP_CONFIG',
           'parseTransportMode', 
           'startAmqpServer',
-          'startServerWithAmqp',
           'initializeAmqpIntegration'
         ];
         
@@ -181,9 +180,9 @@ const validationSteps = [
     name: 'Test Client Transport',
     check: async () => {
       try {
-        const { RabbitMQClientTransport } = require('../tools/transports/amqp-client-transport.js');
+        const { AMQPClientTransport } = require('../tools/transports/amqp-client-transport.js');
         
-        const transport = new RabbitMQClientTransport({
+        const transport = new AMQPClientTransport({
           amqpUrl: process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',
           serverQueuePrefix: 'mcp.discovery',
           exchangeName: 'mcp.notifications',

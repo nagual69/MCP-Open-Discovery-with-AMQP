@@ -5,7 +5,7 @@
  * via AMQP/RabbitMQ and perform network discovery operations.
  */
 
-const { RabbitMQClientTransport } = require('../amqp-client-transport.js');
+const { AMQPClientTransport } = require('../tools/transports/amqp-client-transport.js');
 
 /**
  * Enhanced logging
@@ -53,13 +53,24 @@ class SimpleMCPClient {
   }
   
   handleMessage(message) {
+    console.log('[CLIENT] Received message:', {
+      messageId: message.id,
+      method: message.method,
+      hasResult: !!message.result,
+      hasError: !!message.error,
+      hasPendingRequest: message.id ? this.pendingRequests.has(message.id) : false,
+      pendingRequestsCount: this.pendingRequests.size
+    });
+    
     if (message.id && this.pendingRequests.has(message.id)) {
       const { resolve, reject } = this.pendingRequests.get(message.id);
       this.pendingRequests.delete(message.id);
       
       if (message.error) {
+        console.log('[CLIENT] Request failed with error:', message.error);
         reject(new Error(`MCP Error: ${message.error.message}`));
       } else {
+        console.log('[CLIENT] Request succeeded with result:', message.result);
         resolve(message.result);
       }
     } else if (!message.id) {
@@ -67,6 +78,11 @@ class SimpleMCPClient {
       log('info', 'Received notification', {
         method: message.method,
         params: message.params
+      });
+    } else {
+      console.warn('[CLIENT] Received message with unknown ID or no pending request:', {
+        messageId: message.id,
+        pendingIds: Array.from(this.pendingRequests.keys())
       });
     }
   }
@@ -138,7 +154,7 @@ async function demonstrateNetworkDiscovery() {
   log('info', 'Starting MCP Open Discovery AMQP demonstration...');
   
   // Create AMQP transport
-  const transport = new RabbitMQClientTransport({
+  const transport = new AMQPClientTransport({
     amqpUrl: process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',
     serverQueuePrefix: 'mcp.discovery',
     exchangeName: 'mcp.notifications',
@@ -298,7 +314,7 @@ async function demonstrateNetworkDiscovery() {
 async function monitorDiscoveryEvents() {
   log('info', 'Starting real-time discovery monitoring...');
   
-  const transport = new RabbitMQClientTransport({
+  const transport = new AMQPClientTransport({
     amqpUrl: process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',
     serverQueuePrefix: 'mcp.discovery',
     exchangeName: 'mcp.notifications'

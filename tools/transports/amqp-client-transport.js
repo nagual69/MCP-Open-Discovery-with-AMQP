@@ -29,9 +29,9 @@ class Transport {
 }
 
 /**
- * RabbitMQ client transport for connecting to MCP Open Discovery Server
+ * AMQP client transport for connecting to MCP Open Discovery Server
  */
-class RabbitMQClientTransport extends Transport {
+class AMQPClientTransport extends Transport {
   constructor(options) {
     super();
     
@@ -52,6 +52,9 @@ class RabbitMQClientTransport extends Transport {
       maxReconnectAttempts: 10,
       ...options
     };
+    
+    // Generate unique session ID for MCP bidirectional routing
+    this.sessionId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     this.connection = null;
     this.channel = null;
@@ -83,6 +86,7 @@ class RabbitMQClientTransport extends Transport {
       throw new Error('Transport not connected');
     }
 
+    // Use MCP bidirectional routing instead of direct queue targeting
     const envelope = {
       message,
       timestamp: Date.now(),
@@ -90,19 +94,29 @@ class RabbitMQClientTransport extends Transport {
       correlationId: this.generateCorrelationId()
     };
 
-    // For requests, set up response handling
+    // For requests, set up response handling with MCP routing
     if (envelope.type === 'request' && message.id !== undefined) {
       envelope.replyTo = this.responseQueue;
       this.setupRequestTimeout(envelope.correlationId, message.id);
     }
 
-    const targetQueue = this.getTargetQueueName(message);
+    // Use MCP bidirectional routing via exchange instead of direct queue
+    const exchangeName = `${this.options.exchangeName}.mcp.routing`;
+    const routingKey = this.getMcpRoutingKey(message);
     const messageBuffer = Buffer.from(JSON.stringify(envelope));
 
-    await this.channel.sendToQueue(targetQueue, messageBuffer, {
+    console.log('[AMQP Client] Publishing to MCP bidirectional routing:', {
+      exchange: exchangeName,
+      routingKey: routingKey,
+      messageId: message.id,
+      method: message.method,
+      correlationId: envelope.correlationId
+    });
+
+    await this.channel.publish(exchangeName, routingKey, messageBuffer, {
       correlationId: envelope.correlationId,
       replyTo: envelope.replyTo,
-      persistent: true,
+      persistent: false,
       timestamp: envelope.timestamp
     });
   }
@@ -172,12 +186,26 @@ class RabbitMQClientTransport extends Transport {
       }
     });
 
-    // Create exclusive response queue for this client
+    // Assert the main MCP exchange for bidirectional routing
+    const mcpExchangeName = `${this.options.exchangeName}.mcp.routing`;
+    await this.channel.assertExchange(mcpExchangeName, 'topic', {
+      durable: true
+    });
+
+    // Create exclusive response queue for this client session
     const responseQueueResult = await this.channel.assertQueue('', {
       exclusive: true,
       autoDelete: true
     });
     this.responseQueue = responseQueueResult.queue;
+
+    // Bind response queue to client-specific routing key
+    const clientResponseRoutingKey = `mcp.response.${this.sessionId}.#`;
+    await this.channel.bindQueue(
+      this.responseQueue,
+      mcpExchangeName,
+      clientResponseRoutingKey
+    );
 
     // Set up response queue consumer
     await this.channel.consume(this.responseQueue, (msg) => {
@@ -220,23 +248,19 @@ class RabbitMQClientTransport extends Transport {
       autoDelete: true
     });
     
-    // Bind to discovery-related routing keys
+    // Bind to MCP notification routing keys
+    const mcpExchangeName = `${this.options.exchangeName}.mcp.routing`;
     const routingKeys = [
-      'discovery.nmap',
-      'discovery.snmp', 
-      'discovery.proxmox',
-      'discovery.zabbix',
-      'discovery.network',
-      'discovery.memory',
-      'discovery.credentials',
-      'discovery.general',
-      'notifications.#'
+      'mcp.notification.#',
+      'mcp.event.#',
+      'discovery.notification.#',
+      'discovery.event.#'
     ];
     
     for (const routingKey of routingKeys) {
       await this.channel.bindQueue(
         notificationQueue.queue,
-        this.options.exchangeName,
+        mcpExchangeName,
         routingKey
       );
     }
@@ -307,27 +331,84 @@ class RabbitMQClientTransport extends Transport {
     }, this.options.reconnectDelay);
   }
 
-  getMessageType(message) {
-    if (message.method && message.id !== undefined) {
-      return 'request';
-    } else if (message.result !== undefined || message.error !== undefined) {
+  /**
+   * Detect message type following MCP v2025-06-18 specification
+   * 
+   * JSON-RPC 2.0 message type detection:
+   * - Response: Has 'id' and ('result' OR 'error')
+   * - Request: Has 'id' and 'method' (but no result/error)
+   * - Notification: Has 'method' but no 'id'
+   */
+  detectMessageType(message) {
+    // Priority 1: Check for response (id + result/error)
+    if (message.id !== undefined && (message.result !== undefined || message.error !== undefined)) {
       return 'response';
-    } else {
+    }
+    
+    // Priority 2: Check for request (id + method, but no result/error)
+    if (message.id !== undefined && message.method !== undefined) {
+      return 'request';
+    }
+    
+    // Priority 3: Check for notification (method only, no id)
+    if (message.method !== undefined && message.id === undefined) {
       return 'notification';
     }
+    
+    // Fallback for malformed messages
+    console.warn('[AMQP Client] Unknown message type, treating as notification:', message);
+    return 'notification';
+  }
+
+  // Legacy compatibility method
+  getMessageType(message) {
+    return this.detectMessageType(message);
   }
 
   getTargetQueueName(message) {
-    // Route all requests to the MCP Open Discovery server queue
+    // Legacy method - kept for reference but not used in MCP bidirectional routing
     return `${this.options.serverQueuePrefix}.requests`;
   }
 
+  /**
+   * Get MCP routing key for bidirectional message routing
+   * Implements the MCP session/stream-based routing pattern
+   */
+  getMcpRoutingKey(message) {
+    // For client-to-server requests, we need to route to any available server session
+    // Use a general routing pattern that servers can bind to
+    if (message.method) {
+      // Route based on tool category for load balancing
+      const toolCategory = this.getToolCategory(message.method);
+      return `mcp.request.${toolCategory}.${message.method}`;
+    }
+    
+    // Fallback for other message types
+    return 'mcp.request.general';
+  }
+
+  /**
+   * Determine tool category for routing (matches server-side categories)
+   */
+  getToolCategory(method) {
+    if (method.startsWith('nmap_')) return 'nmap';
+    if (method.startsWith('snmp_')) return 'snmp';
+    if (method.startsWith('proxmox_')) return 'proxmox';
+    if (method.startsWith('zabbix_')) return 'zabbix';
+    if (['ping', 'telnet', 'wget', 'netstat', 'ifconfig', 'arp', 'route', 'nslookup'].includes(method)) return 'network';
+    if (method.startsWith('memory_') || method.startsWith('cmdb_')) return 'memory';
+    if (method.startsWith('credentials_')) return 'credentials';
+    if (method.startsWith('registry_')) return 'registry';
+    return 'general';
+  }
+
   generateCorrelationId() {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Include session ID in correlation ID so server can route responses back
+    return `${this.sessionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }
 
 module.exports = {
-  RabbitMQClientTransport,
+  AMQPClientTransport,
   Transport
 };
