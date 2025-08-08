@@ -187,7 +187,6 @@ async function createServer() {
       capabilities: {
         tools: {},
         resources: {},
-        logging: {},
         prompts: {}
       }
     }

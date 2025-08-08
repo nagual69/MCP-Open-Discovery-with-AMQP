@@ -61,6 +61,88 @@ class CoreRegistry {
   }
 
   /**
+   * Check if tools are already registered in the database
+   * @returns {Promise<boolean>} True if tools exist in database
+   */
+  async areToolsAlreadyRegistered() {
+    if (!this.dbInitialized) {
+      return false;
+    }
+
+    try {
+      const modules = await this.db.getModules();
+      const tools = await this.db.getTools();
+      
+      console.log(`[Core Registry] Database check: ${modules.length} modules, ${tools.length} tools found`);
+      
+      // Consider tools registered if we have at least one module with tools
+      return modules.length > 0 && tools.length > 0;
+    } catch (error) {
+      console.error('[Core Registry] Error checking existing tools:', error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Load tools from database instead of re-registering
+   * @param {Object} server - MCP server instance
+   * @returns {Promise<Object>} Registry status
+   */
+  async loadToolsFromDatabase(server) {
+    if (!this.dbInitialized) {
+      throw new Error('Database not initialized');
+    }
+
+    try {
+      console.log('[Core Registry] Loading tools from existing database...');
+      
+      const modules = await this.db.getModules();
+      const tools = await this.db.getTools();
+      
+      // Reconstruct registry state from database
+      for (const module of modules) {
+        const moduleData = {
+          name: module.module_name,
+          category: module.category,
+          tools: new Set(),
+          loadedAt: new Date(module.created_at),
+          loadDuration: 0, // Unknown from DB
+          active: true
+        };
+        
+        this.modules.set(module.module_name, moduleData);
+        
+        if (!this.categories.has(module.category)) {
+          this.categories.set(module.category, new Set());
+        }
+      }
+      
+      // Add tools to registry state
+      for (const tool of tools) {
+        this.registeredTools.add(tool.tool_name);
+        
+        const module = this.modules.get(tool.module_name);
+        if (module) {
+          module.tools.add(tool.tool_name);
+          this.categories.get(module.category).add(tool.tool_name);
+        }
+      }
+      
+      console.log(`[Core Registry] ✅ Loaded ${modules.length} modules with ${tools.length} tools from database`);
+      
+      return {
+        modules: modules.length,
+        tools: tools.length,
+        loadedFromDatabase: true
+      };
+      
+    } catch (error) {
+      console.error('[Core Registry] Error loading tools from database:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Start tracking a new module
    */
   startModule(moduleName, category) {

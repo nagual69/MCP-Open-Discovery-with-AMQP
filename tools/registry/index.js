@@ -233,8 +233,10 @@ async function initializeRegistry() {
 /**
  * Main tool registration function - replaces old registerAllTools
  * 
- * ARCHITECTURAL FIX: Implements comprehensive deduplication to prevent
- * the catastrophic tool registration issues identified in forensic analysis.
+ * ARCHITECTURAL FIX: Implements proper database-first startup flow:
+ * 1. Check if database exists and has tools
+ * 2. If yes: Load tools from database and skip registration
+ * 3. If no: Initialize database and register tools fresh
  */
 async function registerAllTools(server) {
   // DEDUPLICATION GUARD: Prevent multiple concurrent registrations
@@ -260,83 +262,127 @@ async function registerAllTools(server) {
     console.log('[Registry] 🚀 MCP Open Discovery Tool Registration');
     console.log('[Registry] ========================================');
 
-    // Initialize the core registry
+    // Initialize the core registry (always needed for database connection)
     const registry = await initializeRegistry();
 
-    // Define tool modules in organized structure
-    const toolModules = [
-      { 
-        name: 'network_tools_sdk', 
-        category: 'network',
-        loader: () => require('../network_tools_sdk')
-      },
-      { 
-        name: 'memory_tools_sdk', 
-        category: 'memory',
-        loader: () => require('../memory_tools_sdk') 
-      },
-      { 
-        name: 'nmap_tools_sdk', 
-        category: 'nmap',
-        loader: () => require('../nmap_tools_sdk')
-      },
-      { 
-        name: 'proxmox_tools_sdk', 
-        category: 'proxmox',
-        loader: () => require('../proxmox_tools_sdk')
-      },
-      { 
-        name: 'snmp_tools_sdk', 
-        category: 'snmp', 
-        loader: () => require('../snmp_tools_sdk')
-      },
-      { 
-        name: 'zabbix_tools_sdk', 
-        category: 'zabbix',
-        loader: () => require('../zabbix_tools_sdk')
-      },
-      { 
-        name: 'credentials_tools_sdk', 
-        category: 'credentials',
-        loader: () => require('../credentials_tools_sdk')
+    // CRITICAL FIX: Check if tools are already registered in database
+    const toolsExistInDB = await registry.areToolsAlreadyRegistered();
+    
+    if (toolsExistInDB) {
+      console.log('[Registry] 🔄 Tools already exist in database, loading from persistent storage...');
+      
+      const loadResult = await registry.loadToolsFromDatabase(server);
+      
+      // Initialize memory tools if they exist in the loaded modules
+      const memoryModule = registry.modules.get('memory_tools_sdk');
+      if (memoryModule) {
+        console.log('[Registry] 🔧 Initializing memory tools from database load...');
+        try {
+          const memoryToolsModule = require('../memory_tools_sdk');
+          if (memoryToolsModule.initialize && typeof memoryToolsModule.initialize === 'function') {
+            await memoryToolsModule.initialize();
+            console.log('[Registry] ✅ Memory tools initialized successfully from database');
+          }
+        } catch (memoryError) {
+          console.error('[Registry] ❌ Memory tools initialization failed:', memoryError.message);
+        }
       }
-    ];
+      
+      // Mark registration as complete
+      registrationComplete = true;
+      registrationInProgress = false;
+      
+      console.log('[Registry] ✅ Tools loaded from database successfully');
+      console.log(JSON.stringify({
+        summary: { 
+          total: loadResult.tools, 
+          modules: loadResult.modules,
+          categories: registry.categories.size,
+          loadedFromDatabase: true
+        },
+        timestamp: new Date().toISOString(),
+        database: { enabled: true, loadedFromExisting: true }
+      }, null, 2));
+      
+      return { registry, summary: registry.getToolCounts() };
+    } else {
+      console.log('[Registry] 🆕 No existing tools found in database, performing fresh registration...');
+      
+      // Proceed with fresh tool registration - Define tool modules in organized structure
+      const toolModules = [
+        { 
+          name: 'network_tools_sdk', 
+          category: 'network',
+          loader: () => require('../network_tools_sdk')
+        },
+        { 
+          name: 'memory_tools_sdk', 
+          category: 'memory',
+          loader: () => require('../memory_tools_sdk') 
+        },
+        { 
+          name: 'nmap_tools_sdk', 
+          category: 'nmap',
+          loader: () => require('../nmap_tools_sdk')
+        },
+        { 
+          name: 'proxmox_tools_sdk', 
+          category: 'proxmox',
+          loader: () => require('../proxmox_tools_sdk')
+        },
+        { 
+          name: 'snmp_tools_sdk', 
+          category: 'snmp', 
+          loader: () => require('../snmp_tools_sdk')
+        },
+        { 
+          name: 'zabbix_tools_sdk', 
+          category: 'zabbix',
+          loader: () => require('../zabbix_tools_sdk')
+        },
+        { 
+          name: 'credentials_tools_sdk', 
+          category: 'credentials',
+          loader: () => require('../credentials_tools_sdk')
+        }
+      ];
 
-    // Register each tool module
-    for (const moduleConfig of toolModules) {
-      await registerToolModule(server, registry, moduleConfig);
+      // Register each tool module
+      for (const moduleConfig of toolModules) {
+        await registerToolModule(server, registry, moduleConfig);
+      }
+
+      // Register management tools (registry control)
+      await registerManagementModule(server, registry);
+
+      // Complete registration summary
+      const summary = registry.getToolCounts();
+      console.log('[Registry] Tool Registration Complete!');
+      console.log(JSON.stringify({
+        summary: { 
+          total: summary.total, 
+          modules: toolModules.length + 1, // +1 for management tools
+          categories: Object.keys(summary.categories).length + 1 // +1 for registry
+        },
+        categories: { ...summary.categories, registry: getManagementToolNames().length },
+        modules: await getModuleDetails(registry),
+        timestamp: new Date().toISOString(),
+        database: registry.dbInitialized ? {
+          enabled: true,
+          stats: await registry.getAnalytics()
+        } : { enabled: false }
+      }, null, 2));
+
+      console.log(`[Registry] 🔥 Hot-reload Status: ${JSON.stringify(registry.getStatus().hot_reload)}`);
+      
+      // Mark registration as complete
+      registrationComplete = true;
+      registrationInProgress = false;
+      
+      console.log('[Registry] 🛡️  ARCHITECTURAL FIX: Deduplication guards active');
+      
+      return { registry, summary };
     }
-
-    // Register management tools (registry control)
-    await registerManagementModule(server, registry);
-
-    // Complete registration summary
-    const summary = registry.getToolCounts();
-    console.log('[Registry] Tool Registration Complete!');
-    console.log(JSON.stringify({
-      summary: { 
-        total: summary.total, 
-        modules: toolModules.length + 1, // +1 for management tools
-        categories: Object.keys(summary.categories).length + 1 // +1 for registry
-      },
-      categories: { ...summary.categories, registry: getManagementToolNames().length },
-      modules: await getModuleDetails(registry),
-      timestamp: new Date().toISOString(),
-      database: registry.dbInitialized ? {
-        enabled: true,
-        stats: await registry.getAnalytics()
-      } : { enabled: false }
-    }, null, 2));
-
-    console.log(`[Registry] 🔥 Hot-reload Status: ${JSON.stringify(registry.getStatus().hot_reload)}`);
-    
-    // Mark registration as complete
-    registrationComplete = true;
-    registrationInProgress = false;
-    
-    console.log('[Registry] 🛡️  ARCHITECTURAL FIX: Deduplication guards active');
-    
-    return { registry, summary };
   } catch (error) {
     registrationInProgress = false; // Reset on error
     console.error('[Registry] Tool registration failed:', error.message);
@@ -357,10 +403,22 @@ async function registerToolModule(server, registry, moduleConfig) {
     
     // Load the module
     const moduleExports = moduleConfig.loader();
-    const { tools, handleToolCall } = moduleExports;
+    const { tools, handleToolCall, initialize } = moduleExports;
     
     if (!tools || !Array.isArray(tools)) {
       throw new Error(`Module ${moduleConfig.name} does not export tools array`);
+    }
+
+    // CRITICAL FIX: Initialize memory tools module if it has an initialize function
+    if (moduleConfig.name === 'memory_tools_sdk' && typeof initialize === 'function') {
+      console.log(`[Registry] Initializing ${moduleConfig.name} database...`);
+      try {
+        await initialize();
+        console.log(`[Registry] ✅ ${moduleConfig.name} database initialized successfully`);
+      } catch (initError) {
+        console.error(`[Registry] ❌ Failed to initialize ${moduleConfig.name}:`, initError.message);
+        throw new Error(`Memory tools initialization failed: ${initError.message}`);
+      }
     }
 
     // Start module tracking

@@ -351,6 +351,37 @@ class DatabaseLayer {
   }
 
   /**
+   * Get all modules from database
+   */
+  async getModules() {
+    try {
+      return await this.executeQuery(`
+        SELECT * FROM modules ORDER BY created_at DESC
+      `);
+    } catch (error) {
+      console.error('[Database Layer] Failed to get modules:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all tools from database
+   */
+  async getTools() {
+    try {
+      return await this.executeQuery(`
+        SELECT t.*, m.module_name 
+        FROM tools t
+        LEFT JOIN modules m ON t.module_id = m.id
+        ORDER BY t.created_at DESC
+      `);
+    } catch (error) {
+      console.error('[Database Layer] Failed to get tools:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Memory persistence methods for CMDB integration
    */
 
