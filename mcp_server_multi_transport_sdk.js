@@ -16,7 +16,7 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const express = require('express');
 const { randomUUID } = require('node:crypto');
-const { registerAllTools, getToolCounts, cleanup, registerAllResources, getResourceCounts } = require('./tools/registry/index');
+const { registerAllTools, registerAllResources, getResourceCounts, getRegistry, getHotReloadManager, getValidationManager, cleanup } = require('./tools/registry/index_refactored');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
 // AMQP integration (using original files - properly fixed)
 const { 
@@ -296,13 +296,12 @@ async function startStdioServer() {
   await server.connect(transport);
   
   // Log successful startup
-  const toolCounts = getToolCounts();
-  const resourceCounts = getResourceCounts();
+  const registry = getRegistry();
+  const stats = registry ? registry.getStats() : { tools: 0, modules: 0, categories: 0 };
   log('info', 'MCP Open Discovery Server (SDK) started successfully', {
     version: '2.0.0',
     transport: 'stdio',
-    tools: toolCounts,
-    resources: resourceCounts,
+    registry: stats,
     singleton: true, // Mark as using singleton pattern
     config: {
       maxConnections: CONFIG.MAX_CONNECTIONS,
@@ -350,8 +349,10 @@ async function startHttpServer() {
   
   // Health check endpoint
   app.get('/health', (req, res) => {
-    const toolCounts = getToolCounts();
-    const resourceCounts = getResourceCounts();
+    const registry = getRegistry();
+    const stats = registry ? registry.getStats() : { tools: 0, modules: 0, categories: 0 };
+    const validationManager = getValidationManager();
+    const hotReloadManager = getHotReloadManager();
     
     // Get AMQP status if available
     let amqpStatus = null;
@@ -366,8 +367,10 @@ async function startHttpServer() {
       status: 'healthy',
       version: '2.0.0',
       transport: 'http',
-      tools: toolCounts,
-      resources: resourceCounts,
+      registry: stats,
+      resources: getResourceCounts(),
+      validation: validationManager ? validationManager.getValidationSummary() : null,
+      hotReload: hotReloadManager ? hotReloadManager.getStatus() : null,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
       oauth: {
@@ -599,14 +602,15 @@ async function startHttpServer() {
 
   // Start HTTP server
   app.listen(CONFIG.HTTP_PORT, () => {
-    const toolCounts = getToolCounts();
+    const registry = getRegistry();
+    const stats = registry ? registry.getStats() : { tools: 0, modules: 0, categories: 0 };
     const resourceCounts = getResourceCounts();
     const promptCounts = getPromptCounts();
     log('info', 'MCP Open Discovery Server (SDK) started successfully', {
       version: '2.0.0',
       transport: 'http',
       port: CONFIG.HTTP_PORT,
-      tools: toolCounts,
+      registry: stats,
       resources: resourceCounts,
       prompts: promptCounts,
       config: {

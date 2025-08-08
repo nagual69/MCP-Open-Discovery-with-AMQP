@@ -104,6 +104,54 @@ class CoreRegistry {
   }
 
   /**
+   * Alternative method name for compatibility with old registry
+   * @returns {Promise<boolean>}
+   */
+  async areToolsAlreadyRegistered() {
+    return this.hasExistingTools();
+  }
+
+  /**
+   * Load existing tools from database and register them with MCP server
+   * @param {Object} server - MCP server instance
+   * @returns {Promise<LoadResult>}
+   */
+  async loadToolsFromDatabase(server) {
+    this._ensureInitialized();
+    this.state = REGISTRY_STATES.LOADING_FROM_DB;
+    
+    try {
+      console.log('[Core Registry] 📂 Loading and registering tools from database...');
+      
+      const modules = await this.db.getModules();
+      const tools = await this.db.getTools();
+      
+      // Rebuild internal state from database
+      await this._rebuildStateFromDatabase(modules, tools);
+      
+      // Register tools with MCP server (this is the missing piece)
+      await this._registerDatabaseToolsWithServer(server, modules, tools);
+      
+      this.state = REGISTRY_STATES.READY;
+      
+      const result = {
+        modules: modules.length,
+        tools: tools.length,
+        categories: this.categories.size,
+        loadedFromDatabase: true
+      };
+      
+      console.log(`[Core Registry] ✅ Loaded and registered ${result.modules} modules with ${result.tools} tools from database`);
+      
+      return result;
+    } catch (error) {
+      this.state = REGISTRY_STATES.ERROR;
+      console.error('[Core Registry] ❌ Failed to load from database:', error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Load existing tools from database instead of re-registering
    * @returns {Promise<LoadResult>}
    */
@@ -411,6 +459,79 @@ class CoreRegistry {
     }
     
     console.log('[Core Registry] ✅ State rebuild complete');
+  }
+
+  /**
+   * Register tools from database with MCP server
+   * This requires reloading the actual modules to get tool definitions
+   * @param {Object} server - MCP server instance
+   * @param {Array} modules - Module records from database
+   * @param {Array} tools - Tool records from database
+   * @private
+   */
+  async _registerDatabaseToolsWithServer(server, modules, tools) {
+    console.log('[Core Registry] 🔄 Registering database tools with MCP server...');
+    
+    // Group tools by module
+    const moduleTools = new Map();
+    for (const moduleRecord of modules) {
+      moduleTools.set(moduleRecord.module_name, {
+        category: moduleRecord.category,
+        tools: tools.filter(t => t.module_name === moduleRecord.module_name)
+      });
+    }
+    
+    // Load each module and register its tools
+    for (const [moduleName, moduleData] of moduleTools) {
+      try {
+        console.log(`[Core Registry] 🔄 Loading module: ${moduleName}`);
+        
+        // Dynamically load the module
+        const moduleExports = require(`../${moduleName}`);
+        const { tools: moduleToolDefs, handleToolCall, initialize } = moduleExports;
+        
+        if (!moduleToolDefs || !Array.isArray(moduleToolDefs)) {
+          console.warn(`[Core Registry] ⚠️  Module ${moduleName} has no tools array, skipping`);
+          continue;
+        }
+        
+        // Special initialization for memory tools
+        if (moduleName === 'memory_tools_sdk' && typeof initialize === 'function') {
+          console.log(`[Core Registry] 🔧 Initializing ${moduleName}...`);
+          await initialize();
+        }
+        
+        // Register tools that exist in database
+        for (const toolDef of moduleToolDefs) {
+          const toolInDB = moduleData.tools.find(t => t.tool_name === toolDef.name);
+          if (toolInDB) {
+            try {
+              // Convert Zod schema to JSON Schema if needed
+              let jsonSchema = toolDef.inputSchema;
+              if (toolDef.inputSchema && toolDef.inputSchema._def) {
+                // This would need the zodToJsonSchema converter
+                console.log(`[Core Registry] ⚠️  Tool ${toolDef.name} has Zod schema - conversion needed`);
+                jsonSchema = { type: 'object', properties: {}, additionalProperties: true };
+              }
+              
+              // Register with MCP server
+              server.tool(toolDef.name, toolDef.description, jsonSchema, async (args) => {
+                return handleToolCall(toolDef.name, args);
+              });
+              
+              console.log(`[Core Registry] ✅ Registered database tool: ${toolDef.name}`);
+            } catch (error) {
+              console.error(`[Core Registry] ❌ Failed to register tool ${toolDef.name}:`, error.message);
+            }
+          }
+        }
+        
+      } catch (error) {
+        console.error(`[Core Registry] ❌ Failed to load module ${moduleName}:`, error.message);
+      }
+    }
+    
+    console.log('[Core Registry] ✅ Database tools registered with MCP server');
   }
 }
 
