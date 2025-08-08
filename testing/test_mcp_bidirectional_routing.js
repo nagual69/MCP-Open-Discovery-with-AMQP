@@ -53,8 +53,10 @@ async function testMCPBidirectionalRouting() {
 
     // Test 1: List available tools
     console.log('🔧 Test 1: Listing available tools...');
+    const { ListToolsResultSchema } = require('@modelcontextprotocol/sdk');
     const toolsResponse = await client.request(
       { method: 'tools/list' },
+      ListToolsResultSchema,
       { timeout: 10000 }
     );
     
@@ -71,6 +73,7 @@ async function testMCPBidirectionalRouting() {
     // Test 2: Test credentials tool (simple operation)
     console.log('\n🔐 Test 2: Testing credentials_list tool...');
     try {
+      const { CallToolResultSchema } = require('@modelcontextprotocol/sdk');
       const credentialsResponse = await client.request(
         {
           method: 'tools/call',
@@ -79,6 +82,7 @@ async function testMCPBidirectionalRouting() {
             arguments: {}
           }
         },
+        CallToolResultSchema,
         { timeout: 10000 }
       );
       console.log('✅ Credentials tool responded successfully');

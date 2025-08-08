@@ -280,6 +280,15 @@ class RabbitMQServerTransport extends Transport {
     // Clean message for sending
     const cleanMessage = { ...message };
 
+    console.log('[AMQP] About to send response (first 200 chars):', {
+      messageId: cleanMessage.id,
+      hasId: cleanMessage.id !== undefined && cleanMessage.id !== null,
+      jsonrpc: cleanMessage.jsonrpc,
+      hasResult: !!cleanMessage.result,
+      hasError: !!cleanMessage.error,
+      messagePreview: JSON.stringify(cleanMessage).substring(0, 200) + '...'
+    });
+
     try {
       if (replyTo) {
         // Direct response to client's reply queue using pubsubChannel for bidirectional responses

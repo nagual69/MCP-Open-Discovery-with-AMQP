@@ -86,35 +86,51 @@ class AMQPClientTransport extends Transport {
       throw new Error('Transport not connected');
     }
 
-    // Use MCP bidirectional routing instead of direct queue targeting
+    console.log('[AMQP Client] Sending message:', {
+      messageId: message.id,
+      method: message.method,
+      messageType: this.getMessageType(message)
+    });
+
+    // Create envelope with correlation ID for response routing
+    const correlationId = this.generateCorrelationId();
+    
     const envelope = {
       message,
       timestamp: Date.now(),
       type: this.getMessageType(message),
-      correlationId: this.generateCorrelationId()
+      correlationId: correlationId
     };
 
-    // For requests, set up response handling with MCP routing
+    // For requests, set up response handling
     if (envelope.type === 'request' && message.id !== undefined) {
       envelope.replyTo = this.responseQueue;
-      this.setupRequestTimeout(envelope.correlationId, message.id);
+      this.setupRequestTimeout(correlationId, message.id);
+      
+      console.log('[AMQP Client] Set up request tracking:', {
+        messageId: message.id,
+        correlationId: correlationId,
+        replyTo: this.responseQueue,
+        timeoutMs: this.options.responseTimeout
+      });
     }
 
-    // Use MCP bidirectional routing via exchange instead of direct queue
+    // Send to the NEW bidirectional routing system instead of legacy direct queue
     const exchangeName = `${this.options.exchangeName}.mcp.routing`;
     const routingKey = this.getMcpRoutingKey(message);
     const messageBuffer = Buffer.from(JSON.stringify(envelope));
 
-    console.log('[AMQP Client] Publishing to MCP bidirectional routing:', {
+    console.log('[AMQP Client] Publishing to MCP bidirectional routing (NEW SYSTEM):', {
       exchange: exchangeName,
       routingKey: routingKey,
       messageId: message.id,
       method: message.method,
-      correlationId: envelope.correlationId
+      correlationId: correlationId,
+      replyTo: envelope.replyTo
     });
 
     await this.channel.publish(exchangeName, routingKey, messageBuffer, {
-      correlationId: envelope.correlationId,
+      correlationId: correlationId,
       replyTo: envelope.replyTo,
       persistent: false,
       timestamp: envelope.timestamp
@@ -181,33 +197,31 @@ class AMQPClientTransport extends Transport {
 
     // Set up channel error handling
     this.channel.on('error', (error) => {
+      console.error('[AMQP Client] Channel error:', error);
       if (this.onerror) {
         this.onerror(error);
       }
     });
 
-    // Assert the main MCP exchange for bidirectional routing
+    // Assert the MCP bidirectional routing exchange (needed for new routing system)
     const mcpExchangeName = `${this.options.exchangeName}.mcp.routing`;
     await this.channel.assertExchange(mcpExchangeName, 'topic', {
       durable: true
     });
 
-    // Create exclusive response queue for this client session
+    // Create exclusive response queue for this client session  
     const responseQueueResult = await this.channel.assertQueue('', {
       exclusive: true,
       autoDelete: true
     });
     this.responseQueue = responseQueueResult.queue;
 
-    // Bind response queue to client-specific routing key
-    const clientResponseRoutingKey = `mcp.response.${this.sessionId}.#`;
-    await this.channel.bindQueue(
-      this.responseQueue,
-      mcpExchangeName,
-      clientResponseRoutingKey
-    );
+    console.log('[AMQP Client] Created response queue:', {
+      queue: this.responseQueue,
+      sessionId: this.sessionId
+    });
 
-    // Set up response queue consumer
+    // Set up response queue consumer (no routing key binding needed - direct queue usage)
     await this.channel.consume(this.responseQueue, (msg) => {
       if (msg) {
         this.handleResponse(msg);
@@ -220,19 +234,47 @@ class AMQPClientTransport extends Transport {
 
   handleResponse(msg) {
     try {
-      const envelope = JSON.parse(msg.content.toString());
       const correlationId = msg.properties.correlationId;
+      
+      console.log('[AMQP Client] Received response:', {
+        correlationId,
+        hasContent: !!msg.content,
+        contentLength: msg.content ? msg.content.length : 0
+      });
+      
+      // Parse the response - should be direct JSON-RPC now, not envelope
+      let response;
+      try {
+        response = JSON.parse(msg.content.toString());
+        console.log('[AMQP Client] Parsed response structure:', {
+          hasId: response.id !== undefined && response.id !== null,
+          hasJsonrpc: !!response.jsonrpc,
+          hasResult: !!response.result,
+          hasError: !!response.error,
+          resultKeys: response.result ? Object.keys(response.result).slice(0, 5) : null,
+          responseKeys: Object.keys(response),
+          actualId: response.id
+        });
+      } catch (parseError) {
+        console.error('[AMQP Client] Failed to parse response JSON:', parseError);
+        return;
+      }
       
       // Clear timeout for this request
       if (this.pendingRequests.has(correlationId)) {
         clearTimeout(this.pendingRequests.get(correlationId));
         this.pendingRequests.delete(correlationId);
+        console.log('[AMQP Client] ✅ Response received for correlation ID:', correlationId);
+      } else {
+        console.warn('[AMQP Client] ⚠️ Received response for unknown correlation ID:', correlationId);
       }
       
+      // Forward response directly to MCP client (no envelope unwrapping needed)
       if (this.onmessage) {
-        this.onmessage(envelope.message);
+        this.onmessage(response);
       }
     } catch (error) {
+      console.error('[AMQP Client] Error handling response:', error);
       if (this.onerror) {
         this.onerror(error);
       }
