@@ -9,7 +9,7 @@ docker-compose down
 
 # Build the new image with modular architecture
 Write-Host "🏗️ Building Docker image..." -ForegroundColor Yellow
-docker-compose build
+docker-compose build --no-cache
 
 # Start the containers
 Write-Host "🚀 Starting containers..." -ForegroundColor Yellow

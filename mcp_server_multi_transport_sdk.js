@@ -159,6 +159,7 @@ let serverInitialized = false;
  * All transports (stdio, HTTP, AMQP) will share this single instance.
  */
 async function createServer() {
+  // Validated - Function ID#1003 - SINGLETON SERVER CREATION (CRITICAL)
   // Return existing instance if already created (SINGLETON PATTERN)
   if (globalMcpServer && serverInitialized) {
     log('debug', '[SINGLETON] Returning existing MCP server instance');
@@ -319,6 +320,7 @@ async function startStdioServer() {
  * Start the server with HTTP transport
  */
 async function startHttpServer() {
+  // Validated - Function ID#1002 - HTTP Server Startup
   log('debug', 'Starting HTTP server setup');
   
   // Import OAuth module here to avoid initialization order issues
@@ -669,6 +671,8 @@ async function startHttpServer() {
  * 
  * This function is designed to support multiple transports that all share
  * the same singleton MCP server instance, preventing registration duplication.
+ * 
+ * Validated - Function ID#1001 - MAIN ENTRY POINT
  */
 async function startServer() {
   try {

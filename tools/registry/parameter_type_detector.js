@@ -7,6 +7,8 @@
  * Detects if a tool has array parameters that need special handling
  * @param {object} tool - The tool object with inputSchema
  * @returns {boolean} - True if tool has array parameters
+ * 
+ * Validated - Function ID#1008 - ARRAY PARAMETER DETECTION (DECISION LOGIC)
  */
 function hasArrayParameters(tool) {
   if (!tool.inputSchema || typeof tool.inputSchema !== 'object') {
@@ -43,6 +45,8 @@ function hasArrayParameters(tool) {
  * Gets the appropriate schema for MCP registration based on parameter type
  * @param {object} tool - The tool object with inputSchema
  * @returns {object} - The schema to use for registration
+ * 
+ * Validated - Function ID#1009 - SCHEMA PREPARATION (POTENTIAL ERROR POINT)
  */
 function getRegistrationSchema(tool) {
   if (!tool.inputSchema) {
@@ -54,15 +58,8 @@ function getRegistrationSchema(tool) {
     return tool.inputSchema;
   }
 
-  // For simple parameters, extract shape if it's a Zod object
-  if (tool.inputSchema._def && tool.inputSchema._def.typeName === 'ZodObject') {
-    const shape = typeof tool.inputSchema._def.shape === 'function' 
-      ? tool.inputSchema._def.shape() 
-      : tool.inputSchema._def.shape;
-    return shape;
-  }
-
-  // Otherwise use as-is
+  // For simple parameters, return the full schema (don't extract shape!)
+  // The zodToJsonSchema conversion will handle the proper conversion
   return tool.inputSchema;
 }
 

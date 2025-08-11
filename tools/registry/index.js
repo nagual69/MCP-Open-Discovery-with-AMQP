@@ -24,6 +24,7 @@ const { HotReloadManager } = require('./hot_reload_manager');
 const { ToolValidationManager } = require('./tool_validation_manager');
 const { registerAllResources, getResourceCounts } = require('./resource_manager');
 const { hasArrayParameters, getRegistrationSchema, getRegistrationMethod, analyzeParameters } = require('./parameter_type_detector');
+const { zodToJsonSchema } = require('zod-to-json-schema');
 
 // Registry singleton instances with proper lifecycle
 let registryInstance = null;
@@ -286,6 +287,8 @@ function getValidationManager() {
  * 
  * @param {Object} server - MCP server instance
  * @returns {Promise<Object>} Registration results
+ * 
+ * Validated - Function ID#1004 - TOOL REGISTRATION ORCHESTRATOR (CRITICAL PATH)
  */
 async function registerAllTools(server) {
   // Prevent multiple concurrent registrations
@@ -383,6 +386,7 @@ async function _loadFromDatabase(server, registry, validator) {
  * @private
  */
 async function _registerFreshTools(server, registry, validator) {
+  // Validated - Function ID#1005 - FRESH TOOL REGISTRATION (HOT PATH)
   // Define all tool modules with metadata for hot-reload
   const toolModules = [
     { 
@@ -469,6 +473,7 @@ async function _registerFreshTools(server, registry, validator) {
           if (validationResult && validationResult.valid) {
             
             // CRITICAL: Detect parameter types to determine registration method
+            // Validated - Function ID#1006 - PARAMETER ANALYSIS (CRITICAL DECISION POINT)
             const paramAnalysis = analyzeParameters(tool);
             const hasArrays = hasArrayParameters(tool);
             const registrationMethod = getRegistrationMethod(tool);
@@ -479,25 +484,33 @@ async function _registerFreshTools(server, registry, validator) {
             // Get appropriate schema for registration
             let registrationSchema = getRegistrationSchema(tool);
             
-            // For non-array parameters, convert Zod to JSON Schema if needed
-            if (!hasArrays && tool.inputSchema && tool.inputSchema._def) {
+            console.log(`[Registry] [DEBUG] ${tool.name} - Original schema has _def:`, !!tool.inputSchema._def);
+            console.log(`[Registry] [DEBUG] ${tool.name} - Registration schema has _def:`, !!registrationSchema._def);
+            
+            // Convert Zod to JSON Schema for ALL tools (both array and non-array)
+            // Both server.tool() and server.registerTool() expect JSON Schema
+            if (tool.inputSchema && tool.inputSchema._def) {
               try {
                 registrationSchema = zodToJsonSchema(tool.inputSchema);
+                console.log(`[Registry] [DEBUG] Converted Zod schema to JSON Schema for ${tool.name}`);
               } catch (error) {
                 console.warn(`[Registry] ⚠️  Failed to convert Zod schema for ${tool.name}:`, error.message);
                 registrationSchema = { type: 'object', properties: {}, additionalProperties: true };
               }
+            } else {
+              console.log(`[Registry] [DEBUG] ${tool.name} - No Zod conversion needed (no _def property)`);
             }
             
             // Register using the appropriate MCP SDK method
+            // Validated - Function ID#1007 - MCP SDK REGISTRATION (ERROR POINT!)
             if (registrationMethod === 'server.tool') {
-              // Array parameter tools - use server.tool() with original schema
+              // Array parameter tools - use server.tool() with JSON Schema
               console.log(`[Registry] [DEBUG] Registering ${tool.name} with server.tool() for array parameters`);
               server.tool(tool.name, tool.description, registrationSchema, async (args) => {
                 return module.handleToolCall(tool.name, args);
               });
             } else {
-              // Simple parameter tools - use server.registerTool() with processed schema
+              // Simple parameter tools - use server.registerTool() with JSON Schema
               console.log(`[Registry] [DEBUG] Registering ${tool.name} with server.registerTool() for simple parameters`);
               const toolConfig = {
                 description: tool.description,
