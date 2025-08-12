@@ -366,7 +366,367 @@ mcp-open-discovery/
 
 ---
 
-## 💡 Quick Reference
+## � **CRITICAL: AMQP Transport MCP Compliance Issues**
+
+### **BLOCKING ISSUE: Transport Interface Contract Violation**
+
+**Status**: VSCode connects to AMQP transport but initialize responses never sent
+**Root Cause**: AMQP transport violates MCP SDK transport interface contract
+**Impact**: AMQP transport unusable for VSCode integration
+
+### **MCP Protocol 2025-06-18 Compliance Analysis**
+
+Based on comprehensive analysis of official MCP specification, our AMQP transport has **critical compliance violations**:
+
+1. **Transport Interface Violation** (BLOCKING ❌)
+
+   - Manual `transport.start()` required before SDK connection
+   - SDK expects full transport lifecycle control
+   - Protocol class doesn't call `transport.send()` due to interface contract violation
+
+2. **Callback Integration Issues** (HIGH ❌)
+
+   - `onmessage` callback may not trigger SDK message processing
+   - Error/close callbacks not properly integrated with SDK lifecycle
+
+3. **Message Flow Breakdown** (CRITICAL ❌)
+   - Initialize requests received successfully
+   - Initialize responses generated but never sent via `transport.send()`
+   - Capability negotiation blocked by response transmission failure
+
+### **Required MCP Transport Interface**
+
+```javascript
+class Transport {
+  start() {
+    /* Must be auto-callable by SDK during connect() */
+  }
+  send(message) {
+    /* Must handle all JSON-RPC responses */
+  }
+  close() {
+    /* Must cleanup gracefully */
+  }
+
+  // Required Callbacks - SDK registers these during connect()
+  onmessage = (message) => {
+    /* SDK processes all incoming */
+  };
+  onerror = (error) => {
+    /* SDK handles transport errors */
+  };
+  onclose = () => {
+    /* SDK manages cleanup */
+  };
+}
+```
+
+## 🛠️ **AMQP Transport Compliance Fix Tasks**
+
+### **PHASE 1: Transport Interface Compliance** (CRITICAL - BLOCKING)
+
+#### **Task 1.1: Fix AMQP Server Transport Interface**
+
+**File**: `tools/transports/amqp-server-transport.js`
+**Priority**: CRITICAL (BLOCKING)
+**Estimated Time**: 2-3 hours
+
+**Actions Required**:
+
+1. **Remove Manual Start Requirement**:
+
+   ```javascript
+   // ❌ CURRENT: Requires manual start() before SDK connection
+   // ✅ TARGET: start() callable by SDK during connect()
+   ```
+
+2. **Implement SDK-Compatible start() Method**:
+
+   ```javascript
+   async start() {
+     // Must be idempotent - SDK may call multiple times
+     if (this.isStarted) return;
+
+     // Initialize AMQP connection/channels
+     await this.initializeConnection();
+     this.isStarted = true;
+
+     // Signal SDK that transport is ready
+   }
+   ```
+
+3. **Fix Callback Wiring**:
+
+   ```javascript
+   // Ensure onmessage triggers SDK processing
+   this.onmessage = (message) => {
+     // Must delegate to SDK message handler
+   };
+   ```
+
+4. **Validate send() Method Signature**:
+   ```javascript
+   send(message) {
+     // Must match SDK expectations exactly
+     // Handle JSON-RPC response transmission
+   }
+   ```
+
+**Success Criteria**:
+
+- [ ] SDK can call `transport.start()` without manual pre-initialization
+- [ ] `transport.send()` called by SDK for initialize responses
+- [ ] No manual transport lifecycle management required
+
+#### **Task 1.2: Fix AMQP Transport Integration**
+
+**File**: `tools/transports/amqp-transport-integration.js`
+**Priority**: CRITICAL (BLOCKING)
+**Estimated Time**: 1 hour
+
+**Actions Required**:
+
+1. **Remove Manual start() Call**:
+
+   ```javascript
+   // ❌ REMOVE THIS:
+   await transport.start();
+
+   // ✅ LET SDK HANDLE:
+   await mcpServer.connect(transport); // SDK calls start() internally
+   ```
+
+2. **Verify SDK Integration**:
+   ```javascript
+   // Ensure proper SDK connection flow
+   const transport = new RabbitMQServerTransport(config);
+   await mcpServer.connect(transport); // SDK manages lifecycle
+   ```
+
+**Success Criteria**:
+
+- [ ] No manual `transport.start()` calls
+- [ ] SDK fully controls transport lifecycle
+- [ ] Initialize handshake works end-to-end
+
+#### **Task 1.3: Update Base AMQP Transport**
+
+**File**: `tools/transports/base-amqp-transport.js`
+**Priority**: HIGH
+**Estimated Time**: 1-2 hours
+
+**Actions Required**:
+
+1. **Review Interface Implementation**:
+
+   - Ensure base class doesn't propagate interface violations
+   - Validate callback patterns align with SDK expectations
+
+2. **Add SDK Lifecycle Support**:
+   ```javascript
+   // Add proper state management for SDK control
+   constructor() {
+     this.isStarted = false;
+     this.isConnected = false;
+   }
+   ```
+
+**Success Criteria**:
+
+- [ ] Base class supports SDK-controlled lifecycle
+- [ ] Interface compliance inherited by subclasses
+
+### **PHASE 2: Message Flow Validation** (HIGH PRIORITY)
+
+#### **Task 2.1: Validate Initialize Handshake**
+
+**Priority**: HIGH
+**Estimated Time**: 1 hour
+
+**Actions Required**:
+
+1. **Test Initialize Flow**:
+
+   - VSCode sends `initialize` request
+   - Server generates `initialize` response
+   - Response transmitted via `transport.send()`
+   - VSCode receives response successfully
+
+2. **Validate Capability Negotiation**:
+   ```javascript
+   // Server capabilities declaration
+   {
+     "capabilities": {
+       "tools": { "listChanged": true },
+       "resources": { "subscribe": true, "listChanged": true },
+       "prompts": { "listChanged": true }
+     }
+   }
+   ```
+
+**Success Criteria**:
+
+- [ ] Initialize request → response handshake working
+- [ ] Capability negotiation successful
+- [ ] VSCode shows server as connected
+
+#### **Task 2.2: Test Tool Operation Flow**
+
+**Priority**: HIGH
+**Estimated Time**: 1 hour
+
+**Actions Required**:
+
+1. **Validate Tool Listing**:
+
+   - VSCode sends `tools/list` request
+   - Server responds with tool definitions
+   - All 57 tools visible in VSCode
+
+2. **Test Tool Execution**:
+   - VSCode calls `tools/call` with tool parameters
+   - Server executes tool and returns results
+   - Results displayed correctly in VSCode
+
+**Success Criteria**:
+
+- [ ] `tools/list` returns all 57 tools
+- [ ] `tools/call` executes successfully
+- [ ] Bidirectional JSON-RPC flow working
+
+### **PHASE 3: Error Handling & Robustness** (MEDIUM PRIORITY)
+
+#### **Task 3.1: Implement Proper Error Handling**
+
+**Priority**: MEDIUM
+**Estimated Time**: 2 hours
+
+**Actions Required**:
+
+1. **Connection Error Handling**:
+
+   - AMQP connection failures
+   - RabbitMQ service unavailable
+   - Network interruptions
+
+2. **Message Error Handling**:
+   - Invalid JSON-RPC messages
+   - Tool execution failures
+   - Timeout scenarios
+
+**Success Criteria**:
+
+- [ ] Graceful error handling for all failure modes
+- [ ] Proper error responses to VSCode
+- [ ] Connection recovery capabilities
+
+#### **Task 3.2: Security Best Practices**
+
+**Priority**: MEDIUM
+**Estimated Time**: 2-3 hours
+
+**Actions Required**:
+
+1. **AMQP Security**:
+
+   - TLS/SSL for AMQP connections
+   - Credential management for RabbitMQ
+   - Secure session ID generation
+
+2. **MCP Security Compliance**:
+   - Session hijacking prevention
+   - Input validation and sanitization
+   - Audit trail for privileged operations
+
+**Success Criteria**:
+
+- [ ] Secure AMQP connections
+- [ ] MCP security best practices implemented
+- [ ] No security vulnerabilities identified
+
+### **PHASE 4: Testing & Validation** (ONGOING)
+
+#### **Task 4.1: Comprehensive Testing**
+
+**Priority**: HIGH (Parallel with fixes)
+**Estimated Time**: Ongoing
+
+**Actions Required**:
+
+1. **Unit Tests**:
+
+   - Transport interface compliance tests
+   - Message flow validation tests
+   - Error handling tests
+
+2. **Integration Tests**:
+
+   - VSCode connection tests
+   - Tool execution tests
+   - Load testing for multiple clients
+
+3. **Production Validation**:
+   - Container deployment tests
+   - Real-world usage scenarios
+   - Performance benchmarking
+
+**Success Criteria**:
+
+- [ ] All tests passing
+- [ ] VSCode integration fully functional
+- [ ] Production-ready deployment
+
+## 🎯 **AMQP Transport Success Metrics**
+
+### **Critical Success Criteria**:
+
+1. **✅ VSCode Connection**: VSCode connects and shows server as available
+2. **✅ Initialize Handshake**: Initialize request → response flow working
+3. **✅ Tool Visibility**: All 57 tools visible in VSCode interface
+4. **✅ Tool Execution**: Tools execute successfully and return results
+5. **✅ Error Handling**: Graceful error handling and recovery
+6. **✅ Production Ready**: Stable deployment in container environment
+
+### **Performance Targets**:
+
+- **Connection Time**: < 5 seconds to establish AMQP transport
+- **Tool Response Time**: < 2 seconds for tool execution
+- **Reliability**: > 99% uptime for AMQP transport
+- **Scalability**: Support multiple concurrent VSCode sessions
+
+## 🔄 **Implementation Priority Order**
+
+1. **CRITICAL**: Fix transport interface compliance (Tasks 1.1-1.3)
+2. **HIGH**: Validate message flow and handshake (Tasks 2.1-2.2)
+3. **MEDIUM**: Implement error handling and security (Tasks 3.1-3.2)
+4. **ONGOING**: Comprehensive testing and validation (Task 4.1)
+
+## 📋 **Current AMQP Transport Status**
+
+### **Working Components** ✅:
+
+- RabbitMQ connection and channel setup
+- Message routing through exchanges/queues
+- JSON-RPC message format
+- Session management with correlation IDs
+- Tool registry integration (57 tools available)
+- Container deployment infrastructure
+
+### **Broken Components** ❌:
+
+- Transport interface contract compliance
+- SDK integration and lifecycle management
+- Initialize response transmission
+- VSCode client integration
+- Capability negotiation flow
+
+### **Immediate Next Action**:
+
+**Start with Task 1.1**: Fix AMQP server transport interface to be SDK-compatible. This is the critical blocking issue preventing VSCode integration.
+
+---
+
+## �💡 Quick Reference
 
 **Start Development**: `npm start` or `.\rebuild_deploy.ps1`
 **Test Tools**: `npm run test` or individual test files

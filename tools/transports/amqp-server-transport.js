@@ -139,6 +139,16 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
   }
 
   async start() {
+    // CRITICAL MCP SDK COMPLIANCE FIX: Make start() idempotent
+    // The SDK may call start() multiple times, so we must check if already started
+    if (this.connectionState.connected) {
+      console.log('[AMQP] Transport already started, skipping (SDK compliance):', {
+        sessionId: this.sessionId,
+        alreadyConnected: true
+      });
+      return;
+    }
+    
     console.log('[AMQP] Starting MCP transport with bidirectional pub/sub routing:', {
       hasOnMessage: typeof this.onmessage === 'function',
       hasOnError: typeof this.onerror === 'function',
