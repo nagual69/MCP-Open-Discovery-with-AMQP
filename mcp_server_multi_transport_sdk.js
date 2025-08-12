@@ -1,29 +1,24 @@
 /**
- * MCP Ope# AMQP integration (using original files - properly fixed)
-const { 
-  startAmqpServer, 
-  initializeAmqpIntegration,
-  getAmqpStatus
-} = require('./tools/transports/amqp-transport-integration');overy Server - Multi-Transport (SDK Compatible)
+ * MCP Open Discovery Server - Multi-Transport (SDK Compatible)
  * 
  * This is an enhanced server implementation using the official MCP TypeScript SDK
- * that supports both stdio and HTTP transports, making it suitable for both
- * CLI and web-based MCP clients.
+ * that supports multiple transports (stdio, HTTP, AMQP) through a componentized
+ * transport architecture, making it suitable for CLI, web, and distributed clients.
  */
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
-const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
-const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
-const express = require('express');
-const { randomUUID } = require('node:crypto');
 const { registerAllTools, registerAllResources, getResourceCounts, getRegistry, getHotReloadManager, getValidationManager, cleanup } = require('./tools/registry/index');
 const { registerAllPrompts, getPromptCounts } = require('./tools/prompts_sdk');
-// AMQP integration (using original files - properly fixed)
+
+// Componentized transport system - NEW TRANSPORT MANAGER v2.0
 const { 
-  startAmqpServer, 
-  initializeAmqpIntegration,
-  getAmqpStatus
-} = require('./tools/transports/amqp-transport-integration');
+  startAllTransports, 
+  getAllTransportStatus, 
+  cleanupAllTransports,
+  detectEnvironment,
+  getTransportRecommendations,
+  parseTransportMode
+} = require('./tools/transports/core/transport-manager');
 
 // Environment configuration with defaults
 const CONFIG = {
@@ -676,130 +671,67 @@ async function startHttpServer() {
  */
 async function startServer() {
   try {
-    // Parse transport modes - supports: stdio, http, amqp, grpc
-    const transportModes = CONFIG.TRANSPORT_MODE.toLowerCase().split(',').map(m => m.trim()).filter(Boolean);
+    // Detect environment and get transport recommendations
+    const environment = detectEnvironment();
+    log('info', 'Environment detected', environment);
     
+    // Parse transport modes using the new transport manager
+    const transportModes = parseTransportMode(CONFIG.TRANSPORT_MODE);
     log('info', `Starting server with transport modes: ${transportModes.join(', ')}`, {
       originalValue: CONFIG.TRANSPORT_MODE,
       envValue: process.env.TRANSPORT_MODE,
       parsedModes: transportModes,
-      architecture: 'singleton-server-multi-transport'
+      environment: environment,
+      architecture: 'transport-manager-v2.0'
     });
 
-    // Initialize AMQP integration only if AMQP is requested
-    if (transportModes.includes('amqp')) {
-      initializeAmqpIntegration(log);
+    // Create singleton MCP server instance
+    const mcpServer = await createServer();
+    log('info', 'Singleton MCP server created and ready for all transports');
+
+    // Start all transports using the new transport manager
+    const transportResults = await startAllTransports(mcpServer, transportModes, {
+      httpPort: CONFIG.HTTP_PORT,
+      oauthEnabled: CONFIG.OAUTH_ENABLED,
+      oauthProtectedEndpoints: CONFIG.OAUTH_PROTECTED_ENDPOINTS,
+      amqpUrl: CONFIG.AMQP_URL,
+      amqpQueuePrefix: CONFIG.AMQP_QUEUE_PREFIX,
+      amqpExchange: CONFIG.AMQP_EXCHANGE,
+      grpcPort: CONFIG.GRPC_PORT,
+      grpcMaxConnections: CONFIG.GRPC_MAX_CONNECTIONS,
+      grpcKeepaliveTime: CONFIG.GRPC_KEEPALIVE_TIME,
+      logFunction: log
+    });
+
+    // Report startup status from transport manager
+    if (transportResults.successful > 0) {
+      const successfulTransports = Object.keys(transportResults.transports).filter(
+        name => transportResults.transports[name].success
+      );
+      log('info', `Successfully started transports: ${successfulTransports.join(', ')}`);
     }
     
-    // TODO: Initialize gRPC integration when gRPC transport is requested
-    if (transportModes.includes('grpc')) {
-      log('info', 'gRPC transport requested - will initialize when gRPC integration is available');
-      // Future: initializeGrpcIntegration(log);
+    if (transportResults.errors && transportResults.errors.length > 0) {
+      log('warn', `Failed to start transports: ${transportResults.errors.map(e => `${e.transport} (${e.error})`).join(', ')}`);
     }
     
-    // Start each requested transport
-    const activeTransports = [];
-    const failedTransports = [];
-    
-    for (const mode of transportModes) {
-      try {
-        switch (mode) {
-          case 'stdio':
-            await startStdioServer();
-            activeTransports.push('stdio');
-            break;
-            
-          case 'http':
-            await startHttpServer();
-            activeTransports.push('http');
-            break;
-            
-          case 'amqp':
-            try {
-              // Enhanced AMQP server with full orchestration capabilities
-              const createServerFn = async () => {
-                log('info', '[AMQP Enhanced] Using singleton server instance for transport');
-                return await createServer(); // Returns existing singleton instance
-              };
-              
-              // Use the enhanced AMQP server with consolidated functionality
-              const amqpTransport = await startAmqpServer(createServerFn, log, {
-                transportMode: CONFIG.TRANSPORT_MODE
-              });
-              activeTransports.push('amqp');
-              
-              log('info', 'Enhanced AMQP server started successfully', {
-                sessionId: amqpTransport.sessionId || 'unknown',
-                hasTransport: !!amqpTransport
-              });
-            } catch (amqpError) {
-              log('warn', 'Enhanced AMQP server failed to start', {
-                error: amqpError.message,
-                fallback: 'Server will continue without AMQP support'
-              });
-              failedTransports.push({ mode: 'amqp', error: amqpError.message });
-            }
-            break;
-            
-          case 'grpc':
-            try {
-              // FUTURE: gRPC Transport Integration
-              log('info', 'Starting gRPC transport with singleton server pattern...');
-              
-              // Create transport-only function (consistent with AMQP pattern)
-              const createTransportOnlyFn = async () => {
-                log('info', '[gRPC] Using singleton server instance for transport');
-                return await createServer(); // Returns existing singleton instance
-              };
-              
-              // TODO: Implement when gRPC integration is available
-              // const { startGrpcServer, startGrpcAutoRecovery } = require('./tools/transports/grpc-transport-integration');
-              // const grpcTransport = await startGrpcServer(createTransportOnlyFn, log);
-              // activeTransports.push('grpc');
-              
-              log('warn', 'gRPC transport not yet implemented - placeholder for future development');
-              failedTransports.push({ mode: 'grpc', error: 'Not yet implemented' });
-              
-            } catch (grpcError) {
-              log('warn', 'gRPC transport failed to start', {
-                error: grpcError.message,
-                fallback: 'Server will continue without gRPC support'
-              });
-              failedTransports.push({ mode: 'grpc', error: grpcError.message });
-            }
-            break;
-            
-          default:
-            log('warn', `Unknown transport mode: ${mode}`);
-        }
-      } catch (transportError) {
-        log('error', `Failed to start ${mode} transport`, {
-          error: transportError.message,
-          stack: transportError.stack
-        });
-        failedTransports.push({ mode, error: transportError.message });
-      }
-    }
-    
-    // Report startup status
-    if (activeTransports.length > 0) {
-      log('info', 'MCP Server started successfully', {
-        activeTransports,
-        failedTransports: failedTransports.length > 0 ? failedTransports : 'none',
-        mode: transportModes.join(', '),
-        degradedOperation: failedTransports.length > 0
-      });
-      
-      // Log warnings for failed transports
-      if (failedTransports.length > 0) {
-        log('warn', 'Server running in degraded mode - some transports failed', {
-          failedCount: failedTransports.length,
-          details: failedTransports
-        });
-      }
-    } else {
-      log('error', 'All transports failed to start', { failedTransports });
+    if (transportResults.successful === 0) {
       throw new Error('No transports could be started');
+    }
+
+    log('info', 'MCP Server started successfully', {
+      activeTransports: transportResults.successful,
+      failedTransports: transportResults.errors.length > 0 ? transportResults.errors : 'none',
+      mode: transportModes.join(', '),
+      degradedOperation: transportResults.errors.length > 0
+    });
+    
+    // Log warnings for failed transports
+    if (transportResults.errors.length > 0) {
+      log('warn', 'Server running in degraded mode - some transports failed', {
+        failedCount: transportResults.errors.length,
+        details: transportResults.errors
+      });
     }
     
     // Enhanced graceful shutdown
@@ -807,17 +739,8 @@ async function startServer() {
       log('info', `Received ${signal}, shutting down gracefully...`);
       
       try {
-        // Stop AMQP auto-recovery if running
-        if (process.amqpRecovery) {
-          log('info', 'Stopping AMQP auto-recovery service...');
-          process.amqpRecovery.stop = true;
-        }
-        
-        // Close AMQP transport if active
-        if (process.amqpTransport) {
-          log('info', 'Closing AMQP transport...');
-          await process.amqpTransport.close();
-        }
+        // Use transport manager for clean shutdown
+        await cleanupAllTransports(transportResults);
         
         log('info', 'Graceful shutdown complete');
         process.exit(0);

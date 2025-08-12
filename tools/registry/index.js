@@ -24,7 +24,6 @@ const { HotReloadManager } = require('./hot_reload_manager');
 const { ToolValidationManager } = require('./tool_validation_manager');
 const { registerAllResources, getResourceCounts } = require('./resource_manager');
 const { hasArrayParameters, getRegistrationSchema, getRegistrationMethod, analyzeParameters } = require('./parameter_type_detector');
-const { zodToJsonSchema } = require('zod-to-json-schema');
 
 // Registry singleton instances with proper lifecycle
 let registryInstance = null;

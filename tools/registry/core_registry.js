@@ -104,10 +104,11 @@ class CoreRegistry {
   }
 
   /**
-   * Alternative method name for compatibility with old registry
+   * Deprecated alias for compatibility (use hasExistingTools instead)
    * @returns {Promise<boolean>}
    */
   async areToolsAlreadyRegistered() {
+    // For backward compatibility only
     return this.hasExistingTools();
   }
 
@@ -304,21 +305,7 @@ class CoreRegistry {
     return stats;
   }
 
-  /**
-   * Get tool counts in legacy format for compatibility
-   * @returns {Object} Tool counts
-   */
-  getToolCounts() {
-    const categories = {};
-    for (const [category, tools] of this.categories) {
-      categories[category] = tools.size;
-    }
-    
-    return {
-      total: this.registeredTools.size,
-      categories
-    };
-  }
+  // getToolCounts is now merged into getStats()
 
   /**
    * Get hot-reload status
