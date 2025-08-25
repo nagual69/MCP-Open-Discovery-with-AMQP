@@ -52,7 +52,7 @@ COPY package.json ./
 RUN npm install --no-fund --no-audit
 
 # Copy application files
-COPY mcp_server_multi_transport_sdk.js ./
+COPY mcp_open_discovery_server.js ./
 COPY tools/ ./tools/
 COPY scripts/ ./scripts/
 
@@ -73,4 +73,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start the server
-CMD ["node","--use-system-ca", "mcp_server_multi_transport_sdk.js"]
+CMD ["node","--use-system-ca", "mcp_open_discovery_server.js"]

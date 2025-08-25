@@ -232,10 +232,25 @@ async function createServer() {
   }
 
   serverInitialized = true;
-  log('info', '[SINGLETON] ✅ MCP server instance ready for all transports');
+    log('info', '[SINGLETON] ✅ MCP server instance ready for all transports');
+
+  return globalMcpServer;
+
+  // Debug: Check what methods are available on the server instance
+  log('debug', '[DEBUG] Available methods on globalMcpServer:', {
+    methods: Object.getOwnPropertyNames(globalMcpServer).filter(name => typeof globalMcpServer[name] === 'function'),
+    hasHandleRequest: typeof globalMcpServer.handleRequest === 'function',
+    hasRequestHandler: typeof globalMcpServer.requestHandler === 'function',
+    hasHandle: typeof globalMcpServer.handle === 'function'
+  });
 
   // Add request/response logging and security middleware (same pattern as working server)
   const originalHandleRequest = globalMcpServer.handleRequest;
+  log('debug', '[DEBUG] Original handleRequest method:', { 
+    exists: !!originalHandleRequest, 
+    type: typeof originalHandleRequest 
+  });
+  
   globalMcpServer.handleRequest = async function(request) {
     const startTime = Date.now();
     const requestId = Math.random().toString(36).substring(2, 15);
@@ -264,6 +279,48 @@ async function createServer() {
           setTimeout(() => reject(new Error('Request timeout')), CONFIG.REQUEST_TIMEOUT)
         )
       ]);
+
+      // CRITICAL FIX: Sanitize tools/list response schemas to fix keyValidator._parse error
+      if (request.method === 'tools/list' && result && result.tools && Array.isArray(result.tools)) {
+        log('debug', `🔧 Sanitizing ${result.tools.length} tool schemas in tools/list response`);
+        
+        result.tools = result.tools.map(tool => {
+          if (tool.inputSchema) {
+            const originalSchema = tool.inputSchema;
+            
+            // Create sanitized copy
+            const sanitizedSchema = { ...originalSchema };
+            
+            // Remove problematic properties that break MCP SDK validation
+            delete sanitizedSchema.$schema;
+            delete sanitizedSchema.$defs;
+            delete sanitizedSchema.definitions;
+            
+            // Fix additionalProperties for MCP compatibility
+            if (sanitizedSchema.additionalProperties === false) {
+              sanitizedSchema.additionalProperties = true;
+            }
+            
+            log('debug', `✅ Sanitized schema for tool: ${tool.name}`, {
+              before: {
+                hasSchema: '$schema' in originalSchema,
+                additionalProperties: originalSchema.additionalProperties,
+                hasDefs: '$defs' in originalSchema || 'definitions' in originalSchema
+              },
+              after: {
+                hasSchema: '$schema' in sanitizedSchema,
+                additionalProperties: sanitizedSchema.additionalProperties,
+                hasDefs: '$defs' in sanitizedSchema || 'definitions' in sanitizedSchema
+              }
+            });
+            
+            return { ...tool, inputSchema: sanitizedSchema };
+          }
+          return tool;
+        });
+        
+        log('info', `🎯 SCHEMA FIX: Sanitized ${result.tools.length} tool schemas in tools/list response`);
+      }
 
       const duration = Date.now() - startTime;
       log('debug', `Request ${requestId} completed in ${duration}ms`);
@@ -534,6 +591,61 @@ async function startHttpServer() {
       }
 
       // Handle the request with existing transport
+      // CRITICAL FIX: Add schema sanitization for existing transports too
+      if (req.body && req.body.method === 'tools/list') {
+        log('debug', '🔧 Intercepting tools/list request for existing transport schema sanitization');
+        
+        // Capture the original response method
+        const originalJson = res.json.bind(res);
+        
+        // Override res.json to sanitize the response
+        res.json = function(data) {
+          if (data && data.result && data.result.tools && Array.isArray(data.result.tools)) {
+            log('debug', `🔧 Sanitizing ${data.result.tools.length} tool schemas in existing transport tools/list response`);
+            
+            data.result.tools = data.result.tools.map(tool => {
+              if (tool.inputSchema) {
+                const originalSchema = tool.inputSchema;
+                
+                // Create sanitized copy
+                const sanitizedSchema = { ...originalSchema };
+                
+                // Remove problematic properties that break MCP SDK validation
+                delete sanitizedSchema.$schema;
+                delete sanitizedSchema.$defs;
+                delete sanitizedSchema.definitions;
+                
+                // Fix additionalProperties for MCP compatibility
+                if (sanitizedSchema.additionalProperties === false) {
+                  sanitizedSchema.additionalProperties = true;
+                }
+                
+                log('debug', `✅ Sanitized schema for tool: ${tool.name}`, {
+                  before: {
+                    hasSchema: '$schema' in originalSchema,
+                    additionalProperties: originalSchema.additionalProperties,
+                    hasDefs: '$defs' in originalSchema || 'definitions' in originalSchema
+                  },
+                  after: {
+                    hasSchema: '$schema' in sanitizedSchema,
+                    additionalProperties: sanitizedSchema.additionalProperties,
+                    hasDefs: '$defs' in sanitizedSchema || 'definitions' in sanitizedSchema
+                  }
+                });
+                
+                return { ...tool, inputSchema: sanitizedSchema };
+              }
+              return tool;
+            });
+            
+            log('info', `🎯 SCHEMA FIX: Sanitized ${data.result.tools.length} tool schemas in existing transport tools/list response`);
+          }
+          
+          // Call original json method with sanitized data
+          return originalJson(data);
+        };
+      }
+      
       await transport.handleRequest(req, res, req.body);
     } catch (error) {
       log('error', 'Error handling MCP HTTP request', {

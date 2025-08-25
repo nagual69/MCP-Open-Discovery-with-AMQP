@@ -62,7 +62,7 @@ async function runTest(testName, testFunction) {
  * Test 1: Server Module Loading
  */
 async function testServerModuleLoading() {
-  const serverPath = path.resolve('./mcp_server_multi_transport_sdk.js');
+  const serverPath = path.resolve('./mcp_open_discovery_server.js');
   
   try {
     // Try to require the server module
@@ -111,7 +111,7 @@ async function testToolRegistryLoading() {
  */
 async function testMcpStdioProtocol() {
   return new Promise((resolve, reject) => {
-    const serverPath = path.resolve('./mcp_server_multi_transport_sdk.js');
+    const serverPath = path.resolve('./mcp_open_discovery_server.js');
     
     // Start server with stdio transport
     const server = spawn('node', [serverPath], {

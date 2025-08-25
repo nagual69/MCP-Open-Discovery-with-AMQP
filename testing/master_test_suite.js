@@ -270,7 +270,7 @@ class StdioTransportClient {
 
   async start() {
     return new Promise((resolve, reject) => {
-      this.server = spawn('node', ['mcp_server_multi_transport_sdk.js'], {
+      this.server = spawn('node', ['mcp_open_discovery_server.js'], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, MCP_TRANSPORT: 'stdio' },
         cwd: path.join(__dirname, '..')

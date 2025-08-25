@@ -719,7 +719,7 @@ class StdioTransportClient {
   async start() {
     return new Promise((resolve, reject) => {
       try {
-        this.process = spawn('node', ['../mcp_server_multi_transport_sdk.js'], {
+        this.process = spawn('node', ['../mcp_open_discovery_server.js'], {
           stdio: ['pipe', 'pipe', 'pipe'],
           cwd: __dirname
         });

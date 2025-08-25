@@ -5,7 +5,7 @@
  * all functionality is preserved and working correctly.
  */
 
-const { createServer } = require('../mcp_server_multi_transport_sdk');
+const { createServer } = require('../mcp_open_discovery_server');
 const { 
   startAllTransports,
   getAllTransportStatus,

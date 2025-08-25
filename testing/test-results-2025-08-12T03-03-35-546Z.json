@@ -1,0 +1,2593 @@
+{
+  "summary": {
+    "totalTools": 62,
+    "passed": 3,
+    "failed": 59,
+    "skipped": 0,
+    "successRate": 4.838709677419355
+  },
+  "categories": {
+    "memory": {
+      "total": 9,
+      "passed": 0,
+      "failed": 9,
+      "skipped": 0
+    },
+    "network": {
+      "total": 9,
+      "passed": 0,
+      "failed": 9,
+      "skipped": 0
+    },
+    "nmap": {
+      "total": 5,
+      "passed": 0,
+      "failed": 5,
+      "skipped": 0
+    },
+    "snmp": {
+      "total": 12,
+      "passed": 2,
+      "failed": 10,
+      "skipped": 0
+    },
+    "proxmox": {
+      "total": 10,
+      "passed": 0,
+      "failed": 10,
+      "skipped": 0
+    },
+    "zabbix": {
+      "total": 7,
+      "passed": 1,
+      "failed": 6,
+      "skipped": 0
+    },
+    "credentials": {
+      "total": 5,
+      "passed": 0,
+      "failed": 5,
+      "skipped": 0
+    },
+    "registry": {
+      "total": 5,
+      "passed": 0,
+      "failed": 5,
+      "skipped": 0
+    }
+  },
+  "transports": {
+    "http": {
+      "total": 62,
+      "passed": 3,
+      "failed": 59,
+      "categories": {
+        "memory": {
+          "total": 9,
+          "passed": 0,
+          "failed": 9,
+          "skipped": 0,
+          "tools": {
+            "memory_get": {
+              "status": "failed",
+              "duration": 10,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802240,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_set": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802250,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_query": {
+              "status": "failed",
+              "duration": 5,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802254,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_merge": {
+              "status": "failed",
+              "duration": 4,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802258,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_clear": {
+              "status": "failed",
+              "duration": 5,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802263,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_stats": {
+              "status": "failed",
+              "duration": 5,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802267,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_save": {
+              "status": "failed",
+              "duration": 5,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802273,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_rotate_key": {
+              "status": "failed",
+              "duration": 5,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802278,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_migrate_from_filesystem": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802283,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "network": {
+          "total": 9,
+          "passed": 0,
+          "failed": 9,
+          "skipped": 0,
+          "tools": {
+            "ping": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802286,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nslookup": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802289,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "netstat": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802292,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "ifconfig": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802295,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "route": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802298,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "arp": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802302,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "tcp_connect": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802305,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "wget": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802308,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "whois": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802312,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "nmap": {
+          "total": 5,
+          "passed": 0,
+          "failed": 5,
+          "skipped": 0,
+          "tools": {
+            "nmap_ping_scan": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802315,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_tcp_connect_scan": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802318,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_tcp_syn_scan": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802322,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_udp_scan": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802325,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_version_scan": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802328,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "snmp": {
+          "total": 12,
+          "passed": 2,
+          "failed": 10,
+          "skipped": 0,
+          "tools": {
+            "snmp_create_session": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802331,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_close_session": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802334,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_get": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session b2cf527c-cc6d-4ff8-b0d9-53da53dbc440 not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_get_next": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session b2cf527c-cc6d-4ff8-b0d9-53da53dbc440 not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_walk": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802344,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_table": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802347,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_discover": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802350,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_device_inventory": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802352,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_interface_discovery": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802355,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_service_discovery": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802357,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_system_health": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802360,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_network_topology": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802363,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "proxmox": {
+          "total": 10,
+          "passed": 0,
+          "failed": 10,
+          "skipped": 0,
+          "tools": {
+            "proxmox_list_nodes": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802369,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_node_details": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802372,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_vms": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802375,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_vm_details": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802377,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_containers": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802380,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_container_details": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802383,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_storage": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802386,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_networks": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802388,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_cluster_resources": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802391,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_metrics": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802394,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "zabbix": {
+          "total": 7,
+          "passed": 1,
+          "failed": 6,
+          "skipped": 0,
+          "tools": {
+            "zabbix_host_discover": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802397,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_problems": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802399,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_alerts": {
+              "status": "passed",
+              "duration": 259,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix alerts: Failed to authenticate with Zabbix: Zabbix authentication failed: Application error."
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_metrics": {
+              "status": "failed",
+              "duration": 6,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802662,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_events": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802668,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_triggers": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802672,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_inventory": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802676,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "credentials": {
+          "total": 5,
+          "passed": 0,
+          "failed": 5,
+          "skipped": 0,
+          "tools": {
+            "credentials_add": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802680,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_get": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802683,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_list": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802686,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_remove": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802690,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_rotate_key": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802692,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "registry": {
+          "total": 5,
+          "passed": 0,
+          "failed": 5,
+          "skipped": 0,
+          "tools": {
+            "registry_get_status": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802695,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_load_module": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802698,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_unload_module": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802701,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_reload_module": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802703,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_toggle_hotreload": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 1754967802706,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        }
+      }
+    },
+    "stdio": {
+      "total": 62,
+      "passed": 3,
+      "failed": 59,
+      "categories": {
+        "memory": {
+          "total": 9,
+          "passed": 0,
+          "failed": 9,
+          "skipped": 0,
+          "tools": {
+            "memory_get": {
+              "status": "failed",
+              "duration": 3,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_set": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 3,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_query": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 4,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_merge": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 5,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_clear": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 6,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_stats": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 7,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_save": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 8,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_rotate_key": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 9,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "memory_migrate_from_filesystem": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 10,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "network": {
+          "total": 9,
+          "passed": 0,
+          "failed": 9,
+          "skipped": 0,
+          "tools": {
+            "ping": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 11,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nslookup": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 12,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "netstat": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 13,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "ifconfig": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 14,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "route": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 15,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "arp": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 16,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "tcp_connect": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 17,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "wget": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 18,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "whois": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 19,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "nmap": {
+          "total": 5,
+          "passed": 0,
+          "failed": 5,
+          "skipped": 0,
+          "tools": {
+            "nmap_ping_scan": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 20,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_tcp_connect_scan": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 21,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_tcp_syn_scan": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 22,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_udp_scan": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 23,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "nmap_version_scan": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 24,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "snmp": {
+          "total": 12,
+          "passed": 2,
+          "failed": 10,
+          "skipped": 0,
+          "tools": {
+            "snmp_create_session": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 25,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_close_session": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 26,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_get": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session undefined not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_get_next": {
+              "status": "passed",
+              "duration": 0,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session undefined not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_walk": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 29,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_table": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 30,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_discover": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 31,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_device_inventory": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 32,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_interface_discovery": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 33,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_service_discovery": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 34,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_system_health": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 35,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "snmp_network_topology": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 36,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "proxmox": {
+          "total": 10,
+          "passed": 0,
+          "failed": 10,
+          "skipped": 0,
+          "tools": {
+            "proxmox_list_nodes": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 38,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_node_details": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 39,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_vms": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 40,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_vm_details": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 41,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_containers": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 42,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_container_details": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 43,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_storage": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 44,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_list_networks": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 45,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_cluster_resources": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 46,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "proxmox_get_metrics": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 47,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "zabbix": {
+          "total": 7,
+          "passed": 1,
+          "failed": 6,
+          "skipped": 0,
+          "tools": {
+            "zabbix_host_discover": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 48,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_problems": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 49,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_alerts": {
+              "status": "passed",
+              "duration": 10735,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix alerts: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_metrics": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 51,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_events": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 52,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_triggers": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 53,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "zabbix_get_inventory": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 54,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "credentials": {
+          "total": 5,
+          "passed": 0,
+          "failed": 5,
+          "skipped": 0,
+          "tools": {
+            "credentials_add": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 55,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_get": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 56,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_list": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 57,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_remove": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 58,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "credentials_rotate_key": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 59,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        },
+        "registry": {
+          "total": 5,
+          "passed": 0,
+          "failed": 5,
+          "skipped": 0,
+          "tools": {
+            "registry_get_status": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 60,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_load_module": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 61,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_unload_module": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 62,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_reload_module": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 63,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            },
+            "registry_toggle_hotreload": {
+              "status": "failed",
+              "duration": 2,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 64,
+                "error": {
+                  "code": -32603,
+                  "message": "keyValidator._parse is not a function"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: keyValidator._parse is not a function"
+                ]
+              },
+              "error": "JSON-RPC error: keyValidator._parse is not a function"
+            }
+          }
+        }
+      }
+    }
+  },
+  "details": [],
+  "errors": [],
+  "infrastructure": {
+    "health": {
+      "mcp": {
+        "status": "healthy",
+        "details": {
+          "status": "healthy",
+          "version": "2.0.0",
+          "transport": "http",
+          "registry": {
+            "tools": 0,
+            "modules": 0
+          },
+          "singleton": true,
+          "timestamp": "2025-08-12T03:03:17.193Z"
+        }
+      },
+      "proxmox": {
+        "status": "reachable",
+        "endpoint": "192.168.200.10:8006"
+      },
+      "zabbix": {
+        "status": "unreachable",
+        "error": "Health check timeout",
+        "endpoint": "http://172.20.0.23:8080"
+      },
+      "snmp": {
+        "agents": {
+          "172.20.0.10": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.11": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.12": {
+            "status": "available",
+            "community": "public"
+          }
+        }
+      }
+    },
+    "connectivity": {}
+  }
+}

@@ -209,7 +209,7 @@ function getRegistry() {
     // Initialize companion managers
     if (!hotReloadManager) {
       hotReloadManager = new HotReloadManager(registryInstance);
-      hotReloadManager.enable(); // Enable hot-reload by default
+      hotReloadManager.enable();
     }
     
     if (!validationManager) {
@@ -224,7 +224,7 @@ function getRegistry() {
  * @returns {HotReloadManager}
  */
 function getHotReloadManager() {
-  getRegistry(); // Ensure registry is initialized
+  getRegistry();
   return hotReloadManager;
 }
 
@@ -233,7 +233,7 @@ function getHotReloadManager() {
  * @returns {ToolValidationManager}
  */
 function getValidationManager() {
-  getRegistry(); // Ensure registry is initialized
+  getRegistry();
   return validationManager;
 }
 
@@ -341,7 +341,7 @@ async function registerAllTools(server) {
         
         // Special initialization for modules that need it
         if (moduleConfig.requiresInit && module.initialize) {
-          console.log(`[Registry] � Initializing ${moduleConfig.name}...`);
+          console.log(`[Registry] 🔧 Initializing ${moduleConfig.name}...`);
           await module.initialize();
         }
         

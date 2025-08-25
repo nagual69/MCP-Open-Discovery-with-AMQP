@@ -166,7 +166,7 @@ flowchart TB
 - **🔐 Security Framework:** AES-256 encryption, audit trails, key rotation
 - **📊 Analytics Dashboard:** Module history, performance metrics, usage patterns
 
-- **🎯 Main Server:** `mcp_server_multi_transport_sdk.js` - Full MCP SDK implementation
+- **🎯 Main Server:** `mcp_open_discovery_server.js` - Clean modular MCP SDK implementation
 - **🔧 Tool Registry:** Centralized SDK-compatible tool registration with Zod schemas
 - **🏗️ In-Memory CMDB:** Hierarchical, queryable configuration database for discovered CIs
 - **🔐 Credential Manager:** Enterprise-grade encrypted credential storage with audit trails

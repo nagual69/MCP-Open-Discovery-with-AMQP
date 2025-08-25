@@ -249,7 +249,7 @@ async function runValidation() {
   if (failedSteps === 0) {
     log('success', '🎉 AMQP integration is ready for MCP Open Discovery Server v2.0!');
     log('info', '\nNext steps:');
-    log('info', '1. Start your MCP server: TRANSPORT_MODE=amqp node mcp_server_multi_transport_sdk.js');
+    log('info', '1. Start your MCP server: TRANSPORT_MODE=amqp node mcp_open_discovery_server.js');
     log('info', '2. Test with: node examples/amqp-discovery-client.js');
     log('info', '3. Run comprehensive tests: node test-amqp-transport.js');
   } else {
@@ -277,7 +277,7 @@ function generateIntegrationReport() {
     ],
     nextSteps: [
       'Copy transport files to tools/transports/',
-      'Update mcp_server_multi_transport_sdk.js',
+      'Update mcp_open_discovery_server.js',
       'Set TRANSPORT_MODE environment variable',
       'Start RabbitMQ broker',
       'Test with example client'

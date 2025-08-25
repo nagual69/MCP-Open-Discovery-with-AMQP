@@ -158,7 +158,7 @@ Write-Host "      • Tool category routing" -ForegroundColor White
 Write-Host "      • Real-time discovery notifications" -ForegroundColor White
 
 Write-Host "`n🔥 Ready to start server with command:" -ForegroundColor Yellow
-Write-Host "   TRANSPORT_MODE=$($transportModes[$Mode]) node mcp_server_multi_transport_sdk.js" -ForegroundColor White
+Write-Host "   TRANSPORT_MODE=$($transportModes[$Mode]) node mcp_open_discovery_server.js" -ForegroundColor White
 
 Write-Host "`n📋 Testing Commands:" -ForegroundColor Cyan
 Write-Host "   • Test AMQP transport: node testing/test-amqp-transport.js" -ForegroundColor White
@@ -182,16 +182,16 @@ if ($startServer -eq "y" -or $startServer -eq "Y") {
     Write-Host "`n🚀 Starting server..." -ForegroundColor Green
     
     # Check if server file exists
-    if (Test-Path "mcp_server_multi_transport_sdk.js") {
-        node mcp_server_multi_transport_sdk.js
+    if (Test-Path "mcp_open_discovery_server.js") {
+        node mcp_open_discovery_server.js
     }
-    elseif (Test-Path "../mcp_server_multi_transport_sdk.js") {
+    elseif (Test-Path "../mcp_open_discovery_server.js") {
         Set-Location ..
-        node mcp_server_multi_transport_sdk.js
+        node mcp_open_discovery_server.js
     }
     else {
         Write-Warning "Server file not found. Please navigate to your MCP Open Discovery project directory and run:"
-        Write-Host "TRANSPORT_MODE=$($transportModes[$Mode]) node mcp_server_multi_transport_sdk.js" -ForegroundColor Yellow
+        Write-Host "TRANSPORT_MODE=$($transportModes[$Mode]) node mcp_open_discovery_server.js" -ForegroundColor Yellow
     }
 }
 else {
