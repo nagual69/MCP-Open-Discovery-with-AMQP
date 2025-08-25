@@ -11,6 +11,7 @@
  */
 
 const { zodToJsonSchema } = require('zod-to-json-schema');
+const { z } = require('zod');
 const { CoreRegistry } = require('./core_registry');
 const { HotReloadManager } = require('./hot_reload_manager');
 const { ToolValidationManager } = require('./tool_validation_manager');
@@ -110,13 +111,26 @@ function convertZodToMCPSchema(zodSchema) {
  */
 function registerMCPTool(server, tool, handleToolCall) {
   try {
-    // Convert Zod schema to MCP-compliant JSON Schema
-    const inputSchema = convertZodToMCPSchema(tool.inputSchema);
+    // MCP SDK expects a Zod schema for inputSchema. Some modules may
+    // accidentally provide JSON Schema objects; detect and fallback.
+    let inputZodSchema;
+    const s = tool.inputSchema;
+  if (s && typeof s === 'object' && (typeof s.safeParse === 'function' || typeof s.parse === 'function')) {
+      // Likely a Zod schema (Zod types expose _parse)
+      inputZodSchema = s;
+    } else if (s && typeof s === 'object' && (s.type || s.$schema || s.properties)) {
+      // Looks like JSON Schema; warn and fallback to empty strict object
+      console.warn(`[Registry] Detected JSON Schema for tool "${tool.name}". MCP SDK requires Zod schema. Using strict empty schema as fallback.`);
+      inputZodSchema = z.object({}).strict();
+    } else {
+      // No schema provided; use strict empty object per MCP examples
+      inputZodSchema = z.object({}).strict();
+    }
     
     // Create MCP Tool configuration per specification
     const toolConfig = {
       description: tool.description || `Execute ${tool.name} tool`,
-      inputSchema: inputSchema
+      inputSchema: inputZodSchema
     };
 
     // Create execution handler that follows MCP CallToolResult specification

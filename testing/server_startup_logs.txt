@@ -1,0 +1,109 @@
+[2025-08-25T23:03:38.786Z] [DEBUG] [TRANSPORT_MANAGER] Configured category routing for: network -> mcp.notifications.tools.network 
+
+[2025-08-25T23:03:38.786Z] [DEBUG] [TRANSPORT_MANAGER] Configured category routing for: nmap -> mcp.notifications.tools.nmap 
+
+[2025-08-25T23:03:38.786Z] [DEBUG] [TRANSPORT_MANAGER] Configured category routing for: proxmox -> mcp.notifications.tools.proxmox 
+
+[2025-08-25T23:03:38.786Z] [DEBUG] [TRANSPORT_MANAGER] Configured category routing for: snmp -> mcp.notifications.tools.snmp 
+
+[2025-08-25T23:03:38.786Z] [DEBUG] [TRANSPORT_MANAGER] Configured category routing for: zabbix -> mcp.notifications.tools.zabbix 
+
+[2025-08-25T23:03:38.786Z] [DEBUG] [TRANSPORT_MANAGER] Configured category routing for: credentials -> mcp.notifications.tools.credentials 
+
+[2025-08-25T23:03:38.786Z] [DEBUG] [TRANSPORT_MANAGER] Configured category routing for: registry -> mcp.notifications.tools.registry 
+
+[2025-08-25T23:03:38.787Z] [INFO] [TRANSPORT_MANAGER] Tool category routing configured for 8 categories {
+
+  "categories": [
+
+    "memory",
+
+    "network",
+
+    "nmap",
+
+    "proxmox",
+
+    "snmp",
+
+    "zabbix",
+
+    "credentials",
+
+    "registry"
+
+  ],
+
+  "totalTools": 17
+
+}
+
+[2025-08-25T23:03:38.787Z] [INFO] [TRANSPORT_MANAGER] Enhanced AMQP server started successfully with MCP Open Discovery v2.0 enhancements {
+
+  "amqpUrl": "amqp://mcp:discovery@rabbitmq:5672",
+
+  "queuePrefix": "mcp.discovery",
+
+  "exchangeName": "mcp.notifications",
+
+  "prefetchCount": 1,
+
+  "autoRecovery": true,
+
+  "registryIntegration": true,
+
+  "categoryRouting": true,
+
+  "gracefulShutdown": true
+
+}
+
+[2025-08-25T23:03:38.787Z] [INFO] [TRANSPORT_MANAGER] AMQP transport started with auto-recovery capabilities 
+
+[2025-08-25T23:03:38.787Z] [INFO] [TRANSPORT_MANAGER] amqp transport started successfully 
+
+[2025-08-25T23:03:38.787Z] [INFO] [TRANSPORT_MANAGER] Transport manager startup complete {
+
+  "environment": {
+
+    "isContainer": true,
+
+    "transportMode": "http,amqp"
+
+  },
+
+  "enabled": [
+
+    "http",
+
+    "amqp"
+
+  ],
+
+  "successful": 2,
+
+  "failed": 0,
+
+  "errors": [],
+
+  "summary": "2/2 transports started successfully"
+
+}
+
+[2025-08-25T23:03:38.787Z] [INFO] MCP Server started successfully {
+
+  "failedTransports": "none",
+
+  "mode": "http, amqp",
+
+  "degradedOperation": false
+
+}
+
+[2025-08-25T23:03:53.839Z] [DEBUG] [TRANSPORT_MANAGER] AMQP health check passed 
+
+[Memory Auto-Save] Saved 0 CIs to SQLite persistence
+
+[2025-08-25T23:04:08.832Z] [DEBUG] [TRANSPORT_MANAGER] AMQP health check passed 
+
+[2025-08-25T23:04:23.839Z] [DEBUG] [TRANSPORT_MANAGER] AMQP health check passed 
