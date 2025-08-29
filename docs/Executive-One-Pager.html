@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MCP Open Discovery v2.0 — Executive One‑Pager</title>
+<style>
+  :root {
+    --bg: #0b0f17; --card: #121826; --text: #e6eefc; --muted: #a9b7d0;
+    --accent: #6cc0ff; --accent2: #77f7c6; --line: #21304a;
+  }
+  html, body { margin:0; padding:0; font-family: Inter, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 28px; }
+  .card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)); border: 1px solid var(--line); border-radius: 14px; padding: 28px; }
+  h1 { font-size: 28px; margin: 0 0 8px; letter-spacing: 0.2px; }
+  h2 { font-size: 18px; margin: 22px 0 8px; color: var(--accent); }
+  p { line-height: 1.55; color: var(--muted); margin: 8px 0 12px; }
+  ul { margin: 8px 0 12px 18px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand img { height: 44px; }
+  .badge { font-size: 12px; color: #00131f; background: linear-gradient(90deg, var(--accent), var(--accent2)); padding: 6px 10px; border-radius: 999px; font-weight: 600; letter-spacing: 0.3px; }
+  .foot { font-size: 12px; color: var(--muted); margin-top: 18px; opacity: 0.9; }
+  .pill { display:inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; margin: 2px 6px 2px 0; font-size: 12px; color: var(--muted); }
+  .hl { color: var(--text); }
+  .muted { color: var(--muted); }
+  .callout { background: rgba(108,192,255,0.08); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  @media print {
+    body { background: #fff; color: #000; }
+    .card { background: #fff; border-color: #ddd; }
+    .badge { color: #000; background: none; border: 1px solid #aaa; }
+    .page { padding: 20mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="brand">
+        <img src="../mcp-open-discovery-logo.png" alt="MCP Open Discovery" />
+        <div>
+          <h1>MCP Open Discovery v2.0 — Executive One‑Pager</h1>
+          <div class="muted">Production‑ready MCP server for discovery, CMDB, and tool orchestration</div>
+        </div>
+      </div>
+      <div class="badge">Container‑first • Official MCP SDK</div>
+    </div>
+
+    <div class="card">
+      <h2>What it is</h2>
+      <p>A production‑ready Model Context Protocol (MCP) server that unifies infrastructure discovery, lightweight CMDB, and tool orchestration. Built on the official MCP SDK with a dynamic tool registry and container‑first deployment.</p>
+
+      <h2>Why it matters</h2>
+      <ul>
+        <li>Accelerates infrastructure visibility and inventory with minimal setup</li>
+        <li>Centralizes discovery/monitoring actions behind a single secure endpoint</li>
+        <li>Reduces operational toil via hot‑reload tools and persistent CMDB</li>
+        <li>Enterprise security: encrypted credentials, audit trails, least privilege</li>
+      </ul>
+
+      <div class="grid">
+        <div>
+          <h2>Key capabilities</h2>
+          <ul>
+            <li>57+ tools: Network, SNMP, Proxmox, Zabbix, Nmap, Credentials, Memory (CMDB)</li>
+            <li>Dynamic registry with hot‑reload (no restarts for updates)</li>
+            <li>SQLite‑backed CMDB: hierarchical CI keys, relationships, auto‑save</li>
+            <li>Multi‑transport MCP server: HTTP, stdio; AMQP evaluated; container‑first</li>
+          </ul>
+        </div>
+        <div>
+          <h2>Architecture</h2>
+          <ul>
+            <li>Single MCP server instance; centralized tool registry</li>
+            <li>Encrypted credentials + SQLite CMDB</li>
+            <li>Capability‑based security for privileged scans (no root)</li>
+            <li>Health endpoint and structured logs for ops</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Security & compliance</h2>
+      <ul>
+        <li>AES‑256 encrypted credentials with audit logging</li>
+        <li>Input validation and defensive error handling</li>
+        <li>Capability‑based Docker security (NET_RAW, NET_ADMIN, NET_BIND_SERVICE)</li>
+        <li>Designed for least privilege; supports at‑rest encryption policies</li>
+      </ul>
+
+      <h2>Deployment & operations</h2>
+      <ul>
+        <li>Docker Compose; Windows PowerShell script (rebuild_deploy.ps1)</li>
+        <li>Health checks and logs; hot‑reload for safe iteration</li>
+        <li>Works locally, in CI, or in container platforms</li>
+      </ul>
+
+      <div class="grid">
+        <div>
+          <h2>Proof points</h2>
+          <ul>
+            <li>93% overall tool success across 57 tools</li>
+            <li>Validated against Proxmox, SNMP devices, and Zabbix</li>
+            <li>Persistent CMDB and dynamic registry at runtime</li>
+          </ul>
+        </div>
+        <div>
+          <h2>Get started</h2>
+          <ul>
+            <li>Run: <span class="hl">rebuild_deploy.ps1</span> on Windows</li>
+            <li>Verify health on port 3000 and list MCP tools</li>
+            <li>Add credentials and start discovery</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout foot">
+        This project was substantially coded with AI under human guidance and review. See README for architecture and security details.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
