@@ -7,6 +7,38 @@ param(
     [switch]$NoLogs
 )
 
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+# Always operate from the repo root (script directory)
+Set-Location -Path $PSScriptRoot
+
+function Invoke-Compose {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$ComposeArgs
+    )
+
+    if (Get-Command docker-compose -ErrorAction SilentlyContinue) {
+        & docker-compose @ComposeArgs
+    }
+    elseif (Get-Command docker -ErrorAction SilentlyContinue) {
+        & docker compose @ComposeArgs
+    }
+    else {
+        throw "Docker (compose) not found. Install Docker Desktop/Engine and ensure it's on PATH."
+    }
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Compose command failed: $($ComposeArgs -join ' ') (exit $LASTEXITCODE)"
+    }
+}
+
+# Validate repo root contains docker-compose.yml
+if (-not (Test-Path -Path (Join-Path $PSScriptRoot 'docker-compose.yml'))) {
+    throw "docker-compose.yml not found in $PSScriptRoot. Run this script from the repository root."
+}
+
 if ($Help) {
     Write-Host "MCP Open Discovery Rebuild Script" -ForegroundColor Cyan
     Write-Host ""
@@ -30,41 +62,48 @@ else {
     Write-Host "Use -BuildAll to rebuild all containers (RabbitMQ, Zabbix, etc.)" -ForegroundColor Gray
 }
 
-# Stop containers based on scope
-if ($BuildAll) {
-    Write-Host "Stopping ALL containers..." -ForegroundColor Yellow
-    docker-compose down
+try {
+    # Stop containers based on scope
+    if ($BuildAll) {
+        Write-Host "Stopping ALL containers..." -ForegroundColor Yellow
+        Invoke-Compose down
+    }
+    else {
+        Write-Host "Stopping MCP server container only..." -ForegroundColor Yellow
+        try { Invoke-Compose stop mcp-server } catch { Write-Host "mcp-server not running or stop failed, continuing..." -ForegroundColor DarkGray }
+        try { Invoke-Compose rm -f mcp-server } catch { Write-Host "mcp-server not present to remove, continuing..." -ForegroundColor DarkGray }
+    }
+
+    # Build the image(s)
+    if ($BuildAll) {
+        Write-Host "Building ALL Docker images..." -ForegroundColor Yellow
+        Invoke-Compose build --no-cache
+    }
+    else {
+        Write-Host "Building MCP server Docker image..." -ForegroundColor Yellow
+        Invoke-Compose build --no-cache mcp-server
+    }
+
+    # Start the containers
+    Write-Host "Starting containers..." -ForegroundColor Yellow
+    Invoke-Compose up -d
+
+    # Pause to ensure services are up
+    Write-Host "Waiting for services to start..." -ForegroundColor Yellow
+    Start-Sleep -Seconds 10
+
+    # Show running containers
+    Write-Host "Running containers:" -ForegroundColor Green
+    Invoke-Compose ps
+
+    Write-Host "Rebuild and redeploy complete!" -ForegroundColor Cyan
+    Write-Host 'To view logs, use: docker-compose logs -f' -ForegroundColor Gray
 }
-else {
-    Write-Host "Stopping MCP server container only..." -ForegroundColor Yellow
-    docker-compose stop mcp-server
-    docker-compose rm -f mcp-server
+catch {
+    Write-Error $_
+    exit 1
 }
 
-# Build the image(s)
-if ($BuildAll) {
-    Write-Host "Building ALL Docker images..." -ForegroundColor Yellow
-    docker-compose build --no-cache
-}
-else {
-    Write-Host "Building MCP server Docker image..." -ForegroundColor Yellow
-    docker-compose build --no-cache mcp-server
-}
-
-# Start the containers
-Write-Host "Starting containers..." -ForegroundColor Yellow
-docker-compose up -d
-
-# Pause to ensure services are up
-Write-Host "Waiting for services to start..." -ForegroundColor Yellow
-Start-Sleep -Seconds 10
-
-# Show running containers
-Write-Host "Running containers:" -ForegroundColor Green
-docker-compose ps
-
-Write-Host "Rebuild and redeploy complete!" -ForegroundColor Cyan
-Write-Host 'To view logs, use: docker-compose logs -f' -ForegroundColor Gray
 if (-not $NoLogs) {
-    docker-compose logs -f
+    Invoke-Compose logs -f
 }

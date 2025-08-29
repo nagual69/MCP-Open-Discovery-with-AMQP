@@ -34,7 +34,7 @@ try {
 console.log('\n🔍 Test 2: MCP SDK Tool Schema Check');
 
 // Import our actual SNMP tools module
-const snmpTools = require('./tools/snmp_tools_sdk');
+const snmpTools = require('../tools/snmp_tools_sdk');
 
 console.log('Found tools:', snmpTools.tools.length);
 

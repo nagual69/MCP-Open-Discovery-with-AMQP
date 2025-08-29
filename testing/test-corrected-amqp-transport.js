@@ -3,7 +3,7 @@
  * Tests complete request-response cycle with the fixed transport
  */
 
-const { AMQPClientTransport } = require('./tools/transports/amqp-client-transport.js');
+const { AMQPClientTransport } = require('../tools/transports/amqp-client-transport.js');
 
 async function testCorrectedAmqpTransport() {
     console.log('\n=== Testing Corrected AMQP Transport Implementation ===\n');

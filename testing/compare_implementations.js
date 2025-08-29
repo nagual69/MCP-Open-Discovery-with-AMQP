@@ -6,7 +6,7 @@ const { z } = require('zod');
 const realZodToJsonSchema = require('zod-to-json-schema').zodToJsonSchema;
 
 // Import my custom version
-const customConvert = require('./tools/registry/index');
+const customConvert = require('../tools/registry/index');
 
 // Test schema
 const testSchema = z.object({

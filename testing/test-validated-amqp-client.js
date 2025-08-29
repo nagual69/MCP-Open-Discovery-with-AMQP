@@ -13,7 +13,7 @@ const {
 } = require('@modelcontextprotocol/sdk/types.js');
 
 // Our custom AMQP transport
-const { AMQPClientTransport } = require('./tools/transports/amqp-client-transport.js');
+const { AMQPClientTransport } = require('../tools/transports/amqp-client-transport.js');
 
 /**
  * Test single client with multiple tool calls (following parallelToolCallsClient.js)

@@ -13,7 +13,7 @@ const {
 } = require('@modelcontextprotocol/sdk/dist/cjs/types.js');
 
 // Our custom AMQP transport
-const { AMQPClientTransport } = require('./tools/transports/amqp-client-transport.js');
+const { AMQPClientTransport } = require('../tools/transports/amqp-client-transport.js');
 
 async function testProperMcpAmqpClient() {
     console.log('\n=== Proper MCP SDK AMQP Client Test ===\n');

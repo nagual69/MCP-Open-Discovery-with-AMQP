@@ -628,7 +628,7 @@ services:
 
 ## 📚 **Documentation**
 
-###  **The Incredible Journey**
+### **The Incredible Journey**
 
 **[Vibe-Coding Journey](./docs/theincrediblejourney/THE_INCREDIBLE_JOURNEY.md)** - The Incredible Vibe Coding Journey
 

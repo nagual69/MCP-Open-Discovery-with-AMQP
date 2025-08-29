@@ -28,7 +28,7 @@ console.log('  Type:', jsonSchema.type);
 console.log('  Properties:', Object.keys(jsonSchema.properties || {}));
 
 // Test 3: Test mcp-types adapter (current working solution)
-const { adaptToolToMCPTypes } = require('./tools/registry/mcp_types_adapter');
+const { adaptToolToMCPTypes } = require('../tools/registry/mcp_types_adapter');
 
 const mockTool = {
   name: 'test_tool',

@@ -7,7 +7,7 @@
 
 const { z } = require('zod');
 const { ToolSchema } = require('mcp-types');
-const { adaptToolToMCPTypes, createParameterValidator, getValidationSummary } = require('./tools/registry/mcp_types_adapter');
+const { adaptToolToMCPTypes, createParameterValidator, getValidationSummary } = require('../tools/registry/mcp_types_adapter');
 
 // Mock MCP server for testing
 class MockMCPServer {

@@ -39,7 +39,7 @@ async function testParameterDetection() {
     console.log('=== Testing MCP Parameter Detection ===');
     
     // Import the memory tools directly to test parameter handling
-    const memoryTools = require('./tools/memory_tools_sdk');
+    const memoryTools = require('../tools/memory_tools_sdk');
     
     console.log('Memory tools loaded successfully');
     console.log('Available memory tools:', memoryTools.tools.map(t => t.name));
