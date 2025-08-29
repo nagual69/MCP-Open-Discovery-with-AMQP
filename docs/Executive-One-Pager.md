@@ -1,6 +1,6 @@
 # MCP Open Discovery v2.0 — Executive One‑Pager
 
-<img src="../mcp-open-discovery-logo.png" alt="MCP Open Discovery" width="140" />
+<img src="./mcp-open-discovery-logo-white.png" alt="MCP Open Discovery" width="140" />
 
 ## What it is
 
