@@ -70,6 +70,13 @@ Refer to the code under `tools/` for the authoritative list and schemas.
 - Persistence: `tools/memory_tools_sdk.js` uses SQLite (via `tools/registry/database_layer.js`) to persist CI data.
 - Credentials: encrypted storage with audit trails (see `tools/credentials_tools_sdk.js`).
 
+### Architecture diagram
+
+<img src="./docs/mcp_server_architecture.svg" alt="MCP Open Discovery Architecture" width="768"/>
+
+- Full diagram (Mermaid): [open_mcp_architecture.mmd](./open_mcp_architecture.mmd)
+- Tip: In VS Code, install a Mermaid preview extension to view it; you can also copy the content into a Markdown ```mermaid block for GitHub rendering.
+
 Design considerations:
 
 - Prefer least privilege (Docker capabilities vs. privileged mode for scans).

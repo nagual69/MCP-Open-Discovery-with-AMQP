@@ -2,81 +2,138 @@
 id: 70ab8892-f07a-436f-b361-8c105dd95852
 ---
 flowchart TB
-    subgraph DynamicCore["🔥 Dynamic Registry Core"]
+    %% ===== Server & Transports =====
+    subgraph ServerCore["🧩 MCP Server Core"]
         direction TB
-        Tracker[("🎯 Registration<br/>Tracker")]
-        HotReload[("🔄 Hot-Reload<br/>Engine")]
-        Analytics[("📊 Analytics<br/>Dashboard")]
+        MCPServer[("🧠 Singleton<br/>McpServer")]
+        TransportMgr[("🧭 Transport<br/>Manager")]    
     end
 
+    subgraph Transports["🚚 Transports"]
+        direction LR
+        Stdio[("🖨️ stdio")] 
+        HTTP[("🌐 HTTP<br/>/mcp, /health")]
+        OAuth[("🔒 OAuth<br/>Middleware")] 
+        AMQP[("📦 AMQP<br/>RabbitMQ")]
+        AMQPEx[("📮 Exchange:<br/>AMQP_EXCHANGE")] 
+        AMQPRoute[("🛣️ Routing Exch:<br/>AMQP_EXCHANGE.mcp.routing")]
+    ReqQ[("📥 ${AMQP_QUEUE_PREFIX}.requests.${sessionId}")]
+    ResQ[("📤 ${AMQP_QUEUE_PREFIX}.responses.${sessionId}")]
+    end
+
+    %% ===== Registry =====
+    subgraph DynamicCore["🔥 Dynamic Registry Core"]
+        direction TB
+        CoreRegistry[("📚 CoreRegistry")] 
+        HotReload[("🔄 HotReload<br/>Manager")] 
+        Validator[("✅ ToolValidation<br/>Manager")] 
+        TypesAdapter[("🔧 mcp‑types<br/>Adapter")] 
+    end
+
+    %% ===== Persistence & Security =====
     subgraph Persistence["🗄️ Persistence Layer"]
         direction TB
-        SQLite[("💾 SQLite<br/>Registry DB")]
-        ModuleHistory[("📋 Module<br/>History")]
-        ToolStats[("📈 Tool<br/>Statistics")]
+        SQLite[("💾 SQLite<br/>dynamic_registry.db")] 
+        CMDB[("🧠 CMDB / Memory<br/>SQLite-backed")] 
+        ToolStats[("📈 Tool<br/>Statistics")] 
     end
 
     subgraph Security["🔐 Security & Access"]
         direction TB
-        CredManager[("🔐 Credential<br/>Manager")]
-        Encryption[("🛡️ AES-256<br/>Encryption")]
-        AuditTrails[("📝 Audit<br/>Trails")]
+        CredManager[("🔐 Credentials<br/>Manager")] 
+        Encryption[("🛡️ AES‑256<br/>Encryption")] 
+        AuditTrails[("📝 Audit<br/>Trails")] 
     end
 
-    subgraph Runtime["⚡ Runtime Management"]
+    %% ===== Prompts & Resources =====
+    subgraph UXAssets["🧩 Prompts & Resources"]
         direction TB
-        ModuleLoader[("📦 Module<br/>Loader")]
-        FileWatcher[("👁️ File<br/>Watcher")]
-        ModuleCache[("💨 Module<br/>Cache")]
+        Prompts[("� Prompts")] 
+        Resources[("� Resources")] 
     end
 
-    subgraph ToolModules["🛠️ Tool Modules - 61 Dynamic Tools"]
+    %% ===== Tool Modules =====
+    subgraph ToolModules["🛠️ Tool Modules"]
         direction LR
-        RegTools[("🔥 Registry<br/>5 Tools")]
-        MemoryTools[("🧠 Memory CMDB<br/>8 Tools")]
-        NetworkTools[("🌐 Network<br/>9 Tools")]
-        ProxmoxTools[("🏗️ Proxmox<br/>10 Tools")]
-        SNMPTools[("📡 SNMP<br/>12 Tools")]
-        ZabbixTools[("🖥️ Zabbix<br/>7 Tools")]
-        NMAPTools[("🔍 NMAP<br/>5 Tools")]
-        CredTools[("🔐 Credentials<br/>5 Tools")]
+        RegTools[("🧩 Registry Tools")] 
+        MemoryTools[("🧠 Memory CMDB")] 
+        NetworkTools[("🌐 Network")] 
+        ProxmoxTools[("🏗️ Proxmox")] 
+        SNMPTools[("📡 SNMP")] 
+        ZabbixTools[("🖥️ Zabbix")] 
+        NMAPTools[("🔍 NMAP")] 
+        CredTools[("🔐 Credentials")] 
     end
 
-    %% Core connections
-    Tracker -.->|Persists to| SQLite
-    HotReload -.->|Watches| FileWatcher
-    Analytics -.->|Analyzes| ToolStats
+    %% ===== Observability =====
+    subgraph Observability["📊 Health & Events"]
+        direction TB
+        Health[("✅ /health Endpoint")] 
+        Heartbeat[("💓 mcp.heartbeat<br/>(fanout)")] 
+    end
 
-    %% Runtime connections
-    ModuleLoader -->|Loads| RegTools
-    ModuleLoader -->|Loads| MemoryTools
-    ModuleLoader -->|Loads| NetworkTools
-    ModuleLoader -->|Loads| ProxmoxTools
-    ModuleLoader -->|Loads| SNMPTools
-    ModuleLoader -->|Loads| ZabbixTools
-    ModuleLoader -->|Loads| NMAPTools
-    ModuleLoader -->|Loads| CredTools
+    %% Server wiring
+    MCPServer -->|registers| CoreRegistry
+    MCPServer -->|registers| Prompts
+    MCPServer -->|registers| Resources
+    TransportMgr --> Stdio
+    TransportMgr --> HTTP
+    TransportMgr --> AMQP
+    HTTP --> OAuth
+    HTTP --> Health
 
-    %% Security connections
-    CredManager -.->|Encrypts with| Encryption
-    CredManager -.->|Logs to| AuditTrails
+    %% Registry wiring
+    CoreRegistry --> TypesAdapter
+    CoreRegistry --> HotReload
+    CoreRegistry --> Validator
+    CoreRegistry -->|loads| RegTools
+    CoreRegistry -->|loads| MemoryTools
+    CoreRegistry -->|loads| NetworkTools
+    CoreRegistry -->|loads| ProxmoxTools
+    CoreRegistry -->|loads| SNMPTools
+    CoreRegistry -->|loads| ZabbixTools
+    CoreRegistry -->|loads| NMAPTools
+    CoreRegistry -->|loads| CredTools
+    HotReload -.->|watches| RegTools
+    HotReload -.-> MemoryTools
+    HotReload -.-> NetworkTools
+    HotReload -.-> ProxmoxTools
+    HotReload -.-> SNMPTools
+    HotReload -.-> ZabbixTools
+    HotReload -.-> NMAPTools
+    HotReload -.-> CredTools
 
-    %% Persistence connections
-    SQLite -.->|Tracks| ModuleHistory
-    SQLite -.->|Stores| ToolStats
+    %% Persistence & Security wiring
+    MemoryTools -.-> CMDB
+    CMDB -.-> SQLite
+    CredTools -.-> CredManager
+    CredManager -.->|encrypts| Encryption
+    CredManager -.->|audits| AuditTrails
+    CoreRegistry -.->|stats| ToolStats
+    SQLite -.-> ToolStats
 
-    %% Hot-reload flow
-    FileWatcher -->|Triggers| HotReload
-    HotReload -->|Updates| ModuleCache
-    ModuleCache -->|Refreshes| ModuleLoader
+    %% AMQP routing details
+    AMQP --- AMQPEx
+    AMQPEx --> AMQPRoute
+    AMQPRoute --> ReqQ
+    AMQPRoute --> ResQ
+    AMQPRoute -.->|mcp.request.<cat>.<method>| AMQP
+    AMQPRoute -.->|discovery.<category>| AMQP
+    Heartbeat -.-> AMQP
 
-    %% Revolutionary features callout
-    classDef revolutionary fill:#ff6b6b,stroke:#d63031,stroke-width:3px,color:#fff
-    classDef dynamic fill:#00b894,stroke:#00a085,stroke-width:2px,color:#fff
-    classDef secure fill:#6c5ce7,stroke:#5f3dc4,stroke-width:2px,color:#fff
-    classDef perfect fill:#fdcb6e,stroke:#e17055,stroke-width:2px,color:#2d3436
+    %% Styling
+    classDef core fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
+    classDef transport fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
+    classDef registry fill:#a78bfa,stroke:#7c3aed,stroke-width:2px,color:#fff
+    classDef storage fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#2d3436
+    classDef secure fill:#ef4444,stroke:#b91c1c,stroke-width:2px,color:#fff
+    classDef ux fill:#94a3b8,stroke:#64748b,stroke-width:2px,color:#fff
+    classDef obs fill:#22d3ee,stroke:#0891b2,stroke-width:2px,color:#1f2937
 
-    class HotReload,RegTools revolutionary
-    class ModuleLoader,FileWatcher,ModuleCache dynamic
-    class CredManager,Encryption,AuditTrails secure
-    class Tracker,Analytics,SQLite perfect
+    class MCPServer,TransportMgr core
+    class Stdio,HTTP,AMQP,AMQPEx,AMQPRoute,ReqQ,ResQ transport
+    class CoreRegistry,HotReload,Validator,TypesAdapter registry
+    class SQLite,CMDB,ToolStats storage
+    class CredManager,Encryption,AuditTrails,OAuth secure
+    class Prompts,Resources ux
+    class Health,Heartbeat obs
