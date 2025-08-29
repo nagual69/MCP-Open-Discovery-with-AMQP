@@ -13,6 +13,8 @@
  */
 
 const path = require('path');
+const { DiscoveryEngine } = require('./registry/discovery_engine.js');
+const { getResourceCounts, getResourceHealth } = require('./registry/resource_manager.js');
 
 /**
  * Tools definition array for the new hot-reload registry system
@@ -28,8 +30,67 @@ const tools = [
     }
   },
   {
+    name: 'registry_list_modules',
+    description: 'List currently known modules and watcher status from the hot-reload manager',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
+    name: 'registry_watch_module',
+    description: 'Start watching a module for hot-reload by name and optional file path',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        moduleName: { type: 'string', description: 'Name of the module (e.g., memory_tools_sdk)' },
+        filePath: { type: 'string', description: 'Absolute path to the module file; if omitted, attempts a require.resolve fallback' }
+      },
+      required: ['moduleName']
+    }
+  },
+  {
+    name: 'registry_unwatch_module',
+    description: 'Stop watching a module for hot-reload',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        moduleName: { type: 'string', description: 'Name of the module to stop watching' }
+      },
+      required: ['moduleName']
+    }
+  },
+  {
+    name: 'registry_discover_modules',
+    description: 'Run the Discovery Engine to find tool modules and return metadata + load order',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
+    name: 'registry_resources_status',
+    description: 'Return resource registration counts and health status',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
+    name: 'registry_restart_watchers',
+    description: 'Disable and re-enable hot-reload to restart all watchers using preserved file paths',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
     name: 'registry_load_module',
-    description: 'Dynamically load a new module into the registry at runtime',
+  description: 'Dynamically load a new module into the registry at runtime (register tools)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -41,7 +102,7 @@ const tools = [
           type: 'string',
           description: 'Name for the module'
         },
-        category: {
+    category: {
           type: 'string',
           description: 'Category of tools (e.g., network, memory, custom)'
         },
@@ -50,12 +111,12 @@ const tools = [
           description: 'Name of the export function to call'
         }
       },
-      required: ['modulePath', 'moduleName', 'category', 'exportName']
+  required: ['modulePath', 'moduleName', 'category']
     }
   },
   {
     name: 'registry_unload_module',
-    description: 'Unload a module and remove its tools from the registry',
+    description: 'Unload a module and remove its tools from the registry (best-effort unregister)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -68,6 +129,38 @@ const tools = [
     }
   },
   {
+    name: 'registry_reregister_module',
+    description: 'Re-register a module’s tools after hot-reload to refresh handlers',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        moduleName: { type: 'string', description: 'Module to re-register' },
+  filePath: { type: 'string', description: 'Optional absolute module path if auto-resolve fails' }
+      },
+      required: ['moduleName']
+    }
+  },
+  {
+    name: 'plugin_list',
+    description: 'List discovered plugins and their states',
+    inputSchema: { type: 'object', properties: {}, required: [] }
+  },
+  {
+    name: 'plugin_load',
+    description: 'Load a plugin by ID',
+    inputSchema: { type: 'object', properties: { pluginId: { type: 'string' } }, required: ['pluginId'] }
+  },
+  {
+    name: 'plugin_unload',
+    description: 'Unload a plugin by ID',
+    inputSchema: { type: 'object', properties: { pluginId: { type: 'string' } }, required: ['pluginId'] }
+  },
+  {
+    name: 'plugin_activate',
+    description: 'Activate a loaded plugin by ID',
+    inputSchema: { type: 'object', properties: { pluginId: { type: 'string' } }, required: ['pluginId'] }
+  },
+  {
     name: 'registry_reload_module',
     description: 'Hot-reload a module with fresh code from disk',
     inputSchema: {
@@ -76,6 +169,11 @@ const tools = [
         moduleName: {
           type: 'string',
           description: 'Name of the module to reload'
+        },
+        reregister: {
+          type: 'boolean',
+          description: 'If true, immediately re-register the module tools after reload',
+          default: false
         }
       },
       required: ['moduleName']
@@ -101,21 +199,36 @@ const tools = [
  * Central tool call handler for all registry tools
  */
 async function handleToolCall(toolName, args) {
-  // Get the global tool tracker instance - we need access to it
-  const { toolTracker } = require('./sdk_tool_registry');
+  // Get the registry components - updated to use new architecture
+  const { getRegistryInstance, getHotReloadManager, getValidationManager, dynamicLoadModule, dynamicUnloadModule, reregisterModuleTools, getPluginManager } = require('./registry/index.js');
+  const registry = getRegistryInstance();
+  const hotReloadManager = getHotReloadManager();
+  const validationManager = getValidationManager();
   
   switch (toolName) {
     case 'registry_get_status':
       try {
-        const status = toolTracker.getModuleStatus();
-        const analytics = await toolTracker.getAnalytics();
+        if (!registry) {
+          return {
+            content: [{
+              type: 'text',
+              text: 'Registry not initialized yet'
+            }],
+            isError: true
+          };
+        }
+
+        const status = registry.getStats();
+        const hotReloadStatus = hotReloadManager ? hotReloadManager.getStatus() : null;
+        const validationSummary = validationManager ? validationManager.getValidationSummary() : null;
 
         return {
           content: [{
             type: 'text',
             text: JSON.stringify({
               registry_status: status,
-              analytics: analytics,
+              hot_reload: hotReloadStatus,
+              validation: validationSummary,
               timestamp: new Date().toISOString()
             }, null, 2)
           }]
@@ -132,29 +245,8 @@ async function handleToolCall(toolName, args) {
 
     case 'registry_load_module':
       try {
-        const fullPath = path.resolve(__dirname, args.modulePath);
-        const success = await toolTracker.loadModule(
-          fullPath,
-          args.moduleName,
-          args.category,
-          args.exportName
-        );
-
-        const moduleInfo = toolTracker.modules.get(args.moduleName);
-
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success,
-              module: args.moduleName,
-              category: args.category,
-              tools_loaded: moduleInfo?.tools?.length || 0,
-              hot_reload_enabled: toolTracker.hotReloadEnabled,
-              message: `Module ${args.moduleName} loaded successfully`
-            }, null, 2)
-          }]
-        };
+  const result = await dynamicLoadModule(args);
+  return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }], isError: result.success === false };
       } catch (error) {
         return {
           content: [{
@@ -167,24 +259,8 @@ async function handleToolCall(toolName, args) {
 
     case 'registry_unload_module':
       try {
-        const moduleInfo = toolTracker.modules.get(args.moduleName);
-        const toolCount = moduleInfo?.tools?.length || 0;
-
-        const success = await toolTracker.unloadModule(args.moduleName);
-
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success,
-              module: args.moduleName,
-              tools_removed: toolCount,
-              message: success ?
-                `Module ${args.moduleName} unloaded successfully` :
-                `Failed to unload module ${args.moduleName}`
-            }, null, 2)
-          }]
-        };
+  const result = await dynamicUnloadModule(args.moduleName);
+  return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }], isError: result.success === false };
       } catch (error) {
         return {
           content: [{
@@ -197,21 +273,29 @@ async function handleToolCall(toolName, args) {
 
     case 'registry_reload_module':
       try {
-        const success = await toolTracker.reloadModule(args.moduleName);
-        const moduleInfo = toolTracker.modules.get(args.moduleName);
+        if (!hotReloadManager) {
+          return {
+            content: [{
+              type: 'text',
+              text: 'Hot-reload manager not available'
+            }],
+            isError: true
+          };
+        }
 
+        const result = await hotReloadManager.reloadModule(args.moduleName);
+        let merged = result;
+        if (result && result.success && args.reregister) {
+          try {
+            const reg = await reregisterModuleTools(args.moduleName);
+            merged = { ...result, reregister: reg };
+          } catch (e) {
+            merged = { ...result, reregister: { success: false, error: e.message } };
+          }
+        }
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success,
-              module: args.moduleName,
-              tools: moduleInfo?.tools?.length || 0,
-              message: success ?
-                `Module ${args.moduleName} reloaded successfully` :
-                `Failed to reload module ${args.moduleName}`
-            }, null, 2)
-          }]
+          content: [{ type: 'text', text: JSON.stringify(merged, null, 2) }],
+          isError: merged && (merged.success === false || (merged.reregister && merged.reregister.success === false))
         };
       } catch (error) {
         return {
@@ -223,21 +307,47 @@ async function handleToolCall(toolName, args) {
         };
       }
 
+    case 'registry_reregister_module':
+      try {
+        // If filePath provided, seed the hot-reload manager mapping to help reregister
+        if (args.filePath && getHotReloadManager) {
+          const hrm = getHotReloadManager();
+          if (hrm && args.moduleName && args.filePath) {
+            hrm.moduleFilePaths.set(args.moduleName, args.filePath);
+          }
+        }
+        const result = await reregisterModuleTools(args.moduleName);
+        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }], isError: result.success === false };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error re-registering module: ${error.message}` }], isError: true };
+      }
+
     case 'registry_toggle_hotreload':
       try {
-        toolTracker.hotReloadEnabled = args.enabled;
-        
-        // Optionally persist to database if available
-        if (toolTracker.dbInitialized && toolTracker.db) {
-          await toolTracker.db.setConfig('hot_reload', args.enabled.toString());
+        if (!hotReloadManager) {
+          return {
+            content: [{
+              type: 'text',
+              text: 'Hot-reload manager not available'
+            }],
+            isError: true
+          };
         }
+
+        if (args.enabled) {
+          hotReloadManager.enable();
+        } else {
+          hotReloadManager.disable();
+        }
+
+        const status = hotReloadManager.getStatus();
 
         return {
           content: [{
             type: 'text',
             text: JSON.stringify({
-              hot_reload_enabled: toolTracker.hotReloadEnabled,
-              watchers_active: toolTracker.moduleWatchers.size,
+              hot_reload_enabled: status.enabled,
+              watching_modules: status.watchedModules,
               message: `Hot-reload ${args.enabled ? 'enabled' : 'disabled'} system-wide`
             }, null, 2)
           }]
@@ -252,280 +362,134 @@ async function handleToolCall(toolName, args) {
         };
       }
 
+    case 'registry_list_modules':
+      try {
+        const hot = hotReloadManager ? hotReloadManager.getStatus() : null;
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ hot_reload: hot }, null, 2) }],
+          isError: !hot
+        };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error listing modules: ${error.message}` }], isError: true };
+      }
+
+    case 'registry_watch_module':
+      try {
+        if (!hotReloadManager) {
+          return { content: [{ type: 'text', text: 'Hot-reload manager not available' }], isError: true };
+        }
+        const { moduleName } = args;
+        let { filePath } = args;
+        if (!filePath) {
+          try {
+            // Attempt standard tools path resolution
+            filePath = require.resolve(`./${moduleName}`);
+          } catch (e) {
+            try {
+              filePath = require.resolve(`../${moduleName}`);
+            } catch (e2) {
+              return { content: [{ type: 'text', text: `Cannot resolve filePath for ${moduleName}; please provide an absolute path` }], isError: true };
+            }
+          }
+        }
+        if (!path.isAbsolute(filePath)) {
+          filePath = path.resolve(filePath);
+        }
+        hotReloadManager.watchModule(moduleName, filePath);
+        const status = hotReloadManager.getStatus();
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, module: status.modules[moduleName] || null }, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error watching module: ${error.message}` }], isError: true };
+      }
+
+    case 'registry_unwatch_module':
+      try {
+        if (!hotReloadManager) {
+          return { content: [{ type: 'text', text: 'Hot-reload manager not available' }], isError: true };
+        }
+        hotReloadManager.stopWatching(args.moduleName);
+        const status = hotReloadManager.getStatus();
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, module: status.modules[args.moduleName] || null }, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error unwatching module: ${error.message}` }], isError: true };
+      }
+
+    case 'registry_discover_modules':
+      try {
+        const engine = new DiscoveryEngine();
+        const modules = await engine.discoverToolModules();
+        const stats = engine.getStats();
+        return { content: [{ type: 'text', text: JSON.stringify({ stats, modules }, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error during discovery: ${error.message}` }], isError: true };
+      }
+
+    case 'registry_resources_status':
+      try {
+        const counts = getResourceCounts();
+        const health = getResourceHealth();
+        return { content: [{ type: 'text', text: JSON.stringify({ counts, health }, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error retrieving resources status: ${error.message}` }], isError: true };
+      }
+
+    case 'registry_restart_watchers':
+      try {
+        if (!hotReloadManager) {
+          return { content: [{ type: 'text', text: 'Hot-reload manager not available' }], isError: true };
+        }
+        hotReloadManager.disable();
+        hotReloadManager.enable();
+        const status = hotReloadManager.getStatus();
+        return { content: [{ type: 'text', text: JSON.stringify({ success: true, status }, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error restarting watchers: ${error.message}` }], isError: true };
+      }
+
     default:
       throw new Error(`Unknown registry tool: ${toolName}`);
+    
+    // Plugin management tools
+    case 'plugin_list':
+      try {
+        const pm = getPluginManager();
+        await pm.initialize();
+        const list = pm.listPlugins();
+        const stats = pm.getStats();
+        return { content: [{ type: 'text', text: JSON.stringify({ plugins: list, stats }, null, 2) }] };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error listing plugins: ${error.message}` }], isError: true };
+      }
+    case 'plugin_load':
+      try {
+        const pm = getPluginManager();
+        await pm.initialize();
+        const ok = await pm.loadPlugin(args.pluginId);
+        return { content: [{ type: 'text', text: JSON.stringify({ success: ok }, null, 2) }], isError: !ok };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error loading plugin: ${error.message}` }], isError: true };
+      }
+    case 'plugin_unload':
+      try {
+        const pm = getPluginManager();
+        const ok = await pm.unloadPlugin(args.pluginId);
+        return { content: [{ type: 'text', text: JSON.stringify({ success: ok }, null, 2) }], isError: !ok };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error unloading plugin: ${error.message}` }], isError: true };
+      }
+    case 'plugin_activate':
+      try {
+        const pm = getPluginManager();
+        const ok = await pm.activatePlugin(args.pluginId);
+        return { content: [{ type: 'text', text: JSON.stringify({ success: ok }, null, 2) }], isError: !ok };
+      } catch (error) {
+        return { content: [{ type: 'text', text: `Error activating plugin: ${error.message}` }], isError: true };
+      }
   }
-}
-
-/**
- * Register all registry management tools with the MCP server
- * @param {McpServer} server - The MCP server instance
- * @param {ToolRegistrationTracker} toolTracker - The global tool tracker instance
- */
-function registerRegistryTools(server, toolTracker) {
-  console.log('[MCP SDK] 🔧 Registering dynamic module management tools...');
-
-  // Tool 1: Get module status and hot-reload information
-  server.tool(
-    'registry_get_status',
-    'Get comprehensive status of the dynamic tool registry including hot-reload info',
-    {
-      type: 'object',
-      properties: {},
-      required: []
-    },
-    async () => {
-      try {
-        const status = toolTracker.getModuleStatus();
-        const analytics = await toolTracker.getAnalytics();
-
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              registry_status: status,
-              analytics: analytics,
-              timestamp: new Date().toISOString()
-            }, null, 2)
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Error getting registry status: ${error.message}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
-
-  // Tool 2: Load a module dynamically
-  server.tool(
-    'registry_load_module',
-    'Dynamically load a new module into the registry at runtime',
-    {
-      type: 'object',
-      properties: {
-        modulePath: {
-          type: 'string',
-          description: 'Path to the module file (relative to tools/ directory)'
-        },
-        moduleName: {
-          type: 'string',
-          description: 'Name for the module'
-        },
-        category: {
-          type: 'string',
-          description: 'Category of tools (e.g., network, memory, custom)'
-        },
-        exportName: {
-          type: 'string',
-          description: 'Name of the export function to call'
-        }
-      },
-      required: ['modulePath', 'moduleName', 'category', 'exportName']
-    },
-    async (args) => {
-      try {
-        const fullPath = path.resolve(__dirname, args.modulePath);
-        const success = await toolTracker.loadModule(
-          fullPath,
-          args.moduleName,
-          args.category,
-          args.exportName
-        );
-
-        const moduleInfo = toolTracker.modules.get(args.moduleName);
-
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success,
-              module: args.moduleName,
-              category: args.category,
-              tools_loaded: moduleInfo?.tools?.length || 0,
-              hot_reload_enabled: toolTracker.hotReloadEnabled,
-              message: `Module ${args.moduleName} loaded successfully`
-            }, null, 2)
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Error loading module: ${error.message}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
-
-  // Tool 3: Unload a module
-  server.tool(
-    'registry_unload_module',
-    'Unload a module and remove its tools from the registry',
-    {
-      type: 'object',
-      properties: {
-        moduleName: {
-          type: 'string',
-          description: 'Name of the module to unload'
-        }
-      },
-      required: ['moduleName']
-    },
-    async (args) => {
-      try {
-        const moduleInfo = toolTracker.modules.get(args.moduleName);
-        const toolCount = moduleInfo?.tools?.length || 0;
-
-        const success = await toolTracker.unloadModule(args.moduleName);
-
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success,
-              module: args.moduleName,
-              tools_removed: toolCount,
-              message: success ?
-                `Module ${args.moduleName} unloaded successfully` :
-                `Failed to unload module ${args.moduleName}`
-            }, null, 2)
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Error unloading module: ${error.message}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
-
-  // Tool 4: Reload a module (hot-reload)
-  server.tool(
-    'registry_reload_module',
-    'Hot-reload a module with updated code',
-    {
-      type: 'object',
-      properties: {
-        moduleName: {
-          type: 'string',
-          description: 'Name of the module to reload'
-        }
-      },
-      required: ['moduleName']
-    },
-    async (args) => {
-      try {
-        const oldInfo = toolTracker.modules.get(args.moduleName);
-        await toolTracker.reloadModule(args.moduleName);
-        const newInfo = toolTracker.modules.get(args.moduleName);
-
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              module: args.moduleName,
-              tools_before: oldInfo?.tools?.length || 0,
-              tools_after: newInfo?.tools?.length || 0,
-              hot_reload: true,
-              message: `Module ${args.moduleName} hot-reloaded successfully`
-            }, null, 2)
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Error reloading module: ${error.message}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
-
-  // Tool 5: Toggle hot-reload for the entire system
-  server.tool(
-    'registry_toggle_hotreload',
-    'Enable or disable hot-reload capabilities system-wide',
-    {
-      type: 'object',
-      properties: {
-        enabled: {
-          type: 'boolean',
-          description: 'Enable (true) or disable (false) hot-reload'
-        }
-      },
-      required: ['enabled']
-    },
-    async (args) => {
-      try {
-        const oldStatus = toolTracker.hotReloadEnabled;
-        toolTracker.hotReloadEnabled = args.enabled;
-
-        // Update database config
-        if (toolTracker.dbInitialized) {
-          await toolTracker.db.updateConfig('hot_reload', args.enabled.toString());
-        }
-
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              success: true,
-              hot_reload_enabled: args.enabled,
-              previous_status: oldStatus,
-              watched_modules: toolTracker.moduleWatchers.size,
-              message: `Hot-reload ${args.enabled ? 'enabled' : 'disabled'}`
-            }, null, 2)
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Error toggling hot-reload: ${error.message}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
-
-  console.log('[MCP SDK] ✅ Registered 5 dynamic module management tools');
-}
-
-/**
- * Get tool definitions for registration tracking
- * @returns {Array} Array of tool names for counting
- */
-function getRegistryToolNames() {
-  return [
-    'registry_get_status',
-    'registry_load_module', 
-    'registry_unload_module',
-    'registry_reload_module',
-    'registry_toggle_hotreload'
-  ];
 }
 
 module.exports = {
   // New hot-reload registry format
   tools,
-  handleToolCall,
-  
-  // Legacy backwards compatibility
-  registerRegistryTools,
-  getRegistryToolNames
+  handleToolCall
 };

@@ -450,7 +450,7 @@ class CoreRegistry {
 
   /**
    * Register tools from database with MCP server
-   * This requires reloading the actual modules to get tool definitions
+   * Uses mcp-types adapter for consistent schema conversion
    * @param {Object} server - MCP server instance
    * @param {Array} modules - Module records from database
    * @param {Array} tools - Tool records from database
@@ -458,6 +458,9 @@ class CoreRegistry {
    */
   async _registerDatabaseToolsWithServer(server, modules, tools) {
     console.log('[Core Registry] 🔄 Registering database tools with MCP server...');
+    
+    // Import mcp-types adapter for consistent conversion
+    const { adaptToolToMCPTypes, createParameterValidator } = require('./mcp_types_adapter');
     
     // Group tools by module
     const moduleTools = new Map();
@@ -488,23 +491,78 @@ class CoreRegistry {
           await initialize();
         }
         
-        // Register tools that exist in database
+        // Register tools that exist in database using mcp-types adapter
         for (const toolDef of moduleToolDefs) {
           const toolInDB = moduleData.tools.find(t => t.tool_name === toolDef.name);
           if (toolInDB) {
             try {
-              // Convert Zod schema to JSON Schema if needed
-              let jsonSchema = toolDef.inputSchema;
-              if (toolDef.inputSchema && toolDef.inputSchema._def) {
-                // This would need the zodToJsonSchema converter
-                console.log(`[Core Registry] ⚠️  Tool ${toolDef.name} has Zod schema - conversion needed`);
-                jsonSchema = { type: 'object', properties: {}, additionalProperties: true };
-              }
+              // Use mcp-types adapter for consistent conversion
+              const mcpTool = adaptToolToMCPTypes(toolDef);
+              const validateParams = createParameterValidator(toolDef.inputSchema);
               
-              // Register with MCP server
-              server.tool(toolDef.name, toolDef.description, jsonSchema, async (args) => {
-                return handleToolCall(toolDef.name, args);
-              });
+              // Create execution handler with validation
+              const mcpHandler = async (args, context) => {
+                try {
+                  console.log(`[Core Registry] Executing ${toolDef.name}`);
+                  console.log(`[Core Registry DEBUG] Raw args received:`, JSON.stringify(args, null, 2));
+                  console.log(`[Core Registry DEBUG] Context received:`, JSON.stringify(context, null, 2));
+                  
+                  // Extract actual tool arguments from MCP SDK request
+                  // MCP SDK passes the entire request context, we need to extract the arguments
+                  let toolArgs = args || {};
+                  
+                  // If args contains MCP context properties, try to extract actual arguments
+                  if (args && (args.signal || args.sessionId || args._meta || args.requestInfo)) {
+                    console.log(`[Core Registry DEBUG] Detected MCP context, extracting arguments from request...`);
+                    // The actual arguments should be in the request context or passed differently
+                    // For now, try to find them in the context or args.arguments
+                    if (context && context.arguments) {
+                      toolArgs = context.arguments;
+                    } else if (args.arguments) {
+                      toolArgs = args.arguments;
+                    } else {
+                      // If we can't find arguments anywhere, this might be a non-parameterized call
+                      toolArgs = {};
+                    }
+                    console.log(`[Core Registry DEBUG] Extracted tool args:`, JSON.stringify(toolArgs, null, 2));
+                  }
+                  
+                  // Validate parameters if validator exists
+                  if (validateParams) {
+                    console.log(`[Core Registry DEBUG] Running parameter validation for ${toolDef.name}`);
+                    const validation = validateParams(toolArgs);
+                    if (!validation.success) {
+                      console.error(`[Core Registry] Parameter validation failed for ${toolDef.name}:`, validation.error);
+                      return {
+                        content: [{ type: "text", text: `Parameter validation error: ${JSON.stringify(validation.error, null, 2)}` }],
+                        isError: true
+                      };
+                    }
+                    toolArgs = validation.data || toolArgs;
+                    console.log(`[Core Registry DEBUG] Validated args:`, JSON.stringify(toolArgs, null, 2));
+                  }
+                  
+                  // Execute tool
+                  const result = await handleToolCall(toolDef.name, toolArgs || {});
+                  
+                  // Format result for MCP
+                  if (result && typeof result === 'object' && result.content) {
+                    return result;
+                  }
+                  return {
+                    content: [{ type: "text", text: typeof result === 'string' ? result : JSON.stringify(result, null, 2) }],
+                    isError: false
+                  };
+                } catch (error) {
+                  return {
+                    content: [{ type: "text", text: `Execution error: ${error.message}` }],
+                    isError: true
+                  };
+                }
+              };
+              
+              // Register with MCP server using mcp-types schema
+              server.tool(mcpTool.name, mcpTool.description, mcpTool.inputSchema, mcpHandler);
               
               console.log(`[Core Registry] ✅ Registered database tool: ${toolDef.name}`);
             } catch (error) {

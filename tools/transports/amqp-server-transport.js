@@ -424,10 +424,8 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
 
   handleRequest(msg) {
     let acknowledged = false;
-    
     try {
       const content = JSON.parse(msg.content.toString());
-      
       console.log('[AMQP] Processing message content:', {
         correlationId: msg.properties.correlationId,
         replyTo: msg.properties.replyTo,
@@ -436,73 +434,65 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
         directMessageId: content.id,
         directMessageMethod: content.method
       });
-      
+
       // Determine if this is a wrapped envelope or direct JSON-RPC message
       let jsonRpcMessage;
       if (content.message && typeof content.message === 'object') {
-        // This is an envelope wrapper - extract the JSON-RPC message
         jsonRpcMessage = content.message;
         console.log('[AMQP] Detected envelope wrapper, extracting message');
       } else if (content.id !== undefined || content.method !== undefined) {
-        // This is a direct JSON-RPC message
         jsonRpcMessage = content;
         console.log('[AMQP] Detected direct JSON-RPC message');
       } else {
         throw new Error('Invalid message format: neither envelope nor JSON-RPC');
       }
-      
-      // Store correlation ID and reply-to for response routing
+
+      // Ensure JSON-RPC version and record routing info for send()
       if (jsonRpcMessage && typeof jsonRpcMessage === 'object') {
-        jsonRpcMessage._rabbitMQCorrelationId = msg.properties.correlationId;
-        jsonRpcMessage._rabbitMQReplyTo = msg.properties.replyTo;
-        
-        // Store only essential data for deferred acknowledgment to avoid circular references
-        jsonRpcMessage._rabbitMQDeliveryTag = msg.fields.deliveryTag;
+        if (!jsonRpcMessage.jsonrpc) {
+          jsonRpcMessage.jsonrpc = '2.0';
+        }
+        const correlationId = msg.properties.correlationId;
+        const replyTo = msg.properties.replyTo;
+        const deliveryTag = msg.fields.deliveryTag;
+        // Attach fallback routing props
+        jsonRpcMessage._rabbitMQCorrelationId = correlationId;
+        jsonRpcMessage._rabbitMQReplyTo = replyTo;
+        jsonRpcMessage._rabbitMQDeliveryTag = deliveryTag;
         jsonRpcMessage._rabbitMQAcknowledged = false;
+        // Store primary routing for transport.send()
+        if (jsonRpcMessage.id !== undefined && jsonRpcMessage.id !== null) {
+          this.storeRoutingInfo(jsonRpcMessage.id, {
+            correlationId,
+            replyTo,
+            exchangeName: this.options.exchangeName,
+            routingKey: this.requestQueue,
+            deliveryTag
+          });
+        }
       }
-      
+
       if (this.onmessage) {
         console.log('[AMQP] Calling onmessage handler with JSON-RPC message:', {
           messageId: jsonRpcMessage.id,
           method: jsonRpcMessage.method
         });
         this.onmessage(jsonRpcMessage);
+        // Acknowledge receipt; SDK will send response via transport.send()
+        this.safeAck(msg);
+        acknowledged = true;
       } else {
         console.warn('[AMQP] No onmessage handler set!');
-        // Acknowledge immediately if no handler
         this.safeAck(msg);
         acknowledged = true;
       }
-      
     } catch (error) {
       console.error('[AMQP] Error handling request:', error);
       if (this.onerror) {
         this.onerror(error);
       }
-      
-      // Safe negative acknowledgment for errors
       this.safeNack(msg);
       acknowledged = true;
-    }
-  }
-
-  safeAck(msg) {
-    if (this.channel && !this.channel.closing) {
-      try {
-        this.channel.ack(msg);
-      } catch (ackError) {
-        console.warn('[AMQP] Failed to acknowledge message:', ackError.message);
-      }
-    }
-  }
-
-  safeAckByTag(deliveryTag) {
-    if (this.channel && !this.channel.closing) {
-      try {
-        this.channel.ack({ fields: { deliveryTag } });
-      } catch (ackError) {
-        console.warn('[AMQP] Failed to acknowledge message by tag:', ackError.message);
-      }
     }
   }
 

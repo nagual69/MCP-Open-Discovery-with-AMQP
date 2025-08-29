@@ -6,7 +6,7 @@
  */
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
-const { registerAllTools, registerAllResources } = require('./tools/registry/index');
+const { registerAllTools, registerAllResources, getServerInstance } = require('./tools/registry/index');
 const { registerAllPrompts } = require('./tools/prompts_sdk');
 
 // Transport Manager v2.0 - Modular Architecture
@@ -122,10 +122,25 @@ async function createMcpServer() {
     }
   );
 
+  // Publish server reference to global fallback for cross-module singletons
+  try {
+    const GLOBAL_KEY = '__MCP_OPEN_DISCOVERY__';
+    const g = globalThis || global;
+    g[GLOBAL_KEY] = g[GLOBAL_KEY] || {};
+    g[GLOBAL_KEY].serverInstance = globalMcpServer;
+  } catch {}
+
   try {
     // Register all components
     log('info', '[SINGLETON] Starting tool registration');
     await registerAllTools(globalMcpServer);
+    // Validate that registry captured the server instance for dynamic ops
+    try {
+      const srv = getServerInstance && getServerInstance();
+      if (!srv) {
+        log('warn', '[SINGLETON] Registry did not capture server instance; dynamic ops may fail');
+      }
+    } catch {}
     log('info', '[SINGLETON] Tool registration complete');
 
     log('info', '[SINGLETON] Starting resource registration');

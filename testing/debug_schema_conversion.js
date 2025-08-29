@@ -1,8 +1,8 @@
 /**
- * Test to debug why schema conversion is failing for some tools
+ * Test to debug schema conversion using mcp-types adapter
  */
 
-const { hasArrayParameters, getRegistrationMethod } = require('../tools/registry/parameter_type_detector');
+const { adaptToolToMCPTypes, getValidationSummary } = require('../tools/registry/mcp_types_adapter');
 
 async function debugSchemaConversion() {
   console.log('🔧 Debugging Schema Conversion Issue');

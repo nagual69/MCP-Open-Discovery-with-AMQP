@@ -76,6 +76,22 @@ class HotReloadManager {
     this.enabled = true;
     this.state = HOTRELOAD_STATES.ENABLED;
     this.logger.log('[Hot-Reload] ✅ Enabled');
+
+    // Auto-restore file watchers for any previously known module file paths
+    try {
+      let restored = 0;
+      for (const [moduleName, filePath] of this.moduleFilePaths) {
+        if (!this.watchers.has(moduleName)) {
+          this.watchModule(moduleName, filePath);
+          if (this.watchers.has(moduleName)) restored++;
+        }
+      }
+      if (restored > 0) {
+        this.logger.log(`[Hot-Reload] 🔁 Restored watchers for ${restored} module(s)`);
+      }
+    } catch (err) {
+      this.logger.warn('[Hot-Reload] Failed to restore watchers on enable:', err.message);
+    }
   }
 
   /**
@@ -168,8 +184,8 @@ class HotReloadManager {
     try {
       watcher.close();
       this.watchers.delete(moduleName);
-      this.moduleFilePaths.delete(moduleName);
-      this.logger.log(`[Hot-Reload] 🛑 Stopped watching: ${moduleName}`);
+  // IMPORTANT: Do NOT delete moduleFilePaths here so we can restore later
+  this.logger.log(`[Hot-Reload] 🛑 Stopped watching: ${moduleName} (path retained for restore)`);
     } catch (error) {
       this.logger.warn(`[Hot-Reload] Error stopping watcher for ${moduleName}:`, error.message);
     }

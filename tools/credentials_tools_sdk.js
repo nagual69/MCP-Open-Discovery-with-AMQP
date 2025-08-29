@@ -75,8 +75,10 @@ async function handleToolCall(name, args) {
   }
 }
 
-async function addCredential({ id, type, ...data }) {
+async function addCredential(args) {
   try {
+    const { id, type } = args;
+    
     // Validate required parameters
     if (!id || !type) {
       return {
@@ -90,6 +92,15 @@ async function addCredential({ id, type, ...data }) {
           error: 'id and type are required parameters' 
         },
       };
+    }
+    
+    // Extract data fields, excluding MCP protocol fields
+    const data = {};
+    const mcpFields = ['sessionId', '_meta', 'requestId', 'requestInfo', 'signal'];
+    for (const [key, value] of Object.entries(args)) {
+      if (!mcpFields.includes(key) && key !== 'id' && key !== 'type') {
+        data[key] = value;
+      }
     }
     
     credentialsManager.addCredential(id, type, data);
@@ -120,8 +131,10 @@ async function addCredential({ id, type, ...data }) {
   }
 }
 
-async function getCredential({ id }) {
+async function getCredential(args) {
   try {
+    const { id } = args;
+    
     // Validate required parameters
     if (!id) {
       return {
@@ -164,8 +177,9 @@ async function getCredential({ id }) {
   }
 }
 
-async function listCredentials({ type }) {
+async function listCredentials(args) {
   try {
+    const { type } = args;
     const credentials = credentialsManager.listCredentials(type);
     return {
       content: [{ 
@@ -193,8 +207,10 @@ async function listCredentials({ type }) {
   }
 }
 
-async function removeCredential({ id }) {
+async function removeCredential(args) {
   try {
+    const { id } = args;
+    
     // Validate required parameters
     if (!id) {
       return {

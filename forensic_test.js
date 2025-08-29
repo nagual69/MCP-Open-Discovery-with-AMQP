@@ -27,17 +27,20 @@ console.log('  Has _def:', !!jsonSchema._def);
 console.log('  Type:', jsonSchema.type);
 console.log('  Properties:', Object.keys(jsonSchema.properties || {}));
 
-// Test 3: What our parameter detector returns
-const { getRegistrationSchema } = require('./tools/registry/parameter_type_detector');
+// Test 3: Test mcp-types adapter (current working solution)
+const { adaptToolToMCPTypes } = require('./tools/registry/mcp_types_adapter');
 
 const mockTool = {
   name: 'test_tool',
   inputSchema: testSchema
 };
 
-const detectorResult = getRegistrationSchema(mockTool);
-console.log('\n3. Parameter Detector Result:');
-console.log('  Has _def:', !!detectorResult._def);
+const mcpTypesResult = adaptToolToMCPTypes(mockTool);
+console.log('\n3. MCP-Types Adapter Result:');
+console.log('  Name:', mcpTypesResult.name);
+console.log('  Description:', mcpTypesResult.description);
+console.log('  Input Schema Type:', mcpTypesResult.inputSchema.type);
+console.log('  Input Schema Properties:', Object.keys(mcpTypesResult.inputSchema.properties || {}));
 console.log('  Type:', detectorResult.type || detectorResult._def?.typeName);
 
 // Test 4: Simulate what gets passed to server.registerTool

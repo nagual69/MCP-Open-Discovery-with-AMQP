@@ -11,11 +11,16 @@
 const { z } = require('zod');
 const { DatabaseLayer } = require('./registry/database_layer');
 
+// Global shared state to keep memory/db stable across hot-reloads
+const GLOBAL_KEY = '__MCP_OPEN_DISCOVERY_MEMORY__';
+const g = globalThis || global;
+g[GLOBAL_KEY] = g[GLOBAL_KEY] || {};
+
 // Reference to the in-memory CI store
-let ciMemory = {};
+let ciMemory = g[GLOBAL_KEY].ciMemory || {};
 
 // SQLite database instance
-let registryDB = null;
+let registryDB = g[GLOBAL_KEY].registryDB || null;
 
 // Auto-save configuration
 const AUTO_SAVE_ENABLED = process.env.MEMORY_AUTO_SAVE !== 'false';
@@ -29,7 +34,10 @@ let autoSaveTimer = null;
 async function initialize(memoryStore) {
   try {
     // Initialize SQLite database
-    registryDB = new DatabaseLayer();
+    if (!registryDB) {
+      registryDB = new DatabaseLayer();
+      g[GLOBAL_KEY].registryDB = registryDB;
+    }
     await registryDB.initialize();
     
     // Load from SQLite persistent storage first
@@ -48,7 +56,8 @@ async function initialize(memoryStore) {
     }
     
     // Merge with any provided memory store, with persistent data taking precedence
-    ciMemory = { ...memoryStore, ...persistentData };
+  ciMemory = { ...memoryStore, ...persistentData };
+  g[GLOBAL_KEY].ciMemory = ciMemory;
     
     console.log(`[MCP SDK] Memory tools initialized with ${Object.keys(ciMemory).length} CIs from SQLite persistence`);
     
@@ -115,7 +124,7 @@ async function triggerSave() {
     for (const [ciKey, ciData] of Object.entries(ciMemory)) {
       await registryDB.storeMemoryData(ciKey, JSON.stringify(ciData), determineCIType(ciData));
     }
-    return { success: true, count: Object.keys(ciMemory).length };
+  return { success: true, count: Object.keys(ciMemory).length };
   } catch (error) {
     console.error('[MCP SDK] Manual save failed:', error.message);
     throw error;
@@ -268,15 +277,16 @@ async function handleToolCall(name, args) {
     case 'memory_set':
       try {
         ciMemory[args.key] = args.value;
+    g[GLOBAL_KEY].ciMemory = ciMemory;
         
         // Trigger save to persistent storage
-        const saveSuccess = await triggerSave();
+    const saveResult = await triggerSave();
         
         return {
           content: [
             {
               type: "text", 
-              text: `Successfully stored CI with key: ${args.key}\nSaved to persistent storage: ${saveSuccess ? 'Yes' : 'Failed'}\nStored data: ${JSON.stringify(args.value, null, 2)}`
+      text: `Successfully stored CI with key: ${args.key}\nSaved to persistent storage: ${saveResult?.success ? 'Yes' : 'Failed'}\nStored data: ${JSON.stringify(args.value, null, 2)}`
             }
           ]
         };
@@ -297,15 +307,16 @@ async function handleToolCall(name, args) {
         const existing = args.key in ciMemory ? ciMemory[args.key] : {};
         const merged = mergeCI(existing, args.value);
         ciMemory[args.key] = merged;
+    g[GLOBAL_KEY].ciMemory = ciMemory;
         
         // Trigger save to persistent storage
-        const saveSuccess = await triggerSave();
+    const saveResult = await triggerSave();
         
         return {
           content: [
             {
               type: "text",
-              text: `Successfully merged data into CI with key: ${args.key}\nSaved to persistent storage: ${saveSuccess ? 'Yes' : 'Failed'}\nMerged data: ${JSON.stringify(ciMemory[args.key], null, 2)}`
+      text: `Successfully merged data into CI with key: ${args.key}\nSaved to persistent storage: ${saveResult?.success ? 'Yes' : 'Failed'}\nMerged data: ${JSON.stringify(ciMemory[args.key], null, 2)}`
             }
           ]
         };
@@ -397,31 +408,30 @@ async function handleToolCall(name, args) {
 
     case 'memory_stats':
       try {
-        const stats = registryDB ? await registryDB.getMemoryStats() : {};
+    const stats = registryDB ? await registryDB.getMemoryStats() : {};
         const inMemoryCount = Object.keys(ciMemory).length;
-        
-        const typeBreakdown = stats.type_breakdown?.map(t => `  ${t.ci_type}: ${t.count}`).join('\n') || '  No data';
-        
+    // Align with database_layer.getMemoryStats fields
+    const sqliteTotal = stats.total_cis || 0;
+    const totalSize = stats.total_size || 0;
+    const encrypted = stats.encrypted_cis || 0;
+    const oldest = stats.oldest || 'N/A';
+    const newest = stats.newest || 'N/A';
+    const auditEntries = stats.audit_entries || 0;
+
         return {
           content: [
             {
               type: "text",
-              text: `Memory Statistics:
+      text: `Memory Statistics:
 In-Memory CIs: ${inMemoryCount}
-SQLite CIs: ${stats.memory_store?.total_cis || 0}
-Encrypted CIs: ${stats.memory_store?.encrypted_cis || 0}
-Total Storage Size: ${stats.memory_store?.total_size_bytes || 0} bytes
-Active Keys: ${stats.encryption_keys?.total_keys || 0}
-Audit Entries: ${stats.audit_trail?.total_audit_entries || 0}
-Oldest CI: ${stats.memory_store?.oldest_ci || 'N/A'}
-Newest CI: ${stats.memory_store?.newest_ci || 'N/A'}
-Latest Key: ${stats.encryption_keys?.latest_key || 'N/A'}
-Latest Audit: ${stats.audit_trail?.latest_audit || 'N/A'}
+SQLite CIs: ${sqliteTotal}
+Encrypted CIs: ${encrypted}
+Total Storage Size: ${totalSize} bytes
+Audit Entries: ${auditEntries}
+Oldest CI: ${oldest}
+Newest CI: ${newest}
 Auto-Save Enabled: ${AUTO_SAVE_ENABLED}
-Auto-Save Interval: ${AUTO_SAVE_INTERVAL}ms
-
-CI Type Breakdown:
-${typeBreakdown}`
+Auto-Save Interval: ${AUTO_SAVE_INTERVAL}ms`
             }
           ]
         };

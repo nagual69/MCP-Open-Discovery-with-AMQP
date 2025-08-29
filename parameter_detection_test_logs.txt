@@ -1,0 +1,76 @@
+[LOG] === Testing MCP Parameter Detection ===
+[LOG] Memory tools loaded successfully
+[LOG] Available memory tools: [
+  "memory_get",
+  "memory_set",
+  "memory_merge",
+  "memory_query",
+  "memory_clear",
+  "memory_stats",
+  "memory_rotate_key",
+  "memory_save",
+  "memory_migrate_from_filesystem"
+]
+[LOG] Testing memory_set with parameters: {
+  "key": "test:server:web01",
+  "value": {
+    "hostname": "web01.example.com",
+    "ip": "192.168.1.100",
+    "type": "web-server"
+  }
+}
+[LOG] 
+=== Testing Scenario 1: Parameters first, context second ===
+[LOG] Scenario 1 Result: {
+  "content": [
+    {
+      "type": "text",
+      "text": "Error storing CI: SQLite database not initialized"
+    }
+  ],
+  "isError": true
+}
+[LOG] 
+=== Testing Scenario 2: Context first, parameters second ===
+[LOG] Scenario 2 Result: {
+  "content": [
+    {
+      "type": "text",
+      "text": "Error storing CI: SQLite database not initialized"
+    }
+  ],
+  "isError": true
+}
+[LOG] 
+=== Testing Scenario 3: Parameters wrapped in arguments property ===
+[LOG] Scenario 3 Result: {
+  "content": [
+    {
+      "type": "text",
+      "text": "Error storing CI: SQLite database not initialized"
+    }
+  ],
+  "isError": true
+}
+[LOG] 
+=== Testing Scenario 4: Only context object (no parameters) ===
+[LOG] Scenario 4 Result: {
+  "content": [
+    {
+      "type": "text",
+      "text": "Error storing CI: SQLite database not initialized"
+    }
+  ],
+  "isError": true
+}
+[LOG] 
+=== Testing Scenario 5: Parameters nested in context ===
+[LOG] Scenario 5 Result: {
+  "content": [
+    {
+      "type": "text",
+      "text": "Error storing CI: SQLite database not initialized"
+    }
+  ],
+  "isError": true
+}

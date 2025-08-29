@@ -1,8 +1,8 @@
 /**
- * Test array parameter detection for the problematic tools
+ * Test array parameter detection using mcp-types adapter
  */
 
-const { hasArrayParameters, getRegistrationMethod } = require('../tools/registry/parameter_type_detector');
+const { adaptToolToMCPTypes, getValidationSummary } = require('../tools/registry/mcp_types_adapter');
 
 async function testArrayDetection() {
   console.log('🔧 Testing Array Parameter Detection');

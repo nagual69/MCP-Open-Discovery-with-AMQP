@@ -50,6 +50,7 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "glob": "^11.0.3",
+    "mcp-types": "^1.0.2",
     "net-snmp": "^3.10.1",
     "node-fetch": "^2.7.0",
     "sqlite3": "^5.1.7",

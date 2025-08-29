@@ -1,0 +1,17 @@
+{
+  "jsonrpc": "2.0",
+  "id": "test-memory-set",
+  "method": "tools/call",
+  "params": {
+    "name": "memory_set",
+    "arguments": {
+      "key": "test:server:webserver-01",
+      "value": {
+        "type": "server",
+        "hostname": "webserver-01",
+        "ip": "192.168.1.100",
+        "status": "active"
+      }
+    }
+  }
+}

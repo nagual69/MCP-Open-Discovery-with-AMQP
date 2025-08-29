@@ -248,20 +248,43 @@ class DatabaseLayer {
     console.log('[Database Layer] [DEBUG] Recording module registration:', moduleName);
     
     try {
-      // First, deactivate any existing module with the same name (for hot-reload scenarios)
-      await this.executeQuery(
-        `UPDATE modules SET active = 0, unloaded_at = CURRENT_TIMESTAMP WHERE name = ? AND active = 1`,
+      // First check if module exists
+      const existingModule = await this.executeQuery(
+        `SELECT id, name FROM modules WHERE name = ? LIMIT 1`,
         [moduleName]
       );
-
-      // Insert new module record
-      const result = await this.executeQuery(
-        `INSERT INTO modules (name, category, load_duration_ms, tool_count, active) VALUES (?, ?, ?, ?, 1)`,
-        [moduleName, category, loadDuration, tools.length]
-      );
       
-      const moduleId = result.id;
-      console.log(`[Database Layer] [DEBUG] Module inserted with ID ${moduleId}, tool_count: ${tools.length}`);
+      let moduleId;
+      
+      if (existingModule && existingModule.length > 0) {
+        // Module exists - update it
+        moduleId = existingModule[0].id;
+        console.log(`[Database Layer] [DEBUG] Updating existing module ${moduleName} (ID: ${moduleId})`);
+        
+        await this.executeQuery(
+          `UPDATE modules SET category = ?, load_duration_ms = ?, tool_count = ?, active = 1, 
+           loaded_at = CURRENT_TIMESTAMP, unloaded_at = NULL WHERE name = ?`,
+          [category, loadDuration, tools.length, moduleName]
+        );
+        
+        // Remove existing tools for this module to avoid duplicates
+        await this.executeQuery(
+          `DELETE FROM tools WHERE module_id = ?`,
+          [moduleId]
+        );
+      } else {
+        // Module doesn't exist - insert new
+        console.log(`[Database Layer] [DEBUG] Inserting new module ${moduleName}`);
+        
+        const result = await this.executeQuery(
+          `INSERT INTO modules (name, category, load_duration_ms, tool_count, active) VALUES (?, ?, ?, ?, 1)`,
+          [moduleName, category, loadDuration, tools.length]
+        );
+        
+        moduleId = result.id;
+      }
+      
+      console.log(`[Database Layer] [DEBUG] Module processed with ID ${moduleId}, tool_count: ${tools.length}`);
 
       // Record individual tools
       console.log(`[Database Layer] [DEBUG] Recording ${tools.length} tools for ${moduleName}...`);
