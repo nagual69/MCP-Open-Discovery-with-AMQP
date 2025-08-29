@@ -3,321 +3,151 @@
 ### **WORLD'S FIRST DYNAMIC MCP TOOL REGISTRY WITH HOT-RELOAD**
 
 <div align="left">
-  <img src="./mcp-open-discovery-logo.png" width="125" style="float: left; margin-left: 15px;" alt="MCP Open Discovery Logo">
-</div>
+  <div align="center">
 
-**A production-ready infrastructure discovery and CMDB platform delivering 62 powerful tools through the official Model Context Protocol (MCP) SDK. Built for AI assistants, automation systems, and enterprise infrastructure management with 100% architectural integrity, multi-transport support (HTTP + AMQP + gRPC-ready), and battle-tested auto-recovery capabilities.**
+  <img src="./mcp-open-discovery-logo.png" alt="MCP Open Discovery Logo" width="200" />
 
-<br clear="left">
+  </div>
 
-[![Revolutionary](https://img.shields.io/badge/🔥-REVOLUTIONARY-red)](./docs/DYNAMIC_REGISTRY.md)
-[![Hot Reload](https://img.shields.io/badge/🔄-Hot%20Reload-orange)](./docs/DYNAMIC_REGISTRY.md)
-[![Tools Available](https://img.shields.io/badge/Tools-62-blue)](#-tool-categories)
-[![Success Rate](https://img.shields.io/badge/Success%20Rate-100%25-success)](#-live-testing-results)
-[![Architecture](https://img.shields.io/badge/Architecture-Singleton%20Server-green)](#-enterprise-architecture)
-[![Transports](https://img.shields.io/badge/Transports-HTTP%20%7C%20AMQP%20%7C%20gRPC-orange)](#-multi-transport-support)
-[![MCP SDK](https://img.shields.io/badge/MCP-SDK%20v0.5.2-orange)](https://modelcontextprotocol.io)
-[![Database](https://img.shields.io/badge/SQLite-Registry%20DB-green)](./tools/dynamic_registry_db.js)
+# MCP Open Discovery v2.0
 
----
+Enterprise-grade Model Context Protocol (MCP) server for infrastructure discovery, lightweight CMDB, and tooling orchestration. Designed for security-conscious environments, built on the official MCP SDK, and deployable with containers by default.
 
-## 🔥 **REVOLUTIONARY BREAKTHROUGH: Singleton Server Architecture**
+  <div align="center">
 
-### **Phase 4 COMPLETE: Multi-Transport Enterprise Architecture**
+  <img src="./docs/CodedwithAI-white-transparent.png" alt="Coded with AI" width="160" />
 
-**WE'VE ACHIEVED BULLETPROOF PRODUCTION ARCHITECTURE!** The world's most robust MCP server with:
+  <br/>
+  <sub>This project was substantially coded with AI under human direction and review. Code and architecture decisions were guided, verified, and integrated by humans.</sub>
 
-🎯 **SINGLETON SERVER PATTERN** - One server instance, multiple transports, zero duplication
-🔄 **MULTI-TRANSPORT SUPPORT** - HTTP, AMQP, and gRPC-ready with seamless failover
-🗄️ **BATTLE-TESTED AUTO-RECOVERY** - AMQP auto-recovery with exponential backoff
-⚡ **100% ARCHITECTURAL INTEGRITY** - Comprehensive deduplication guards and validation
-📊 **ENTERPRISE-GRADE RELIABILITY** - Production-tested failover and recovery mechanisms
+  </div>
+
+## Overview
+
+MCP Open Discovery provides a single MCP server that exposes a broad set of discovery, monitoring, and CMDB-style capabilities via tools. It uses a centralized tool registry with hot‑reload, an SQLite-backed persistent store for CIs, and a container-first deployment approach.
+
+This README aims to describe current capabilities plainly and avoid over‑claiming. For regulated or large enterprise environments, please evaluate features in a staging environment before production use.
+
+## Highlights
+
+- Single MCP server instance shared by multiple transports
+- Central tool registry with hot‑reload and modular categories
+- SQLite-backed persistent memory/CMDB with manual and periodic saves
+- Credential management with encryption and audit logging
+- Structured logging and a health endpoint for basic observability
+
+## Current Transport Support
+
+- HTTP: supported and enabled by default (port 3000)
+- Stdio: supported for local/embedded scenarios
+- AMQP (RabbitMQ): available; evaluated in practice. Suitable for non-interactive integrations. For IDE integrations, confirm MCP transport compliance in your environment.
+- gRPC: not enabled; future consideration
+
+Notes:
+
+- Transport selection can be tailored per deployment. Validate AMQP behavior with your client stack before relying on it.
+
+## Tooling Scope (overview)
+
+The server typically registers 70+ tools across these categories (exact counts can vary by build):
+
+- Memory (CMDB/persistence)
+- Credentials
+- Network (ping, DNS, HTTP fetch, routes, interfaces, ARP, etc.)
+- Nmap scanning (capability-aware)
+- SNMP discovery and inspection
+- Proxmox cluster inspection
+- Zabbix integration (inventory, metrics, events)
+- Registry/Hot‑reload management
+- Test/Debug utilities
+
+Refer to the code under `tools/` for the authoritative list and schemas.
+
+## Architecture basics
+
+- Server: `mcp_open_discovery_server.js` creates a single MCP server instance and starts available transports.
+- Registry: `tools/registry/index.js` centralizes tool loading/registration and hot‑reload management.
+- Persistence: `tools/memory_tools_sdk.js` uses SQLite (via `tools/registry/database_layer.js`) to persist CI data.
+- Credentials: encrypted storage with audit trails (see `tools/credentials_tools_sdk.js`).
+
+Design considerations:
+
+- Prefer least privilege (Docker capabilities vs. privileged mode for scans).
+- Avoid duplicate registrations via a single server instance.
+- Provide stable defaults with clear extension points.
+
+## Quick start
+
+Prerequisites: Docker & Docker Compose, Git
+
+Windows (PowerShell):
+
+```powershell
+./rebuild_deploy.ps1
+```
+
+Linux/Mac (alternative):
 
 ```bash
-# 🎯 MULTI-TRANSPORT ARCHITECTURE - PRODUCTION READY 🎯
-✅ HTTP Transport     # Primary transport on port 3000
-✅ AMQP Transport     # Message queue with auto-recovery
-🚀 gRPC Transport     # Protocol buffers ready (future)
-🛡️ Singleton Pattern  # Zero duplication, maximum reliability
-🔄 Auto-Recovery      # Exponential backoff, infinite retries
+docker-compose up -d
 ```
 
-### **Enterprise Architecture Achievements:**
-
-- **Singleton Server** - Single MCP instance shared across all transports
-- **Deduplication Guards** - Comprehensive protection against duplicate registrations
-- **Auto-Recovery System** - Tested AMQP failover with 4-attempt successful recovery
-- **Multi-Transport Ready** - HTTP, AMQP active; gRPC architecture prepared
-
----
-
-## 🚀 **[READ OUR INCREDIBLE DEVELOPMENT JOURNEY!](./docs/THE_INCREDIBLE_JOURNEY.md)**
-
-**Discover the amazing story of human-AI vibe coding that created this revolutionary platform in just weeks!** From a simple network discovery tool to the world's first dynamic MCP tool registry - this is the chronicle of one of the most remarkable open-source development journeys in MCP history.
-
-**[📖 The Incredible Journey: Building MCP Open Discovery v2.0](./docs/THE_INCREDIBLE_JOURNEY.md)** ⭐
-
----
-
-## 🎯 **Key Achievements**
-
-- **🔥 WORLD'S FIRST SINGLETON MCP ARCHITECTURE** - Bulletproof multi-transport design
-- **✅ 100% Tool Success Rate** - All 62 tools working perfectly with zero duplication
-- **🔄 BATTLE-TESTED AUTO-RECOVERY** - AMQP failover tested with exponential backoff
-- **🗄️ SQLite Registry Database** - Persistent tracking of modules, tools, and analytics
-- **⚡ Multi-Transport Support** - HTTP, AMQP active; gRPC architecture ready
-- **�️ Comprehensive Deduplication** - Architectural guards prevent registration conflicts
-- **✅ Production Validated** - Successfully tested with 6-node Proxmox cluster
-- **✅ Enterprise Grade** - Secure credential management, ITIL v4 CMDB standards
-- **✅ AI-Ready Infrastructure Analysis** - Professional prompts for infrastructure assessment
-
----
-
-## 🏗️ **Revolutionary Architecture**
-
-```mermaid
----
-id: 70ab8892-f07a-436f-b361-8c105dd95852
----
-flowchart TB
-    subgraph DynamicCore["🔥 Dynamic Registry Core"]
-        direction TB
-        Tracker[("🎯 Registration<br/>Tracker")]
-        HotReload[("🔄 Hot-Reload<br/>Engine")]
-        Analytics[("📊 Analytics<br/>Dashboard")]
-    end
-
-    subgraph Persistence["🗄️ Persistence Layer"]
-        direction TB
-        SQLite[("💾 SQLite<br/>Registry DB")]
-        ModuleHistory[("📋 Module<br/>History")]
-        ToolStats[("📈 Tool<br/>Statistics")]
-    end
-
-    subgraph Security["🔐 Security & Access"]
-        direction TB
-        CredManager[("🔐 Credential<br/>Manager")]
-        Encryption[("🛡️ AES-256<br/>Encryption")]
-        AuditTrails[("📝 Audit<br/>Trails")]
-    end
-
-    subgraph Runtime["⚡ Runtime Management"]
-        direction TB
-        ModuleLoader[("📦 Module<br/>Loader")]
-        FileWatcher[("👁️ File<br/>Watcher")]
-        ModuleCache[("💨 Module<br/>Cache")]
-    end
-
-    subgraph ToolModules["🛠️ Tool Modules - 57 Production Tools"]
-        direction LR
-        MemoryTools[("🧠 Memory CMDB<br/>9 Tools")]
-        NetworkTools[("🌐 Network<br/>8 Tools")]
-        ProxmoxTools[("🏗️ Proxmox<br/>10 Tools")]
-        SNMPTools[("📡 SNMP<br/>12 Tools")]
-        ZabbixTools[("🖥️ Zabbix<br/>7 Tools")]
-        NMAPTools[("🔍 NMAP<br/>5 Tools")]
-        CredTools[("🔐 Credentials<br/>6 Tools")]
-    end
-
-    %% Core connections
-    Tracker -.->|Persists to| SQLite
-    HotReload -.->|Watches| FileWatcher
-    Analytics -.->|Analyzes| ToolStats
-
-    %% Runtime connections
-    ModuleLoader -->|Loads| MemoryTools
-    ModuleLoader -->|Loads| NetworkTools
-    ModuleLoader -->|Loads| ProxmoxTools
-    ModuleLoader -->|Loads| SNMPTools
-    ModuleLoader -->|Loads| ZabbixTools
-    ModuleLoader -->|Loads| NMAPTools
-    ModuleLoader -->|Loads| CredTools
-
-    %% Security connections
-    CredManager -.->|Encrypts with| Encryption
-    CredManager -.->|Logs to| AuditTrails
-
-    %% Persistence connections
-    SQLite -.->|Tracks| ModuleHistory
-    SQLite -.->|Stores| ToolStats
-
-    %% Hot-reload flow
-    FileWatcher -->|Triggers| HotReload
-    HotReload -->|Updates| ModuleCache
-    ModuleCache -->|Refreshes| ModuleLoader
-
-    %% Revolutionary features callout
-    classDef revolutionary fill:#ff6b6b,stroke:#d63031,stroke-width:3px,color:#fff
-    classDef dynamic fill:#00b894,stroke:#00a085,stroke-width:2px,color:#fff
-    classDef secure fill:#6c5ce7,stroke:#5f3dc4,stroke-width:2px,color:#fff
-    classDef perfect fill:#fdcb6e,stroke:#e17055,stroke-width:2px,color:#2d3436
-
-    class HotReload,MemoryTools revolutionary
-    class ModuleLoader,FileWatcher,ModuleCache dynamic
-    class CredManager,Encryption,AuditTrails secure
-    class Tracker,Analytics,SQLite perfect
-```
-
-### **🔥 Phase 3: Production Architecture Components:**
-
-- **🎯 ToolRegistrationTracker:** Comprehensive tool and module tracking
-- **🗄️ DynamicRegistryDB:** SQLite persistence for modules, tools, and analytics
-- **⚡ Memory Persistence:** Enterprise-grade encrypted CMDB with auto-save
-- **🔐 Security Framework:** AES-256 encryption, audit trails, key rotation
-- **📊 Analytics Dashboard:** Module history, performance metrics, usage patterns
-
-- **🎯 Main Server:** `mcp_open_discovery_server.js` - Clean modular MCP SDK implementation
-- **🔧 Tool Registry:** Centralized SDK-compatible tool registration with Zod schemas
-- **🏗️ In-Memory CMDB:** Hierarchical, queryable configuration database for discovered CIs
-- **🔐 Credential Manager:** Enterprise-grade encrypted credential storage with audit trails
-- **📈 Health Monitoring:** Comprehensive health checks, request timing, and structured logging
-- **🐳 Container-First:** Production-ready Docker deployment with non-root execution
-
----
-
-## �️ **Multi-Transport Enterprise Architecture**
-
-### **🎯 Singleton Server Pattern - Production Ready**
-
-Our revolutionary architecture implements a **Singleton Server Pattern** that supports multiple transports sharing a single MCP server instance, eliminating registration duplication and enabling seamless multi-protocol access.
-
-```mermaid
----
-title: Multi-Transport Singleton Architecture
----
-flowchart TB
-    subgraph SingletonCore["🎯 Singleton MCP Server Core"]
-        direction TB
-        GlobalServer[("🚀 globalMcpServer<br/>ONE INSTANCE")]
-        ToolRegistry[("🛠️ Tool Registry<br/>62 Tools ONCE")]
-        DedupeGuards[("🛡️ Deduplication<br/>Guards")]
-    end
-
-    subgraph MultiTransport["🌐 Multi-Transport Layer"]
-        direction LR
-        HTTPTransport[("🌐 HTTP Transport<br/>Port 3000")]
-        AMQPTransport[("📡 AMQP Transport<br/>RabbitMQ")]
-        gRPCTransport[("⚡ gRPC Transport<br/>Future Ready")]
-    end
-
-    subgraph AutoRecovery["🔄 Auto-Recovery System"]
-        direction TB
-        HealthCheck[("❤️ Health Monitoring<br/>15s intervals")]
-        ExponentialBackoff[("📈 Exponential Backoff<br/>Up to 300s")]
-        InfiniteRetry[("♾️ Infinite Retries<br/>Production Ready")]
-    end
-
-    %% Core connections
-    GlobalServer --> HTTPTransport
-    GlobalServer --> AMQPTransport
-    GlobalServer --> gRPCTransport
-
-    %% Deduplication protection
-    DedupeGuards -.->|Protects| ToolRegistry
-    ToolRegistry -.->|Serves| MultiTransport
-
-    %% Auto-recovery system
-    HealthCheck -->|Triggers| ExponentialBackoff
-    ExponentialBackoff -->|Enables| InfiniteRetry
-    InfiniteRetry -.->|Recovers| AMQPTransport
-
-    %% Styling
-    classDef singleton fill:#ff6b6b,stroke:#d63031,stroke-width:3px,color:#fff
-    classDef transport fill:#00b894,stroke:#00a085,stroke-width:2px,color:#fff
-    classDef recovery fill:#6c5ce7,stroke:#5f3dc4,stroke-width:2px,color:#fff
-
-    class GlobalServer,ToolRegistry singleton
-    class HTTPTransport,AMQPTransport,gRPCTransport transport
-    class HealthCheck,ExponentialBackoff,InfiniteRetry recovery
-```
-
-### **✅ Battle-Tested Features**
-
-- **🎯 Single Registration** - Tools registered once, served to all transports
-- **🔄 AMQP Auto-Recovery** - Tested with 4-attempt successful recovery
-- **🛡️ Deduplication Guards** - Comprehensive protection against duplicate registrations
-- **⚡ Zero-Downtime Failover** - HTTP remains available during AMQP outages
-- **📈 Exponential Backoff** - Smart retry intervals up to 300 seconds
-- **♾️ Infinite Retries** - Production-ready recovery for enterprise environments
-
-### **🔧 Transport Status**
-
-| Transport | Status    | Port/Config   | Features                                      |
-| --------- | --------- | ------------- | --------------------------------------------- |
-| **HTTP**  | ✅ Active | Port 3000     | Primary transport, health endpoint            |
-| **AMQP**  | ✅ Active | RabbitMQ:5672 | Auto-recovery, exponential backoff            |
-| **gRPC**  | 🚀 Ready  | Port 50051    | Architecture prepared, Protocol Buffers ready |
-
----
-
-## �🎯 **Tool Categories & Dynamic Registry**
-
-| Category                  | Tools | Success Rate | Status  | Dynamic Features                                     |
-| ------------------------- | ----- | ------------ | ------- | ---------------------------------------------------- |
-| **Memory CMDB**           | 9/9   | ✅ **100%**  | Perfect | SQLite persistence, encryption, CI relationships     |
-| **Proxmox Integration**   | 10/10 | ✅ **100%**  | Perfect | Full cluster management, VMs, containers, storage    |
-| **Credential Management** | 6/6   | ✅ **100%**  | Perfect | Encrypted storage, audit trails, key rotation        |
-| **Network Tools**         | 9/9   | ✅ **100%**  | Perfect | Ping, DNS, wget, routing, netstat, telnet, ifconfig  |
-| **SNMP Discovery**        | 12/12 | ✅ **100%**  | Perfect | Device inventory, topology analysis, system health   |
-| **Zabbix Monitoring**     | 7/7   | ✅ **100%**  | Perfect | Host discovery, metrics, alerts, inventory, problems |
-| **NMAP Scanning**         | 5/5   | ✅ **100%**  | Perfect | Advanced network scanning with capability security   |
-| **Registry Management**   | 5/5   | ✅ **100%**  | Perfect | Dynamic module loading, hot-reload, status tracking  |
-
-**🎯 Total: 62/62 tools working (100% success rate with singleton architecture!)**
-
-### **🔄 Enterprise Features & Management:**
-
-- **Load/Unload Modules** - Dynamic module management capabilities
-- **Memory Persistence** - SQLite-based encrypted CMDB storage
-- **Registry Database** - SQLite tracks all modules, tools, and analytics
-- **Enterprise Security** - AES-256 encryption with audit trails
-- **Zero Downtime** - Container-optimized deployment with health monitoring
-
----
-
-## 🚀 **Quick Start**
-
-### **Prerequisites**
-
-- Docker & Docker Compose
-- Git
-
-### **Launch in 30 Seconds**
+Verify:
 
 ```bash
-# Clone the repository
-git clone https://github.com/nagual69/mcp-open-discovery.git
-cd mcp-open-discovery
-
-# Deploy with one command (includes capability-based security setup)
-./rebuild_deploy.ps1  # Windows PowerShell
-# OR
-docker-compose up -d  # Linux/Mac
-
-# Verify deployment and security features
 curl http://localhost:3000/health
 ```
 
-> **🛡️ Security Note**: The deployment automatically configures capability-based security for privileged network operations while maintaining non-root executionn. All NMAP scanning tools work with enterprise-grade security.
+## Security notes
 
-### **🎯 Instant Testing**
+- Credentials are stored encrypted with audit logging; integrate with your secrets management process for production.
+- CI persistence uses SQLite; apply host or volume encryption per policy if required.
+- Network scanning tools (e.g., nmap) may require extra container capabilities; review `docker-compose.yml` before enabling.
+
+## Operational notes
+
+- Hot‑reload is supported for tool modules; validate in lower environments before promoting changes.
+- Tool counts and schemas may evolve; use the MCP `tools/list` method to discover the current interface.
+- AMQP usage depends on client compatibility with MCP transports. Test end‑to‑end in your stack if you plan to rely on AMQP.
+
+## Example calls (HTTP)
+
+Network ping:
 
 ```bash
-# Test network discovery
 curl -X POST http://localhost:3000/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "ping", "arguments": {"host": "google.com"}}}'
-
-# Test SNMP device discovery
-curl -X POST http://localhost:3000/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "snmp_device_inventory", "arguments": {"host": "192.168.1.1"}}}'
-
-# Test Zabbix host discovery
-curl -X POST http://localhost:3000/mcp \
-  -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "zabbix_host_discover", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix"}}}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"ping","arguments":{"host":"127.0.0.1","count":2}}}'
 ```
+
+SNMP device inventory:
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"snmp_device_inventory","arguments":{"host":"192.168.1.10","version":"2c","community":"public"}}}'
+```
+
+Zabbix host discovery:
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"zabbix_host_discover","arguments":{"baseUrl":"http://localhost:8080","username":"Admin","password":"zabbix"}}}'
+```
+
+## Roadmap (selected)
+
+- Harden AMQP transport for broader client compatibility
+- Expanded observability (metrics, tracing integration points)
+- Optional at-rest encryption for CI persistence
+- Additional enterprise connectors and discovery modules
+
+## License
+
+Apache-2.0. See `LICENSE` for details.
+
+````
 
 ### **🔐 Unified Credential Management**
 
@@ -369,7 +199,7 @@ curl -X POST http://localhost:3000/mcp \
 curl -X POST http://localhost:3000/mcp \
   -H "Content-Type: application/json" \
   -d '{"method": "tools/call", "params": {"name": "zabbix_host_discover", "arguments": {"creds_id": "zabbix-main"}}}'
-```
+````
 
 ---
 
@@ -692,7 +522,7 @@ Our comprehensive testing against **real production infrastructure** achieved:
 | ✅ NMAP Scanning (5/5)                | 🔥 Enterprise security with hot-reload |
 | ✅ Credentials (5/5)                  |                                        |
 
-**[View Complete Testing Report →](./archive/LIVE_TESTING_REPORT.md)**
+**[View Complete Testing Report →](./docs/theincrediblejourney/LIVE_TESTING_REPORT.md)**
 
 ---
 
@@ -798,20 +628,24 @@ services:
 
 ## 📚 **Documentation**
 
+###  **The Incredible Journey**
+
+**[Vibe-Coding Journey](./docs/theincrediblejourney/THE_INCREDIBLE_JOURNEY.md)** - The Incredible Vibe Coding Journey
+
 ### **📖 Complete Documentation**
 
-- **[Architecture Guide](./docs/DEVELOPER.md)** - System architecture and design patterns
-- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Production deployment with capability-based security
-- **[Testing Guide](./docs/TESTING.md)** - Comprehensive testing procedures and NMAP validation
-- **[Security Implementation](./docs/SECURITY_IMPLEMENTATION.md)** - Detailed capability-based security model
-- **[Usage Examples](./docs/USAGE_EXAMPLES.md)** - Complete NMAP scanning examples and workflows
-- **[MCP Compliance](./docs/MCP_COMPLIANCE.md)** - MCP protocol implementation details
+- **[Architecture Guide](./docs/theincrediblejourney/DEVELOPER.md)** - System architecture and design patterns
+- **[Deployment Guide](./docs/theincrediblejourney/DEPLOYMENT.md)** - Production deployment with capability-based security
+- **[Testing Guide](./docs/theincrediblejourney/TESTING.md)** - Comprehensive testing procedures and NMAP validation
+- **[Security Implementation](./docs/theincrediblejourney/SECURITY_IMPLEMENTATION.md)** - Detailed capability-based security model
+- **[Usage Examples](./docs/theincrediblejourney/USAGE_EXAMPLES.md)** - Complete NMAP scanning examples and workflows
+- **[MCP Compliance](./docs/theincrediblejourney/MCP_COMPLIANCE.md)** - MCP protocol implementation details
 
 ### **📋 Development Resources**
 
-- **[Migration Guide](./docs/MCP_SDK_MIGRATION_PLAN.md)** - Upgrading from legacy versions
-- **[Live Testing Report](./archive/LIVE_TESTING_REPORT.md)** - Complete testing results
-- **[VS Code Integration](./docs/VSCODE_MCP_INTEGRATION.md)** - IDE integration guide
+- **[Migration Guide](./docs/theincrediblejourney/MCP_SDK_MIGRATION_PLAN.md)** - Upgrading from legacy versions
+- **[Live Testing Report](./docs/theincrediblejourney/LIVE_TESTING_REPORT.md)** - Complete testing results
+- **[VS Code Integration](./docs/theincrediblejourney/VSCODE_MCP_INTEGRATION.md)** - IDE integration guide
 
 ---
 
