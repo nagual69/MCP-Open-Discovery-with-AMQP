@@ -5,7 +5,7 @@
 <div align="left">
   <div align="center">
 
-  <img src="./mcp-open-discovery-logo.png" alt="MCP Open Discovery Logo" width="200" />
+  <img src="docs/mcp-open-discovery-logo-white.png" alt="MCP Open Discovery Logo" width="200" />
 
   </div>
 
