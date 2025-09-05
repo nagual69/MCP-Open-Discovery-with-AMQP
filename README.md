@@ -85,7 +85,7 @@ Design considerations:
 
 ## Quick start
 
-Prerequisites: Docker & Docker Compose, Git
+Prerequisites: Docker Desktop (includes Docker Compose), Git
 
 Windows (PowerShell):
 
@@ -96,7 +96,7 @@ Windows (PowerShell):
 Linux/Mac (alternative):
 
 ```bash
-docker-compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 Verify:
@@ -105,11 +105,29 @@ Verify:
 curl http://localhost:3000/health
 ```
 
+### Minimal production compose
+
+For a lean, production-only deployment of the MCP server:
+
+- HTTP only:
+  docker compose -f docker/docker-file-mcpod-server.yml up -d
+- With AMQP broker (RabbitMQ):
+  docker compose -f docker/docker-file-mcpod-server.yml --profile with-amqp up -d
+  The prod scripts below auto-set TRANSPORT_MODE; if running manually, set TRANSPORT_MODE=http,amqp.
+
+### Deployment scripts
+
+- Windows (full stack or server-only):
+  - Full/dev stack: `./rebuild_deploy.ps1` (uses `docker/docker-compose.yml`)
+  - Minimal production server: `./rebuild_deploy_prod.ps1` (add `-WithAmqp` to include RabbitMQ)
+- Linux/macOS:
+  - Full/dev stack: `./rebuild_redeploy.sh` (uses `docker/docker-compose.yml`)
+
 ## Security notes
 
 - Credentials are stored encrypted with audit logging; integrate with your secrets management process for production.
 - CI persistence uses SQLite; apply host or volume encryption per policy if required.
-- Network scanning tools (e.g., nmap) may require extra container capabilities; review `docker-compose.yml` before enabling.
+- Network scanning tools (e.g., nmap) may require extra container capabilities; review `docker/docker-compose.yml` before enabling.
 
 ## Operational notes
 
@@ -452,14 +470,14 @@ Method: probe response analysis
 ### **🐳 Docker Deployment**
 
 ```bash
-# Production deployment with all components
-docker-compose up -d
+# Production deployment with all components (from repo root)
+docker compose -f docker/docker-compose.yml up -d
 
 # Scale for high availability
-docker-compose up -d --scale mcp-server=3
+docker compose -f docker/docker-compose.yml up -d --scale mcp-server=3
 
 # Monitor health and logs
-docker-compose logs -f mcp-server
+docker compose -f docker/docker-compose.yml logs -f mcp-server
 curl http://localhost:3000/health
 ```
 

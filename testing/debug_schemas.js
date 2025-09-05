@@ -121,8 +121,7 @@ async function getToolSchemas() {
     const testTools = {
       "memory_stats": tools.find(t => t.name === "memory_stats"),
       "ping": tools.find(t => t.name === "ping"), 
-      "snmp_get": tools.find(t => t.name === "snmp_get"),
-      "test_simple": tools.find(t => t.name === "test_simple")
+      "snmp_get": tools.find(t => t.name === "snmp_get")
     };
     
     console.log("\n📊 Schema Analysis");

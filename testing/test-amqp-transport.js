@@ -199,7 +199,7 @@ async function testToolCall(transport) {
       }
     };
     
-    // Send ping tool call request
+    // Send ping tool call request (use localhost to avoid external dependency)
     const toolRequest = {
       jsonrpc: '2.0',
       id: 3,
@@ -207,8 +207,8 @@ async function testToolCall(transport) {
       params: {
         name: 'ping',
         arguments: {
-          host: '8.8.8.8',
-          count: 2,
+          host: '127.0.0.1',
+          count: 1,
           timeout: 5
         }
       }

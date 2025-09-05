@@ -56,11 +56,11 @@ COPY mcp_open_discovery_server.js ./
 COPY tools/ ./tools/
 COPY scripts/ ./scripts/
 
+## Ensure runtime writable dirs exist so named volumes inherit ownership
+RUN mkdir -p /home/mcpuser/app/data /home/mcpuser/app/logs 
+
 # Set permissions
 RUN chown -R mcpuser:mcpuser /home/mcpuser/app
-
-# Use the non-root user
-USER mcpuser
 
 # Set default transport mode to HTTP for container deployment
 ENV TRANSPORT_MODE=http
@@ -71,6 +71,9 @@ EXPOSE 3000
 # Set health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+
+# Use the non-root user
+USER mcpuser
 
 # Start the server
 CMD ["node","--use-system-ca", "mcp_open_discovery_server.js"]

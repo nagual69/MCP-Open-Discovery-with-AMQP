@@ -36,7 +36,7 @@ A production-ready Model Context Protocol (MCP) server that unifies infrastructu
 
 ## Deployment & operations
 
-- Standard Docker Compose; Windows PowerShell script provided (rebuild_deploy.ps1)
+- Standard Docker Compose (`docker/docker-compose.yml`); Windows PowerShell script provided (`rebuild_deploy.ps1`). Minimal production server: `rebuild_deploy_prod.ps1` (add `-WithAmqp` to include RabbitMQ).
 - Health checks and logs; hot‑reload for safe iteration
 - Works locally, in CI, or in container platforms
 
@@ -48,7 +48,7 @@ A production-ready Model Context Protocol (MCP) server that unifies infrastructu
 
 ## Get started
 
-- Run the provided PowerShell script on Windows: `rebuild_deploy.ps1`
+- Run the provided PowerShell script on Windows: `rebuild_deploy.ps1` (full/dev stack) or `rebuild_deploy_prod.ps1` (minimal production).
 - Hit the health endpoint on port 3000 and list tools via MCP
 - Add credentials to connect Proxmox/SNMP/Zabbix and start discovery
 

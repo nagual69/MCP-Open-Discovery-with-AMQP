@@ -237,9 +237,9 @@ class TransportLevelFixTester {
     console.log('\n🧬 Testing schema validator behavior...');
     
     try {
-      // Test a simple tool first
+      // Test a simple stable tool first
       const simpleResult = await this.makeRequest('tools/call', {
-        name: 'test_simple',
+        name: 'memory_stats',
         arguments: {}
       });
       
@@ -251,7 +251,7 @@ class TransportLevelFixTester {
       console.log('❌ Even simple tools failing:', error.message);
       this.results.total++;
       this.results.failed++;
-      this.results.errors.push(`test_simple failed: ${error.message}`);
+  this.results.errors.push(`memory_stats failed: ${error.message}`);
     }
   }
 

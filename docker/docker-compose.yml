@@ -1,8 +1,8 @@
 services:
   mcp-server:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     image: mcp-open-discovery
     container_name: mcp-open-discovery
     ports:
@@ -15,15 +15,23 @@ services:
       - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
       - AMQP_ENABLED=true
       - TRANSPORT_MODE=http,amqp
+      - HTTP_PORT=3000
+      - LOG_LEVEL=info
+      # AMQP Tuning and Routing
+      - AMQP_QUEUE_PREFIX=mcp.discovery
+      - AMQP_EXCHANGE=mcp.notifications
+      - AMQP_PREFETCH_COUNT=1
+      - AMQP_MESSAGE_TTL=3600000
+      - AMQP_QUEUE_TTL=7200000
       # AMQP Auto-Recovery Configuration
       - AMQP_AUTO_RECOVERY=true
-      - AMQP_RETRY_INTERVAL=10000
+      - AMQP_RECONNECT_DELAY=10000
       - AMQP_MAX_RETRY_ATTEMPTS=50
     volumes:
       # Persistent SQLite database storage
-      - mcp_data:/app/data
+      - mcp_data:/home/mcpuser/app/data
       # Optional: Mount logs directory
-      - mcp_logs:/app/logs
+      - mcp_logs:/home/mcpuser/app/logs
     networks:
       - mcp-network
     restart: unless-stopped
@@ -52,6 +60,7 @@ services:
       - RABBITMQ_DEFAULT_USER=mcp
       - RABBITMQ_DEFAULT_PASS=discovery
       - RABBITMQ_DEFAULT_VHOST=/
+      - RABBITMQ_MANAGEMENT_PATH_PREFIX=/rabbitmq
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:

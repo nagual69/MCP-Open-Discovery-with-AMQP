@@ -77,7 +77,7 @@ async function testSingleClientMultipleTools() {
                 request: {
                     method: 'tools/call',
                     params: {
-                        name: 'mcp_mcp-open-disc_memory_stats',
+                        name: 'memory_stats',
                         arguments: {}
                     }
                 }
@@ -87,7 +87,7 @@ async function testSingleClientMultipleTools() {
                 request: {
                     method: 'tools/call',
                     params: {
-                        name: 'mcp_mcp-open-disc_registry_get_status',
+                        name: 'registry_get_status',
                         arguments: {
                             format: 'summary'
                         }
@@ -99,9 +99,9 @@ async function testSingleClientMultipleTools() {
                 request: {
                     method: 'tools/call',
                     params: {
-                        name: 'mcp_mcp-open-disc_ping',
+                        name: 'ping',
                         arguments: {
-                            host: '8.8.8.8',
+                            host: '127.0.0.1',
                             count: 2
                         }
                     }
@@ -226,22 +226,22 @@ async function testMultipleAmqpClients() {
             {
                 id: 'amqp-client1',
                 name: 'amqp-basic-client-1',
-                toolName: 'mcp_mcp-open-disc_memory_stats',
+                toolName: 'memory_stats',
                 toolArguments: {}
             },
             {
                 id: 'amqp-client2',
                 name: 'amqp-basic-client-2',
-                toolName: 'mcp_mcp-open-disc_ping',
+                toolName: 'ping',
                 toolArguments: {
-                    host: '8.8.8.8',
+                    host: '127.0.0.1',
                     count: 1
                 }
             },
             {
                 id: 'amqp-client3',
                 name: 'amqp-basic-client-3',
-                toolName: 'mcp_mcp-open-disc_registry_get_status',
+                toolName: 'registry_get_status',
                 toolArguments: {
                     format: 'summary'
                 }

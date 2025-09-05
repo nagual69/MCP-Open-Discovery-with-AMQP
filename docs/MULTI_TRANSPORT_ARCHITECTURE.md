@@ -1646,7 +1646,7 @@ This comprehensive architecture establishes the **MCP Open Discovery Server v2.0
 **Start Development**: `npm start` or `.\rebuild_deploy.ps1`
 **Test Tools**: `npm run test` or individual test files
 **Check Health**: `npm run health` or `http://localhost:3000/health`
-**View Logs**: `docker-compose logs -f mcp-server`
+**View Logs**: `docker compose -f docker/docker-compose.yml logs -f mcp-server`
 **Debug AMQP**: Use `testing/test_amqp_mcp_compliance.js` for validation
 **Monitor AMQP**: RabbitMQ Management UI at `http://localhost:15672`
 

@@ -44,16 +44,18 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-if [[ ! -f "docker-compose.yml" ]]; then
-	echo -e "${RED}docker-compose.yml not found in $SCRIPT_DIR. Run from repo root.${NC}" >&2
+COMPOSE_FILE="docker/docker-compose.yml"
+
+if [[ ! -f "$COMPOSE_FILE" ]]; then
+	echo -e "${RED}$COMPOSE_FILE not found in $SCRIPT_DIR. Run from repo root.${NC}" >&2
 	exit 1
 fi
 
 compose() {
 	if command -v docker-compose >/dev/null 2>&1; then
-		docker-compose "$@"
+	docker-compose -f "$COMPOSE_FILE" "$@"
 	elif command -v docker >/dev/null 2>&1; then
-		docker compose "$@"
+	docker compose -f "$COMPOSE_FILE" "$@"
 	else
 		echo -e "${RED}Docker (compose) not found. Install Docker and ensure it's on PATH.${NC}" >&2
 		exit 1
@@ -99,7 +101,7 @@ echo -e "${GREEN}Running containers:${NC}"
 compose ps
 
 echo -e "${CYAN}Rebuild and redeploy complete!${NC}"
-echo -e "${GRAY}To view logs, use: docker-compose logs -f${NC}"
+echo -e "${GRAY}To view logs, use: docker compose -f docker/docker-compose.yml logs -f${NC}"
 
 if ! $NO_LOGS; then
 	compose logs -f

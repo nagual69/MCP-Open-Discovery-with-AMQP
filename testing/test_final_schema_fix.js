@@ -58,20 +58,6 @@ const testCases = [
         }
       }
     }
-  },
-  {
-    name: "Test Tool (Raw Schema)",
-    method: "POST",
-    url: "http://localhost:3000/mcp",
-    data: {
-      jsonrpc: "2.0", 
-      id: 4,
-      method: "tools/call",
-      params: {
-        name: "test_simple",
-        arguments: {}
-      }
-    }
   }
 ];
 

@@ -104,12 +104,19 @@ Created: `master_test_suite.js` - Comprehensive testing framework that consolida
 
 10. **`test-amqp-transport.js`** - AMQP transport testing
 
-    - 🔒 **KEEP** - AMQP transport not covered in master suite
-    - 🔒 **KEEP** - Message queue functionality testing
+- 🔒 **KEEP** - AMQP transport not covered in master suite
+- 🔒 **KEEP** - Message queue functionality testing
 
 11. **`validate-amqp-integration.js`** - AMQP integration validation
-    - 🔒 **KEEP** - AMQP-specific integration testing
-    - 🔒 **KEEP** - Message queue setup validation
+
+- 🔒 **KEEP** - AMQP-specific integration testing
+- 🔒 **KEEP** - Message queue setup validation
+
+12. **`test-validated-amqp-client.js`** - SDK-pattern AMQP client
+
+- 🔒 **KEEP** - Mirrors official MCP SDK client patterns; covers tools/list and tools/call over AMQP
+
+Removed legacy/redundant AMQP tests: `test-proper-mcp-amqp-client.js`, `test-corrected-amqp-transport.js`, `test_amqp_send_fix.js`, `test_mcp_bidirectional_routing.js`, `test_simple_bidirectional.js`.
 
 ### Network-Specific Testing
 

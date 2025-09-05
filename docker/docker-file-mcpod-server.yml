@@ -1,0 +1,83 @@
+services:
+  mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: mcp-open-discovery
+    container_name: mcp-open-discovery
+    ports:
+      - "3000:3000"
+    environment:
+      # Core server runtime
+      - TRANSPORT_MODE=${TRANSPORT_MODE:-http}  # Override to http,amqp when running with RabbitMQ profile
+      - HTTP_PORT=3000
+      - LOG_LEVEL=info
+
+      # AMQP (optional; used when running with the 'with-amqp' profile)
+      - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
+      - AMQP_QUEUE_PREFIX=mcp.discovery
+      - AMQP_EXCHANGE=mcp.notifications
+      - AMQP_RECONNECT_DELAY=10000
+      - AMQP_MAX_RECONNECT_ATTEMPTS=50
+      - AMQP_PREFETCH_COUNT=1
+      - AMQP_MESSAGE_TTL=3600000
+      - AMQP_QUEUE_TTL=7200000
+
+    volumes:
+      - mcp_data:/home/mcpuser/app/data
+      - mcp_logs:/home/mcpuser/app/logs
+
+    networks:
+      - mcp-network
+
+    restart: unless-stopped
+
+    # Capability-based security for nmap
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+      - NET_BIND_SERVICE
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Optional RabbitMQ broker for AMQP transport (enable with: --profile with-amqp)
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: mcp-rabbitmq
+    profiles: ["with-amqp"]
+    ports:
+      - "5672:5672"      # AMQP
+      - "15672:15672"    # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=mcp
+      - RABBITMQ_DEFAULT_PASS=discovery
+      - RABBITMQ_DEFAULT_VHOST=/
+      - RABBITMQ_MANAGEMENT_PATH_PREFIX=/rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - mcp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  mcp_data:
+    driver: local
+  mcp_logs:
+    driver: local
+  rabbitmq_data:
+    driver: local

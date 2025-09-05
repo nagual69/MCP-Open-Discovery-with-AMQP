@@ -8,9 +8,9 @@ const { registerAllTools } = require('../tools/registry/index');
     console.log('Registered tools:', res.tools);
     const toolsList = await server.server.request({ method: 'tools/list' }, require('@modelcontextprotocol/sdk/types.js').ListToolsResultSchema);
     console.log('tools/list ok, count:', toolsList.tools.length);
-    // Simulate a call to a simple tool with params
-    const callResult = await server.server.request({ method: 'tools/call', params: { name: 'test_simple', arguments: { message: 'hello', count: 2 } } }, require('@modelcontextprotocol/sdk/types.js').CompatibilityCallToolResultSchema);
-    console.log('tools/call ok, isError:', !!callResult.isError, 'contentLen:', callResult.content?.length ?? 0);
+  // Simulate a call to a stable built-in tool instead of deprecated test tool
+  const callResult = await server.server.request({ method: 'tools/call', params: { name: 'memory_stats', arguments: {} } }, require('@modelcontextprotocol/sdk/types.js').CompatibilityCallToolResultSchema);
+  console.log('tools/call ok (memory_stats), isError:', !!callResult.isError, 'contentLen:', callResult.content?.length ?? 0);
     process.exit(0);
   } catch (e) {
     console.error('Error:', e);

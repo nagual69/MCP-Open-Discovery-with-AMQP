@@ -439,14 +439,6 @@ async function registerAllTools(server) {
         category: 'Zabbix'
       },
       { 
-        name: 'test_simple_sdk',
-        category: 'Test'
-      },
-      { 
-        name: 'test_raw_schema_sdk',
-        category: 'Test'
-      },
-      { 
         name: 'debug_validation_sdk',
         category: 'Debug'
       },
@@ -735,14 +727,6 @@ async function registerAllTools(server) {
       { 
         name: 'zabbix_tools_sdk',
         category: 'Zabbix'
-      },
-      { 
-        name: 'test_simple_sdk',
-        category: 'Test'
-      },
-      { 
-        name: 'test_raw_schema_sdk',
-        category: 'Test'
       },
       { 
         name: 'debug_validation_sdk',

@@ -34,9 +34,11 @@ function Invoke-Compose {
     }
 }
 
-# Validate repo root contains docker-compose.yml
-if (-not (Test-Path -Path (Join-Path $PSScriptRoot 'docker-compose.yml'))) {
-    throw "docker-compose.yml not found in $PSScriptRoot. Run this script from the repository root."
+$composeFile = Join-Path $PSScriptRoot 'docker/docker-compose.yml'
+
+# Validate compose file location (moved under docker/)
+if (-not (Test-Path -Path $composeFile)) {
+    throw "Compose file not found: $composeFile. Run this script from the repository root."
 }
 
 if ($Help) {
@@ -66,27 +68,27 @@ try {
     # Stop containers based on scope
     if ($BuildAll) {
         Write-Host "Stopping ALL containers..." -ForegroundColor Yellow
-        Invoke-Compose down
+        Invoke-Compose -ComposeArgs @('-f', $composeFile, 'down')
     }
     else {
         Write-Host "Stopping MCP server container only..." -ForegroundColor Yellow
-        try { Invoke-Compose stop mcp-server } catch { Write-Host "mcp-server not running or stop failed, continuing..." -ForegroundColor DarkGray }
-        try { Invoke-Compose rm -f mcp-server } catch { Write-Host "mcp-server not present to remove, continuing..." -ForegroundColor DarkGray }
+        try { Invoke-Compose -ComposeArgs @('-f', $composeFile, 'stop', 'mcp-server') } catch { Write-Host "mcp-server not running or stop failed, continuing..." -ForegroundColor DarkGray }
+        try { Invoke-Compose -ComposeArgs @('-f', $composeFile, 'rm', '-f', 'mcp-server') } catch { Write-Host "mcp-server not present to remove, continuing..." -ForegroundColor DarkGray }
     }
 
     # Build the image(s)
     if ($BuildAll) {
         Write-Host "Building ALL Docker images..." -ForegroundColor Yellow
-        Invoke-Compose build --no-cache
+        Invoke-Compose -ComposeArgs @('-f', $composeFile, 'build', '--no-cache')
     }
     else {
         Write-Host "Building MCP server Docker image..." -ForegroundColor Yellow
-        Invoke-Compose build --no-cache mcp-server
+        Invoke-Compose -ComposeArgs @('-f', $composeFile, 'build', '--no-cache', 'mcp-server')
     }
 
     # Start the containers
     Write-Host "Starting containers..." -ForegroundColor Yellow
-    Invoke-Compose up -d
+    Invoke-Compose -ComposeArgs @('-f', $composeFile, 'up', '-d')
 
     # Pause to ensure services are up
     Write-Host "Waiting for services to start..." -ForegroundColor Yellow
@@ -94,10 +96,10 @@ try {
 
     # Show running containers
     Write-Host "Running containers:" -ForegroundColor Green
-    Invoke-Compose ps
+    Invoke-Compose -ComposeArgs @('-f', $composeFile, 'ps')
 
     Write-Host "Rebuild and redeploy complete!" -ForegroundColor Cyan
-    Write-Host 'To view logs, use: docker-compose logs -f' -ForegroundColor Gray
+    Write-Host 'To view logs, use: docker compose -f docker/docker-compose.yml logs -f' -ForegroundColor Gray
 }
 catch {
     Write-Error $_
@@ -105,5 +107,5 @@ catch {
 }
 
 if (-not $NoLogs) {
-    Invoke-Compose logs -f
+    Invoke-Compose -ComposeArgs @('-f', $composeFile, 'logs', '-f')
 }

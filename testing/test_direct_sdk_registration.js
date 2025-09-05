@@ -35,7 +35,7 @@ async function testDirectRegistration() {
       required: ['host']
     };
     
-    server.registerTool('test_simple', {
+  server.registerTool('direct_test_tool', {
       description: 'Simple test tool',
       inputSchema: simpleSchema
     }, async (args) => {

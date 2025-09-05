@@ -127,6 +127,8 @@
 
 ### 3. Test Tools (3 tools)
 
+Note: These temporary test tools (test_simple, test_no_params, test_raw_schema) were used only during schema debugging and have since been removed from the registry and codebase.
+
 #### 3.1 test_simple
 
 - **Status**: ✅ PASS

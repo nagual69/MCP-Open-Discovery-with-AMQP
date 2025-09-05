@@ -36,7 +36,7 @@ const AMQP_CONFIG = {
 };
 
 /**
- * Tool category mappings for your 61-tool enterprise platform
+ * Tool category mappings for your enterprise platform
  */
 const TOOL_CATEGORIES = {
   memory: ['memory_', 'cmdb_'],
@@ -771,7 +771,7 @@ function getToolCategory(toolName) {
 function enhanceHealthCheckWithRegistry(originalHealthResponse) {
   const enhanced = enhanceHealthCheck(originalHealthResponse);
   
-  // Add tool category breakdown for your 61-tool platform
+  // Add tool category breakdown for your tool platform
   if (process.amqpTransport) {
     try {
       // Try to get registry information
@@ -779,7 +779,7 @@ function enhanceHealthCheckWithRegistry(originalHealthResponse) {
       if (registryModule && registryModule.getToolCounts) {
         const toolCounts = registryModule.getToolCounts();
         enhanced.tools = {
-          total: toolCounts.total || 61,
+          total: toolCounts.total || 999,
           categories: toolCounts.categories || {},
           amqpEnabled: true,
           categoryRoutingEnabled: AMQP_CONFIG.TOOL_CATEGORY_ROUTING,
@@ -789,16 +789,16 @@ function enhanceHealthCheckWithRegistry(originalHealthResponse) {
     } catch (error) {
       // Fallback information
       enhanced.tools = {
-        total: 61,
+        total: 999,
         categories: {
-          memory: 9,
-          network: 8, 
-          proxmox: 10,
-          snmp: 12,
-          zabbix: 7,
-          nmap: 5,
-          credentials: 6,
-          registry: 4
+          memory: 0,
+          network: 0, 
+          proxmox: 0,
+          snmp: 0,
+          zabbix: 0,
+          nmap: 0,
+          credentials: 0,
+          registry: 0
         },
         amqpEnabled: true,
         note: 'Registry integration not available - using static counts'
