@@ -49,6 +49,8 @@ class HotReloadManager {
     // Cache management
     this.moduleCache = new Map();     // moduleName -> module exports
     this.reloadStats = new Map();     // moduleName -> reload statistics
+  this.pendingReloads = new Map();  // moduleName -> timeout id (debounce)
+  this.onAfterReload = null;        // callback(moduleName, result)
     
     // Configuration
     this.watchOptions = {
@@ -151,7 +153,17 @@ class HotReloadManager {
       
       watcher.on('change', async (filePath) => {
         this.logger.log(`[Hot-Reload] 📝 File changed: ${path.basename(filePath)}`);
-        await this.reloadModule(moduleName);
+        // Simple debounce per module to avoid cascades
+        const existing = this.pendingReloads.get(moduleName);
+        if (existing) clearTimeout(existing);
+        const tid = setTimeout(async () => {
+          this.pendingReloads.delete(moduleName);
+          const res = await this.reloadModule(moduleName).catch(err => ({ success: false, error: err.message }));
+          if (this.onAfterReload) {
+            try { await this.onAfterReload(moduleName, res); } catch (e) { this.logger.warn('[Hot-Reload] onAfterReload error:', e.message); }
+          }
+        }, 250);
+        this.pendingReloads.set(moduleName, tid);
       });
 
       watcher.on('error', (error) => {
@@ -203,6 +215,9 @@ class HotReloadManager {
     if (moduleNames.length > 0) {
       this.logger.log(`[Hot-Reload] 🛑 Stopped watching ${moduleNames.length} modules`);
     }
+  // Clear any pending debounces
+  for (const [, tid] of this.pendingReloads) { try { clearTimeout(tid); } catch {} }
+  this.pendingReloads.clear();
   }
 
   /**
@@ -336,6 +351,8 @@ class HotReloadManager {
     this.reloadStats.clear();
     this.lastReloadTimes.clear();
     this.moduleFilePaths.clear();
+  for (const [, tid] of this.pendingReloads) { try { clearTimeout(tid); } catch {} }
+  this.pendingReloads.clear();
     
     this.state = HOTRELOAD_STATES.DISABLED;
     this.enabled = false;
@@ -433,6 +450,14 @@ class HotReloadManager {
     stats.averageDuration = Math.round(
       (stats.averageDuration * (stats.totalReloads - 1) + duration) / stats.totalReloads
     );
+  }
+
+  /**
+   * Set a callback that runs after each reload completes.
+   * @param {(moduleName: string, result: object) => Promise<void>|void} cb
+   */
+  setAfterReloadCallback(cb) {
+    this.onAfterReload = typeof cb === 'function' ? cb : null;
   }
 }
 

@@ -1,15 +1,11 @@
 /**
- * Tool Registry Index - MCP Types Integration v3.0
+ * Tool Registry Index - MCP Types Integration (Unified)
  * 
- * Enhanced implementation using mcp-types for guaranteed specification compliance
- * while maintaining ALL original features and functionality:
- * - Uses mcp-types package for spec-compliant schemas
- * - Maintains Zod schemas for developer experience and runtime validation
- * - Keeps all original registry, validation, and hot-reload features
- * - Clean adapter pattern eliminates conversion issues
- * - No more "keyValidator._parse is not a function" errors
- * 
- * Based on MCP Schema 2025-06-18 specification + mcp-types integration
+ * Single source of truth for registering tools/resources with the MCP server.
+ * - Standardizes on server.registerTool and Zod raw shapes
+ * - Integrates ToolValidationManager (strict or warn mode)
+ * - Wires HotReloadManager reloads → handler re-registration
+ * - Exposes dynamic load/unload/re-register helpers
  */
 
 const { adaptToolToMCPTypes, createParameterValidator, jsonSchemaToZodShape, getZodRawShape, isZodSchema, isJsonSchema } = require('./mcp_types_adapter');
@@ -19,6 +15,7 @@ const { ToolValidationManager } = require('./tool_validation_manager');
 const { registerAllResources, getResourceCounts } = require('./resource_manager');
 const path = require('path');
 const { PluginManager } = require('./plugin_manager');
+const { DiscoveryEngine } = require('./discovery_engine');
 
 // Global container for cross-module singletons (prevents duplicate instances)
 const GLOBAL_KEY = '__MCP_OPEN_DISCOVERY__';
@@ -33,6 +30,9 @@ let registrationInProgress = false;
 let registrationComplete = false;
 let serverInstance = g[GLOBAL_KEY].serverInstance || null; // MCP server reference for dynamic operations
 let pluginManager = g[GLOBAL_KEY].pluginManager || null;  // Optional plugin manager
+
+const DEBUG_REGISTRY = process.env.DEBUG_REGISTRY === '1' || process.env.DEBUG_REGISTRY === 'true';
+const rlog = (...args) => { if (DEBUG_REGISTRY) console.log('[Registry][DEBUG]', ...args); };
 
 function _saveGlobals() {
   g[GLOBAL_KEY].registryInstance = registryInstance;
@@ -54,7 +54,7 @@ function _saveGlobals() {
  */
 function registerMCPTool(server, tool, handleToolCall) {
   try {
-    console.log(`[Registry] Registering tool with mcp-types: ${tool.name}`);
+  console.log(`[Registry] Registering tool: ${tool.name}`);
     
     // Step 1: Build a Zod raw shape for input schema so SDK can validate/parse
     let zodRawShape;
@@ -69,8 +69,8 @@ function registerMCPTool(server, tool, handleToolCall) {
       zodRawShape = {};
     }
 
-    // Step 2: Create parameter validator for extra safety/logging
-    const validateParams = createParameterValidator(isZodSchema(tool.inputSchema) ? tool.inputSchema : undefined);
+  // Step 2: Create parameter validator for extra safety/logging
+  const validateParams = createParameterValidator(isZodSchema(tool.inputSchema) ? tool.inputSchema : undefined);
 
     // Step 3: Create execution handler that receives parsed args from SDK
     const mcpHandler = async (parsedArgsOrExtra, maybeExtra) => {
@@ -157,7 +157,7 @@ function registerMCPTool(server, tool, handleToolCall) {
       // Note: outputSchema optional; keeping runtime validation in handler if needed
       annotations: tool.annotations,
     };
-  server.registerTool(tool.name, registerConfig, mcpHandler);
+    server.registerTool(tool.name, registerConfig, mcpHandler);
     console.log(`[Registry] ✅ Registered MCP tool: ${tool.name} via SDK.registerTool`);
     return true;
     
@@ -169,8 +169,6 @@ function registerMCPTool(server, tool, handleToolCall) {
 
 /**
  * Dynamic: Load a module at runtime and register its tools via MCP SDK
- * @param {Object} options - { modulePath, moduleName, category, exportName }
- * @returns {Promise<Object>} Result summary
  */
 async function dynamicLoadModule(options = {}) {
   const srv = getServerInstance();
@@ -337,12 +335,23 @@ function getRegistry() {
     if (!hotReloadManager) {
       hotReloadManager = new HotReloadManager(registryInstance);
       hotReloadManager.enable(); // Enable hot-reload by default
+      // Bind reloads → re-register tool handlers via callback
+      hotReloadManager.setAfterReloadCallback(async (moduleName, res) => {
+        if (res && res.success) {
+          try {
+            const rr = await reregisterModuleTools(moduleName);
+            rlog('Re-registered tools after reload:', rr);
+          } catch (e) {
+            console.warn('[Registry] Re-register after reload failed:', e.message);
+          }
+        }
+      });
     }
     
     if (!validationManager) {
       validationManager = new ToolValidationManager();
     }
-  _saveGlobals();
+    _saveGlobals();
   }
   return registryInstance;
 }
@@ -378,7 +387,8 @@ function getValidationManager() {
  * @param {Object} server - MCP server instance
  * @returns {Promise<Object>} Registration results
  */
-async function registerAllTools(server) {
+async function registerAllTools(server, options = {}) {
+  const { useDiscovery = (process.env.REGISTRY_USE_DISCOVERY === '1' || process.env.REGISTRY_USE_DISCOVERY === 'true') } = options;
   // Prevent multiple concurrent registrations - PRESERVED FROM ORIGINAL
   if (registrationInProgress) {
     console.log('[Registry] ⚠️  Registration already in progress, waiting...');
@@ -398,144 +408,115 @@ async function registerAllTools(server) {
   
   try {
     console.log('[Registry] ========================================');
-    console.log('[Registry] 🚀 MCP Open Discovery v3.0 - mcp-types Integration');
+    console.log('[Registry] 🚀 MCP Open Discovery - Registry Initialization');
     console.log('[Registry] 📋 MCP Schema Specification: 2025-06-18');
     console.log('[Registry] ========================================');
     
-  const registry = getRegistry();
-  serverInstance = server; // store for dynamic operations
-    // expose globally for cross-module access
+    const registry = getRegistry();
+    serverInstance = server; // store for dynamic operations
     try { g[GLOBAL_KEY].serverInstance = server; } catch {}
     const validator = getValidationManager();
     
-    // Initialize the registry - PRESERVED FROM ORIGINAL
+    // Initialize the registry
     await registry.initialize();
     
-    // Define tool modules with clean structure - PRESERVED FROM ORIGINAL
-    const toolModules = [
-      { 
-        name: 'memory_tools_sdk',
-        category: 'Memory',
-        requiresInit: true
-      },
-      { 
-        name: 'network_tools_sdk',
-        category: 'Network'
-      },
-      { 
-        name: 'nmap_tools_sdk',
-        category: 'NMAP'
-      },
-      { 
-        name: 'proxmox_tools_sdk',
-        category: 'Proxmox'
-      },
-      { 
-        name: 'snmp_tools_sdk',
-        category: 'SNMP'
-      },
-      { 
-        name: 'zabbix_tools_sdk',
-        category: 'Zabbix'
-      },
-      { 
-        name: 'debug_validation_sdk',
-        category: 'Debug'
-      },
-      { 
-        name: 'credentials_tools_sdk',
-        category: 'Credentials'
-      },
-      { 
-        name: 'registry_tools_sdk',
-        category: 'Registry'
-      }
-    ];
+    let toolModules;
+    if (useDiscovery) {
+      console.log('[Registry] 🔍 Using DiscoveryEngine to find modules...');
+      const de = new DiscoveryEngine();
+      const discovered = await de.discoverToolModules();
+      toolModules = discovered.map(m => ({ name: m.name, category: m.category }));
+      console.log(`[Registry] 🔍 Discovery found ${toolModules.length} modules`);
+    } else {
+      toolModules = [
+        { name: 'memory_tools_sdk', category: 'Memory', requiresInit: true },
+        { name: 'network_tools_sdk', category: 'Network' },
+        { name: 'nmap_tools_sdk', category: 'NMAP' },
+        { name: 'proxmox_tools_sdk', category: 'Proxmox' },
+        { name: 'snmp_tools_sdk', category: 'SNMP' },
+        { name: 'zabbix_tools_sdk', category: 'Zabbix' },
+  { name: 'marketplace_tools_sdk', category: 'Marketplace' },
+        { name: 'debug_validation_sdk', category: 'Debug' },
+        { name: 'credentials_tools_sdk', category: 'Credentials' },
+        { name: 'registry_tools_sdk', category: 'Registry' }
+      ];
+    }
 
     let totalTools = 0;
     const results = {};
 
-    // Process each module - PRESERVED LOGIC FROM ORIGINAL
     for (const moduleConfig of toolModules) {
       try {
         console.log(`[Registry] 🔄 Processing ${moduleConfig.name}...`);
-        
-        // Load the module
-        const module = require(`../${moduleConfig.name}`);
-        
-        // Special initialization for modules that need it - PRESERVED FROM ORIGINAL
-        if (moduleConfig.requiresInit && module.initialize) {
-          console.log(`[Registry] 🔄 Initializing ${moduleConfig.name}...`);
-          await module.initialize();
+        const mod = require(`../${moduleConfig.name}`);
+        if (mod.initialize) {
+          console.log(`[Registry] 🔧 Initializing ${moduleConfig.name}...`);
+          await mod.initialize();
         }
-        
-        // Validate module structure - PRESERVED FROM ORIGINAL
-        if (!module.tools || !Array.isArray(module.tools)) {
+        if (!mod.tools || !Array.isArray(mod.tools)) {
           console.warn(`[Registry] ⚠️  Module ${moduleConfig.name} has no tools array`);
           results[moduleConfig.category] = 0;
           continue;
         }
-        
-        if (!module.handleToolCall || typeof module.handleToolCall !== 'function') {
+        if (!mod.handleToolCall || typeof mod.handleToolCall !== 'function') {
           console.warn(`[Registry] ⚠️  Module ${moduleConfig.name} has no handleToolCall function`);
           results[moduleConfig.category] = 0;
           continue;
         }
-        
-        // Start module registration tracking - PRESERVED FROM ORIGINAL
+
         registry.startModule(moduleConfig.name, moduleConfig.category);
-        
         let registeredCount = 0;
-        
-        // Register each tool using enhanced MCP interface
-        for (const tool of module.tools) {
-          // Validate tool definition - PRESERVED FROM ORIGINAL
+
+        // Validate batch before registering
+        const batch = validationManager.validateToolBatch(mod.tools, moduleConfig.name);
+        rlog('Validation batch summary:', batch.summary);
+
+        for (const tool of mod.tools) {
           if (!tool.name || typeof tool.name !== 'string') {
             console.warn(`[Registry] ⚠️  Invalid tool name in ${moduleConfig.name}`);
             continue;
           }
-          
-          // Register tool with MCP server using mcp-types adapter
-          const success = registerMCPTool(server, tool, module.handleToolCall);
-          
+          const v = validationManager.getValidationResult(tool.name) || { valid: true, errors: [] };
+          if (!v.valid && validationManager.config.strictMode) {
+            console.error(`[Registry] ❌ Skipping invalid tool (strict): ${tool.name}`, v.errors);
+            continue;
+          } else if (!v.valid) {
+            console.warn(`[Registry] ⚠️  Registering tool with warnings: ${tool.name}`);
+          }
+
+          const success = registerMCPTool(server, tool, mod.handleToolCall);
           if (success) {
-            // Track in internal registry - PRESERVED FROM ORIGINAL
             registry.registerTool(tool.name);
             registeredCount++;
             totalTools++;
           }
         }
-        
+
         results[moduleConfig.category] = registeredCount;
-        console.log(`[Registry] ✅ Registered ${registeredCount}/${module.tools.length} ${moduleConfig.category} tools`);
-        
-        // Complete module registration - PRESERVED FROM ORIGINAL
+        console.log(`[Registry] ✅ Registered ${registeredCount}/${mod.tools.length} ${moduleConfig.category} tools`);
+
         await registry.completeModule();
-        
-        // Set up hot-reload watching - PRESERVED FROM ORIGINAL
-  if (hotReloadManager) {
+        if (hotReloadManager) {
           const filePath = require.resolve(`../${moduleConfig.name}`);
           hotReloadManager.watchModule(moduleConfig.name, filePath);
         }
-        
+
       } catch (error) {
         console.error(`[Registry] ❌ Failed to process ${moduleConfig.name}:`, error.message);
         results[moduleConfig.category] = `Error: ${error.message}`;
       }
     }
 
-    // Mark registration as complete - PRESERVED FROM ORIGINAL
-  registrationComplete = true;
+    registrationComplete = true;
     registrationInProgress = false;
     
     console.log('[Registry] ========================================');
     console.log(`[Registry] ✅ Registration Complete: ${totalTools} tools`);
-    console.log('[Registry] 📊 Using mcp-types for spec compliance');
     console.log('[Registry] ========================================');
     
-  return {
+    return {
       success: true,
-      source: 'mcp_types_integration_v3',
+      source: 'mcp_specification_compliant',
       registry: registry,
       summary: registry.getStats(),
       modules: toolModules.length,
@@ -577,293 +558,20 @@ function getRegistryInstance() {
   return registryInstance || g[GLOBAL_KEY].registryInstance || null;
 }
 
-/**
- * Cleanup and shutdown - PRESERVED FROM ORIGINAL
- * @returns {Promise<void>}
- */
+// Exports are defined once at the end of the file
+
+/** Cleanup and shutdown */
 async function cleanup() {
   console.log('[Registry] 🧹 Starting cleanup...');
-  
-  if (hotReloadManager) {
-    hotReloadManager.cleanup();
-  }
-  
-  if (validationManager) {
-    validationManager.clearResults();
-  }
-  
-  if (registryInstance) {
-    await registryInstance.cleanup();
-  }
-  
+  if (hotReloadManager) hotReloadManager.cleanup();
+  if (validationManager) validationManager.clearResults();
+  if (registryInstance) await registryInstance.cleanup();
   registryInstance = null;
   hotReloadManager = null;
   validationManager = null;
   registrationInProgress = false;
   registrationComplete = false;
-  
   console.log('[Registry] ✅ Cleanup complete');
-}
-
-// DUPLICATE EXPORTS COMMENTED OUT - USING FINAL EXPORT BELOW
-/*
-module.exports = {
-  registerAllTools,
-  registerAllResources,
-  getResourceCounts,
-  getRegistry,
-  getHotReloadManager,
-  getValidationManager,
-  getRegistryInstance,
-  cleanup
-};
-*/
-
-/**
- * Get or create the registry singleton - PRESERVED FROM ORIGINAL
- * @returns {CoreRegistry}
- */
-function getRegistry() {
-  if (!registryInstance) {
-    registryInstance = new CoreRegistry();
-    
-    // Initialize companion managers
-    if (!hotReloadManager) {
-      hotReloadManager = new HotReloadManager(registryInstance);
-      hotReloadManager.enable(); // Enable hot-reload by default
-    }
-    
-    if (!validationManager) {
-      validationManager = new ToolValidationManager();
-    }
-  }
-  return registryInstance;
-}
-
-/**
- * Get the hot-reload manager
- * @returns {HotReloadManager}
- */
-function getHotReloadManager() {
-  getRegistry(); // Ensure registry is initialized
-  return hotReloadManager;
-}
-
-/**
- * Get the validation manager
- * @returns {ToolValidationManager}
- */
-function getValidationManager() {
-  getRegistry(); // Ensure registry is initialized
-  return validationManager;
-}
-
-/**
- * Main tool registration function - MCP SDK compliant
- * 
- * Implements clean, specification-based tool registration:
- * 1. Load tool modules
- * 2. Validate tool definitions
- * 3. Register tools using standard MCP interface
- * 4. Track registration in internal registry
- * 
- * @param {Object} server - MCP server instance
- * @returns {Promise<Object>} Registration results
- */
-async function registerAllTools(server) {
-  // Prevent multiple concurrent registrations
-  if (registrationInProgress) {
-    console.log('[Registry] ⚠️  Registration already in progress, waiting...');
-    while (registrationInProgress) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    return _getRegistrationResults();
-  }
-
-  // Return existing results if already complete
-  if (registrationComplete && registryInstance) {
-    console.log('[Registry] ✅ Tools already registered, returning existing results');
-    return _getRegistrationResults();
-  }
-
-  registrationInProgress = true;
-  
-  try {
-    console.log('[Registry] ========================================');
-    console.log('[Registry] 🚀 MCP Open Discovery v2.0 - Clean Registry');
-    console.log('[Registry] 📋 MCP Schema Specification: 2025-06-18');
-    console.log('[Registry] ========================================');
-    
-  const registry = getRegistry();
-  serverInstance = server; // store for dynamic operations
-    const validator = getValidationManager();
-    
-    // Initialize the registry
-    await registry.initialize();
-    
-    // Define tool modules with clean structure
-    const toolModules = [
-      { 
-        name: 'memory_tools_sdk',
-        category: 'Memory',
-        requiresInit: true
-      },
-      { 
-        name: 'network_tools_sdk',
-        category: 'Network'
-      },
-      { 
-        name: 'nmap_tools_sdk',
-        category: 'NMAP'
-      },
-      { 
-        name: 'proxmox_tools_sdk',
-        category: 'Proxmox'
-      },
-      { 
-        name: 'snmp_tools_sdk',
-        category: 'SNMP'
-      },
-      { 
-        name: 'zabbix_tools_sdk',
-        category: 'Zabbix'
-      },
-      { 
-        name: 'debug_validation_sdk',
-        category: 'Debug'
-      },
-      { 
-        name: 'credentials_tools_sdk',
-        category: 'Credentials'
-      },
-      { 
-        name: 'registry_tools_sdk',
-        category: 'Registry'
-      }
-    ];
-
-    let totalTools = 0;
-    const results = {};
-
-    // Process each module
-    for (const moduleConfig of toolModules) {
-      try {
-        console.log(`[Registry] 🔄 Processing ${moduleConfig.name}...`);
-        
-        // Load the module
-        const module = require(`../${moduleConfig.name}`);
-        
-        // Special initialization for modules that need it
-        if (moduleConfig.requiresInit && module.initialize) {
-          console.log(`[Registry] � Initializing ${moduleConfig.name}...`);
-          await module.initialize();
-        }
-        
-        // Validate module structure
-        if (!module.tools || !Array.isArray(module.tools)) {
-          console.warn(`[Registry] ⚠️  Module ${moduleConfig.name} has no tools array`);
-          results[moduleConfig.category] = 0;
-          continue;
-        }
-        
-        if (!module.handleToolCall || typeof module.handleToolCall !== 'function') {
-          console.warn(`[Registry] ⚠️  Module ${moduleConfig.name} has no handleToolCall function`);
-          results[moduleConfig.category] = 0;
-          continue;
-        }
-        
-        // Start module registration tracking
-        registry.startModule(moduleConfig.name, moduleConfig.category);
-        
-        let registeredCount = 0;
-        
-        // Register each tool using clean MCP interface
-        for (const tool of module.tools) {
-          // Validate tool definition
-          if (!tool.name || typeof tool.name !== 'string') {
-            console.warn(`[Registry] ⚠️  Invalid tool name in ${moduleConfig.name}`);
-            continue;
-          }
-          
-          // Register tool with MCP server
-          const success = registerMCPTool(server, tool, module.handleToolCall);
-          
-          if (success) {
-            // Track in internal registry
-            registry.registerTool(tool.name);
-            registeredCount++;
-            totalTools++;
-          }
-        }
-        
-        results[moduleConfig.category] = registeredCount;
-        console.log(`[Registry] ✅ Registered ${registeredCount}/${module.tools.length} ${moduleConfig.category} tools`);
-        
-        // Complete module registration
-        await registry.completeModule();
-        
-        // Set up hot-reload watching
-        if (hotReloadManager) {
-          const filePath = require.resolve(`../${moduleConfig.name}`);
-          hotReloadManager.watchModule(moduleConfig.name, filePath);
-        }
-        
-      } catch (error) {
-        console.error(`[Registry] ❌ Failed to process ${moduleConfig.name}:`, error.message);
-        results[moduleConfig.category] = `Error: ${error.message}`;
-      }
-    }
-
-    // Mark registration as complete
-    registrationComplete = true;
-    registrationInProgress = false;
-    
-    console.log('[Registry] ========================================');
-    console.log(`[Registry] ✅ Registration Complete: ${totalTools} tools`);
-    console.log('[Registry] ========================================');
-    
-    return {
-      success: true,
-      source: 'mcp_specification_compliant',
-      registry: registry,
-      summary: registry.getStats(),
-      modules: toolModules.length,
-      tools: totalTools,
-      categories: results
-    };
-    
-  } catch (error) {
-    registrationInProgress = false;
-    console.error('[Registry] ❌ Tool registration failed:', error.message);
-    throw error;
-  }
-}
-
-/**
- * Get current registration results
- * @returns {Object} Current registration state
- * @private
- */
-function _getRegistrationResults() {
-  if (!registryInstance) {
-    return { success: false, error: 'Registry not initialized' };
-  }
-  
-  return {
-    success: true,
-    registry: registryInstance,
-    summary: registryInstance.getStats(),
-    validation: validationManager ? validationManager.getValidationSummary() : null,
-    hotReload: hotReloadManager ? hotReloadManager.getStatus() : null
-  };
-}
-
-/**
- * Get registry instance (for external access)
- * @returns {CoreRegistry|null}
- */
-function getRegistryInstance() {
-  return registryInstance;
 }
 
 /** Get the MCP server instance (if initialized) */
@@ -879,33 +587,7 @@ function getPluginManager() {
   return pluginManager;
 }
 
-/**
- * Cleanup and shutdown
- * @returns {Promise<void>}
- */
-async function cleanup() {
-  console.log('[Registry] 🧹 Starting cleanup...');
-  
-  if (hotReloadManager) {
-    hotReloadManager.cleanup();
-  }
-  
-  if (validationManager) {
-    validationManager.clearResults();
-  }
-  
-  if (registryInstance) {
-    await registryInstance.cleanup();
-  }
-  
-  registryInstance = null;
-  hotReloadManager = null;
-  validationManager = null;
-  registrationInProgress = false;
-  registrationComplete = false;
-  
-  console.log('[Registry] ✅ Cleanup complete');
-}
+// (cleanup defined earlier; removed duplicate)
 
 module.exports = {
   registerAllTools,

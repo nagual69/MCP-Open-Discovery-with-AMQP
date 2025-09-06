@@ -25,7 +25,11 @@ const tools = [
     description: 'Get comprehensive status of the dynamic tool registry including hot-reload info',
     inputSchema: {
       type: 'object',
-      properties: {},
+      properties: {
+        includeAnalytics: { type: 'boolean', description: 'Include database analytics in the response' },
+        includeModules: { type: 'boolean', description: 'Include detailed module information (if available)' },
+        format: { type: 'string', enum: ['json', 'summary'], description: 'Response format' }
+      },
       required: []
     }
   },
@@ -174,7 +178,9 @@ const tools = [
           type: 'boolean',
           description: 'If true, immediately re-register the module tools after reload',
           default: false
-        }
+  },
+  clearCache: { type: 'boolean', description: 'Clear module cache before reload' },
+  validateTools: { type: 'boolean', description: 'Validate tools after reload' }
       },
       required: ['moduleName']
     }
@@ -218,21 +224,38 @@ async function handleToolCall(toolName, args) {
           };
         }
 
-        const status = registry.getStats();
+  const status = registry.getStats();
+  // Handle optional analytics/format similar to management_tools
+  const includeAnalytics = args.includeAnalytics ?? false;
+  const includeModules = args.includeModules ?? true;
+  const format = args.format || 'json';
         const hotReloadStatus = hotReloadManager ? hotReloadManager.getStatus() : null;
         const validationSummary = validationManager ? validationManager.getValidationSummary() : null;
 
-        return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              registry_status: status,
-              hot_reload: hotReloadStatus,
-              validation: validationSummary,
-              timestamp: new Date().toISOString()
-            }, null, 2)
-          }]
-        };
+        const payload = { registry_status: status, hot_reload: hotReloadStatus, validation: validationSummary, timestamp: new Date().toISOString() };
+        if (includeAnalytics && registry.getAnalytics) {
+          try {
+            payload.analytics = await registry.getAnalytics();
+          } catch (e) {
+            payload.analytics_error = e.message;
+          }
+        }
+        if (!includeModules && payload.registry_status && payload.registry_status.modules) {
+          // Redact detailed modules map if present in status
+          delete payload.registry_status.modules;
+        }
+        if (format === 'summary') {
+          const rs = payload.registry_status || {};
+          const hr = payload.hot_reload || {};
+          const summary = {
+            total_tools: rs.tools || 0,
+            total_modules: rs.modules || 0,
+            hot_reload_enabled: hr.enabled || false,
+            database_enabled: !!(payload.analytics && payload.analytics.database)
+          };
+          return { content: [{ type: 'text', text: JSON.stringify({ summary, timestamp: payload.timestamp }, null, 2) }] };
+        }
+        return { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
       } catch (error) {
         return {
           content: [{
@@ -245,7 +268,14 @@ async function handleToolCall(toolName, args) {
 
     case 'registry_load_module':
       try {
-  const result = await dynamicLoadModule(args);
+        // Back-compat: accept snake_case from management_tools
+        const normalized = {
+          modulePath: args.modulePath ?? args.module_path,
+          moduleName: args.moduleName ?? args.module_name,
+          category: args.category,
+          exportName: args.exportName
+        };
+        const result = await dynamicLoadModule(normalized);
   return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }], isError: result.success === false };
       } catch (error) {
         return {
@@ -283,7 +313,8 @@ async function handleToolCall(toolName, args) {
           };
         }
 
-        const result = await hotReloadManager.reloadModule(args.moduleName);
+  const options = { clearCache: !!args.clearCache, validateTools: !!args.validateTools };
+  const result = await hotReloadManager.reloadModule(args.moduleName, options);
         let merged = result;
         if (result && result.success && args.reregister) {
           try {

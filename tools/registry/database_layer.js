@@ -15,7 +15,10 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
+
+// Debug logging gate
+const DEBUG_DB = process.env.DEBUG_DB === '1' || process.env.DEBUG_DB === 'true';
+const dlog = (...args) => { if (DEBUG_DB) console.log('[Database Layer][DEBUG]', ...args); };
 
 /**
  * Database schema for the MCP Dynamic Tools Registry
@@ -161,16 +164,19 @@ class DatabaseLayer {
    * Create database schema
    */
   async createSchema() {
-    console.log('[Database Layer] [DEBUG] Creating database schema...');
-    console.log('[Database Layer] [DEBUG] Starting schema creation...');
+    dlog('Creating database schema...');
+    dlog('Starting schema creation...');
     
     const tables = Object.keys(SCHEMA);
-    console.log('[Database Layer] [DEBUG] Creating', tables.length, 'tables:', tables);
+    dlog('Creating', tables.length, 'tables:', tables);
 
     for (const [tableName, sql] of Object.entries(SCHEMA)) {
       await this.executeQuery(sql);
-      console.log(`[Database Layer] [DEBUG] Table created successfully: ${tableName}`);
+      dlog(`Table created successfully: ${tableName}`);
     }
+
+    // Indices for performance
+    await this._createIndices();
 
     // Initialize default configuration
     await this.initializeConfig();
@@ -178,10 +184,26 @@ class DatabaseLayer {
   }
 
   /**
+   * Create indices for frequently used lookups
+   */
+  async _createIndices() {
+    const indices = [
+      `CREATE INDEX IF NOT EXISTS idx_modules_name ON modules(name)`,
+      `CREATE INDEX IF NOT EXISTS idx_modules_loaded_at ON modules(loaded_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_tools_module_id ON tools(module_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_tools_name ON tools(name)`,
+      `CREATE INDEX IF NOT EXISTS idx_tools_created_at ON tools(created_at)`
+    ];
+    for (const sql of indices) {
+      await this.executeQuery(sql);
+    }
+  }
+
+  /**
    * Initialize default registry configuration
    */
   async initializeConfig() {
-    console.log('[Database Layer] [DEBUG] Starting configuration initialization...');
+    dlog('Starting configuration initialization...');
     
     const defaultConfig = [
       ['registry_version', '2.0.0'],
@@ -190,25 +212,25 @@ class DatabaseLayer {
       ['max_module_history', '100']
     ];
 
-    console.log('[Database Layer] [DEBUG] Inserting', defaultConfig.length, 'default config entries...');
+    dlog('Inserting', defaultConfig.length, 'default config entries...');
 
     for (let i = 0; i < defaultConfig.length; i++) {
       const [key, value] = defaultConfig[i];
-      console.log(`[Database Layer] [DEBUG] Processing config entry ${i + 1} : ${key}`);
+      dlog(`Processing config entry ${i + 1} : ${key}`);
       
       try {
         await this.executeQuery(
           `INSERT OR IGNORE INTO registry_config (key, value) VALUES (?, ?)`,
           [key, value]
         );
-        console.log(`[Database Layer] [DEBUG] Config entry successful for ${key}`);
+        dlog(`Config entry successful for ${key}`);
       } catch (error) {
         console.error(`[Database Layer] [ERROR] Config entry failed for ${key}:`, error.message);
       }
     }
 
-    console.log('[Database Layer] [DEBUG] Configuration initialization completed');
-    console.log('[Database Layer] [DEBUG] Configuration initialized');
+    dlog('Configuration initialization completed');
+    dlog('Configuration initialized');
   }
 
   /**
@@ -245,9 +267,12 @@ class DatabaseLayer {
    * Record a module registration
    */
   async recordModuleRegistration(moduleName, category, tools, loadDuration) {
-    console.log('[Database Layer] [DEBUG] Recording module registration:', moduleName);
+    dlog('Recording module registration:', moduleName);
     
     try {
+      // Begin transaction
+      await this.executeQuery('BEGIN TRANSACTION');
+
       // First check if module exists
       const existingModule = await this.executeQuery(
         `SELECT id, name FROM modules WHERE name = ? LIMIT 1`,
@@ -259,7 +284,7 @@ class DatabaseLayer {
       if (existingModule && existingModule.length > 0) {
         // Module exists - update it
         moduleId = existingModule[0].id;
-        console.log(`[Database Layer] [DEBUG] Updating existing module ${moduleName} (ID: ${moduleId})`);
+        dlog(`Updating existing module ${moduleName} (ID: ${moduleId})`);
         
         await this.executeQuery(
           `UPDATE modules SET category = ?, load_duration_ms = ?, tool_count = ?, active = 1, 
@@ -274,7 +299,7 @@ class DatabaseLayer {
         );
       } else {
         // Module doesn't exist - insert new
-        console.log(`[Database Layer] [DEBUG] Inserting new module ${moduleName}`);
+        dlog(`Inserting new module ${moduleName}`);
         
         const result = await this.executeQuery(
           `INSERT INTO modules (name, category, load_duration_ms, tool_count, active) VALUES (?, ?, ?, ?, 1)`,
@@ -284,27 +309,31 @@ class DatabaseLayer {
         moduleId = result.id;
       }
       
-      console.log(`[Database Layer] [DEBUG] Module processed with ID ${moduleId}, tool_count: ${tools.length}`);
+      dlog(`Module processed with ID ${moduleId}, tool_count: ${tools.length}`);
 
       // Record individual tools
-      console.log(`[Database Layer] [DEBUG] Recording ${tools.length} tools for ${moduleName}...`);
+      dlog(`Recording ${tools.length} tools for ${moduleName}...`);
       for (const toolName of tools) {
-        console.log(`[Database Layer] [DEBUG] Inserting tool: ${toolName}`);
+        dlog(`Inserting tool: ${toolName}`);
         
         try {
           await this.executeQuery(
             `INSERT INTO tools (module_id, name, category) VALUES (?, ?, ?)`,
             [moduleId, toolName, category]
           );
-          console.log(`[Database Layer] [DEBUG] Tool inserted successfully: ${toolName}`);
+          dlog(`Tool inserted successfully: ${toolName}`);
         } catch (error) {
           console.error(`[Database Layer] [ERROR] Failed to insert tool ${toolName}:`, error.message);
         }
       }
-      
-      console.log(`[Database Layer] [DEBUG] All tools recorded for ${moduleName}`);
+
+      // Commit transaction
+      await this.executeQuery('COMMIT');
+      dlog(`All tools recorded for ${moduleName}`);
       return moduleId;
     } catch (error) {
+      // Rollback best-effort
+      try { await this.executeQuery('ROLLBACK'); } catch {}
       console.error(`[Database Layer] [ERROR] Failed to record module ${moduleName}:`, error.message);
       throw error;
     }
@@ -364,7 +393,7 @@ class DatabaseLayer {
         FROM modules m
         LEFT JOIN tools t ON m.id = t.module_id
         GROUP BY m.id
-        ORDER BY m.loaded_at DESC
+  ORDER BY m.loaded_at DESC
         LIMIT ?
       `, [limit]);
     } catch (error) {
@@ -379,7 +408,9 @@ class DatabaseLayer {
   async getModules() {
     try {
       return await this.executeQuery(`
-        SELECT * FROM modules ORDER BY created_at DESC
+        SELECT m.*, m.name AS module_name 
+        FROM modules m 
+        ORDER BY m.loaded_at DESC
       `);
     } catch (error) {
       console.error('[Database Layer] Failed to get modules:', error.message);
@@ -393,10 +424,10 @@ class DatabaseLayer {
   async getTools() {
     try {
       return await this.executeQuery(`
-        SELECT t.*, m.module_name 
-        FROM tools t
-        LEFT JOIN modules m ON t.module_id = m.id
-        ORDER BY t.created_at DESC
+  SELECT t.*, m.name AS module_name, t.name AS tool_name
+  FROM tools t
+  LEFT JOIN modules m ON t.module_id = m.id
+  ORDER BY t.created_at DESC
       `);
     } catch (error) {
       console.error('[Database Layer] Failed to get tools:', error.message);

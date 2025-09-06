@@ -15,6 +15,9 @@ const { ToolSchema } = require('mcp-types');
 const { zodToJsonSchema } = require('zod-to-json-schema');
 const { z } = require('zod');
 
+const DEBUG_ADAPTER = process.env.DEBUG_ADAPTER === '1' || process.env.DEBUG_ADAPTER === 'true';
+const alog = (...args) => { if (DEBUG_ADAPTER) console.log('[MCP Adapter][DEBUG]', ...args); };
+
 /**
  * Convert our Zod-based tool definition to mcp-types compliant format
  * 
@@ -106,7 +109,8 @@ function convertZodToMCPJsonSchema(zodSchema) {
     delete mcpSchema.$defs;
     delete mcpSchema.definitions;
     
-    return mcpSchema;
+  alog('Converted Zod → MCP JSON schema keys:', Object.keys(mcpSchema.properties || {}));
+  return mcpSchema;
   } catch (error) {
     console.warn(`[MCP Adapter] Failed to convert Zod schema for ${zodSchema.name || 'unknown'}:`, error.message);
     return createEmptyMCPSchema();
@@ -196,30 +200,30 @@ function isJsonSchema(obj) {
  */
 function createParameterValidator(zodSchema) {
   if (!isZodSchema(zodSchema)) {
-    console.log(`[MCP Adapter] No Zod schema provided - no validation needed`);
+    alog('No Zod schema provided - no validation needed');
     // No validation needed
     return (params) => {
-      console.log(`[MCP Adapter] No validation - passing through params:`, JSON.stringify(params, null, 2));
+      alog('No validation - passing through params:', JSON.stringify(params, null, 2));
       return { success: true, data: params };
     };
   }
 
-  console.log(`[MCP Adapter] Creating Zod validator for schema:`, zodSchema._def?.typeName || 'unknown');
+  alog('Creating Zod validator for schema:', zodSchema._def?.typeName || 'unknown');
 
   return (params) => {
     try {
-      console.log(`[MCP Adapter] Validating params:`, JSON.stringify(params, null, 2));
-      console.log(`[MCP Adapter] Using Zod schema:`, zodSchema._def?.typeName || 'unknown');
+      alog('Validating params:', JSON.stringify(params, null, 2));
+      alog('Using Zod schema:', zodSchema._def?.typeName || 'unknown');
       
       const result = zodSchema.safeParse(params);
-      console.log(`[MCP Adapter] Zod validation result:`, {
+      alog('Zod validation result:', {
         success: result.success,
         errorCount: result.error ? result.error.errors?.length : 0,
         data: result.success ? 'valid' : 'invalid'
       });
       
       if (!result.success) {
-        console.log(`[MCP Adapter] Zod validation errors:`, JSON.stringify(result.error.errors, null, 2));
+        alog('Zod validation errors:', JSON.stringify(result.error.errors, null, 2));
       }
       
       return result;

@@ -460,7 +460,7 @@ class CoreRegistry {
     console.log('[Core Registry] 🔄 Registering database tools with MCP server...');
     
     // Import mcp-types adapter for consistent conversion
-    const { adaptToolToMCPTypes, createParameterValidator } = require('./mcp_types_adapter');
+  const { adaptToolToMCPTypes, createParameterValidator, isZodSchema, isJsonSchema, jsonSchemaToZodShape, getZodRawShape } = require('./mcp_types_adapter');
     
     // Group tools by module
     const moduleTools = new Map();
@@ -561,8 +561,20 @@ class CoreRegistry {
                 }
               };
               
-              // Register with MCP server using mcp-types schema
-              server.tool(mcpTool.name, mcpTool.description, mcpTool.inputSchema, mcpHandler);
+              // Register with MCP server using unified registerTool path (Zod raw shapes)
+              let zodRawShape;
+              if (isZodSchema(toolDef.inputSchema)) {
+                zodRawShape = getZodRawShape(toolDef.inputSchema);
+              } else if (isJsonSchema(toolDef.inputSchema)) {
+                zodRawShape = jsonSchemaToZodShape(toolDef.inputSchema);
+              }
+              if (!zodRawShape) zodRawShape = {};
+              server.registerTool(toolDef.name, {
+                title: toolDef.title,
+                description: toolDef.description || mcpTool.description,
+                inputSchema: zodRawShape,
+                annotations: toolDef.annotations
+              }, mcpHandler);
               
               console.log(`[Core Registry] ✅ Registered database tool: ${toolDef.name}`);
             } catch (error) {

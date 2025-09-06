@@ -15,6 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events');
+const axios = require('axios');
 
 /**
  * Plugin lifecycle states
@@ -44,6 +45,7 @@ class PluginManager extends EventEmitter {
     this.enabled = options.enabled !== false;
     this.sandboxing = options.sandboxing !== false;
     this.maxPlugins = options.maxPlugins || 50;
+  this.defaultInstallDir = options.defaultInstallDir || this.pluginDirs[0];
   }
 
   /**
@@ -73,6 +75,7 @@ class PluginManager extends EventEmitter {
    * @private
    */
   async _discoverPlugins() {
+  this.plugins.clear();
     for (const pluginDir of this.pluginDirs) {
       if (!fs.existsSync(pluginDir)) continue;
 
@@ -230,6 +233,107 @@ class PluginManager extends EventEmitter {
       
       return false;
     }
+  }
+
+  /**
+   * Remove a plugin from disk and registry
+   * @param {string} pluginId
+   * @returns {Promise<boolean>}
+   */
+  async removePlugin(pluginId) {
+    const plugin = this.plugins.get(pluginId);
+    if (!plugin) throw new Error(`Plugin ${pluginId} not found`);
+    // Attempt to unload first
+    try { await this.unloadPlugin(pluginId); } catch {}
+
+    try {
+      const stats = await fs.promises.stat(plugin.path);
+      if (stats.isDirectory()) {
+        await fs.promises.rm(plugin.path, { recursive: true, force: true });
+      } else {
+        await fs.promises.rm(plugin.path, { force: true });
+      }
+      this.plugins.delete(pluginId);
+      this.emit('pluginRemoved', pluginId);
+      return true;
+    } catch (error) {
+      console.error(`[Plugin Manager] ❌ Failed to remove plugin ${pluginId}: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Re-scan plugin directories and update catalog
+   */
+  async refresh() {
+    await this._discoverPlugins();
+    return this.listPlugins();
+  }
+
+  /**
+   * Basic search across discovered plugins
+   * @param {Object} opts
+   * @param {string} opts.query free-text query
+   * @param {string} [opts.type] filter by manifest.type
+   */
+  search({ query = '', type } = {}) {
+    const q = (query || '').toLowerCase();
+    return this.listPlugins().filter(p => {
+      const typeOk = !type || (this.plugins.get(p.id)?.manifest?.type === type);
+      if (!q) return typeOk;
+      const hay = `${p.id} ${p.name} ${p.description} ${p.author}`.toLowerCase();
+      return typeOk && hay.includes(q);
+    });
+  }
+
+  /**
+   * Install a plugin from an HTTP(S) URL. Saves to default install dir.
+   * Supports .js file or .zip with index.js (zip handling TODO/future).
+   * @param {string} url
+   * @param {Object} [opts]
+   * @param {string} [opts.pluginId]
+   * @param {boolean} [opts.autoLoad]
+   */
+  async installFromUrl(url, opts = {}) {
+    if (!url) throw new Error('url is required');
+    await this._ensureDirectory(this.defaultInstallDir);
+    const res = await axios.get(url, { responseType: 'arraybuffer' });
+    // naive detection: if starts with '{' it's likely JSON, otherwise treat as JS
+    // We only support direct JS module downloads here
+    const suggestedName = (opts.pluginId || path.basename(new URL(url).pathname) || 'plugin.js')
+      .replace(/\?.*$/, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '-');
+    const fileName = suggestedName.endsWith('.js') ? suggestedName : `${suggestedName}.js`;
+    const filePath = path.join(this.defaultInstallDir, fileName);
+    await fs.promises.writeFile(filePath, Buffer.from(res.data));
+    // Discover and optionally auto-load
+    await this._discoverPlugins();
+    const manifest = await this._loadPluginManifest(filePath);
+    const id = manifest?.id || path.basename(fileName, '.js');
+    if (opts.autoLoad) await this.loadPlugin(id);
+    return { success: true, id, path: filePath };
+  }
+
+  /**
+   * Install a plugin from a local file path
+   * @param {string} sourcePath absolute or relative path to .js
+   * @param {Object} [opts]
+   * @param {string} [opts.pluginId]
+   * @param {boolean} [opts.autoLoad]
+   */
+  async installFromFile(sourcePath, opts = {}) {
+    if (!sourcePath) throw new Error('sourcePath is required');
+    await this._ensureDirectory(this.defaultInstallDir);
+    const absSrc = path.isAbsolute(sourcePath) ? sourcePath : path.resolve(sourcePath);
+    const base = opts.pluginId || path.basename(absSrc);
+    const fileName = base.endsWith('.js') ? base : `${base}.js`;
+    const dest = path.join(this.defaultInstallDir, fileName);
+    await fs.promises.copyFile(absSrc, dest);
+    await this._discoverPlugins();
+    const manifest = await this._loadPluginManifest(dest);
+    const id = manifest?.id || path.basename(fileName, '.js');
+    if (opts.autoLoad) await this.loadPlugin(id);
+    return { success: true, id, path: dest };
   }
 
   /**

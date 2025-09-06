@@ -19,14 +19,21 @@ const path = require('path');
  * Discovery Engine for automatic tool detection and analysis
  */
 class DiscoveryEngine {
-  constructor() {
+  constructor(options = {}) {
     this.discoveredModules = new Map();
     this.dependencies = new Map();
     this.loadOrder = [];
-    this.searchPaths = [
-      path.join(__dirname, '..'), // tools/ directory
-      path.join(__dirname, '../..') // project root for custom tools
-    ];
+    this.circularDetected = false;
+    this.searchPaths = Array.isArray(options.searchPaths) && options.searchPaths.length > 0
+      ? options.searchPaths
+      : [
+          path.join(__dirname, '..'), // tools/ directory
+          path.join(__dirname, '../..') // project root for custom tools
+        ];
+  }
+
+  addSearchPath(p) {
+    if (p && !this.searchPaths.includes(p)) this.searchPaths.push(p);
   }
 
   /**
@@ -45,7 +52,14 @@ class DiscoveryEngine {
 
     // Analyze dependencies and determine load order
     await this._analyzeDependencies(discovered);
-    this.loadOrder = this._calculateLoadOrder();
+    try {
+      this.loadOrder = this._calculateLoadOrder();
+      this.circularDetected = false;
+    } catch (e) {
+      this.circularDetected = true;
+      console.warn('[Discovery Engine] ⚠️  Circular dependency detected, using fallback order:', e.message);
+      this.loadOrder = Array.from(this.discoveredModules.keys());
+    }
 
     console.log(`[Discovery Engine] ✅ Discovered ${discovered.length} tool modules`);
     console.log(`[Discovery Engine] 📋 Load order: ${this.loadOrder.join(' → ')}`);
@@ -177,9 +191,14 @@ class DiscoveryEngine {
    * @private
    */
   _hasRequiredExports(content) {
-    return content.includes('module.exports') && 
-           content.includes('tools') && 
-           content.includes('handleToolCall');
+    // Look for common patterns:
+    // module.exports = { tools: [...], handleToolCall: fn }
+    // exports.tools = ...; exports.handleToolCall = ...
+    // const tools = [...]; module.exports = { tools, handleToolCall }
+    const hasToolsArray = /\btools\s*:\s*\[/m.test(content) || /\bconst\s+tools\s*=\s*\[/m.test(content) || /exports\.tools\s*=\s*\[/m.test(content);
+  const hasHandler = /\bhandleToolCall\s*:\s*function|\bhandleToolCall\s*=\s*\(|exports\.handleToolCall\s*=\s*|\bfunction\s+handleToolCall\s*\(|\basync\s+function\s+handleToolCall\s*\(/m.test(content);
+    const hasExports = /module\.exports\s*=|exports\./m.test(content);
+    return hasExports && hasToolsArray && hasHandler;
   }
 
   /**
@@ -211,7 +230,10 @@ class DiscoveryEngine {
    * @private
    */
   _estimateToolCount(content) {
-    const toolMatches = content.match(/name:\s*['"][^'"]+['"]/g);
+    // Try to scope within tools array if present
+    const toolsArrayMatch = content.match(/tools\s*:\s*\[((.|\n|\r)*?)\]/m);
+    const searchSource = toolsArrayMatch ? toolsArrayMatch[1] : content;
+    const toolMatches = searchSource.match(/\bname\s*:\s*['"][^'\"]+['"]/g);
     return toolMatches ? toolMatches.length : 0;
   }
 
@@ -314,7 +336,7 @@ class DiscoveryEngine {
       totalTools,
       categories,
       complexities,
-      hasCircularDependencies: false // TODO: Implement detection
+      hasCircularDependencies: this.circularDetected
     };
   }
 }

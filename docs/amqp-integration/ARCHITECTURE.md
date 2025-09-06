@@ -61,7 +61,7 @@ mcp-open-discovery/                    # Your existing repo
 │   ├── registry/                      # ✅ Your revolutionary registry
 │   │   ├── core_registry.js           # ✅ Works seamlessly with AMQP
 │   │   ├── database_layer.js          # ✅ SQLite + analytics via AMQP
-│   │   └── management_tools.js        # ✅ Hot-reload over AMQP
+│   │   └── registry_tools_sdk.js      # ✅ Registry tools / hot-reload over AMQP
 │   └── *_tools_sdk.js                 # ✅ All 61 tools via AMQP
 ├── testing/
 │   └── test-amqp-transport.js         # 🆕 Comprehensive AMQP tests
