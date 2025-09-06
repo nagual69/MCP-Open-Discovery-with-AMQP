@@ -1,0 +1,21 @@
+{
+  "name": "dep-lib",
+  "version": "1.0.0",
+  "sdk": "@modelcontextprotocol/sdk",
+  "entry": "index.js",
+  "capabilities": {
+    "tools": [
+      {
+        "name": "dep_lib_echo",
+        "description": "Echo from lib",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" }
+          },
+          "required": ["text"]
+        }
+      }
+    ]
+  }
+}

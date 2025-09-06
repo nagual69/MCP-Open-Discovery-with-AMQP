@@ -1,0 +1,22 @@
+{
+  "name": "dep-app",
+  "version": "1.0.0",
+  "sdk": "@modelcontextprotocol/sdk",
+  "entry": "index.js",
+  "dependencies": ["dep-lib"],
+  "capabilities": {
+    "tools": [
+      {
+        "name": "dep_app_use_lib",
+        "description": "App uses lib tool",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": { "type": "string" }
+          },
+          "required": ["text"]
+        }
+      }
+    ]
+  }
+}

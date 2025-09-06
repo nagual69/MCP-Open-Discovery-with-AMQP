@@ -18,7 +18,7 @@ const os = require('os');
 const crypto = require('crypto');
 const EventEmitter = require('events');
 const axios = require('axios');
-const { loadSpecPlugin } = require('./plugin_loader');
+const { loadSpecPlugin, topoSortByDependencies } = require('./plugin_loader');
 let AdmZip;
 try { AdmZip = require('adm-zip'); } catch {}
 
@@ -51,6 +51,13 @@ class PluginManager extends EventEmitter {
     this.sandboxing = options.sandboxing !== false;
     this.maxPlugins = options.maxPlugins || 50;
   this.defaultInstallDir = options.defaultInstallDir || this.pluginDirs[0];
+    // Security/policy flags
+    this.policy = {
+      requireChecksum: false,
+      requireSignature: false,
+      strictCapabilities: false,
+      ...(options.policy || {})
+    };
     // Prefer DI; fall back to registry getter if available
     this.validationManager = options.validationManager || (this.registry && typeof this.registry.getValidationManager === 'function'
       ? this.registry.getValidationManager()
@@ -221,14 +228,14 @@ class PluginManager extends EventEmitter {
       await this._checkDependencies(plugin);
 
       // Two plugin flavors: Spec plugin (mcp-plugin.json) vs legacy tool-module
-      if (plugin.manifest && plugin.manifest.entry) {
+    if (plugin.manifest && plugin.manifest.entry) {
         // Spec-compliant plugin: call createPlugin() via loader
         const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
         await loadSpecPlugin(
           this.registry.getServerInstance ? this.registry.getServerInstance() : require('./index').getServerInstance(),
           rootDir,
           plugin.manifest,
-          { strictCapabilities: false, validationManager: this.validationManager }
+      { strictCapabilities: !!this.policy.strictCapabilities, validationManager: this.validationManager }
         );
         plugin.instance = { type: 'spec-plugin' };
         plugin.state = PluginState.LOADED;
@@ -366,6 +373,14 @@ class PluginManager extends EventEmitter {
       .replace(/\?.*$/, '')
       .replace(/[^a-zA-Z0-9._-]/g, '-');
 
+    // Enforce policy requirements
+    if (this.policy.requireChecksum && !opts.checksum) {
+      throw new Error('Checksum is required by policy for remote installs');
+    }
+    if (this.policy.requireSignature && !(opts.signature && opts.publicKey)) {
+      throw new Error('Signature and publicKey are required by policy for remote installs');
+    }
+
     // Verify checksum if provided
     if (opts.checksum) {
       const algo = (opts.checksumAlgorithm || 'sha256').toLowerCase();
@@ -394,6 +409,54 @@ class PluginManager extends EventEmitter {
     await this._discoverPlugins();
     if (opts.autoLoad) await this.loadPlugin(finalized.id);
     return { success: true, id: finalized.id, path: finalized.path };
+  }
+
+  /**
+   * Load all discovered spec plugins honoring dependency order.
+   * Uses manifest.name and manifest.dependencies to topologically sort.
+   * @param {Object} [opts]
+   * @param {boolean} [opts.activate] also activate after load
+   * @returns {Promise<{loaded: string[], failed: Array<{id: string, error: string}>}>}
+   */
+  async loadAllSpecPlugins(opts = {}) {
+    const activate = !!opts.activate;
+    // Build list of spec plugins
+    const specPlugins = Array.from(this.plugins.values()).filter(p => p.manifest && p.manifest.entry);
+    if (specPlugins.length === 0) return { loaded: [], failed: [] };
+
+    // Topologically sort by manifest dependencies
+    let order;
+    try {
+      order = topoSortByDependencies(specPlugins.map(p => p.manifest));
+    } catch (e) {
+      // If topo sort fails, return error for all
+      return { loaded: [], failed: specPlugins.map(p => ({ id: p.id, error: e.message })) };
+    }
+
+    // Map back to plugin IDs by manifest.name
+    const nameToPlugin = new Map(specPlugins.map(p => [p.manifest.name, p]));
+    const loaded = [];
+    const failed = [];
+    for (const m of order) {
+      const plugin = nameToPlugin.get(m.name);
+      if (!plugin) {
+        failed.push({ id: m.name, error: 'Discovered manifest not found in plugins map' });
+        continue;
+      }
+      try {
+        const ok = await this.loadPlugin(plugin.id);
+        if (!ok) {
+          failed.push({ id: plugin.id, error: this.plugins.get(plugin.id)?.error || 'Unknown load error' });
+          continue;
+        }
+        if (activate) await this.activatePlugin(plugin.id);
+        loaded.push(plugin.id);
+      } catch (e) {
+        failed.push({ id: plugin.id, error: e.message });
+      }
+    }
+
+    return { loaded, failed };
   }
 
   /**
