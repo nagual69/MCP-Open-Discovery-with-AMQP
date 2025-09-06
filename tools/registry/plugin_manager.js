@@ -14,8 +14,12 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const crypto = require('crypto');
 const EventEmitter = require('events');
 const axios = require('axios');
+let AdmZip;
+try { AdmZip = require('adm-zip'); } catch {}
 
 /**
  * Plugin lifecycle states
@@ -46,6 +50,10 @@ class PluginManager extends EventEmitter {
     this.sandboxing = options.sandboxing !== false;
     this.maxPlugins = options.maxPlugins || 50;
   this.defaultInstallDir = options.defaultInstallDir || this.pluginDirs[0];
+    // Prefer DI; fall back to registry getter if available
+    this.validationManager = options.validationManager || (this.registry && typeof this.registry.getValidationManager === 'function'
+      ? this.registry.getValidationManager()
+      : null);
   }
 
   /**
@@ -211,6 +219,9 @@ class PluginManager extends EventEmitter {
       // Load the plugin module
       const pluginModule = await this._loadPluginModule(plugin);
       
+  // Pre-check: validate tools (if tool-module) BEFORE making it active/loaded
+  await this._prevalidatePluginTools(plugin, pluginModule);
+      
       // Initialize the plugin
       if (pluginModule.initialize) {
         await pluginModule.initialize(this._createPluginContext(plugin));
@@ -232,6 +243,41 @@ class PluginManager extends EventEmitter {
       this.emit('pluginError', plugin, error);
       
       return false;
+    }
+  }
+
+  /**
+   * Run validation pre-checks on plugin tools, if a validation manager is available.
+   * Throws on failure in strict mode to block registration/loading.
+   * @param {Object} plugin
+   * @param {Object} pluginModule
+   * @private
+   */
+  async _prevalidatePluginTools(plugin, pluginModule) {
+    try {
+      if (!this.validationManager) return; // No validator wired; skip silently
+      if (!plugin || !plugin.manifest || plugin.manifest.type !== 'tool-module') return;
+      if (!pluginModule || !Array.isArray(pluginModule.tools)) return; // Nothing to validate
+
+      const moduleName = plugin.name || plugin.id || 'plugin-module';
+      const batch = this.validationManager.validateToolBatch(pluginModule.tools, moduleName);
+      const strict = this.validationManager.config?.strictMode !== false; // default strict
+
+      if (batch.invalidTools > 0 && strict) {
+        // Build concise error message
+        const failed = batch.toolResults.filter(r => !r.valid).map(r => r.tool?.name || 'unknown');
+        const msg = `Validation failed for plugin '${moduleName}': ${batch.invalidTools}/${batch.totalTools} tools invalid (${failed.join(', ')})`;
+        // Also attach to plugin state for observability
+        plugin.error = msg;
+        throw new Error(msg);
+      }
+
+      if (batch.summary?.warnings > 0) {
+        console.warn(`[Plugin Manager] ⚠️  ${moduleName}: ${batch.summary.warnings} validation warnings`);
+      }
+    } catch (err) {
+      // Re-throw to let caller mark plugin as ERROR
+      throw err;
     }
   }
 
@@ -298,20 +344,40 @@ class PluginManager extends EventEmitter {
     if (!url) throw new Error('url is required');
     await this._ensureDirectory(this.defaultInstallDir);
     const res = await axios.get(url, { responseType: 'arraybuffer' });
-    // naive detection: if starts with '{' it's likely JSON, otherwise treat as JS
-    // We only support direct JS module downloads here
-    const suggestedName = (opts.pluginId || path.basename(new URL(url).pathname) || 'plugin.js')
+    const data = Buffer.from(res.data);
+    const urlPath = new URL(url).pathname;
+    const suggestedName = (opts.pluginId || path.basename(urlPath) || 'plugin')
       .replace(/\?.*$/, '')
       .replace(/[^a-zA-Z0-9._-]/g, '-');
-    const fileName = suggestedName.endsWith('.js') ? suggestedName : `${suggestedName}.js`;
-    const filePath = path.join(this.defaultInstallDir, fileName);
-    await fs.promises.writeFile(filePath, Buffer.from(res.data));
+
+    // Verify checksum if provided
+    if (opts.checksum) {
+      const algo = (opts.checksumAlgorithm || 'sha256').toLowerCase();
+      const sum = this._computeChecksum(data, algo);
+      if (sum.toLowerCase() !== String(opts.checksum).toLowerCase()) {
+        throw new Error(`Checksum mismatch (${algo}); expected ${opts.checksum}, got ${sum}`);
+      }
+    }
+    // Verify signature if provided
+    if (opts.signature && opts.publicKey) {
+      const sigAlg = opts.signatureAlgorithm || 'RSA-SHA256';
+      const ok = this._verifySignature(data, String(opts.signature), String(opts.publicKey), sigAlg);
+      if (!ok) throw new Error('Signature verification failed');
+    }
+
+    // Stage and validate depending on file type
+    const isZip = /\.zip$/i.test(urlPath);
+    const staged = isZip
+      ? await this._stageAndValidateZip(data, { suggestedName, pluginId: opts.pluginId })
+      : await this._stageAndValidateJs(data, { suggestedName, pluginId: opts.pluginId });
+
+    // Finalize: move into install dir
+    const finalized = await this._finalizeInstall(staged);
+
     // Discover and optionally auto-load
     await this._discoverPlugins();
-    const manifest = await this._loadPluginManifest(filePath);
-    const id = manifest?.id || path.basename(fileName, '.js');
-    if (opts.autoLoad) await this.loadPlugin(id);
-    return { success: true, id, path: filePath };
+    if (opts.autoLoad) await this.loadPlugin(finalized.id);
+    return { success: true, id: finalized.id, path: finalized.path };
   }
 
   /**
@@ -325,15 +391,19 @@ class PluginManager extends EventEmitter {
     if (!sourcePath) throw new Error('sourcePath is required');
     await this._ensureDirectory(this.defaultInstallDir);
     const absSrc = path.isAbsolute(sourcePath) ? sourcePath : path.resolve(sourcePath);
-    const base = opts.pluginId || path.basename(absSrc);
-    const fileName = base.endsWith('.js') ? base : `${base}.js`;
-    const dest = path.join(this.defaultInstallDir, fileName);
-    await fs.promises.copyFile(absSrc, dest);
+    const data = await fs.promises.readFile(absSrc);
+    const suggestedName = (opts.pluginId || path.basename(absSrc))
+      .replace(/\?.*$/, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '-');
+    const isZip = /\.zip$/i.test(absSrc);
+    const staged = isZip
+      ? await this._stageAndValidateZip(data, { suggestedName, pluginId: opts.pluginId })
+      : await this._stageAndValidateJs(data, { suggestedName, pluginId: opts.pluginId });
+
+    const finalized = await this._finalizeInstall(staged);
     await this._discoverPlugins();
-    const manifest = await this._loadPluginManifest(dest);
-    const id = manifest?.id || path.basename(fileName, '.js');
-    if (opts.autoLoad) await this.loadPlugin(id);
-    return { success: true, id, path: dest };
+    if (opts.autoLoad) await this.loadPlugin(finalized.id);
+    return { success: true, id: finalized.id, path: finalized.path };
   }
 
   /**
@@ -553,6 +623,118 @@ class PluginManager extends EventEmitter {
     } catch (error) {
       if (error.code !== 'EEXIST') {
         console.warn(`[Plugin Manager] ⚠️  Failed to create directory ${dirPath}: ${error.message}`);
+      }
+    }
+  }
+
+  // ===================== SECURITY & STAGING HELPERS =====================
+
+  _computeChecksum(data, algorithm = 'sha256') {
+    const h = crypto.createHash(algorithm);
+    h.update(data);
+    return h.digest('hex');
+  }
+
+  _verifySignature(data, signatureBase64, publicKeyPem, algorithm = 'RSA-SHA256') {
+    try {
+      const verify = crypto.createVerify(algorithm);
+      verify.update(data);
+      verify.end();
+      const sig = Buffer.from(signatureBase64, 'base64');
+      return verify.verify(publicKeyPem, sig);
+    } catch (e) {
+      console.warn('[Plugin Manager] ⚠️  Signature verify error:', e.message);
+      return false;
+    }
+  }
+
+  async _stageAndValidateJs(data, { suggestedName, pluginId }) {
+    const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mcpod-js-'));
+    const base = (pluginId || suggestedName || 'plugin').replace(/\.js$/i, '');
+    const tmpFile = path.join(tmpDir, `${base}.js`);
+    await fs.promises.writeFile(tmpFile, data);
+    // Discover manifest and prevalidate tools from temp file
+    const manifest = await this._loadPluginManifest(tmpFile);
+    const id = manifest?.id || base;
+    const plugin = {
+      id,
+      name: manifest?.name || id,
+      manifest: { ...(manifest || {}), type: manifest?.type || 'tool-module' }
+    };
+    // Require from temp and prevalidate
+    delete require.cache[tmpFile];
+    const module = require(tmpFile);
+    await this._prevalidatePluginTools(plugin, module);
+    return { type: 'file', id, srcPath: tmpFile };
+  }
+
+  async _stageAndValidateZip(data, { suggestedName, pluginId }) {
+    if (!AdmZip) throw new Error('ZIP support not available (adm-zip missing)');
+    const tmpZip = path.join(await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mcpod-zip-')), `${Date.now()}.zip`);
+    await fs.promises.writeFile(tmpZip, data);
+    const extractRoot = path.dirname(tmpZip);
+    const outDir = path.join(extractRoot, 'extracted');
+    await fs.promises.mkdir(outDir, { recursive: true });
+    const zip = new AdmZip(tmpZip);
+    zip.extractAllTo(outDir, true);
+
+    // Find plugin root: prefer single top-level folder
+    const entries = await fs.promises.readdir(outDir, { withFileTypes: true });
+    const rootDir = entries.length === 1 && entries[0].isDirectory() ? path.join(outDir, entries[0].name) : outDir;
+
+    // Basic checks
+    const indexJs = path.join(rootDir, 'index.js');
+    if (!fs.existsSync(indexJs)) {
+      throw new Error('Archive missing index.js at plugin root');
+    }
+
+    const manifest = await this._loadPluginManifest(rootDir);
+    const base = (pluginId || manifest?.id || suggestedName || 'plugin').replace(/\.zip$/i, '');
+    const id = manifest?.id || base;
+    const plugin = {
+      id,
+      name: manifest?.name || id,
+      manifest: { ...(manifest || {}), type: manifest?.type || 'tool-module' },
+      path: rootDir
+    };
+
+    // Prevalidate by requiring from staged directory
+    const modulePath = path.join(rootDir, 'index.js');
+    delete require.cache[modulePath];
+    const module = require(modulePath);
+    await this._prevalidatePluginTools(plugin, module);
+
+    return { type: 'dir', id, srcPath: rootDir };
+  }
+
+  async _finalizeInstall(staged) {
+    if (!staged || !staged.id || !staged.srcPath) throw new Error('Invalid staged install');
+    if (staged.type === 'file') {
+      const dest = path.join(this.defaultInstallDir, `${staged.id}.js`);
+      if (fs.existsSync(dest)) throw new Error(`Plugin already exists: ${staged.id}`);
+      await fs.promises.copyFile(staged.srcPath, dest);
+      return { id: staged.id, path: dest };
+    } else if (staged.type === 'dir') {
+      const destDir = path.join(this.defaultInstallDir, staged.id);
+      if (fs.existsSync(destDir)) throw new Error(`Plugin already exists: ${staged.id}`);
+      await fs.promises.mkdir(destDir, { recursive: true });
+      // Copy directory recursively
+      await this._copyDir(staged.srcPath, destDir);
+      return { id: staged.id, path: destDir };
+    }
+    throw new Error('Unknown staged type');
+  }
+
+  async _copyDir(src, dest) {
+    const entries = await fs.promises.readdir(src, { withFileTypes: true });
+    for (const e of entries) {
+      const s = path.join(src, e.name);
+      const d = path.join(dest, e.name);
+      if (e.isDirectory()) {
+        await fs.promises.mkdir(d, { recursive: true });
+        await this._copyDir(s, d);
+      } else if (e.isFile()) {
+        await fs.promises.copyFile(s, d);
       }
     }
   }

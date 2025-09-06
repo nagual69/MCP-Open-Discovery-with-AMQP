@@ -18,6 +18,9 @@
     "test-http": "node testing/test_http_transport.js",
     "test-amqp": "node testing/test-amqp-transport.js",
   "test-oauth": "node testing/test_oauth_implementation.js",
+  "ui:test": "node testing/run_management_ui.js",
+  "ui:serve": "node testing/run_management_ui.js --serve",
+  "test:plugin-validation": "node testing/test_plugin_validation.js",
   "test-registry": "node testing/test_registry_register_from_db.js && node testing/test_registry_reregister_hot_reload.js",
     "health": "powershell -Command \"Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing\"",
     "migrate-credentials": "node tools/migrate_proxmox_credentials.js"
@@ -46,6 +49,7 @@
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@types/amqplib": "^0.10.7",
     "amqplib": "^0.10.8",
+  "adm-zip": "^0.5.10",
     "axios": "^1.11.0",
     "chokidar": "^3.6.0",
     "dotenv": "^17.2.1",

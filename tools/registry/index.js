@@ -176,6 +176,7 @@ async function dynamicLoadModule(options = {}) {
     throw new Error('Server instance not available for dynamic load');
   }
   const registry = getRegistry();
+  const validator = getValidationManager();
   const { modulePath, moduleName, category = 'Custom', exportName } = options;
   if (!modulePath || !moduleName) {
     throw new Error('modulePath and moduleName are required');
@@ -209,8 +210,25 @@ async function dynamicLoadModule(options = {}) {
 
   // Track and register tools
   registry.startModule(moduleName, category);
+  // Validate batch before registering (align with main registration flow)
+  try {
+    if (validator && Array.isArray(mod.tools)) {
+      const batch = validator.validateToolBatch(mod.tools, moduleName);
+      rlog('Dynamic load validation summary:', batch.summary);
+    }
+  } catch {}
   let registered = 0;
   for (const tool of mod.tools) {
+    // If validator present, skip invalid tools in strict mode
+    if (validator) {
+      const v = validator.getValidationResult(tool.name) || { valid: true, errors: [] };
+      if (!v.valid && validator.config?.strictMode) {
+        console.error(`[Registry] ❌ Skipping invalid tool (strict): ${tool.name}`, v.errors);
+        continue;
+      } else if (!v.valid) {
+        console.warn(`[Registry] ⚠️  Registering tool with warnings: ${tool.name}`);
+      }
+    }
     const ok = registerMCPTool(srv, tool, mod.handleToolCall);
     if (ok) {
       registry.registerTool(tool.name);
@@ -311,9 +329,25 @@ async function reregisterModuleTools(moduleName) {
   if (!mod || !Array.isArray(mod.tools) || typeof mod.handleToolCall !== 'function') {
     throw new Error('Reloaded module invalid structure');
   }
+  // Validate batch before re-registering (best effort)
+  const validator = getValidationManager();
+  try {
+    if (validator && Array.isArray(mod.tools)) {
+      const batch = validator.validateToolBatch(mod.tools, moduleName);
+      rlog('Re-register validation summary:', batch.summary);
+    }
+  } catch {}
   let updated = 0, failed = 0;
   for (const tool of mod.tools) {
     try {
+      if (validator) {
+        const v = validator.getValidationResult(tool.name) || { valid: true, errors: [] };
+        if (!v.valid && validator.config?.strictMode) {
+          console.error(`[Registry] ❌ Skipping invalid tool on re-register (strict): ${tool.name}`, v.errors);
+          failed++;
+          continue;
+        }
+      }
       const ok = registerMCPTool(srv, tool, mod.handleToolCall);
       if (ok) updated++; else failed++;
     } catch (e) {
@@ -582,7 +616,7 @@ function getServerInstance() {
 /** Get or create plugin manager */
 function getPluginManager() {
   if (!pluginManager) {
-    pluginManager = new PluginManager(getRegistry());
+  pluginManager = new PluginManager(getRegistry(), { validationManager: getValidationManager() });
   }
   return pluginManager;
 }

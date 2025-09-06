@@ -334,6 +334,21 @@ class ManagementUI {
    */
   _serveStatus(res) {
     const status = this.registry.getStats();
+    // Attempt to enrich with validation and plugin details if accessible via registry
+    try {
+      const getValidationManager = this.registry.getValidationManager || (require('./index').getValidationManager);
+      const getPluginManager = this.registry.getPluginManager || (require('./index').getPluginManager);
+      const vm = typeof getValidationManager === 'function' ? getValidationManager() : null;
+      const pm = typeof getPluginManager === 'function' ? getPluginManager() : null;
+
+      status.validation = vm ? vm.getValidationSummary() : null;
+      status.plugins = pm ? {
+        stats: pm.getStats(),
+        list: pm.listPlugins()
+      } : null;
+    } catch (e) {
+      // Non-fatal; leave as is
+    }
     this._serveJSON(res, status);
   }
 
