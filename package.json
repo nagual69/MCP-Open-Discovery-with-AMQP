@@ -21,6 +21,7 @@
   "ui:test": "node testing/run_management_ui.js",
   "ui:serve": "node testing/run_management_ui.js --serve",
   "test:plugin-validation": "node testing/test_plugin_validation.js",
+  "test:spec-plugin": "node testing/test_spec_plugin_e2e.js",
   "test-registry": "node testing/test_registry_register_from_db.js && node testing/test_registry_reregister_hot_reload.js",
     "health": "powershell -Command \"Invoke-WebRequest -Uri http://localhost:3000/health -UseBasicParsing\"",
     "migrate-credentials": "node tools/migrate_proxmox_credentials.js"

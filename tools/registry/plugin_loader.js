@@ -87,12 +87,14 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
   const entryAbs = path.resolve(rootDir, manifest.entry);
   const entryUrl = pathToFileURL(entryAbs).href;
   const mod = await import(entryUrl);
-  if (typeof mod.createPlugin !== 'function') {
+  const create = typeof mod.createPlugin === 'function' ? mod.createPlugin
+    : (mod && mod.default && typeof mod.default.createPlugin === 'function' ? mod.default.createPlugin : null);
+  if (typeof create !== 'function') {
     throw new Error(`Entry does not export createPlugin(): ${manifest.entry}`);
   }
 
   const { proxy, captured } = createServerProxyCaptureOnly(server);
-  await mod.createPlugin(proxy);
+  await create(proxy);
 
   // Preflight: compare declared vs captured (warnings only by default)
   if (manifest.capabilities) {

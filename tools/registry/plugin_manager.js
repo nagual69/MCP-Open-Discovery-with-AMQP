@@ -151,11 +151,14 @@ class PluginManager extends EventEmitter {
     let manifestPath;
     
     if (fs.statSync(pluginPath).isDirectory()) {
-      // Plugin is a directory - look for package.json or plugin.json
+      // Plugin is a directory - look for mcp-plugin.json (spec), plugin.json, or package.json
+      const mcpSpecPath = path.join(pluginPath, 'mcp-plugin.json');
       const packagePath = path.join(pluginPath, 'package.json');
       const pluginJsonPath = path.join(pluginPath, 'plugin.json');
       
-      if (fs.existsSync(pluginJsonPath)) {
+      if (fs.existsSync(mcpSpecPath)) {
+        manifestPath = mcpSpecPath;
+      } else if (fs.existsSync(pluginJsonPath)) {
         manifestPath = pluginJsonPath;
       } else if (fs.existsSync(packagePath)) {
         manifestPath = packagePath;

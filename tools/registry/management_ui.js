@@ -22,10 +22,11 @@ const path = require('path');
 class ManagementUI {
   constructor(registry, options = {}) {
     this.registry = registry;
-    this.port = options.port || 8080;
+  this.port = options.port || 8080;
     this.server = null;
     this.enabled = options.enabled !== false;
     this.websockets = new Set();
+  this.autoPort = options.autoPort !== false; // try next ports if in use
   }
 
   /**
@@ -43,14 +44,24 @@ class ManagementUI {
     });
 
     return new Promise((resolve, reject) => {
-      this.server.listen(this.port, (err) => {
-        if (err) {
-          reject(err);
-        } else {
+      const tryListen = (attempt = 0, port = this.port) => {
+        this.server.once('error', (err) => {
+          if (err && err.code === 'EADDRINUSE' && this.autoPort && attempt < 20) {
+            const nextPort = port + 1;
+            console.warn(`[Management UI] Port ${port} in use; trying ${nextPort}...`);
+            tryListen(attempt + 1, nextPort);
+          } else {
+            reject(err);
+          }
+        });
+        this.server.listen(port, () => {
+          // Successfully bound
+          this.port = this.server.address().port;
           console.log(`[Management UI] 🚀 Started on http://localhost:${this.port}`);
           resolve();
-        }
-      });
+        });
+      };
+      tryListen(0, this.port);
     });
   }
 
@@ -108,6 +119,9 @@ class ManagementUI {
           break;
         case '/api/reload':
           this._handleReload(req, res);
+          break;
+        case '/api/unload':
+          this._handleUnload(req, res);
           break;
         case '/api/test-tool':
           this._handleToolTest(req, res);
@@ -430,13 +444,19 @@ class ManagementUI {
       let body = '';
       req.on('data', chunk => body += chunk);
       req.on('end', async () => {
-        const { module } = JSON.parse(body);
-        
-        // TODO: Implement reload functionality
-        this._serveJSON(res, { 
-          success: false, 
-          error: 'Reload functionality not yet implemented' 
-        });
+        const { module } = JSON.parse(body || '{}');
+        if (!module) return this._serveJSON(res, { success: false, error: 'module is required' });
+        const { getHotReloadManager, reregisterModuleTools } = require('./index');
+        try {
+          const hrm = getHotReloadManager();
+          const result = await hrm.reloadModule(module, { force: true }).catch(e => ({ success: false, error: e.message }));
+          if (result && result.success) {
+            try { await reregisterModuleTools(module); } catch {}
+          }
+          this._serveJSON(res, { success: !!(result && result.success), result });
+        } catch (e) {
+          this._serveJSON(res, { success: false, error: e.message });
+        }
       });
     } catch (error) {
       this._serveError(res, error);
@@ -450,11 +470,61 @@ class ManagementUI {
    * @private
    */
   async _handleToolTest(req, res) {
-    // TODO: Implement tool testing functionality
-    this._serveJSON(res, { 
-      success: false, 
-      error: 'Tool testing not yet implemented' 
-    });
+    if (req.method !== 'POST') {
+      this._serve405(res);
+      return;
+    }
+    try {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        const { name, args } = JSON.parse(body || '{}');
+        if (!name) return this._serveJSON(res, { success: false, error: 'name is required' });
+        const { getServerInstance } = require('./index');
+        const server = getServerInstance();
+        if (!server) return this._serveJSON(res, { success: false, error: 'Server not initialized' });
+        try {
+          // Test harness: mock server stores handlers in server.tools
+          const tool = server.tools && server.tools[name];
+          if (!tool || typeof tool.handler !== 'function') {
+            return this._serveJSON(res, { success: false, error: 'Tool handler not found' });
+          }
+          const result = await tool.handler(args || {});
+          this._serveJSON(res, { success: true, result });
+        } catch (e) {
+          this._serveJSON(res, { success: false, error: e.message });
+        }
+      });
+    } catch (error) {
+      this._serveError(res, error);
+    }
+  }
+
+  /**
+   * Handle module unload requests
+   */
+  async _handleUnload(req, res) {
+    if (req.method !== 'POST') {
+      this._serve405(res);
+      return;
+    }
+    try {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        const { module } = JSON.parse(body || '{}');
+        if (!module) return this._serveJSON(res, { success: false, error: 'module is required' });
+        const { dynamicUnloadModule } = require('./index');
+        try {
+          const result = await dynamicUnloadModule(module);
+          this._serveJSON(res, result);
+        } catch (e) {
+          this._serveJSON(res, { success: false, error: e.message });
+        }
+      });
+    } catch (error) {
+      this._serveError(res, error);
+    }
   }
 
   /**
