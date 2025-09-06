@@ -18,6 +18,7 @@ const os = require('os');
 const crypto = require('crypto');
 const EventEmitter = require('events');
 const axios = require('axios');
+const { loadSpecPlugin } = require('./plugin_loader');
 let AdmZip;
 try { AdmZip = require('adm-zip'); } catch {}
 
@@ -216,20 +217,32 @@ class PluginManager extends EventEmitter {
       // Check dependencies
       await this._checkDependencies(plugin);
 
-      // Load the plugin module
-      const pluginModule = await this._loadPluginModule(plugin);
-      
-  // Pre-check: validate tools (if tool-module) BEFORE making it active/loaded
-  await this._prevalidatePluginTools(plugin, pluginModule);
-      
-      // Initialize the plugin
-      if (pluginModule.initialize) {
-        await pluginModule.initialize(this._createPluginContext(plugin));
+      // Two plugin flavors: Spec plugin (mcp-plugin.json) vs legacy tool-module
+      if (plugin.manifest && plugin.manifest.entry) {
+        // Spec-compliant plugin: call createPlugin() via loader
+        const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
+        await loadSpecPlugin(
+          this.registry.getServerInstance ? this.registry.getServerInstance() : require('./index').getServerInstance(),
+          rootDir,
+          plugin.manifest,
+          { strictCapabilities: false, validationManager: this.validationManager }
+        );
+        plugin.instance = { type: 'spec-plugin' };
+        plugin.state = PluginState.LOADED;
+        plugin.error = null;
+      } else {
+        // Legacy: Load the plugin module
+        const pluginModule = await this._loadPluginModule(plugin);
+        // Pre-check
+        await this._prevalidatePluginTools(plugin, pluginModule);
+        // Initialize the plugin
+        if (pluginModule.initialize) {
+          await pluginModule.initialize(this._createPluginContext(plugin));
+        }
+        plugin.instance = pluginModule;
+        plugin.state = PluginState.LOADED;
+        plugin.error = null;
       }
-
-      plugin.instance = pluginModule;
-      plugin.state = PluginState.LOADED;
-      plugin.error = null;
 
       console.log(`[Plugin Manager] ✅ Loaded plugin: ${plugin.name}`);
       this.emit('pluginLoaded', plugin);
@@ -506,7 +519,8 @@ class PluginManager extends EventEmitter {
       description: plugin.description,
       author: plugin.author,
       state: plugin.state,
-      error: plugin.error
+  error: plugin.error,
+  type: plugin.manifest?.type || (plugin.manifest?.entry ? 'spec-plugin' : 'tool-module')
     }));
   }
 

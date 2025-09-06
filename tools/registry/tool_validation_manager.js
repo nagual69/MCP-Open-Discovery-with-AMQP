@@ -25,11 +25,10 @@ const MCPToolSchema = z.object({
     .min(1, "Tool name cannot be empty")
     .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/, "Tool name must start with letter and contain only letters, numbers, underscores, hyphens"),
   
-  description: z.string()
-    .min(10, "Tool description must be at least 10 characters")
-    .max(500, "Tool description must be less than 500 characters"),
+  // Description: presence recommended; detailed length checks handled via custom rules
+  description: z.string().min(1, "Tool description should not be empty").optional(),
   
-  inputSchema: z.any() // Accept any schema format (JSON Schema or Zod)
+  inputSchema: z.any() // Accept any schema format (JSON Schema, Zod schema, or Zod raw shape)
 });
 
 /**
@@ -351,18 +350,14 @@ class ToolValidationManager {
       
       // Additional validation for inputSchema
       if (tool.inputSchema) {
-        // Check if it's a Zod schema (has _def property) or JSON Schema
+        // Accept: Zod schema instance, JSON Schema, or Zod raw shape (plain object)
         if (tool.inputSchema._def) {
-          // It's a Zod schema - this is valid for our system
           return { success: true, errors: [] };
-        } else if (typeof tool.inputSchema === 'object' && tool.inputSchema.type) {
-          // It's a JSON Schema - also valid
+        } else if (typeof tool.inputSchema === 'object') {
+          // JSON Schema often has a top-level 'type'; raw shapes do not. Accept both.
           return { success: true, errors: [] };
         } else {
-          return { 
-            success: false, 
-            errors: ['inputSchema must be either a Zod schema or valid JSON Schema'] 
-          };
+          return { success: false, errors: ['inputSchema must be an object or Zod schema'] };
         }
       }
       
@@ -437,6 +432,8 @@ class ToolValidationManager {
       if (!/[.!?]$/.test(tool.description)) {
         result.info.push('Description should end with punctuation');
       }
+    } else {
+      result.warnings.push('Description is missing');
     }
 
     // Check input schema completeness
