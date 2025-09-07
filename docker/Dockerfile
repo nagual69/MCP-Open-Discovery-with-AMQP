@@ -1,30 +1,36 @@
 FROM node:24-alpine
 
-# Install busybox
-RUN apk add --no-cache busybox
+# Improve APK reliability: switch to an alternate mirror and refresh indexes
+RUN sed -i -E 's#https?://[^/]+/alpine#https://dl-4.alpinelinux.org/alpine#g' /etc/apk/repositories \
+    && cat /etc/apk/repositories \
+    && apk update
 
-# Install nmap
-RUN apk add --no-cache nmap \
-    && wget -O /tmp/nmap.tar.bz2 https://nmap.org/dist/nmap-7.97.tar.bz2 \
-    && mkdir -p /tmp/nmap-src \
-    && tar -xjf /tmp/nmap.tar.bz2 -C /tmp/nmap-src --strip-components=1 \
-    && cp -r /tmp/nmap-src/scripts /usr/share/nmap/ \
-    && cp -r /tmp/nmap-src/nselib /usr/share/nmap/ \
-    && cp /tmp/nmap-src/nse_main.lua /usr/share/nmap/ \
-    && rm -rf /tmp/nmap.tar.bz2 /tmp/nmap-src
-
-# Install libcap for capability management and grant network capabilities to nmap 
-RUN apk add --no-cache libcap \
-    && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap   # Install SNMP tools (net-snmp packages)
-RUN apk add --no-cache net-snmp net-snmp-tools net-snmp-dev 
+# Base packages first (certs + tools) and discovery tooling in one layer
+# - ca-certificates before any HTTPS fetches
+# - nmap from Alpine repo (includes NSE scripts)
+# - libcap provides setcap; grant capabilities to nmap
+# - SNMP tools (no dev headers to keep image slim)
+RUN set -eux; \
+    for i in 1 2 3; do \
+    apk add --no-cache \
+    ca-certificates \
+    wget \
+    curl \
+    bash \
+    nmap \
+    libcap \
+    net-snmp \
+    && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap \
+    && break \
+    || (echo 'apk add failed, retrying...' && apk update && sleep 3); \
+    done
 
 # Setup SNMP configuration
 RUN mkdir -p /etc/snmp \
     && echo "mibs +ALL" > /etc/snmp/snmp.conf
 
-# Install additional tools and download MIBs
-RUN apk add --no-cache bash wget curl ca-certificates \
-    && mkdir -p /usr/share/snmp/mibs
+# Create MIBs directory (some images may not include it)
+RUN mkdir -p /usr/share/snmp/mibs
 
 # Download MIBs with retries and better error handling
 RUN for MIB in SNMPv2-MIB IF-MIB IP-MIB HOST-RESOURCES-MIB SNMP-FRAMEWORK-MIB; do \

@@ -1,5 +1,5 @@
 services:
-  mcp-server:
+  mcp-open-discovery-server:
     build:
       context: ..
       dockerfile: docker/Dockerfile
