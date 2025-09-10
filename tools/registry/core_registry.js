@@ -38,6 +38,8 @@ class CoreRegistry {
     // Core state tracking
     this.state = REGISTRY_STATES.UNINITIALIZED;
     this.registeredTools = new Set();
+  this.registeredResources = new Set();
+  this.registeredPrompts = new Set();
     this.categories = new Map(); // category -> Set<toolName>
     this.modules = new Map();    // moduleName -> ModuleInfo
     
@@ -237,6 +239,95 @@ class CoreRegistry {
   }
 
   /**
+   * Register a resource coming from a plugin (no currentModule requirement)
+   * @param {string} resourceName
+   */
+  registerResource(resourceName) {
+    if (!resourceName) return;
+    if (this.registeredResources.has(resourceName)) return;
+    this.registeredResources.add(resourceName);
+    // Resources are not currently categorized; future: plugin category mapping
+    console.log(`[Core Registry] ✅ Registered resource: ${resourceName}`);
+  }
+
+  /**
+   * Register a prompt coming from a plugin (no currentModule requirement)
+   * @param {string} promptName
+   */
+  registerPrompt(promptName) {
+    if (!promptName) return;
+    if (this.registeredPrompts.has(promptName)) return;
+    this.registeredPrompts.add(promptName);
+    console.log(`[Core Registry] ✅ Registered prompt: ${promptName}`);
+  }
+
+  /**
+   * INTERNAL: Unregister a tool (updates memory + DB)
+   */
+  async unregisterToolInternal(toolName) {
+    if (!toolName) return false;
+    if (!this.registeredTools.has(toolName)) return false;
+    this.registeredTools.delete(toolName);
+    // Remove from categories
+    for (const set of this.categories.values()) {
+      if (set.has(toolName)) set.delete(toolName);
+    }
+    if (this.dbInitialized && this.db && typeof this.db.removeTool === 'function') {
+      try { await this.db.removeTool(toolName); } catch {}
+    }
+    console.log(`[Core Registry] 🗑️ Unregistered tool (internal): ${toolName}`);
+    return true;
+  }
+
+  /**
+   * INTERNAL: Unregister resource (memory only for now)
+   */
+  unregisterResourceInternal(resourceName) {
+    if (!resourceName) return false;
+    if (!this.registeredResources.has(resourceName)) return false;
+    this.registeredResources.delete(resourceName);
+    console.log(`[Core Registry] 🗑️ Unregistered resource (internal): ${resourceName}`);
+    return true;
+  }
+
+  /**
+   * INTERNAL: Unregister prompt (memory only for now)
+   */
+  unregisterPromptInternal(promptName) {
+    if (!promptName) return false;
+    if (!this.registeredPrompts.has(promptName)) return false;
+    this.registeredPrompts.delete(promptName);
+    console.log(`[Core Registry] 🗑️ Unregistered prompt (internal): ${promptName}`);
+    return true;
+  }
+
+  /**
+   * Bulk register plugin capabilities snapshot
+   * @param {string} pluginId
+   * @param {{tools?: string[], resources?: string[], prompts?: string[]}} caps
+   */
+  registerPluginCapabilities(pluginId, caps = {}) {
+    const { tools = [], resources = [], prompts = [] } = caps;
+    for (const t of tools) this.registerToolFromPlugin(pluginId, t);
+    for (const r of resources) this.registerResource(r);
+    for (const p of prompts) this.registerPrompt(p);
+  }
+
+  /**
+   * Helper for plugin tool registration without currentModule context
+   * (plugin tools already registered with server at load time)
+   */
+  registerToolFromPlugin(pluginId, toolName) {
+    if (!toolName) return;
+    if (this.registeredTools.has(toolName)) return;
+    this.registeredTools.add(toolName);
+    // Associate pseudo-category 'Plugin' (or specific later)
+    if (!this.categories.has('Plugin')) this.categories.set('Plugin', new Set());
+    this.categories.get('Plugin').add(toolName);
+    console.log(`[Core Registry] 🧩 Plugin ${pluginId} tool registered: ${toolName}`);
+  }
+
+  /**
    * Complete the current module registration
    * @returns {Promise<void>}
    */
@@ -291,6 +382,8 @@ class CoreRegistry {
       state: this.state,
       modules: this.modules.size,
       tools: this.registeredTools.size,
+  resources: this.registeredResources.size,
+  prompts: this.registeredPrompts.size,
       categories: this.categories.size,
       dbInitialized: this.dbInitialized,
       hotReloadEnabled: this.hotReloadEnabled

@@ -9,10 +9,12 @@ Related docs:
 
 ## Objectives (Updated)
 
-- Accept packaged plugin with `mcp-plugin.json` + built entry file
-- Validate manifest (Ajv JSON Schema Draft‑07; optional zod mirror)
+- Accept packaged plugin with `mcp-plugin.json` (v1 or v2) + built entry file
+- Validate manifest (Ajv). v2 adds `dist.hash`, optional `checksums`, `externalDependencies`, `dependenciesPolicy`.
+- Compute & verify distribution integrity (v2) before execution
 - Capture registrations via proxy during createPlugin (preflight stage)
 - Reconcile declared vs actual capabilities; optionally enforce strictness
+- Enforce bundled-only runtime unless `PLUGIN_ALLOW_RUNTIME_DEPS=1`
 - Batch validate tools (ToolValidationManager) when available
 - Register tools/resources/prompts only after successful preflight
 - Support dependency graph topology (cycle diagnostics)
@@ -36,8 +38,11 @@ Two complementary layouts are in play. Both are supported; choose one consistent
 
 Recommended: keep Marketplace storage separate. When installing to Open Discovery, write to PLUGIN_INSTALL_DIR; do not mirror the per-type subfolders.
 
-Schema source of truth: Marketplace `docs/specs/schemas/mcp-plugin.schema.json`.
-The Open Discovery loader either vendors a copy (default path under `docs/mcp-od-marketplace/specs/schemas/`) or respects an override `SCHEMA_PATH`.
+Schema sources:
+- Legacy v1: `docs/specs/schemas/mcp-plugin.schema.json` (no integrity fields)
+- Current v2: `src/lib/schemas/mcp-plugin.schema.v2.json` (integrity + dependency policy)
+Loader picks v2 when `manifestVersion` is "2", otherwise treats manifest as v1.
+`SCHEMA_PATH` can override the on-disk schema (mainly for development/testing).
 
 ### Feature Flags (Open Discovery)
 
@@ -50,6 +55,8 @@ The Open Discovery loader either vendors a copy (default path under `docs/mcp-od
 | STRICT_TOOLS | false | Block registration on invalid tools (validator) |
 | MARKETPLACE_TOKEN | (unset) | Auth header for private Marketplace fetches |
 | SCHEMA_PATH | (auto) | Custom schema JSON path |
+| PLUGIN_ALLOW_RUNTIME_DEPS | false | Permit externalDependencies (v2) & allowlisted runtime installs |
+| PLUGIN_ALLOW_NATIVE | false (future) | Allow native addons (.node) when isolation is available |
 | DEBUG_REGISTRY | false | Verbose registry logging |
 
 Marketplace API server env (this repo):
@@ -58,17 +65,21 @@ Marketplace API server env (this repo):
 
 ## Loader Steps
 
-1. Validate Manifest
+1. Validate Manifest & Integrity
 
-- Read mcp-plugin.json and validate against `docs/specs/schemas/mcp-plugin.schema.json`
-- Enforce required fields: name, version, sdk, entry, capabilities
-- Optional fields: permissions, metadata, dependencies (string[] of plugin IDs)
+- Read `mcp-plugin.json`.
+- Detect version: if `manifestVersion: "2"` apply v2 schema; else legacy v1 schema.
+- Ajv validate (collect structured errors).
+- For v2: recompute `dist.hash` from ordered `dist/` file list; compare to manifest; verify `checksums.files[]` if present.
+- Enforce required fields per schema generation.
 
 Feature flags affecting behavior:
 
-- `MANIFEST_LOADER_ENABLED` (default true)
-- `STRICT_CAPABILITIES` and `STRICT_TOOLS` (default false) to enforce stricter checks
-- `REQUIRE_SIGNATURES` (default false) for remote installer signature verification
+- `MANIFEST_LOADER_ENABLED`
+- `STRICT_CAPABILITIES`, `STRICT_TOOLS`
+- `REQUIRE_SIGNATURES`
+- `PLUGIN_ALLOW_RUNTIME_DEPS` (enables externalDependencies path)
+- `PLUGIN_ALLOW_NATIVE` (future gate for native modules)
 
 2. Resolve Entry
 
@@ -91,10 +102,16 @@ Feature flags affecting behavior:
 - If ToolValidationManager is configured, run batch validation on captured tools prior to final registration.
 - With STRICT_TOOLS=true, invalid tools abort the plugin load.
 
-6. Error Handling
+6. Bundled Policy Enforcement (v2)
 
-- Catch and report manifest errors and dynamic import failures
-- Wrap createPlugin in try/catch and surface readable errors
+- Scan `dist/` for external non-core, non-sdk imports.
+- If any found and `PLUGIN_ALLOW_RUNTIME_DEPS` not set -> fail.
+- If flag set: ensure every external import appears in `externalDependencies` & allowlist.
+
+7. Error Handling
+
+- Catch & report manifest/integrity errors, dynamic import failures.
+- Wrap createPlugin in try/catch and surface readable messages.
 
 ## Example Loader (TypeScript) – Simplified
 
@@ -171,15 +188,20 @@ export async function loadAll(
 - `mcp://docs/{id}` resource returns content
 - `summarize` prompt produces messages array
 
-## Security Considerations (Updated)
+## Security & Packaging Considerations (Updated)
 
-- Checksums required for remote installs (lock file persists SHA256)
-- Signatures optional now; recommended for production with REQUIRE_SIGNATURES
-- No postinstall execution; only ESM import & controlled registration calls
-- Potential future: isolated process or VM sandbox for untrusted plugins
+Integrity & Packaging (v2):
+- Deterministic `dist.hash` (sha256) mandatory.
+- Optional per-file `checksums` allow granular verification.
+- External runtime deps disabled by default; enable with `PLUGIN_ALLOW_RUNTIME_DEPS=1` (must match allowlist + manifest entries).
+- Lock file captures provenance + integrity.
 
-- The permissions section is a hint only; enforce sandboxing/allowlists in host runtime
-- Consider executing plugins in isolated processes if untrusted
+Security:
+- Signatures optional; recommended with `REQUIRE_SIGNATURES` in production.
+- No postinstall scripts executed.
+- Future: VM / worker sandbox tiers; native addons behind `PLUGIN_ALLOW_NATIVE`.
+
+Permissions object is advisory; host enforces real policy (network / fs / exec isolation).
 
 ## Structured Summary
 
@@ -219,4 +241,4 @@ Example summary object returned by loader / installer:
 
 4. Hot-reload watches entry + manifest; on change: revalidate → reconcile → re-register.
 
-_Synced with Open Discovery commit: <ADD_COMMIT_HASH_HERE>_
+Alignment is based on published schema versions (legacy v1, current v2) rather than commit hashes.

@@ -1,18 +1,9 @@
 {
+  "manifestVersion": "2",
   "name": "spec-minimal",
   "version": "1.0.0",
-  "sdk": "@modelcontextprotocol/sdk",
-  "entry": "index.js",
-  "capabilities": {
-    "tools": [
-      {
-        "name": "spec_echo",
-        "inputSchema": {
-          "type": "object",
-          "properties": { "msg": { "type": "string" } },
-          "required": ["msg"]
-        }
-      }
-    ]
-  }
+  "entry": "dist/index.mjs",
+  "dist": { "hash": "sha256:66dc8cf316b225be9dd04ada3a0828915d4b5037fb3a1a8a677dcf5a6412e7d4" },
+  "description": "Minimal example spec plugin (v2)",
+  "permissions": {}
 }

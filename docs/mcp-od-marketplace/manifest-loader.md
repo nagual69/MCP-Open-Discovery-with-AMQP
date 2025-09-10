@@ -22,6 +22,8 @@ Updated for Open Discovery Server v2.0 manifest pipeline (capture → reconcile 
 | REQUIRE_SIGNATURES | false | Enforce detached signature presence + verification |
 | STRICT_CAPABILITIES | false | Fail load if declared capabilities missing after createPlugin() |
 | STRICT_TOOLS | false | Fail load if tool validation reports invalid (via validation manager) |
+| PLUGIN_ALLOW_RUNTIME_DEPS | false | Allow `externalDependencies` (manifest v2) and runtime install of allowlisted packages |
+| PLUGIN_ALLOW_NATIVE | false (future) | Permit native addon (.node) usage when isolation available |
 | MARKETPLACE_TOKEN | (unset) | Optional auth token for authenticated Marketplace fetches |
 | SCHEMA_PATH | (auto) | Override schema path (defaults to vendored Marketplace schema) |
 | DEBUG_REGISTRY | false | Verbose registry debug logging |
@@ -90,6 +92,15 @@ Additional future fields (reserved): `dependenciesResolved`, `validationSummary`
 - Unload: spec plugin unload currently marks inactive; full unregister pending SDK support.
 - Re-register: hot reload manager invokes loader; captured registrations are replayed to live server.
 
+## Packaging & Integrity
+
+- Manifest v2 introduces `dist.hash` (sha256) over ordered `dist/` contents plus optional per‑file checksums.
+- Baseline policy: bundled-only imports (Node core + `@modelcontextprotocol/sdk`).
+- External runtime dependencies require `PLUGIN_ALLOW_RUNTIME_DEPS=1` and must appear in `externalDependencies[]` with exact versions validated against allowlist.
+- Installation emits `install.lock.json` capturing provenance + integrity.
+- `scripts/validate-plugin.js` can be used locally to compute and embed hash before publishing.
+- CI can invoke `scripts/quality-gate-packaging.js` to enforce no stray external imports in `dist/`.
+
 ## Security Notes
 
 - No postinstall scripts executed; only validated manifest + imported entry.
@@ -102,4 +113,4 @@ Additional future fields (reserved): `dependenciesResolved`, `validationSummary`
 - `docs/specs/schemas/mcp-plugin.schema.json`
 - `docs/integration/open-discovery-manifest-loader-pr.md`
 
-_Synced with Open Discovery commit: <ADD_COMMIT_HASH_HERE>_
+Packaging policy & v2 schema now authoritative; commit hash synchronization line removed.

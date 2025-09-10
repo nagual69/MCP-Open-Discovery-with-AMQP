@@ -1,7 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://mcp-od/schemas/mcp-plugin.schema.json",
-  "title": "MCP OD Plugin Manifest",
+  "title": "MCP OD Plugin Manifest (LEGACY v1)",
+  "description": "Legacy v1 manifest schema. For new plugins use manifestVersion '2' with mcp-plugin.schema.v2.json (dist integrity + external dependency policy).",
   "type": "object",
   "required": ["name", "version", "sdk", "entry", "capabilities"],
   "properties": {

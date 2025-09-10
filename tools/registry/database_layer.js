@@ -436,6 +436,31 @@ class DatabaseLayer {
   }
 
   /**
+   * Remove a single tool by name (all modules) and return count removed
+   */
+  async removeTool(toolName) {
+    try {
+      if (!toolName) return 0;
+      const result = await this.executeQuery(`DELETE FROM tools WHERE name = ?`, [toolName]);
+      return result.changes || 0;
+    } catch (error) {
+      console.error('[Database Layer] Failed to remove tool:', toolName, error.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Remove a batch of tools by name
+   */
+  async removeTools(toolNames = []) {
+    let total = 0;
+    for (const t of toolNames) {
+      total += await this.removeTool(t);
+    }
+    return total;
+  }
+
+  /**
    * Memory persistence methods for CMDB integration
    */
 

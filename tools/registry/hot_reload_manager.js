@@ -51,6 +51,7 @@ class HotReloadManager {
     this.reloadStats = new Map();     // moduleName -> reload statistics
   this.pendingReloads = new Map();  // moduleName -> timeout id (debounce)
   this.onAfterReload = null;        // callback(moduleName, result)
+  this.pluginWatchers = new Map(); // pluginId -> FSWatcher (dist)
     
     // Configuration
     this.watchOptions = {
@@ -218,6 +219,9 @@ class HotReloadManager {
   // Clear any pending debounces
   for (const [, tid] of this.pendingReloads) { try { clearTimeout(tid); } catch {} }
   this.pendingReloads.clear();
+  // Stop plugin watchers
+  for (const [, w] of this.pluginWatchers) { try { w.close(); } catch {} }
+  this.pluginWatchers.clear();
   }
 
   /**
@@ -353,6 +357,8 @@ class HotReloadManager {
     this.moduleFilePaths.clear();
   for (const [, tid] of this.pendingReloads) { try { clearTimeout(tid); } catch {} }
   this.pendingReloads.clear();
+  for (const [, w] of this.pluginWatchers) { try { w.close(); } catch {} }
+  this.pluginWatchers.clear();
     
     this.state = HOTRELOAD_STATES.DISABLED;
     this.enabled = false;
@@ -458,6 +464,31 @@ class HotReloadManager {
    */
   setAfterReloadCallback(cb) {
     this.onAfterReload = typeof cb === 'function' ? cb : null;
+  }
+
+  /**
+   * Watch a spec plugin dist directory for changes (simplified). On change, emit a log; integration with plugin reload is future work.
+   * @param {string} pluginId
+   * @param {string} distDir absolute path
+   */
+  watchPlugin(pluginId, distDir) {
+    if (!this.enabled) return;
+    if (!fs.existsSync(distDir) || !fs.statSync(distDir).isDirectory()) return;
+    if (this.pluginWatchers.has(pluginId)) return;
+    try {
+      const watcher = chokidar.watch(distDir, { ...this.watchOptions, depth: 5 });
+      watcher.on('change', (filePath) => {
+        this.logger.log(`[Hot-Reload] 🔁 Plugin ${pluginId} changed: ${path.relative(distDir, filePath)}`);
+        // Placeholder: plugin-specific reload orchestration to be added.
+      });
+      watcher.on('error', err => {
+        this.logger.warn(`[Hot-Reload] Plugin watcher error (${pluginId}): ${err.message}`);
+      });
+      this.pluginWatchers.set(pluginId, watcher);
+      this.logger.log(`[Hot-Reload] 👁️  Watching plugin dist: ${pluginId}`);
+    } catch (e) {
+      this.logger.warn(`[Hot-Reload] Failed to watch plugin ${pluginId}: ${e.message}`);
+    }
   }
 }
 

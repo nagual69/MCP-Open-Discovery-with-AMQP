@@ -30,6 +30,8 @@ let registrationInProgress = false;
 let registrationComplete = false;
 let serverInstance = g[GLOBAL_KEY].serverInstance || null; // MCP server reference for dynamic operations
 let pluginManager = g[GLOBAL_KEY].pluginManager || null;  // Optional plugin manager
+// Track plugin capability snapshots for diffing on hot reload
+const pluginCapabilities = new Map(); // pluginId -> { tools:Set, resources:Set, prompts:Set }
 
 const DEBUG_REGISTRY = process.env.DEBUG_REGISTRY === '1' || process.env.DEBUG_REGISTRY === 'true';
 const rlog = (...args) => { if (DEBUG_REGISTRY) console.log('[Registry][DEBUG]', ...args); };
@@ -40,6 +42,17 @@ function _saveGlobals() {
   g[GLOBAL_KEY].validationManager = validationManager;
   g[GLOBAL_KEY].serverInstance = serverInstance;
   g[GLOBAL_KEY].pluginManager = pluginManager;
+  g[GLOBAL_KEY].pluginCapabilities = pluginCapabilities;
+}
+
+/**
+ * Explicit test/helper injection to set the server instance safely.
+ * Prefer this over mutating globals directly in tests.
+ * @param {Object} server
+ */
+function setServerInstance(server) {
+  serverInstance = server;
+  _saveGlobals();
 }
 
 /**
@@ -542,6 +555,17 @@ async function registerAllTools(server, options = {}) {
     }
 
     registrationComplete = true;
+
+    // After core modules, attempt to load spec plugins (tools/resources/prompts)
+    try {
+      const pm = getPluginManager();
+      await pm.initialize?.();
+      const { loaded, failed } = await pm.loadAllSpecPlugins({ activate: true });
+      if (loaded?.length) console.log(`[Registry] 🔌 Loaded ${loaded.length} spec plugin(s)`);
+      if (failed?.length) console.warn('[Registry] ⚠️ Plugin load failures:', failed);
+    } catch (e) {
+      console.warn('[Registry] ⚠️ Plugin manager initialization failed:', e.message);
+    }
     registrationInProgress = false;
     
     console.log('[Registry] ========================================');
@@ -616,9 +640,93 @@ function getServerInstance() {
 /** Get or create plugin manager */
 function getPluginManager() {
   if (!pluginManager) {
-  pluginManager = new PluginManager(getRegistry(), { validationManager: getValidationManager() });
+    pluginManager = new PluginManager(getRegistry(), { validationManager: getValidationManager() });
+    // Wire plugin events for capability bookkeeping
+    try {
+      pluginManager.on('pluginLoaded', (p) => {
+        if (p.manifest && p.manifest.capabilities) {
+          const caps = p.manifest.capabilities;
+          const tools = new Set((caps.tools || []).map(t=>t.name));
+          const resources = new Set((caps.resources || []).map(r=>r.name));
+          const prompts = new Set((caps.prompts || []).map(r=>r.name));
+          pluginCapabilities.set(p.id, { tools, resources, prompts });
+          const reg = getRegistry();
+          reg.registerPluginCapabilities(p.id, { tools: [...tools], resources: [...resources], prompts: [...prompts] });
+        }
+      });
+      // Placeholder for future plugin reload event (if emitted)
+      pluginManager.on('pluginReloaded', (p, newManifest) => {
+        if (!newManifest || !newManifest.capabilities) return;
+        const prev = pluginCapabilities.get(p.id);
+        const caps = newManifest.capabilities;
+        const newCapNames = {
+          tools: (caps.tools||[]).map(t=>t.name),
+          resources: (caps.resources||[]).map(r=>r.name),
+          prompts: (caps.prompts||[]).map(r=>r.name)
+        };
+        const diff = diffPluginCapabilities(p.id, newCapNames);
+        pluginCapabilities.set(p.id, {
+          tools: new Set(newCapNames.tools),
+          resources: new Set(newCapNames.resources),
+          prompts: new Set(newCapNames.prompts)
+        });
+  applyPluginCapabilityDiff(p.id, diff);
+      });
+    } catch {}
   }
   return pluginManager;
+}
+
+/**
+ * Compute diff of plugin capabilities after a reload (placeholder for future hot reload integration)
+ * @param {string} pluginId
+ * @param {{tools:string[],resources:string[],prompts:string[]}} newCaps
+ */
+function diffPluginCapabilities(pluginId, newCaps) {
+  const prev = pluginCapabilities.get(pluginId) || { tools:new Set(), resources:new Set(), prompts:new Set() };
+  const toSet = (arr=[]) => new Set(arr);
+  const next = { tools: toSet(newCaps.tools), resources: toSet(newCaps.resources), prompts: toSet(newCaps.prompts) };
+  const diff = (prevSet, nextSet) => ({ added:[...nextSet].filter(x=>!prevSet.has(x)), removed:[...prevSet].filter(x=>!nextSet.has(x)) });
+  return { tools: diff(prev.tools, next.tools), resources: diff(prev.resources, next.resources), prompts: diff(prev.prompts, next.prompts) };
+}
+
+/**
+ * Apply capability diff: unregister removed items from server (if supported) and internal registry.
+ * @param {string} pluginId
+ * @param {{tools:{added:string[],removed:string[]},resources:{added:string[],removed:string[]},prompts:{added:string[],removed:string[]}}} diff
+ */
+async function applyPluginCapabilityDiff(pluginId, diff) {
+  const srv = getServerInstance();
+  const reg = getRegistry();
+  const results = { pluginId, removed: { tools:[], resources:[], prompts:[] }, errors: [] };
+  // Tools
+  for (const t of diff.tools.removed) {
+    if (srv && typeof srv.unregisterTool === 'function') {
+      try { await srv.unregisterTool(t); } catch (e) { results.errors.push(`srv tool ${t}: ${e.message}`); }
+    }
+    try { await reg.unregisterToolInternal(t); results.removed.tools.push(t); } catch (e) { results.errors.push(`internal tool ${t}: ${e.message}`); }
+  }
+  // Resources
+  for (const r of diff.resources.removed) {
+    if (srv && typeof srv.unregisterResource === 'function') {
+      try { await srv.unregisterResource(r); } catch (e) { results.errors.push(`srv resource ${r}: ${e.message}`); }
+    }
+    try { reg.unregisterResourceInternal(r); results.removed.resources.push(r); } catch (e) { results.errors.push(`internal resource ${r}: ${e.message}`); }
+  }
+  // Prompts
+  for (const p of diff.prompts.removed) {
+    if (srv && typeof srv.unregisterPrompt === 'function') {
+      try { await srv.unregisterPrompt(p); } catch (e) { results.errors.push(`srv prompt ${p}: ${e.message}`); }
+    }
+    try { reg.unregisterPromptInternal(p); results.removed.prompts.push(p); } catch (e) { results.errors.push(`internal prompt ${p}: ${e.message}`); }
+  }
+  if (diff.tools.added.length) {
+    console.log('[Registry] ➕ New plugin tools detected (registration handled at load):', diff.tools.added.join(', '));
+  }
+  const noSrvAPI = (diff.resources.removed.length && !(srv && typeof srv.unregisterResource === 'function')) || (diff.prompts.removed.length && !(srv && typeof srv.unregisterPrompt === 'function'));
+  if (noSrvAPI) console.log('[Registry] (info) Removed resources/prompts detected but server lacks unregister API');
+  console.log('[Registry] Capability diff applied:', JSON.stringify(results));
+  return results;
 }
 
 // (cleanup defined earlier; removed duplicate)
@@ -631,6 +739,7 @@ module.exports = {
   getHotReloadManager,
   getValidationManager,
   getRegistryInstance,
+  setServerInstance,
   getServerInstance,
   getPluginManager,
   dynamicLoadModule,

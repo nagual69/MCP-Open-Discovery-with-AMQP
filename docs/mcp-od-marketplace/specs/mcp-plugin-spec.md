@@ -1,129 +1,113 @@
 # MCP OD Marketplace Plugin Specification
 
-This document defines a standardized plugin packaging for MCP Open Discovery-compatible modules that can bundle Tools, Resources, and Prompts using the official MCP TypeScript SDK.
+Standardized packaging for MCP Open Discovery–compatible plugins bundling Tools, Resources, and Prompts via the official MCP SDK. Provides a manifest‑first, integrity‑enforced, bundled‑by‑default distribution model.
 
-Goal: Provide a manifest and package layout that the Marketplace can validate, render, and export; and the MCP Open Discovery Registry can ingest and register.
+Goal: Marketplace validates & renders metadata; Registry ingests & registers capabilities deterministically and safely.
 
-See also:
+See also: `./mcp-spec-tools.md`, `./mcp-spec-resources.md`, `./mcp-spec-prompts.md`.
 
-- Tools: ./mcp-spec-tools.md
-- Prompts: ./mcp-spec-prompts.md
-- Resources: ./mcp-spec-resources.md
+## Manifest: mcp-plugin.json (Schema Generations)
 
-## Manifest: mcp-plugin.json
+| Field | v1 | v2 |
+|-------|----|----|
+| manifestVersion | (absent) | "2" (required) |
+| name | slug | same |
+| version | semver | semver (exact required for external deps) |
+| sdk | required range | informational (host pins SDK) |
+| entry | path | must live under `dist/` (ESM) |
+| capabilities | declared lists | same |
+| permissions | array of `{id,reason}` | object booleans (network, fsRead, fsWrite, exec) |
+| metadata | nested display object | flattened top-level (description, author, license, homepage, repository, keywords) |
+| dist | — | REQUIRED `{ hash: "sha256:<64hex>", checksums? }` |
+| externalDependencies | — | optional (feature-flagged) |
+| dependenciesPolicy | — | `bundled-only` (default) or `external-allowed` |
 
-- name: unique plugin id (slug)
-- version: semver
-- sdk: required MCP SDK version range
-- entry: path to the compiled entry module exporting a factory
-- capabilities: declarative list of items exported (tools/resources/prompts) used for preflight reconciliation
-- permissions: hints for client review
-- metadata: display data
-
-Example:
+### v2 Example (abridged)
+```json
 {
-"name": "net-utils",
-"version": "1.0.0",
-"sdk": "^1.2.0",
-"entry": "dist/index.js",
-"capabilities": {
-"tools": [
-{
-"name": "ping",
-"title": "Ping Host",
-"description": "ICMP-like ping via child process or dns",
-"inputSchema": {
-"host": { "type": "string" },
-"count": { "type": "number", "minimum": 1, "maximum": 10 }
-},
-"outputSchema": {
-"rttMs": { "type": "number" },
-"loss": { "type": "number" }
-},
-"annotations": { "readOnlyHint": true, "openWorldHint": true }
+	"manifestVersion": "2",
+	"name": "net-utils",
+	"version": "1.1.0",
+	"entry": "dist/index.js",
+	"description": "Network tooling bundle",
+	"author": "Acme",
+	"dist": { "hash": "sha256:0123abcd..." },
+	"permissions": { "network": true },
+	"capabilities": { "tools": [{ "name": "ping" }] },
+	"externalDependencies": [],
+	"dependenciesPolicy": "bundled-only"
 }
-],
-"resources": [
-{
-"name": "dns-record",
-"title": "DNS Record",
-"uriTemplate": "dns://{domain}",
-"metadata": { "description": "DNS records as resources" }
-}
-],
-"prompts": [
-{
-"name": "net-diagnose",
-"title": "Network Diagnosis",
-"description": "Create a diagnostic prompt"
-}
-]
-},
-"permissions": [
-{ "id": "network", "reason": "Performs DNS/HTTP lookups" }
-],
-"metadata": {
-"displayName": "Network Utilities",
-"author": "Acme",
-"homepage": "https://example.com"
-}
-}
+```
 
 ## Runtime Integration Contract
 
-Entry module MUST export `createPlugin(server: McpServer): Promise<void> | void` that registers all declared capabilities.
+Entry must export `createPlugin(server: McpServer): Promise<void> | void` registering all declared capabilities.
 
 Load sequence:
-1. Validate manifest via Marketplace JSON Schema (Ajv).
-2. Import entry module (ESM) and locate `createPlugin` (named or default.createPlugin).
-3. Execute with a proxy server to CAPTURE registrations (tools/resources/prompts) without committing.
-4. Reconcile captured vs manifest.capabilities.* (warn or throw with STRICT_CAPABILITIES).
-5. Optional: batch tool validation (STRICT_TOOLS) via validation manager.
-6. Forward (final register) each captured item to the real server instance.
-7. Emit structured summary for logs / API.
+1. Ajv validate manifest (v1 or v2).
+2. Dynamic import entry (ESM) & locate `createPlugin`.
+3. Execute inside capture proxy – record attempted registrations.
+4. Reconcile captured vs declared capabilities (STRICT_CAPABILITIES optional failure).
+5. Validate tools (STRICT_TOOLS) before commit.
+6. Forward captured items to live server.
+7. Emit structured summary & (installer) persist lock data.
 
-If any blocking errors occur (schema invalid, missing createPlugin, dependency cycle, strict mismatch) the plugin load fails atomically.
+Blocking failures (invalid schema, missing createPlugin, dependency cycle, strict mismatch) abort atomically.
 
-## Packaging
+## Packaging & Distribution Policy
 
-- Node package with package.json and built JS (ES modules) compatible with Node >=18
-- Include `mcp-plugin.json` at the package root
-- Use @modelcontextprotocol/sdk as a dependency
+Baseline (Option A – enforced):
+1. Fully bundled: only allowlisted Node core modules + `@modelcontextprotocol/sdk` imported at runtime.
+2. No dynamic install unless `PLUGIN_ALLOW_RUNTIME_DEPS=1`.
+3. Deterministic hash: ordered `dist/` file list + content → SHA256 stored in `dist.hash`.
+4. Optional per‑file checksums for future selective verification.
+5. Lock file `install.lock.json` (provenance + integrity) always written.
+
+Controlled External Dependency Mode (`PLUGIN_ALLOW_RUNTIME_DEPS=1`):
+* Validate each `externalDependencies[]` package@version against allowlist `tools/plugins/allowlist-deps.json`.
+* Only exact versions permitted (no ^ ~ ranges).
+* Future: isolated `vendor/node_modules` + integrity map (roadmap).
+
+Reject Criteria:
+* Non‑allowlisted external import when runtime deps disabled.
+* Semver ranges (^, ~, *, >, <) in external dependency versions.
+* Native addons (`.node`) unless `PLUGIN_ALLOW_NATIVE=1` (future flag).
 
 ## Dependency Graph
 
-Optional `dependencies: string[]` referencing other plugin names. Loader performs topological sort and aborts with a cycle chain (`A -> B -> C -> A`).
+Optional `dependencies: string[]` referencing other plugin names. Loader performs topological sort; cycles (`A -> B -> C -> A`) abort with explicit chain.
 
 ## Error Model
 
-- Registration failures should throw errors caught by the host registry. Tools should return CallToolResult with isError true and human-readable text.
+Registration failures throw; tools may return structured `CallToolResult` with `isError=true` & descriptive message.
 
 ## Structured Summary (Loader Output)
 
 ```
 {
-	loaded: [ { name, version, tools, resources, prompts, path } ],
+	loaded:  [ { name, version, tools, resources, prompts, path } ],
 	skipped: [ { name, reason } ],
 	failed:  [ { name, error } ],
 	timings: { totalMs, validationMs, importMs, reconcileMs, registerMs },
 	stats: { toolsRegistered, resourcesRegistered, promptsRegistered, invalidTools, warnings }
 }
 ```
-
-Fields may expand; consumers should treat unknown keys as forward-compatible.
+Forward compatible – unknown keys must be ignored.
 
 ## Lock File
 
-Installers persist `install.lock.json` with `{ name, version, sourceUrl?, sha256, signature?, installedAt }` enabling audit & integrity checks.
+`install.lock.json` stores `{ name, version, sourceUrl?, sha256, signature?, installedAt }` enabling audit & integrity.
 
 ## Versioning
 
-- Follow semver for the plugin. The sdk field pins the MCP SDK range.
+Semantic versioning; host may gate downgrades & major changes. `sdk` field advisory in v2 (host pins SDK runtime).
 
-## Security Hints
+## Security & Sandbox Roadmap
 
-- `permissions` array is non-authoritative; enforce sandboxing and allowlists separately.
-- Checksums required; signatures optional unless `REQUIRE_SIGNATURES=true`.
-- No postinstall scripts executed; only ESM import + controlled registration API.
+Tier 1 (Now): allowlist require, integrity hash, optional signature, no postinstall scripts.
+Tier 2 (Planned): vm context + frozen intrinsics + heap sampling.
+Tier 3 (Planned): worker isolation + resource quotas + termination on violation.
 
-_Spec synchronized with Open Discovery commit: <ADD_COMMIT_HASH_HERE>_
+Permissions metadata is advisory; enforcement occurs in host runtime.
+
+Integrity and dependency policies here supersede earlier drafts with commit hash placeholders.

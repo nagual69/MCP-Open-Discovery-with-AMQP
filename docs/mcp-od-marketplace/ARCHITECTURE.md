@@ -39,23 +39,25 @@ graph TB
         Storage[Local/Cloud Storage]
     end
 
-    subgraph "MCP Integration - MISSING"
-        Plugin[MCP Plugin - NOT IMPLEMENTED]
-        Discovery[MCP Open Discovery - NOT IMPLEMENTED]
-        Tools[Tool Registry - PARTIAL]
-        Note[Dotted lines indicate missing/planned features]
-    end
+  subgraph "MCP Integration Layer"
+    Packaging[Packaging & Integrity (v2)]
+    Loader[Manifest Loader (capture→reconcile→forward)]
+    Registry[Tool & Capability Registry]
+    Sandbox[Sandbox Runtime (Roadmap)]
+  end
 
-    Web --> API
-    API --> DB
-    API --> Storage
-    Plugin -.-> Discovery
-    Plugin -.-> Tools
-    API -.-> Plugin
+  Web --> API
+  API --> DB
+  API --> Storage
+  API --> Loader
+  Loader --> Registry
+  Packaging --> Loader
+  Loader -.-> Sandbox
 
-    style Plugin fill:#ffebee,stroke:#f44336,stroke-dasharray: 5 5
-    style Discovery fill:#ffebee,stroke:#f44336,stroke-dasharray: 5 5
-    style Note fill:#fff3e0,stroke:#ff9800
+  style Packaging fill:#e3f2fd,stroke:#1976d2
+  style Loader fill:#e8f5e9,stroke:#2e7d32
+  style Registry fill:#f3e5f5,stroke:#6a1b9a
+  style Sandbox fill:#fff3e0,stroke:#ff9800,stroke-dasharray: 5 5
 ```
 
 ## 📦 Current Project Structure
@@ -112,12 +114,11 @@ graph TB
 
 ### Missing Components
 
-#### `apps/mcp-plugin` - MCP Integration Plugin ❌ NOT IMPLEMENTED
+#### `apps/mcp-plugin` - MCP Integration (PARTIAL)
 
-- **Purpose**: Remote tool installation for MCP Open Discovery
-- **SDK**: Official MCP TypeScript SDK
-- **Security**: Digital signatures, sandboxing
-- **Hot-reload**: Dynamic tool loading capabilities
+- **Implemented**: Manifest v2 packaging (dist.hash, checksums), bundled-only policy, external dependency gating, lock file, quality gate script, capture→reconcile loader.
+- **Pending**: Runtime sandbox (vm/worker isolation), permission enforcement layer, native addon gate, full unload/deregister, signature enforcement in production.
+- **Hot-reload**: Loader supports revalidation; deeper diff-based updates pending.
 
 #### `packages/schemas` - Type Definitions ❌ NOT IMPLEMENTED (REPLACED)
 
@@ -156,6 +157,27 @@ graph TB
 - **Testing**: Mock servers for development ❌ MISSING
 
 ## 🔄 Data Flow Architecture
+
+### Packaging & Integrity Subsystem
+
+| Concern | Mechanism |
+|---------|-----------|
+| Distribution Integrity | `dist.hash` (sha256 over ordered dist/ files) |
+| Granular Verification | Optional per-file checksums array |
+| External Deps Policy | `dependenciesPolicy` + `externalDependencies[]` (flag gated) |
+| Allowlist Enforcement | `tools/plugins/allowlist-deps.json` (exact versions) |
+| Lock Provenance | `install.lock.json` (name, version, sha256, installedAt, signature?) |
+| Quality Gate | `scripts/quality-gate-packaging.js` fixture scan |
+| Local Validation | `scripts/validate-plugin.js` (hash compute & verify) |
+
+### Sandbox Roadmap
+
+| Tier | Scope | Status |
+|------|-------|--------|
+| 1 | Allowlist require, integrity hash, optional signature | Implemented |
+| 2 | vm.Context isolation, frozen intrinsics, heap sampling | Planned |
+| 3 | Worker isolation, resource quotas, native gating | Planned |
+
 
 ### Tool Creation Workflow
 

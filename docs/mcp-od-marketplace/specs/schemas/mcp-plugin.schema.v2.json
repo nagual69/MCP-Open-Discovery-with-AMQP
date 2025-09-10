@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mcp-open-discovery.io/schemas/mcp-plugin.schema.v2.json",
+  "title": "MCP Plugin Manifest (v2)",
+  "description": "Extended plugin manifest with external dependency declaration and distribution integrity metadata.",
+  "type": "object",
+  "required": ["name", "version", "entry", "dist"],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-[a-zA-Z0-9_-]+$": {}
+  },
+  "$defs": {
+    "semver": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z-.]+)?$"},
+    "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+    "packageName": {"type": "string", "pattern": "^[a-zA-Z0-9_.-]+$", "maxLength": 100},
+    "path": {"type": "string", "maxLength": 4096},
+    "hashObject": {
+      "type": "object",
+      "required": ["alg", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "alg": {"type": "string", "minLength": 1, "maxLength": 30},
+        "value": {"type": "string", "minLength": 8, "maxLength": 200}
+      }
+    },
+    "integrityEntry": {
+      "type": "object",
+      "required": ["alg", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "alg": {"type": "string"},
+        "value": {"type": "string"}
+      }
+    },
+    "signature": {
+      "type": "object",
+      "required": ["alg", "signature"],
+      "additionalProperties": false,
+      "properties": {
+        "alg": {"type": "string", "minLength": 2, "maxLength": 40},
+        "signature": {"type": "string", "minLength": 16},
+        "keyId": {"type": "string", "maxLength": 200},
+        "ts": {"type": "string", "format": "date-time"}
+      }
+    }
+  },
+  "properties": {
+    "manifestVersion": {
+      "type": "string",
+      "enum": ["2"],
+      "description": "Manifest schema version. Must be '2' for this schema."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-z0-9-_]+$",
+      "description": "Plugin unique identifier (lowercase alphanumerics, dash, underscore)."
+    },
+  "version": {"$ref": "#/$defs/semver", "description": "Semantic version (no range specifiers)."},
+    "entry": {
+      "type": "string",
+      "description": "Relative path to built ESM entry file inside dist/ directory.",
+      "pattern": "^dist/.+\\.m?js$"
+    },
+    "description": {"type": "string", "maxLength": 300},
+    "author": {"type": "string", "maxLength": 120},
+    "license": {"type": "string", "maxLength": 50},
+    "homepage": {"type": "string", "format": "uri"},
+    "repository": {"type": "string", "maxLength": 200},
+    "keywords": {
+      "type": "array",
+      "items": {"type": "string", "maxLength": 30},
+      "maxItems": 25,
+      "uniqueItems": true
+    },
+    "dist": {
+      "type": "object",
+      "required": ["hash"],
+      "additionalProperties": false,
+      "properties": {
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-fA-F0-9]{64}$",
+          "description": "Primary SHA256 hash of the entire ordered dist/ contents (sha256:HEX)."
+        },
+        "hashes": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/hashObject"},
+          "maxItems": 6,
+          "description": "Optional additional hashes (e.g., blake3, sha512)."
+        },
+        "fileCount": {"type": "integer", "minimum": 1},
+        "totalBytes": {"type": "integer", "minimum": 0},
+        "coverage": {"type": "string", "enum": ["all", "partial"], "description": "Whether checksums cover all files."},
+        "checksums": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["path", "sha256"],
+                "additionalProperties": false,
+                "properties": {
+                  "path": {"$ref": "#/$defs/path"},
+                  "sha256": {"$ref": "#/$defs/sha256"}
+                }
+              },
+              "maxItems": 2000
+            }
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "network": {"type": "boolean"},
+        "fsRead": {"type": "boolean"},
+        "fsWrite": {"type": "boolean"},
+        "exec": {"type": "boolean"}
+      }
+    },
+    "externalDependencies": {
+      "type": "array",
+      "description": "List of external runtime dependencies (only allowed if PLUGIN_ALLOW_RUNTIME_DEPS=1).",
+      "items": {
+        "type": "object",
+        "required": ["name", "version"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {"$ref": "#/$defs/packageName"},
+          "version": {"$ref": "#/$defs/semver"},
+          "integrity": {"type": "string", "maxLength": 200, "description": "Optional Subresource Integrity style hash."},
+          "optional": {"type": "boolean", "description": "If true, plugin may operate with reduced functionality without this dependency."},
+          "source": {"type": "string", "enum": ["npm", "git", "url"], "default": "npm"},
+          "registry": {"type": "string", "format": "uri", "description": "Custom registry base URL when source=npm."},
+          "integrities": {"type": "array", "items": {"$ref": "#/$defs/integrityEntry"}, "maxItems": 5}
+        }
+      },
+      "maxItems": 40
+    },
+    "dependenciesPolicy": {
+      "type": "string",
+      "enum": ["bundled-only", "external-allowed", "external-allowlist", "sandbox-required"],
+      "description": "How this plugin expects dependencies to be treated. Additional enum values reserved for future stricter policies."
+    },
+    "signatures": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/signature"},
+      "maxItems": 5
+    },
+    "sbom": {
+      "type": "object",
+      "required": ["path", "format"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "format": {"type": "string", "enum": ["spdx-2.3"]}
+      }
+    },
+    "hostRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "os": {"type": "array", "items": {"type": "string"}, "maxItems": 5},
+        "cpuArch": {"type": "array", "items": {"type": "string"}, "maxItems": 5},
+        "features": {"type": "array", "items": {"type": "string"}, "maxItems": 20}
+      }
+    },
+    "engines": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node": {"type": "string", "maxLength": 40}
+      }
+    }
+  }
+}

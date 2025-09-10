@@ -18,9 +18,12 @@ const os = require('os');
 const crypto = require('crypto');
 const EventEmitter = require('events');
 const axios = require('axios');
-const { loadSpecPlugin, topoSortByDependencies } = require('./plugin_loader');
+const { loadSpecPlugin, topoSortByDependencies, computeDistHash } = require('./plugin_loader');
 let AdmZip;
 try { AdmZip = require('adm-zip'); } catch {}
+// Optional credentials manager (used for trusted signing key retrieval)
+let credentialsManager;
+try { credentialsManager = require('../credentials_manager'); } catch {}
 
 /**
  * Plugin lifecycle states
@@ -58,6 +61,11 @@ class PluginManager extends EventEmitter {
       strictCapabilities: false,
       ...(options.policy || {})
     };
+    if (process.env.PLUGIN_REQUIRE_SIGNED === 'true') {
+      this.policy.requireSignature = true;
+    }
+    // Cache for trusted keys
+    this._trustedKeysCache = null;
     // Prefer DI; fall back to registry getter if available
     this.validationManager = options.validationManager || (this.registry && typeof this.registry.getValidationManager === 'function'
       ? this.registry.getValidationManager()
@@ -121,6 +129,11 @@ class PluginManager extends EventEmitter {
     try {
       const manifest = await this._loadPluginManifest(pluginPath);
       if (!manifest) return;
+      // Enforce v2 only
+      if (manifest.manifestVersion && manifest.manifestVersion !== '2') {
+        console.warn(`[Plugin Manager] ⚠️  Skipping non-v2 manifest at ${pluginPath}`);
+        return;
+      }
 
       const plugin = {
         id: manifest.id || path.basename(pluginPath, '.js'),
@@ -229,17 +242,97 @@ class PluginManager extends EventEmitter {
 
       // Two plugin flavors: Spec plugin (mcp-plugin.json) vs legacy tool-module
     if (plugin.manifest && plugin.manifest.entry) {
+        // Validate dist hash for spec plugin if present (v2 requirement)
+        try {
+          if (plugin.manifest.manifestVersion === '2') {
+            const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
+            const distDir = path.join(rootDir, 'dist');
+            if (!plugin.manifest.dist || !plugin.manifest.dist.hash) {
+              throw new Error('v2 plugin missing dist.hash');
+            }
+            if (!fs.existsSync(distDir)) throw new Error('dist directory missing for plugin');
+            const match = plugin.manifest.dist.hash.match(/^sha256:([a-fA-F0-9]{64})$/);
+            if (!match) throw new Error('Invalid dist.hash format');
+            const computed = computeDistHash(distDir);
+            if (computed.toLowerCase() !== match[1].toLowerCase()) {
+              throw new Error(`dist hash mismatch (manifest ${match[1]} != computed ${computed})`);
+            }
+            // Strict signature verification (if configured)
+            try {
+              await this._verifyPluginSignatureIfRequired(plugin, rootDir);
+            } catch (sigErr) {
+              // Quarantine plugin directory before failing
+              try { await this._quarantinePlugin(plugin, rootDir, sigErr.message); } catch (qErr) {
+                console.warn(`[Plugin Manager] Quarantine failed for ${plugin.id}: ${qErr.message}`);
+              }
+              throw sigErr;
+            }
+          }
+        } catch (hashErr) {
+          plugin.state = PluginState.ERROR;
+          plugin.error = hashErr.message;
+          throw hashErr;
+        }
         // Spec-compliant plugin: call createPlugin() via loader
         const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
-        await loadSpecPlugin(
-          this.registry.getServerInstance ? this.registry.getServerInstance() : require('./index').getServerInstance(),
+        const serverRef = this.registry.getServerInstance ? this.registry.getServerInstance() : require('./index').getServerInstance();
+        const { loadSpecPlugin } = require('./plugin_loader');
+        const result = await loadSpecPlugin(
+          serverRef,
           rootDir,
           plugin.manifest,
-      { strictCapabilities: !!this.policy.strictCapabilities, validationManager: this.validationManager }
+          { strictCapabilities: !!this.policy.strictCapabilities, validationManager: this.validationManager }
         );
+        // Record capability snapshot internally (tools/resources/prompts sets)
+        try {
+          if (result && result.captured) {
+            const { getRegistry } = require('./index');
+            const reg = getRegistry();
+            if (reg && typeof reg.registerPluginCapabilities === 'function') {
+              reg.registerPluginCapabilities(plugin.id, {
+                tools: result.captured.tools.map(t => t.name),
+                resources: result.captured.resources.map(r => r.name),
+                prompts: result.captured.prompts.map(p => p.name)
+              });
+            }
+          }
+        } catch (capErr) {
+          console.warn(`[Plugin Manager] Capability snapshot failed for ${plugin.id}: ${capErr.message}`);
+        }
         plugin.instance = { type: 'spec-plugin' };
         plugin.state = PluginState.LOADED;
         plugin.error = null;
+        // Wire plugin dist directory into hot reload manager if available
+        try {
+          const { getHotReloadManager } = require('./index');
+          const hrm = getHotReloadManager && getHotReloadManager();
+          const distDir = path.join(rootDir, 'dist');
+          if (hrm && fs.existsSync(distDir)) {
+            hrm.watchPlugin(plugin.id, distDir);
+          }
+        } catch (e) {
+          console.warn(`[Plugin Manager] Hot reload watch failed for ${plugin.id}: ${e.message}`);
+        }
+        // Write/Update install.lock.json with signature metadata
+        try {
+          const lockPath = path.join(rootDir, 'install.lock.json');
+          const distHash = plugin.manifest.dist?.hash || null;
+          let existing = {};
+          if (fs.existsSync(lockPath)) {
+            try { existing = JSON.parse(await fs.promises.readFile(lockPath, 'utf8')); } catch {}
+          }
+          const lock = {
+            name: plugin.manifest.name,
+            version: plugin.manifest.version,
+            distHash,
+            installedAt: existing.installedAt || new Date().toISOString(),
+            signatureVerified: plugin._signatureVerified || false,
+            signerKeyId: plugin._signerKeyId || null
+          };
+          await fs.promises.writeFile(lockPath, JSON.stringify(lock, null, 2), 'utf8');
+        } catch (e) {
+          console.warn(`[Plugin Manager] ⚠️  Failed to write lock file for ${plugin.name}: ${e.message}`);
+        }
       } else {
         // Legacy: Load the plugin module
         const pluginModule = await this._loadPluginModule(plugin);
@@ -267,6 +360,49 @@ class PluginManager extends EventEmitter {
       
       return false;
     }
+  }
+
+  /**
+   * Reload a spec plugin (basic implementation): unload (without removal), then load again and emit pluginReloaded.
+   * @param {string} pluginId
+   */
+  async reloadPlugin(pluginId) {
+    const plugin = this.plugins.get(pluginId);
+    if (!plugin) throw new Error(`Plugin ${pluginId} not found`);
+    if (!(plugin.manifest && plugin.manifest.entry)) throw new Error('Reload only supported for spec plugins');
+    const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
+    const manifestPath = path.join(rootDir, 'mcp-plugin.json');
+    // Refresh manifest & dist hash before unloading/loading to avoid stale hash mismatch
+    let refreshedManifest = plugin.manifest;
+    try {
+      if (fs.existsSync(manifestPath)) {
+        const raw = JSON.parse(await fs.promises.readFile(manifestPath, 'utf8'));
+        refreshedManifest = raw;
+        plugin.manifest = raw; // update early
+      }
+    } catch (e) {
+      console.warn(`[Plugin Manager] Reload manifest pre-read failed for ${pluginId}: ${e.message}`);
+    }
+    // Unload if loaded/active
+    if (plugin.state === PluginState.LOADED || plugin.state === PluginState.ACTIVE) {
+      try { await this.unloadPlugin(pluginId); } catch {}
+    }
+    const ok = await this.loadPlugin(pluginId);
+    if (!ok) throw new Error(`Reload failed for ${pluginId}`);
+    // Re-read manifest (final confirmation post-load)
+    try {
+      if (fs.existsSync(manifestPath)) {
+        const updated = JSON.parse(await fs.promises.readFile(manifestPath, 'utf8'));
+        plugin.manifest = updated;
+        this.emit('pluginReloaded', plugin, updated);
+      } else {
+        this.emit('pluginReloaded', plugin, plugin.manifest);
+      }
+    } catch (e) {
+      console.warn(`[Plugin Manager] Reload manifest read failed for ${pluginId}: ${e.message}`);
+      this.emit('pluginReloaded', plugin, plugin.manifest);
+    }
+    return true;
   }
 
   /**
@@ -643,7 +779,7 @@ class PluginManager extends EventEmitter {
       delete require.cache[modulePath];
     }
 
-    const module = require(modulePath);
+  const module = require(modulePath);
     
     // Validate plugin interface
     if (plugin.manifest.type === 'tool-module') {
@@ -728,6 +864,77 @@ class PluginManager extends EventEmitter {
     }
   }
 
+  // -------- Signature & Trust Helpers --------
+  async _loadTrustedKeysStrict() {
+    if (!credentialsManager) return [];
+    if (this._trustedKeysCache) return this._trustedKeysCache;
+    const idsEnv = (process.env.PLUGIN_TRUSTED_KEY_IDS || '').trim();
+    const ids = idsEnv ? idsEnv.split(/[,;\s]+/).filter(Boolean) : [];
+    const keys = [];
+    for (const id of ids) {
+      try {
+        const cred = credentialsManager.getCredential(id);
+        if (cred.type !== 'certificate' || !cred.certificate) {
+          console.warn(`[Plugin Manager] Trusted key id ${id} invalid (not certificate or missing field)`);
+          continue;
+        }
+        keys.push({ id, publicKeyPem: cred.certificate });
+      } catch (e) {
+        console.warn(`[Plugin Manager] Failed to load trusted key ${id}: ${e.message}`);
+      }
+    }
+    this._trustedKeysCache = keys;
+    return keys;
+  }
+
+  async _verifyPluginSignatureIfRequired(plugin, rootDir) {
+    const sigPath = path.join(rootDir, 'mcp-plugin.sig');
+    const hasSigFile = fs.existsSync(sigPath);
+    const requireSig = !!this.policy.requireSignature;
+    if (!hasSigFile) {
+      if (requireSig) throw new Error('Signature required but mcp-plugin.sig not found');
+      return; // Nothing to verify
+    }
+    const trusted = await this._loadTrustedKeysStrict();
+    if (trusted.length === 0) {
+      if (requireSig) throw new Error('No trusted signing keys configured (PLUGIN_TRUSTED_KEY_IDS)');
+      console.warn('[Plugin Manager] ⚠️  Signature present but no trusted keys configured; skipping verification');
+      return;
+    }
+    let raw = await fs.promises.readFile(sigPath, 'utf8');
+    raw = raw.trim();
+    let signatureB64 = raw;
+    if (raw.startsWith('{')) {
+      try { const obj = JSON.parse(raw); signatureB64 = obj.signature || obj.sig || signatureB64; } catch {}
+    }
+    if (!signatureB64) throw new Error('Signature file empty');
+    const canonicalData = plugin.manifest.dist?.hash || '';
+    for (const key of trusted) {
+      if (this._verifySignature(canonicalData, signatureB64, key.publicKeyPem)) {
+        plugin._signatureVerified = true;
+        plugin._signerKeyId = key.id;
+        console.log(`[Plugin Manager] 🔐 Signature OK for ${plugin.id} (key ${key.id})`);
+        return;
+      }
+    }
+    if (requireSig) throw new Error('Signature verification failed for all trusted keys');
+    console.warn(`[Plugin Manager] ⚠️  Signature verification failed for ${plugin.id} (non-strict mode, continuing)`);
+  }
+
+  async _quarantinePlugin(plugin, rootDir, reason) {
+    try {
+      const quarantineRoot = path.join(this.pluginDirs[0], '.quarantine');
+      await fs.promises.mkdir(quarantineRoot, { recursive: true });
+      const ts = Date.now();
+      const dest = path.join(quarantineRoot, `${plugin.id}-${ts}`);
+      await fs.promises.rename(rootDir, dest);
+      plugin.path = dest;
+      console.warn(`[Plugin Manager] 🛑 Plugin ${plugin.id} quarantined: ${reason}`);
+    } catch (e) {
+      console.warn(`[Plugin Manager] Quarantine move failed for ${plugin.id}: ${e.message}`);
+    }
+  }
+
   async _stageAndValidateJs(data, { suggestedName, pluginId }) {
     const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mcpod-js-'));
     const base = (pluginId || suggestedName || 'plugin').replace(/\.js$/i, '');
@@ -769,6 +976,9 @@ class PluginManager extends EventEmitter {
     }
 
     const manifest = await this._loadPluginManifest(rootDir);
+    if (!manifest || manifest.manifestVersion !== '2') {
+      throw new Error('Zip plugin must contain a v2 manifest (manifestVersion="2")');
+    }
     const base = (pluginId || manifest?.id || suggestedName || 'plugin').replace(/\.zip$/i, '');
     const id = manifest?.id || base;
     const plugin = {
@@ -784,7 +994,7 @@ class PluginManager extends EventEmitter {
     const module = require(modulePath);
     await this._prevalidatePluginTools(plugin, module);
 
-    return { type: 'dir', id, srcPath: rootDir };
+  return { type: 'dir', id, srcPath: rootDir };
   }
 
   async _finalizeInstall(staged) {

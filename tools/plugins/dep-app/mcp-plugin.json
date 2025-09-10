@@ -1,22 +1,9 @@
 {
+  "manifestVersion": "2",
   "name": "dep-app",
   "version": "1.0.0",
-  "sdk": "@modelcontextprotocol/sdk",
-  "entry": "index.js",
-  "dependencies": ["dep-lib"],
-  "capabilities": {
-    "tools": [
-      {
-        "name": "dep_app_use_lib",
-        "description": "App uses lib tool",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "text": { "type": "string" }
-          },
-          "required": ["text"]
-        }
-      }
-    ]
-  }
+  "entry": "dist/index.mjs",
+  "dist": { "hash": "sha256:cd3ec8010af1ab0c2e535046659f22f1eeb087340f1e389ea44fcd091677e638" },
+  "description": "Example app plugin previously depending on dep-lib (relationship temporarily omitted pending schema support)",
+  "permissions": {}
 }
