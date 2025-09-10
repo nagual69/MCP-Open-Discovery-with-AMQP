@@ -12,12 +12,26 @@
 const { McpServer } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 
-// Tool modules to audit
-const { registerNetworkTools } = require('../tools/network_tools_sdk.js');
-const { registerMemoryTools } = require('../tools/memory_tools_sdk.js');
-const { registerNmapTools } = require('../tools/nmap_tools_sdk.js');
-const { registerProxmoxTools } = require('../tools/proxmox_tools_sdk.js');
-const { registerSnmpTools } = require('../tools/snmp_tools_sdk.js');
+// Tool modules to audit (modules export { tools, handleToolCall })
+const networkToolsModule = require('../tools/network_tools_sdk.js');
+const memoryToolsModule = require('../tools/memory_tools_sdk.js');
+const nmapToolsModule = require('../tools/nmap_tools_sdk.js');
+const proxmoxToolsModule = require('../tools/proxmox_tools_sdk.js');
+const snmpToolsModule = require('../tools/snmp_tools_sdk.js');
+
+function registerModuleTools(module, mockServer) {
+  if (!module || !module.tools || !Array.isArray(module.tools)) return 0;
+  module.tools.forEach(tool => {
+    // Each tool handler will call the module.handleToolCall with the tool name
+    mockServer.tool(tool.name, tool.description, tool.inputSchema, async (params) => {
+      if (typeof module.handleToolCall === 'function') {
+        return await module.handleToolCall(tool.name, params || {});
+      }
+      throw new Error(`Module for ${tool.name} missing handleToolCall`);
+    });
+  });
+  return module.tools.length;
+}
 
 /**
  * Validate MCP response format
@@ -112,11 +126,11 @@ async function auditAllTools() {
   
   // Register all tools
   console.log('📝 Registering tools...');
-  registerNetworkTools(mockServer);
-  registerMemoryTools(mockServer);
-  registerNmapTools(mockServer);
-  registerProxmoxTools(mockServer);
-  registerSnmpTools(mockServer);
+  registerModuleTools(networkToolsModule, mockServer);
+  registerModuleTools(memoryToolsModule, mockServer);
+  registerModuleTools(nmapToolsModule, mockServer);
+  registerModuleTools(proxmoxToolsModule, mockServer);
+  registerModuleTools(snmpToolsModule, mockServer);
   
   console.log(`✅ Registered ${tools.size} tools\n`);
   
@@ -195,31 +209,57 @@ function createMockParams(schema) {
   const params = {};
   
   if (schema && typeof schema === 'object') {
-    Object.keys(schema).forEach(key => {
-      const fieldSchema = schema[key];
-      
-      // Simple mock values based on type
-      if (fieldSchema._def) {
-        switch (fieldSchema._def.typeName) {
-          case 'ZodString':
-            params[key] = 'mock_string_value';
-            break;
-          case 'ZodNumber':
-            params[key] = 123;
-            break;
-          case 'ZodBoolean':
-            params[key] = false;
-            break;
-          case 'ZodObject':
-            params[key] = {};
-            break;
-          default:
-            params[key] = 'mock_value';
+    // If schema looks like Zod shape (has _def and shape function)
+    if (schema._def && typeof schema._def.shape === 'function') {
+      const shape = schema._def.shape();
+      Object.keys(shape).forEach(key => {
+        const fieldSchema = shape[key];
+        if (fieldSchema && fieldSchema._def) {
+          switch (fieldSchema._def.typeName) {
+            case 'ZodString':
+              params[key] = 'mock_string_value';
+              break;
+            case 'ZodNumber':
+              params[key] = 123;
+              break;
+            case 'ZodBoolean':
+              params[key] = false;
+              break;
+            case 'ZodArray':
+              params[key] = ['mock_string_value'];
+              break;
+            case 'ZodObject':
+              params[key] = {};
+              break;
+            default:
+              params[key] = 'mock_value';
+          }
+        } else {
+          params[key] = 'mock_value';
         }
-      } else {
+      });
+
+    } else if (schema.properties) {
+      // JSON Schema style
+      Object.keys(schema.properties).forEach(key => {
+        const prop = schema.properties[key];
+        if (!prop) { params[key] = 'mock_value'; return; }
+        const type = Array.isArray(prop.type) ? prop.type[0] : prop.type;
+        switch (type) {
+          case 'string': params[key] = 'mock_string_value'; break;
+          case 'number': params[key] = 123; break;
+          case 'boolean': params[key] = false; break;
+          case 'array': params[key] = ['mock_string_value']; break;
+          case 'object': params[key] = {}; break;
+          default: params[key] = 'mock_value';
+        }
+      });
+    } else {
+      // Fallback: treat schema as simple map
+      Object.keys(schema).forEach(key => {
         params[key] = 'mock_value';
-      }
-    });
+      });
+    }
   }
   
   return params;
