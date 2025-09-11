@@ -3,6 +3,17 @@
   "version": "1.0.0",
   "distHash": "sha256:66dc8cf316b225be9dd04ada3a0828915d4b5037fb3a1a8a677dcf5a6412e7d4",
   "installedAt": "2025-09-10T03:12:51.432Z",
+  "updatedAt": "2025-09-11T01:43:33.473Z",
   "signatureVerified": false,
-  "signerKeyId": null
+  "signerKeyId": null,
+  "dependenciesPolicy": "bundled-only",
+  "externalDependenciesCount": 0,
+  "coverage": null,
+  "fileCountDeclared": null,
+  "totalBytesDeclared": null,
+  "fileCountActual": 1,
+  "totalBytesActual": 312,
+  "schemaPathOverride": null,
+  "strictCapabilities": false,
+  "requireSignature": false
 }

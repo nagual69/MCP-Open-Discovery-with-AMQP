@@ -1,15 +1,146 @@
-# MCP Open Discovery v2.0 🚀🔥
+<div align="center">
 
-### **WORLD'S FIRST DYNAMIC MCP TOOL REGISTRY WITH HOT-RELOAD**
+# MCP Open Discovery v2.0
+
+**Enterprise Multi-Transport MCP Discovery & Automation Platform**
+
+[▶ Executive Overview (One‑Pager)](./docs/Executive-One-Pager.md) • [Website](https://vibeforgesystems.com/) • [Architecture Diagram](./open_mcp_architecture.mmd)
+
+**Developed & Supported by [VibeForge Systems](https://vibeforgesystems.com/) — enterprise integration, deployment, and customization services available.**
+
+<br/>
+
+**World’s first dynamic Model Context Protocol (MCP) discovery server with hot‑reloadable tool registry, pluggable marketplace, and secure AMQP transport layer.**
+
+</div>
+
+---
+
+## Why Enterprises Choose MCP Open Discovery
+
+| Capability | Enterprise Outcome |
+| ---------- | ------------------ |
+| Multi-Transport (HTTP • Stdio • AMQP) | Integrate AI + infra workflows across IDEs, services, message buses |
+| Dynamic Tool Registry & Hot‑Reload | Zero-downtime extension & controlled change windows |
+| Signed & Policy-Governed Plugins | Supply‑chain integrity + runtime dependency governance |
+| Encrypted Credential & CMDB Layer | Secure operational memory with auditability |
+| Capability Diff & Strict Modes | Prevent drift between declared vs. active capabilities |
+| Sandbox & Allowlist Enforcement | Runtime risk reduction for third‑party extensions |
+| Proxmox • SNMP • Zabbix • Nmap | Unified infrastructure discovery & monitoring fabric |
+| Marketplace Analytics | Operational insight (policy distribution, signatures, sandbox adoption) |
+
+> For enterprise support, integration blueprints, or bespoke plugin development: visit **https://vibeforgesystems.com/** or open a support request.
+
+---
+
+## AMQP Transport Integration (Enterprise Message Bus Mode)
+
+The AMQP transport enables horizontally scalable, decoupled MCP request/response flows over RabbitMQ. This allows infrastructure discovery, monitoring enrichment, and AI agent orchestration to share a common secure event fabric.
+
+### Architecture Highlights
+
+- Topic-based exchanges for routing (`mcp.notifications`, per‑session routing exchange)
+- Per-session ephemeral queues with TTL & auto-delete for isolation
+- Structured routing keys: `mcp.request.<category>.<method>` and notification fan-out (`mcp.notification.#`)
+- Heartbeat exchange (`mcp.heartbeat`) for liveness & operational dashboards
+- Idempotent lifecycle: SDK triggers `start()`; initialize response flows through AMQP channel
+- Capability negotiation preserved across transports
+
+### Enterprise Use Cases
+
+| Use Case | Benefit |
+| -------- | ------- |
+| Cross-Datacenter Discovery | Route tool calls via AMQP without direct network exposure |
+| AI Workflow Orchestration | Publish discovery outputs for downstream enrichment pipelines |
+| Event-Driven Compliance | Trigger scans upon asset onboarding messages |
+| Hybrid Ops Bridge | Link cloud + on‑prem systems using a uniform protocol layer |
+
+### Operational Controls
+
+- Override queue/exchange names via env (`AMQP_EXCHANGE`, `AMQP_QUEUE_PREFIX`)
+- Fine-grained subscription patterns for security segmentation
+- Supports concurrent transports (e.g., `TRANSPORT_MODE=http,amqp`)
+- Health & heartbeat signals consumable by observability stacks
+
+---
+
+## Plugin & Marketplace Architecture
+
+The platform ships with a policy-aware plugin marketplace enabling governed extensibility under strict integrity, signature, and sandbox controls.
+
+### Integrity & Supply Chain
+
+- Deterministic distribution hash (sha256) + per-file checksum coverage
+- Lock file v2 enrichment: file counts, total bytes, coverage, policy snapshot, signature metadata
+- Automatic migration of legacy lock descriptors
+
+### Dependency Policies (`dependenciesPolicy`)
+
+| Policy | Runtime Behavior | Typical Use |
+| ------ | ---------------- | ----------- |
+| bundled-only | All code self-contained | High-security zones |
+| external-allowed | External requires permitted | Internal trusted extensions |
+| external-allowlist | Only declared `externalDependencies` resolved | Controlled partner modules |
+| sandbox-required | Allowlist + runtime sandbox (blocks eval/new Function/native addons) | Third-party / marketplace |
+
+### Runtime Governance
+
+- Capability diff with optional `STRICT_CAPABILITIES=1` enforcement
+- Signature verification (RSA / Ed25519) via `PLUGIN_REQUIRE_SIGNED=1`
+- Allowlisted module load gate + deny native `.node` binaries under sandbox mode
+- Eval & dynamic function creation disabled when sandboxed
+
+### Observability & Analytics
+
+- Policy distribution & signature adoption metrics
+- Sandbox adoption ratios for risk posture tracking
+- On-demand integrity rescans (`tool_store_rescan_integrity`)
+
+### Marketplace Tooling
+
+| Tool | Purpose |
+| ---- | ------- |
+| `tool_store_list_policies` | Enumerate installed plugins + policy & signature status |
+| `tool_store_show` | Detailed plugin manifest + lock metrics |
+| `tool_store_rescan_integrity` | Recompute distribution hash & validate coverage |
+
+> Need custom discovery modules or private plugin distribution? Engage **VibeForge Systems** for secure supply-chain onboarding.
+
+---
+
+## Enterprise Feature Matrix
+
+| Domain | Feature | Description |
+| ------ | ------- | ----------- |
+| Security | Encrypted credentials | AES-256 encrypted store + audit log |
+| Security | Policy-governed plugins | Runtime dependency & sandbox enforcement |
+| Security | Signature verification | RSA & Ed25519 trusted key model |
+| Compliance | Capability diff control | Detect & block undeclared tool exposure |
+| Compliance | Audit-ready logs | Credential + plugin lifecycle events |
+| Operations | Hot‑reload registry | Zero-downtime module updates |
+| Operations | Multi-transport core | HTTP + AMQP + stdio concurrency |
+| Operations | Health & heartbeat | /health endpoint + AMQP heartbeat exchange |
+| Discovery | Proxmox, SNMP, Nmap, Zabbix | Unified multi-surface infrastructure mapping |
+| Extensibility | Marketplace APIs | Install, inspect, rescan, govern plugins |
+| Observability | Analytics snapshot | Policy/signature/sandbox adoption metrics |
+
+---
+
+## Commercial Support & Integration Services
+
+For enterprise deployment architecture, regulated environment hardening, custom plugin development, private marketplace federation, or transport extensions:
+
+**Visit: https://vibeforgesystems.com/**  
+Or open an issue referencing “Enterprise Integration” for a scoping workshop.
+
+---
+
+# MCP Open Discovery v2.0 🚀🔥
 
 <div align="left">
   <div align="center">
-
   <img src="docs/mcp-open-discovery-logo-white.png" alt="MCP Open Discovery Logo" width="200" />
-
   </div>
-
-# MCP Open Discovery v2.0
 
 Enterprise-grade Model Context Protocol (MCP) server for infrastructure discovery, lightweight CMDB, and tooling orchestration. Designed for security-conscious environments, built on the official MCP SDK, and deployable with containers by default.
 
@@ -19,7 +150,6 @@ Enterprise-grade Model Context Protocol (MCP) server for infrastructure discover
 
   <br/>
   <sub>This project was substantially coded with AI under human direction and review. Code and architecture decisions were guided, verified, and integrated by humans.</sub>
-
   </div>
 
 ## Overview
@@ -171,6 +301,34 @@ curl -X POST http://localhost:3000/mcp \
 ## License
 
 Apache-2.0. See `LICENSE` for details.
+
+## Plugin Dependency Policies & Integrity (v2)
+
+This deployment includes an advanced plugin marketplace with integrity, policy, and sandbox controls.
+
+Policies (`dependenciesPolicy`):
+| Policy | Purpose | Env Requirements |
+| ------ | ------- | ---------------- |
+| bundled-only | All code bundled in dist; no runtime external requires | None |
+| external-allowed | Runtime external requires permitted | PLUGIN_ALLOW_RUNTIME_DEPS=1 |
+| external-allowlist | Only modules in `externalDependencies` allowed at runtime | PLUGIN_ALLOW_RUNTIME_DEPS=1 |
+| sandbox-required | Allowlist + hardened sandbox (blocks eval/new Function/native addons) | SANDBOX_AVAILABLE=1 (+PLUGIN_ALLOW_RUNTIME_DEPS=1 if externals used) |
+
+Integrity & Security:
+- Dist hash (sha256) verification + optional per-file checksums with coverage.
+- Capability diff (declared vs registered) with STRICT_CAPABILITIES=1 enforcement.
+- Signature verification (RSA / Ed25519) via PLUGIN_REQUIRE_SIGNED=1 or REQUIRE_SIGNATURES=1.
+- Auto-migrated and enriched lock file (`install.lock.json`) with metrics & policy snapshot.
+- Runtime sandbox (sandbox-required) denies eval, new Function, and native addon loading.
+
+Feature Flags Summary: SCHEMA_PATH, STRICT_CAPABILITIES, PLUGIN_ALLOW_RUNTIME_DEPS, PLUGIN_REQUIRE_SIGNED / REQUIRE_SIGNATURES, SANDBOX_AVAILABLE.
+
+Marketplace Tools Added:
+- tool_store_list_policies
+- tool_store_show
+- tool_store_rescan_integrity
+
+Use these to audit plugin state and verify dist integrity post-installation.
 
 ````
 

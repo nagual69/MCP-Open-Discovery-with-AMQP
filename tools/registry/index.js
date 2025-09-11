@@ -45,6 +45,21 @@ function _saveGlobals() {
   g[GLOBAL_KEY].pluginCapabilities = pluginCapabilities;
 }
 
+// Boot summary (Task9): log key env feature flags once when module loads
+if (!g[GLOBAL_KEY]._bootFlagsLogged) {
+  g[GLOBAL_KEY]._bootFlagsLogged = true;
+  const flags = {
+    SCHEMA_PATH: process.env.SCHEMA_PATH || null,
+    STRICT_CAPABILITIES: process.env.STRICT_CAPABILITIES || process.env.PLUGIN_STRICT_CAPABILITIES || null,
+    PLUGIN_ALLOW_RUNTIME_DEPS: process.env.PLUGIN_ALLOW_RUNTIME_DEPS || null,
+    REQUIRE_SIGNATURES: process.env.REQUIRE_SIGNATURES || null,
+    PLUGIN_REQUIRE_SIGNED: process.env.PLUGIN_REQUIRE_SIGNED || null
+  };
+  try {
+    console.log('[Registry] Feature Flags:', JSON.stringify(flags));
+  } catch {}
+}
+
 /**
  * Explicit test/helper injection to set the server instance safely.
  * Prefer this over mutating globals directly in tests.

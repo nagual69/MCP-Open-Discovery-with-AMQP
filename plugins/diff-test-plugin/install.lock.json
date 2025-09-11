@@ -1,8 +1,19 @@
 {
   "name": "diff-test-plugin",
   "version": "1.0.0",
-  "distHash": "sha256:4b5cd84959e12275cc6dc152d0685015f1a2c779093387bdb5816d3db4d69636",
+  "distHash": "sha256:7662cd8f97f8c91154df6e8d7ac1e3d86c585e878cc17421382c13de937ded04",
   "installedAt": "2025-09-10T03:19:20.186Z",
+  "updatedAt": "2025-09-11T01:43:33.488Z",
   "signatureVerified": false,
-  "signerKeyId": null
+  "signerKeyId": null,
+  "dependenciesPolicy": "bundled-only",
+  "externalDependenciesCount": 0,
+  "coverage": null,
+  "fileCountDeclared": null,
+  "totalBytesDeclared": null,
+  "fileCountActual": 1,
+  "totalBytesActual": 1063,
+  "schemaPathOverride": null,
+  "strictCapabilities": false,
+  "requireSignature": false
 }

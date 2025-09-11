@@ -15,6 +15,11 @@ const tools = [
     inputSchema: z.object({}).optional()
   },
   {
+    name: 'tool_store_list_policies',
+    description: 'List active plugin policy / feature flags',
+    inputSchema: z.object({}).optional()
+  },
+  {
     name: 'tool_store_search',
     description: 'Search discovered plugins by text and optional type',
     inputSchema: z.object({
@@ -38,6 +43,16 @@ const tools = [
     inputSchema: z.object({
       pluginId: z.string()
     })
+  },
+  {
+    name: 'tool_store_show',
+    description: 'Show detailed metadata for a plugin (manifest + lock + capabilities)',
+    inputSchema: z.object({ pluginId: z.string() })
+  },
+  {
+    name: 'tool_store_rescan_integrity',
+    description: 'Recompute dist hash & metrics for a plugin and compare with manifest/lock',
+    inputSchema: z.object({ pluginId: z.string() })
   }
 ];
 
@@ -51,6 +66,17 @@ async function handleToolCall(name, args) {
       const list = pm.listPlugins();
       const stats = pm.getStats();
       return { content: [{ type: 'text', text: JSON.stringify({ plugins: list, stats }, null, 2) }] };
+    }
+    case 'tool_store_list_policies': {
+      const flags = {
+        PLUGIN_ALLOW_RUNTIME_DEPS: process.env.PLUGIN_ALLOW_RUNTIME_DEPS || null,
+        STRICT_CAPABILITIES: process.env.STRICT_CAPABILITIES || process.env.PLUGIN_STRICT_CAPABILITIES || null,
+        REQUIRE_SIGNATURES: process.env.REQUIRE_SIGNATURES || null,
+        PLUGIN_REQUIRE_SIGNED: process.env.PLUGIN_REQUIRE_SIGNED || null,
+        SANDBOX_AVAILABLE: process.env.SANDBOX_AVAILABLE || null,
+        SCHEMA_PATH: process.env.SCHEMA_PATH || null
+      };
+      return { content: [{ type: 'text', text: JSON.stringify({ flags }, null, 2) }] };
     }
     case 'tool_store_search': {
       const results = pm.search({ query: args?.query, type: args?.type });
@@ -69,6 +95,29 @@ async function handleToolCall(name, args) {
     case 'tool_store_remove': {
       const ok = await pm.removePlugin(args.pluginId);
       return { content: [{ type: 'text', text: JSON.stringify({ success: ok }, null, 2) }], isError: !ok };
+    }
+    case 'tool_store_show': {
+      const plugin = pm.getPlugin(args.pluginId);
+      if (!plugin) return { content: [{ type: 'text', text: 'Plugin not found' }], isError: true };
+      const rootDir = fs.existsSync(plugin.path) && fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
+      let lock = null;
+      try { const lp = path.join(rootDir, 'install.lock.json'); if (fs.existsSync(lp)) lock = JSON.parse(fs.readFileSync(lp,'utf8')); } catch {}
+      return { content: [{ type: 'text', text: JSON.stringify({ manifest: plugin.manifest, lock, capabilitySnapshot: plugin.capabilitySnapshot || null }, null, 2) }] };
+    }
+    case 'tool_store_rescan_integrity': {
+      const plugin = pm.getPlugin(args.pluginId);
+      if (!plugin) return { content: [{ type: 'text', text: 'Plugin not found' }], isError: true };
+      if (!(plugin.manifest && plugin.manifest.dist && plugin.manifest.dist.hash)) {
+        return { content: [{ type: 'text', text: 'Plugin missing dist metadata (not v2 spec?)' }], isError: true };
+      }
+      const rootDir = fs.existsSync(plugin.path) && fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
+      const distDir = path.join(rootDir, 'dist');
+      if (!fs.existsSync(distDir)) return { content: [{ type: 'text', text: 'dist directory missing' }], isError: true };
+      const { computeDistHashDetailed } = require('./registry/plugin_loader');
+      const { hashHex, fileCount, totalBytes } = computeDistHashDetailed(distDir);
+      const declared = (plugin.manifest.dist.hash || '').replace(/^sha256:/,'');
+      const match = hashHex.toLowerCase() === declared.toLowerCase();
+      return { content: [{ type: 'text', text: JSON.stringify({ recomputed: { hashHex, fileCount, totalBytes }, declared, match }, null, 2) }], isError: !match };
     }
     default:
       throw new Error(`Unknown marketplace tool: ${name}`);

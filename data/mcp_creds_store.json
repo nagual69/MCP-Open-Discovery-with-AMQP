@@ -8,7 +8,7 @@
     "type": "password",
     "username": "root",
     "url": "https://192.168.200.10:8006",
-    "password": "Nrv7+m7v9brMXTIdwnAceA==:M/HBau4XrCas4qiPN/13gw==",
+    "password": "aByxR3hpC5+VKuCdYM/TxQ==:/Rc3XH5dJ1IOSSUYDghYbA==",
     "notes": "realm:pam,verify_ssl:false,auto-added from .env file"
   }
 }

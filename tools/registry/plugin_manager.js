@@ -18,7 +18,7 @@ const os = require('os');
 const crypto = require('crypto');
 const EventEmitter = require('events');
 const axios = require('axios');
-const { loadSpecPlugin, topoSortByDependencies, computeDistHash } = require('./plugin_loader');
+const { loadSpecPlugin, topoSortByDependencies, computeDistHash, computeDistHashDetailed } = require('./plugin_loader');
 let AdmZip;
 try { AdmZip = require('adm-zip'); } catch {}
 // Optional credentials manager (used for trusted signing key retrieval)
@@ -63,6 +63,11 @@ class PluginManager extends EventEmitter {
     };
     if (process.env.PLUGIN_REQUIRE_SIGNED === 'true') {
       this.policy.requireSignature = true;
+    }
+    // Signature stub (Task10): allow REQUIRE_SIGNATURES (legacy alias) to demand signature presence
+    if (process.env.REQUIRE_SIGNATURES === 'true' && !this.policy.requireSignature) {
+      this.policy.requireSignature = true; // unify flag semantics
+      console.log('[Plugin Manager] REQUIRE_SIGNATURES enabled (alias -> policy.requireSignature)');
     }
     // Cache for trusted keys
     this._trustedKeysCache = null;
@@ -245,6 +250,25 @@ class PluginManager extends EventEmitter {
         // Validate dist hash for spec plugin if present (v2 requirement)
         try {
           if (plugin.manifest.manifestVersion === '2') {
+            // Phase2 Task17: migrate existing lock file early (before hash check) if present
+            try {
+              const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
+              const lockPath = path.join(rootDir, 'install.lock.json');
+              if (fs.existsSync(lockPath)) {
+                let existing = {};
+                try { existing = JSON.parse(await fs.promises.readFile(lockPath,'utf8')); } catch {}
+                const needsUpgrade = !('dependenciesPolicy' in existing) || !('fileCountActual' in existing) || !('schemaPathOverride' in existing);
+                if (needsUpgrade) {
+                  await this._writeExtendedLock(rootDir, plugin.manifest, {
+                    signatureVerified: existing.signatureVerified || plugin._signatureVerified,
+                    signerKeyId: existing.signerKeyId || plugin._signerKeyId
+                  });
+                  console.log(`[Plugin Manager] 🔄 Migrated lock file to v2 schema for ${plugin.id}`);
+                }
+              }
+            } catch (mErr) {
+              console.warn(`[Plugin Manager] Lock migration skipped for ${plugin.id}: ${mErr.message}`);
+            }
             const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
             const distDir = path.join(rootDir, 'dist');
             if (!plugin.manifest.dist || !plugin.manifest.dist.hash) {
@@ -295,6 +319,13 @@ class PluginManager extends EventEmitter {
                 prompts: result.captured.prompts.map(p => p.name)
               });
             }
+            // Phase2 Task16: persist capability snapshot onto plugin object for future diff / reporting
+            plugin.capabilitySnapshot = {
+              tools: result.captured.tools.map(t => t.name),
+              resources: result.captured.resources.map(r => r.name),
+              prompts: result.captured.prompts.map(p => p.name),
+              at: new Date().toISOString()
+            };
           }
         } catch (capErr) {
           console.warn(`[Plugin Manager] Capability snapshot failed for ${plugin.id}: ${capErr.message}`);
@@ -313,25 +344,14 @@ class PluginManager extends EventEmitter {
         } catch (e) {
           console.warn(`[Plugin Manager] Hot reload watch failed for ${plugin.id}: ${e.message}`);
         }
-        // Write/Update install.lock.json with signature metadata
+        // Write/Update install.lock.json with extended v2 metadata (Task7)
         try {
-          const lockPath = path.join(rootDir, 'install.lock.json');
-          const distHash = plugin.manifest.dist?.hash || null;
-          let existing = {};
-          if (fs.existsSync(lockPath)) {
-            try { existing = JSON.parse(await fs.promises.readFile(lockPath, 'utf8')); } catch {}
-          }
-          const lock = {
-            name: plugin.manifest.name,
-            version: plugin.manifest.version,
-            distHash,
-            installedAt: existing.installedAt || new Date().toISOString(),
+          await this._writeExtendedLock(rootDir, plugin.manifest, {
             signatureVerified: plugin._signatureVerified || false,
             signerKeyId: plugin._signerKeyId || null
-          };
-          await fs.promises.writeFile(lockPath, JSON.stringify(lock, null, 2), 'utf8');
+          });
         } catch (e) {
-          console.warn(`[Plugin Manager] ⚠️  Failed to write lock file for ${plugin.name}: ${e.message}`);
+          console.warn(`[Plugin Manager] ⚠️  Failed to write extended lock file for ${plugin.name}: ${e.message}`);
         }
       } else {
         // Legacy: Load the plugin module
@@ -622,6 +642,35 @@ class PluginManager extends EventEmitter {
   }
 
   /**
+   * Install a plugin directly from a ZIP buffer already on disk (Phase1 basic implementation)
+   * @param {string} zipPath absolute or relative path to .zip
+   * @param {Object} [opts]
+   * @param {boolean} [opts.autoLoad]
+   * @returns {Promise<Object>} result { success, id, path }
+   */
+  async installFromZip(zipPath, opts = {}) {
+    const abs = path.isAbsolute(zipPath) ? zipPath : path.resolve(zipPath);
+    if (!fs.existsSync(abs)) throw new Error(`ZIP not found: ${abs}`);
+    const data = await fs.promises.readFile(abs);
+    const suggestedName = path.basename(abs).replace(/\.zip$/i, '');
+    const staged = await this._stageAndValidateZip(data, { suggestedName });
+    const finalized = await this._finalizeInstall(staged);
+    // Attempt to produce extended lock file (Task7)
+    try {
+      const manifestPath = path.join(finalized.path, 'mcp-plugin.json');
+      if (fs.existsSync(manifestPath)) {
+        const manifest = JSON.parse(await fs.promises.readFile(manifestPath, 'utf8'));
+        await this._writeExtendedLock(finalized.path, manifest, {});
+      }
+    } catch (e) {
+      console.warn(`[Plugin Manager] ⚠️  Failed to write extended lock file (zip) for ${staged.id}: ${e.message}`);
+    }
+    await this._discoverPlugins();
+    if (opts.autoLoad) await this.loadPlugin(finalized.id);
+    return { success: true, id: finalized.id, path: finalized.path };
+  }
+
+  /**
    * Unload a plugin
    * @param {string} pluginId - Plugin ID to unload
    * @returns {Promise<boolean>} Success status
@@ -734,15 +783,22 @@ class PluginManager extends EventEmitter {
     const stats = {
       total: this.plugins.size,
       states: {},
-      types: {}
+      types: {},
+      dependencyPolicies: {},
+      signed: { verified: 0, unsigned: 0 },
+      sandbox: { sandboxRequired: 0 },
     };
-
     for (const plugin of this.plugins.values()) {
       stats.states[plugin.state] = (stats.states[plugin.state] || 0) + 1;
-      const type = plugin.manifest.type || 'unknown';
+      const type = (plugin.manifest && plugin.manifest.type) || (plugin.manifest?.entry ? 'spec-plugin' : 'unknown');
       stats.types[type] = (stats.types[type] || 0) + 1;
+      if (plugin.manifest && plugin.manifest.dist) {
+        const pol = plugin.manifest.dependenciesPolicy || 'bundled-only';
+        stats.dependencyPolicies[pol] = (stats.dependencyPolicies[pol] || 0) + 1;
+      }
+      if (plugin._signatureVerified) stats.signed.verified++; else stats.signed.unsigned++;
+      if (plugin.manifest && plugin.manifest.dependenciesPolicy === 'sandbox-required') stats.sandbox.sandboxRequired++;
     }
-
     return stats;
   }
 
@@ -851,13 +907,36 @@ class PluginManager extends EventEmitter {
     return h.digest('hex');
   }
 
-  _verifySignature(data, signatureBase64, publicKeyPem, algorithm = 'RSA-SHA256') {
+  _verifySignature(data, signatureBase64, publicKeyMaterial, algorithm = 'RSA-SHA256') {
     try {
-      const verify = crypto.createVerify(algorithm);
-      verify.update(data);
-      verify.end();
       const sig = Buffer.from(signatureBase64, 'base64');
-      return verify.verify(publicKeyPem, sig);
+      // Detect Ed25519 vs RSA/ECDSA based on key material
+      const isPossiblyRawEd25519 = /^[A-Za-z0-9+/=]{43,88}$/.test(publicKeyMaterial.trim()) && !publicKeyMaterial.includes('BEGIN');
+      const isPem = /BEGIN PUBLIC KEY/.test(publicKeyMaterial) || /BEGIN RSA PUBLIC KEY/.test(publicKeyMaterial) || /BEGIN CERTIFICATE/.test(publicKeyMaterial);
+      if (isPossiblyRawEd25519 && sig.length === 64) {
+        // Treat as raw 32-byte Ed25519 public key (base64) signing canonical data (UTF-8 bytes) directly
+        if (typeof crypto.verify === 'function') {
+          return crypto.verify(null, Buffer.from(data, 'utf8'), { key: Buffer.from(publicKeyMaterial, 'base64'), format: 'der', type: 'spki' }, sig);
+        }
+      }
+      if (isPem) {
+        // Use crypto.createVerify for RSA/ECDSA (algorithm param)
+        const verify = crypto.createVerify(algorithm);
+        verify.update(data);
+        verify.end();
+        return verify.verify(publicKeyMaterial, sig);
+      }
+      // Attempt node:crypto ed25519 verify API if available with keyObject
+      if (crypto.createPublicKey) {
+        try {
+          const keyObj = crypto.createPublicKey(publicKeyMaterial);
+          if (keyObj.asymmetricKeyType === 'ed25519') {
+            return crypto.verify(null, Buffer.from(data, 'utf8'), keyObj, sig);
+          }
+        } catch {}
+      }
+      console.warn('[Plugin Manager] ⚠️  Unrecognized public key material format for signature verification');
+      return false;
     } catch (e) {
       console.warn('[Plugin Manager] ⚠️  Signature verify error:', e.message);
       return false;
@@ -910,7 +989,8 @@ class PluginManager extends EventEmitter {
     if (!signatureB64) throw new Error('Signature file empty');
     const canonicalData = plugin.manifest.dist?.hash || '';
     for (const key of trusted) {
-      if (this._verifySignature(canonicalData, signatureB64, key.publicKeyPem)) {
+      if (this._verifySignature(canonicalData, signatureB64, key.publicKeyPem, 'RSA-SHA256') ||
+          this._verifySignature(canonicalData, signatureB64, key.publicKeyPem, 'sha256')) {
         plugin._signatureVerified = true;
         plugin._signerKeyId = key.id;
         console.log(`[Plugin Manager] 🔐 Signature OK for ${plugin.id} (key ${key.id})`);
@@ -998,21 +1078,22 @@ class PluginManager extends EventEmitter {
   }
 
   async _finalizeInstall(staged) {
-    if (!staged || !staged.id || !staged.srcPath) throw new Error('Invalid staged install');
+  const { IntegrityError, PolicyError } = require('./errors');
+  if (!staged || !staged.id || !staged.srcPath) throw new IntegrityError('Invalid staged install');
     if (staged.type === 'file') {
       const dest = path.join(this.defaultInstallDir, `${staged.id}.js`);
-      if (fs.existsSync(dest)) throw new Error(`Plugin already exists: ${staged.id}`);
+  if (fs.existsSync(dest)) throw new PolicyError(`Plugin already exists: ${staged.id}`);
       await fs.promises.copyFile(staged.srcPath, dest);
       return { id: staged.id, path: dest };
     } else if (staged.type === 'dir') {
       const destDir = path.join(this.defaultInstallDir, staged.id);
-      if (fs.existsSync(destDir)) throw new Error(`Plugin already exists: ${staged.id}`);
+  if (fs.existsSync(destDir)) throw new PolicyError(`Plugin already exists: ${staged.id}`);
       await fs.promises.mkdir(destDir, { recursive: true });
       // Copy directory recursively
       await this._copyDir(staged.srcPath, destDir);
       return { id: staged.id, path: destDir };
     }
-    throw new Error('Unknown staged type');
+  throw new PolicyError('Unknown staged type');
   }
 
   async _copyDir(src, dest) {
@@ -1026,6 +1107,52 @@ class PluginManager extends EventEmitter {
       } else if (e.isFile()) {
         await fs.promises.copyFile(s, d);
       }
+    }
+  }
+
+  // === Extended lock writer (Task7) ===
+  async _writeExtendedLock(rootDir, manifest, extra = {}) {
+    try {
+      if (!manifest || manifest.manifestVersion !== '2') return; // only for v2 plugins
+      const lockPath = path.join(rootDir, 'install.lock.json');
+      let existing = {};
+      if (fs.existsSync(lockPath)) {
+        try { existing = JSON.parse(await fs.promises.readFile(lockPath, 'utf8')); } catch {}
+      }
+      // Collect dist metrics if dist directory exists
+      let distMetrics = {};
+      const distDir = path.join(rootDir, 'dist');
+      if (fs.existsSync(distDir) && fs.statSync(distDir).isDirectory()) {
+        try {
+          const { fileCount, totalBytes } = computeDistHashDetailed(distDir);
+          distMetrics = { fileCount, totalBytes };
+        } catch (e) {
+          console.warn(`[Plugin Manager] Dist metrics failed for lock write: ${e.message}`);
+        }
+      }
+      const externalDeps = Array.isArray(manifest.externalDependencies) ? manifest.externalDependencies : [];
+      const lock = {
+        name: manifest.name,
+        version: manifest.version,
+        distHash: manifest.dist?.hash || null,
+        installedAt: existing.installedAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        signatureVerified: extra.signatureVerified || false,
+        signerKeyId: extra.signerKeyId || null,
+        dependenciesPolicy: manifest.dependenciesPolicy || 'bundled-only',
+        externalDependenciesCount: externalDeps.length,
+        coverage: manifest.dist?.coverage || null,
+        fileCountDeclared: manifest.dist?.fileCount || null,
+        totalBytesDeclared: manifest.dist?.totalBytes || null,
+        fileCountActual: distMetrics.fileCount || null,
+        totalBytesActual: distMetrics.totalBytes || null,
+        schemaPathOverride: process.env.SCHEMA_PATH || null,
+        strictCapabilities: this.policy.strictCapabilities || false,
+        requireSignature: this.policy.requireSignature || false
+      };
+      await fs.promises.writeFile(lockPath, JSON.stringify(lock, null, 2), 'utf8');
+    } catch (e) {
+      console.warn(`[Plugin Manager] ⚠️  Extended lock write failed: ${e.message}`);
     }
   }
 }

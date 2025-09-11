@@ -897,7 +897,35 @@ class MasterTestSuite {
     console.log(summary);
     
     const detailsFile = this.reportGenerator.saveDetailedReport();
-    
+
+    // Run extended plugin integrity & policy test (adjunct) if available
+    try {
+      const pluginTestPath = path.join(__dirname, 'test_plugin_integrity_and_policy.js');
+      if (fs.existsSync(pluginTestPath)) {
+        log('info', 'Running extended plugin integrity & policy tests...');
+        const { spawnSync } = require('child_process');
+        const nodeExec = process.execPath;
+        const proc = spawnSync(nodeExec, [pluginTestPath], { encoding: 'utf-8' });
+        results.extended = results.extended || {};
+        results.extended.pluginIntegrityPolicy = {
+          status: proc.status === 0 ? 'passed' : 'failed',
+            exitCode: proc.status,
+            stdout: (proc.stdout || '').split(/\r?\n/).slice(-50).join('\n'), // last 50 lines for brevity
+            stderr: proc.stderr,
+            ran: true
+        };
+        if (proc.status !== 0) {
+          log('warning', 'Extended plugin integrity & policy tests reported failures (non-blocking)');
+        } else {
+          log('success', 'Extended plugin integrity & policy tests passed');
+        }
+      } else {
+        log('warning', 'Extended plugin integrity & policy test file not found, skipping');
+      }
+    } catch (e) {
+      log('error', 'Error running extended plugin integrity & policy tests (non-blocking)', e.message);
+    }
+
     log('success', 'Master test suite completed!');
     return results;
   }
