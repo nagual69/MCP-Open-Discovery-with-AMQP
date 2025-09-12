@@ -1,0 +1,9 @@
+{
+  "description": "Fallback trusted signing keys for plugin verification when credentials manager is not configured.",
+  "keys": [
+    {
+      "id": "example-key-1",
+      "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALc8QW3JbZg9V9z2yM6QmKM2+8tMka1U\nqk7QwYy5p7O7M2tFvQeioe3wJ5F8V6YbWDt2tJXw4hKf3FZB2Gq3o+sCAwEAAQ==\n-----END PUBLIC KEY-----"
+    }
+  ]
+}

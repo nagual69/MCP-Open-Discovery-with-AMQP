@@ -39,6 +39,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    volumes:
+      - mcp_plugins:/plugins
 
   # RabbitMQ Message Broker
   rabbitmq:
@@ -133,6 +135,8 @@ services:
 
 volumes:
   rabbitmq_data:
+    driver: local
+  mcp_plugins:
     driver: local
 
 networks:

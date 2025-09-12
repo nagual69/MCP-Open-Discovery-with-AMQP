@@ -12,10 +12,24 @@ const fs = require('fs');
 const crypto = require('crypto');
 // Lightweight dist metadata cache to avoid re-hashing unchanged plugin dist trees
 const _distHashCache = new Map(); // key: distDir -> { fingerprint, result }
+// Global external dependencies allowlist cache
+let _globalAllowlistCache = { loaded: false, pathsTried: [], set: null };
 
-// Environment / feature flags
-const ALLOW_RUNTIME_DEPS = /^(1|true)$/i.test(process.env.PLUGIN_ALLOW_RUNTIME_DEPS || '');
-const STRICT_CAPABILITIES = /^(1|true)$/i.test(process.env.STRICT_CAPABILITIES || process.env.PLUGIN_STRICT_CAPABILITIES || '');
+// Environment / feature flags (centralized, dynamic)
+let _ENV_FLAGS_MOD = null;
+try { _ENV_FLAGS_MOD = require('./env_flags'); } catch { _ENV_FLAGS_MOD = null; }
+function getFlags() {
+  try {
+    if (_ENV_FLAGS_MOD && typeof _ENV_FLAGS_MOD.getFlags === 'function') return _ENV_FLAGS_MOD.getFlags();
+  } catch {}
+  // Fallback direct env read
+  const bool = (v) => /^(1|true|yes|on)$/i.test(String(v || ''));
+  return {
+    ALLOW_RUNTIME_DEPS: bool(process.env.PLUGIN_ALLOW_RUNTIME_DEPS),
+    STRICT_CAPABILITIES: bool(process.env.STRICT_CAPABILITIES) || bool(process.env.PLUGIN_STRICT_CAPABILITIES),
+    STRICT_INTEGRITY: bool(process.env.STRICT_INTEGRITY)
+  };
+}
 
 // Restricted core modules (denied unless permission present)
 const RESTRICTED_MODULES = [ 'fs', 'child_process', 'net', 'dgram', 'tls', 'http', 'https', 'dns' ];
@@ -51,13 +65,14 @@ function loadV2Schema() {
 
 function validateManifest(manifest) {
   if (!manifest || manifest.manifestVersion !== '2') {
-    return { ok: false, errors: [ { instancePath: '/manifestVersion', message: 'manifestVersion must be "2"' } ] };
+    return { ok: false, errors: [ { instancePath: '/manifestVersion', path: 'manifestVersion', message: 'manifestVersion must be "2"' } ] };
   }
   const validator = loadV2Schema();
   const ok = validator(manifest);
   // Enhance errors with friendly path + message combo
   const errors = ok ? [] : (validator.errors || []).map(e => ({
     instancePath: e.instancePath || '/',
+    path: formatAjvPath(e.instancePath || '/'),
     message: e.message || 'validation error',
     keyword: e.keyword,
     params: e.params
@@ -136,6 +151,7 @@ function createServerProxyCaptureOnly(server) {
 }
 
 async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
+  const { ALLOW_RUNTIME_DEPS, STRICT_CAPABILITIES, STRICT_INTEGRITY } = getFlags();
   // Validate manifest
   const { ok, errors } = validateManifest(manifest);
   if (!ok) {
@@ -161,10 +177,25 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
       if (!Array.isArray(manifest.externalDependencies) || manifest.externalDependencies.length === 0) {
         throw new PolicyError(`external-allowlist policy requires non-empty externalDependencies array`);
       }
+      // Require integrity/integrities fields when entries are objects
+      const entries = manifest.externalDependencies;
+      const bad = entries.filter(d => typeof d === 'object' && d !== null && !('integrity' in d) && !('integrities' in d));
+      if (bad.length) {
+        throw new PolicyError(`external-allowlist entries must include integrity/integrities fields`);
+      }
     }
     if (policy === 'sandbox-required') {
-      if (!process.env.SANDBOX_AVAILABLE) {
-        throw new PolicyError(`sandbox-required policy but SANDBOX_AVAILABLE not set`);
+      // Prefer sandbox detector module; fallback to env variable
+      let sandboxAvailable = false;
+      try {
+        const sandbox = require('../sandbox');
+        if (sandbox && typeof sandbox.isAvailable === 'function') {
+          sandboxAvailable = !!sandbox.isAvailable();
+        }
+      } catch {}
+      if (!sandboxAvailable) sandboxAvailable = !!process.env.SANDBOX_AVAILABLE;
+      if (!sandboxAvailable) {
+        throw new PolicyError(`sandbox-required policy but sandbox is not available`);
       }
       // sandbox-required implies ALLOW_RUNTIME_DEPS for declared externals
       if (manifest.externalDependencies && manifest.externalDependencies.length > 0 && !ALLOW_RUNTIME_DEPS) {
@@ -216,8 +247,11 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
         if (seen.has(entry.path)) {
           throw new IntegrityError(`Duplicate checksum path detected: ${entry.path}`);
         }
-        seen.add(entry.path);
-        const abs = path.join(distDir, entry.path.replace(/^dist\//,'').replace(/^\.\//,''));
+        const normalized = entry.path
+          .replace(/^dist\//, '')
+          .replace(/^\.\//, '');
+        seen.add(normalized);
+        const abs = path.join(distDir, normalized);
         if (!fs.existsSync(abs)) {
           console.warn(`[Plugin Loader] ⚠ checksum path listed but file missing: ${entry.path}`);
           continue;
@@ -233,7 +267,12 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
       if (manifest.dist.coverage === 'all') {
         const missing = files.filter(f => !seen.has(f));
         if (missing.length) {
-          console.warn(`[Plugin Loader] ⚠ coverage=all but ${missing.length} files lack checksums (e.g. ${missing.slice(0,3).join(', ')})`);
+          const msg = `coverage=all but ${missing.length} files lack checksums (e.g. ${missing.slice(0,3).join(', ')})`;
+          if (STRICT_INTEGRITY) {
+            throw new IntegrityError(msg);
+          } else {
+            console.warn(`[Plugin Loader] ⚠ ${msg}`);
+          }
         }
       }
       if (mismatches > 0) {
@@ -269,12 +308,16 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
   const allowlist = (policy === 'external-allowlist' || policy === 'sandbox-required') && Array.isArray(manifest.externalDependencies)
     ? new Set(manifest.externalDependencies.map(d => typeof d === 'string' ? d : d.name || d.id || String(d)))
     : null;
+  // Load global allowlist (ops-controlled) if present
+  const globalAllow = getGlobalAllowlistDependencies();
   const coreModules = new Set(Module.builtinModules || []);
   const isSandbox = policy === 'sandbox-required';
   // For sandbox-required, wrap global Function / eval temporarily
   const originalEval = global.eval;
   const originalFunction = global.Function;
   let mod;
+  let create;
+  let capturedResult = null;
   try {
     Module._load = function(request, parent, isMain) {
       const parentFile = parent && parent.filename ? parent.filename : '';
@@ -287,8 +330,16 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
       // External allowlist enforcement: only for modules that are NOT relative/absolute/core
       if (allowlist && parentFile.startsWith(pluginRoot)) {
         const isExternalRef = !request.startsWith('.') && !path.isAbsolute(request) && !coreModules.has(request);
-        if (isExternalRef && !allowlist.has(request)) {
-          throw new Error(`Plugin '${manifest.name}' attempted to require module '${request}' not in external allowlist`);
+        if (isExternalRef) {
+          // Require both manifest allowlist and global ops allowlist (if provided)
+          const inManifest = allowlist.has(request);
+          const inGlobal = !globalAllow || globalAllow.has(request);
+          if (!inManifest) {
+            throw new Error(`Plugin '${manifest.name}' attempted to require module '${request}' not in plugin external allowlist`);
+          }
+          if (!inGlobal) {
+            throw new Error(`Plugin '${manifest.name}' attempted to require module '${request}' not in global allowlist`);
+          }
         }
       }
       if (isSandbox && parentFile.startsWith(pluginRoot)) {
@@ -304,6 +355,15 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
       global.Function = function() { throw new Error(`Function constructor blocked in sandbox-required plugin '${manifest.name}'`); };
     }
     mod = await import(entryUrl);
+    create = typeof mod.createPlugin === 'function' ? mod.createPlugin
+      : (mod && mod.default && typeof mod.default.createPlugin === 'function' ? mod.default.createPlugin : null);
+    if (typeof create !== 'function') {
+      const { PolicyError } = require('./errors');
+      throw new PolicyError(`Entry does not export createPlugin(): ${manifest.entry}`);
+    }
+  const { proxy, captured } = createServerProxyCaptureOnly(server);
+  await create(proxy);
+  capturedResult = captured;
   } finally {
     Module._load = originalLoad; // restore regardless of success/failure
     if (isSandbox) {
@@ -311,15 +371,8 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
       global.Function = originalFunction;
     }
   }
-  const create = typeof mod.createPlugin === 'function' ? mod.createPlugin
-    : (mod && mod.default && typeof mod.default.createPlugin === 'function' ? mod.default.createPlugin : null);
-  if (typeof create !== 'function') {
-  const { PolicyError } = require('./errors');
-  throw new PolicyError(`Entry does not export createPlugin(): ${manifest.entry}`);
-  }
-
-  const { proxy, captured } = createServerProxyCaptureOnly(server);
-  await create(proxy);
+  // Use capturedResult gathered during create() execution
+  const captured = capturedResult || { tools: [], resources: [], prompts: [] };
 
   // Capability reconciliation (if manifest.capabilities present treat as declared intent)
   let capabilityDiff = null;
@@ -394,32 +447,32 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
     }
   }
 
-  return { captured, capabilityDiff };
-}
-
-// Post-load summary (debug mode)
-if (process.env.DEBUG_REGISTRY) {
-  try {
-    const summary = {
-      plugin: manifest?.name,
-      version: manifest?.version,
-      policy: manifest?.dependenciesPolicy || 'bundled-only',
-      dist: {
-        hash: manifest?.dist?.hash,
-        fileCountDeclared: manifest?.dist?.fileCount,
-        totalBytesDeclared: manifest?.dist?.totalBytes
-      },
-      captured: {
-        tools: captured?.tools?.length || 0,
-        resources: captured?.resources?.length || 0,
-        prompts: captured?.prompts?.length || 0
-      },
-      capabilityDiff
-    };
-    console.log('[Plugin Loader][DEBUG] Summary:', JSON.stringify(summary, null, 2));
-  } catch (e) {
-    console.warn('[Plugin Loader][DEBUG] Failed to emit summary:', e.message);
+  // Debug summary emission is scoped here where manifest/captured/capabilityDiff are defined
+  if (process.env.DEBUG_REGISTRY) {
+    try {
+      const summary = {
+        plugin: manifest?.name,
+        version: manifest?.version,
+        policy: manifest?.dependenciesPolicy || 'bundled-only',
+        dist: {
+          hash: manifest?.dist?.hash,
+          fileCountDeclared: manifest?.dist?.fileCount,
+          totalBytesDeclared: manifest?.dist?.totalBytes
+        },
+        captured: {
+          tools: captured?.tools?.length || 0,
+          resources: captured?.resources?.length || 0,
+          prompts: captured?.prompts?.length || 0
+        },
+        capabilityDiff
+      };
+      console.log('[Plugin Loader][DEBUG] Summary:', JSON.stringify(summary, null, 2));
+    } catch (e) {
+      console.warn('[Plugin Loader][DEBUG] Failed to emit summary:', e.message);
+    }
   }
+
+  return { captured, capabilityDiff };
 }
 
 // === Helpers ===
@@ -498,3 +551,48 @@ module.exports = {
   computeDistHashDetailed,
   staticSecurityScan
 };
+
+// ---- Local helpers (kept after exports for bundlers) ----
+function formatAjvPath(instancePath) {
+  if (!instancePath || instancePath === '/') return '';
+  // Convert /a/b/0/c -> a.b[0].c for readability
+  const parts = instancePath.split('/').filter(Boolean);
+  const out = [];
+  for (const p of parts) {
+    const idx = Number(p);
+    if (!Number.isNaN(idx) && String(idx) === p) {
+      out.push(`[${idx}]`);
+    } else {
+      if (out.length > 0 && out[out.length - 1].endsWith(']')) out.push('.');
+      if (out.length > 0 && !out[out.length - 1].endsWith('.') && out[out.length - 1] !== '') out.push('.');
+      out.push(p);
+    }
+  }
+  return out.join('').replace(/^\./, '');
+}
+
+function getGlobalAllowlistDependencies() {
+  try {
+    const base = path.resolve(__dirname, '..');
+    const candidate = path.join(base, 'plugins', 'allowlist-deps.json');
+    if (!_globalAllowlistCache.loaded) {
+      _globalAllowlistCache.pathsTried = [candidate];
+      _globalAllowlistCache.loaded = true;
+    }
+    if (!fs.existsSync(candidate)) return null;
+    const stat = fs.statSync(candidate);
+    const mtime = stat.mtimeMs;
+    if (_globalAllowlistCache.mtime === mtime && _globalAllowlistCache.set) {
+      return _globalAllowlistCache.set;
+    }
+    const raw = JSON.parse(fs.readFileSync(candidate, 'utf8'));
+    const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.dependencies) ? raw.dependencies : []);
+    const set = new Set(arr.map(x => typeof x === 'string' ? x : (x && x.name) ? x.name : x));
+    _globalAllowlistCache.set = set;
+    _globalAllowlistCache.mtime = mtime;
+    return set;
+  } catch (e) {
+    console.warn('[Plugin Loader] ⚠ Failed to read global allowlist:', e.message);
+    return null;
+  }
+}

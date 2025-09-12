@@ -497,7 +497,7 @@ async function registerAllTools(server, options = {}) {
         { name: 'proxmox_tools_sdk', category: 'Proxmox' },
         { name: 'snmp_tools_sdk', category: 'SNMP' },
         { name: 'zabbix_tools_sdk', category: 'Zabbix' },
-  { name: 'marketplace_tools_sdk', category: 'Marketplace' },
+        { name: 'marketplace_tools_sdk', category: 'Marketplace' },
         { name: 'debug_validation_sdk', category: 'Debug' },
         { name: 'credentials_tools_sdk', category: 'Credentials' },
         { name: 'registry_tools_sdk', category: 'Registry' }
@@ -578,6 +578,16 @@ async function registerAllTools(server, options = {}) {
       const { loaded, failed } = await pm.loadAllSpecPlugins({ activate: true });
       if (loaded?.length) console.log(`[Registry] 🔌 Loaded ${loaded.length} spec plugin(s)`);
       if (failed?.length) console.warn('[Registry] ⚠️ Plugin load failures:', failed);
+      // Boot-time security summary
+      try {
+        const stats = pm.getStats();
+        console.log('[Registry] 🔒 Plugin Security Summary:', JSON.stringify({
+          total: stats.total,
+          dependencyPolicies: stats.dependencyPolicies,
+          signed: stats.signed,
+          sandbox: stats.sandbox
+        }));
+      } catch {}
     } catch (e) {
       console.warn('[Registry] ⚠️ Plugin manager initialization failed:', e.message);
     }
@@ -746,6 +756,22 @@ async function applyPluginCapabilityDiff(pluginId, diff) {
 
 // (cleanup defined earlier; removed duplicate)
 
+// Aggregate a concise plugin security report for external surfaces (marketplace, health, etc.)
+function getPluginSecurityReport() {
+  try {
+    const pm = getPluginManager();
+    const stats = pm.getStats();
+    return {
+      totalPlugins: stats.total,
+      dependencyPolicies: stats.dependencyPolicies,
+      signatures: stats.signed,
+      sandbox: stats.sandbox
+    };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
 module.exports = {
   registerAllTools,
   registerAllResources,
@@ -761,5 +787,6 @@ module.exports = {
   dynamicUnloadModule,
   reregisterModuleTools,
   registerMCPTool,
+  getPluginSecurityReport,
   cleanup
 };

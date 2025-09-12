@@ -26,6 +26,7 @@ services:
     volumes:
       - mcp_data:/home/mcpuser/app/data
       - mcp_logs:/home/mcpuser/app/logs
+      - mcp_plugins:/plugins
 
     networks:
       - mcp-network
@@ -80,4 +81,6 @@ volumes:
   mcp_logs:
     driver: local
   rabbitmq_data:
+    driver: local
+  mcp_plugins:
     driver: local

@@ -32,6 +32,8 @@ services:
       - mcp_data:/home/mcpuser/app/data
       # Optional: Mount logs directory
       - mcp_logs:/home/mcpuser/app/logs
+      # Plugins volume (2GB target; actual limit depends on Docker driver)
+      - mcp_plugins:/plugins
     networks:
       - mcp-network
     restart: unless-stopped
@@ -302,6 +304,8 @@ volumes:
   mcp_logs:
     driver: local
   rabbitmq_data:
+    driver: local
+  mcp_plugins:
     driver: local
   # Zabbix volumes
   zabbix_postgres_data:

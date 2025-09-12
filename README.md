@@ -823,6 +823,7 @@ services:
 - **[Security Implementation](./docs/theincrediblejourney/SECURITY_IMPLEMENTATION.md)** - Detailed capability-based security model
 - **[Usage Examples](./docs/theincrediblejourney/USAGE_EXAMPLES.md)** - Complete NMAP scanning examples and workflows
 - **[MCP Compliance](./docs/theincrediblejourney/MCP_COMPLIANCE.md)** - MCP protocol implementation details
+ - **[Environment Variables & Settings](./docs/ENVIRONMENT_VARIABLES.md)** - Comprehensive list of environment variables, defaults, and usage examples
 
 ### **📋 Development Resources**
 
