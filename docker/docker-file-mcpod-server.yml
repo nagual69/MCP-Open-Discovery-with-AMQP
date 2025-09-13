@@ -26,7 +26,7 @@ services:
     volumes:
       - mcp_data:/home/mcpuser/app/data
       - mcp_logs:/home/mcpuser/app/logs
-      - mcp_plugins:/plugins
+      - mcp_plugins:/home/mcpuser/plugins
 
     networks:
       - mcp-network

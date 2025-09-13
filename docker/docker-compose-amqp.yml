@@ -40,7 +40,7 @@ services:
       retries: 3
       start_period: 40s
     volumes:
-      - mcp_plugins:/plugins
+      - mcp_plugins:/home/mcpuser/plugins
 
   # RabbitMQ Message Broker
   rabbitmq:

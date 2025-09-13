@@ -235,6 +235,12 @@ Verify:
 curl http://localhost:3000/health
 ```
 
+### Runtime paths
+
+- Data: `/home/mcpuser/app/data` (container volume)
+- Logs: `/home/mcpuser/app/logs` (container volume)
+- Plugins: default `/home/mcpuser/plugins` in containers (mounted volume). When running locally, defaults to `<home>/plugins` then `<cwd>/plugins` if needed. Override with `PLUGINS_ROOT` (must be writable).
+
 ### Minimal production compose
 
 For a lean, production-only deployment of the MCP server:

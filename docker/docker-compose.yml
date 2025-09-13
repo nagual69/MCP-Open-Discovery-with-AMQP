@@ -32,8 +32,8 @@ services:
       - mcp_data:/home/mcpuser/app/data
       # Optional: Mount logs directory
       - mcp_logs:/home/mcpuser/app/logs
-      # Plugins volume (2GB target; actual limit depends on Docker driver)
-      - mcp_plugins:/plugins
+      # Plugins volume (mounted under user home to ensure write access)
+      - mcp_plugins:/home/mcpuser/plugins
     networks:
       - mcp-network
     restart: unless-stopped

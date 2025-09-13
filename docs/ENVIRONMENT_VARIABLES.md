@@ -81,8 +81,8 @@ Centralized boolean flags (parsed in `tools/registry/env_flags.js`):
   - Default: false; real detector may check runtime.
 
 - PLUGINS_ROOT
-  - What: Root directory for plugin store; container deploys mount `/plugins`.
-  - Default: `/plugins` if exists; else `<cwd>/plugins`.
+  - What: Root directory for plugin store. In containers, the default writable location is `/home/mcpuser/plugins`.
+  - Default resolution order: `PLUGINS_ROOT` (if set and writable) → `<home>/plugins` → `<cwd>/plugins`.
 
 - DEBUG_REGISTRY
   - What: Enable extra registry/loader debug summaries.
@@ -119,9 +119,9 @@ SNMP/Proxmox/Nmap/etc. may have their own tool-specific vars (see respective `to
 ## Docker and deployment notes
 
 - Always use `./rebuild_deploy.ps1` for Windows deployments.
-- Container images mount a persistent 2GB volume at `/plugins`:
-  - Downloads/staging at `/plugins/temp`
-  - Installed plugins categorized under `/plugins/tools`, `/plugins/resources`, `/plugins/prompts`.
+- Container images mount a persistent volume at `/home/mcpuser/plugins`:
+  - Downloads/staging at `/home/mcpuser/plugins/temp`
+  - Installed plugins categorized under `/home/mcpuser/plugins/tools`, `/home/mcpuser/plugins/resources`, `/home/mcpuser/plugins/prompts`.
 
 ## Quick examples
 

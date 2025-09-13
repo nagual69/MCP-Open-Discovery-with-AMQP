@@ -49,9 +49,39 @@ class PluginManager extends EventEmitter {
     super();
     this.registry = registry;
     this.plugins = new Map();
-    // Prefer container-mounted /plugins volume with structured subdirs
-    const PLUGINS_ROOT = process.env.PLUGINS_ROOT || '/plugins';
-    this.pluginRoot = fs.existsSync(PLUGINS_ROOT) ? PLUGINS_ROOT : path.join(process.cwd(), 'plugins');
+    // Prefer a writable home-based plugins directory by default.
+    // If PLUGINS_ROOT is explicitly set, use it only when writable; otherwise fall back to <home>/plugins, then <cwd>/plugins.
+    const envRoot = (process.env.PLUGINS_ROOT || '').trim() || null;
+    const homeDir = (os.homedir && os.homedir()) || process.env.HOME || process.cwd();
+    const defaultHomeRoot = path.join(homeDir, 'plugins');
+    const defaultCwdRoot = path.join(process.cwd(), 'plugins');
+
+    const isWritableCandidate = (p) => {
+      try {
+        // If path exists, check write access
+        if (fs.existsSync(p)) {
+          fs.accessSync(p, fs.constants.W_OK);
+          return true;
+        }
+        // If it doesn't exist, check that parent is writable (so we can create it)
+        const parent = path.dirname(p);
+        fs.accessSync(parent, fs.constants.W_OK);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    let chosenRoot = null;
+    if (envRoot && isWritableCandidate(envRoot)) {
+      chosenRoot = envRoot;
+    } else if (envRoot && !isWritableCandidate(envRoot)) {
+      console.warn(`[Plugin Manager] ⚠️ PLUGINS_ROOT='${envRoot}' is not writable; falling back to a safe default`);
+    }
+    if (!chosenRoot) {
+      chosenRoot = isWritableCandidate(defaultHomeRoot) ? defaultHomeRoot : defaultCwdRoot;
+    }
+    this.pluginRoot = chosenRoot;
     this.pluginDirs = options.pluginDirs || [
       path.join(this.pluginRoot, 'tools'),
       path.join(this.pluginRoot, 'prompts'),

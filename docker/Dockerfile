@@ -63,13 +63,16 @@ COPY tools/ ./tools/
 COPY scripts/ ./scripts/
 
 ## Ensure runtime writable dirs exist so named volumes inherit ownership
-RUN mkdir -p /home/mcpuser/app/data /home/mcpuser/app/logs 
+RUN mkdir -p /home/mcpuser/app/data /home/mcpuser/app/logs /home/mcpuser/plugins 
 
 # Set permissions
-RUN chown -R mcpuser:mcpuser /home/mcpuser/app
+RUN chown -R mcpuser:mcpuser /home/mcpuser/app /home/mcpuser/plugins
 
 # Set default transport mode to HTTP for container deployment
 ENV TRANSPORT_MODE=http
+
+# Default plugins root inside the container (can be overridden by env)
+ENV PLUGINS_ROOT=/home/mcpuser/plugins
 
 # Expose the port
 EXPOSE 3000

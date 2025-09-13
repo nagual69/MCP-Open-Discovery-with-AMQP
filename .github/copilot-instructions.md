@@ -70,12 +70,12 @@ Use this section when working on plugins, marketplace flows, and the standardize
 
 ### Storage layout and lifecycle
 
-- Root: `/plugins` (container-mounted, 2GB by default) or `<cwd>/plugins` if the root doesn’t exist.
-- Staging: `/plugins/temp` (atomic staging for URL/file installs; auto-created).
+- Root: `/home/mcpuser/plugins` in containers (mounted volume), or `<home>/plugins` / `<cwd>/plugins` if no env override.
+- Staging: `/home/mcpuser/plugins/temp` (atomic staging for URL/file installs; auto-created).
 - Categorized installs (auto):
-  - `/plugins/tools` for tool-heavy plugins
-  - `/plugins/resources` for resource-only plugins
-  - `/plugins/prompts` for prompt-only plugins
+  - `/home/mcpuser/plugins/tools` for tool-heavy plugins
+  - `/home/mcpuser/plugins/resources` for resource-only plugins
+  - `/home/mcpuser/plugins/prompts` for prompt-only plugins
 - Discovery: `PluginManager` scans those folders and picks up either:
   - Spec plugin: a directory with `mcp-plugin.json` (manifest v2) + `dist/` + `entry` file
   - Legacy module: a single `.js` file (treated as `type=tool-module`)
@@ -154,7 +154,7 @@ Minimal “contract” for a spec plugin:
    - Optional: `signatures[]` and `sbom`
 3) Ensure `dist/` contains all runtime files; compute the `sha256` over entire `dist/` (the loader will recompute and verify).
 4) Optional but recommended: sign the plugin by placing `mcp-plugin.sig` (or fill `signatures[]`) and configure `PLUGIN_TRUSTED_KEY_IDS`.
-5) Install: zip the folder and use `tool_store_install` (URL or file path) or copy under `/plugins/<category>/<id>`.
+5) Install: zip the folder and use `tool_store_install` (URL or file path) or copy under `/home/mcpuser/plugins/<category>/<id>`.
 6) Verify: run `tool_store_verify` and `tool_store_show`; check `install.lock.json` created by the manager for lock v2 data.
 7) Load/activate: use `plugin_load` (and `plugin_activate` if needed) or `pm.loadAllSpecPlugins()` at startup.
 
