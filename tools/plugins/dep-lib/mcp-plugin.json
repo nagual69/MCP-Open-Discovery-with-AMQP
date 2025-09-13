@@ -1,0 +1,9 @@
+{
+  "manifestVersion": "2",
+  "name": "dep-lib",
+  "version": "1.0.0",
+  "entry": "dist/index.mjs",
+  "dist": { "hash": "sha256:651bc695e9edc525011dc3ff413b5756e77fb5eff37b5c3f452b43ac0d7beaec" },
+  "description": "Example dependency library plugin (v2 manifest)",
+  "permissions": {}
+}

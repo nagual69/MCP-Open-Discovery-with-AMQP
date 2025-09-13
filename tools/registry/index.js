@@ -45,21 +45,6 @@ function _saveGlobals() {
   g[GLOBAL_KEY].pluginCapabilities = pluginCapabilities;
 }
 
-// Boot summary (Task9): log key env feature flags once when module loads
-if (!g[GLOBAL_KEY]._bootFlagsLogged) {
-  g[GLOBAL_KEY]._bootFlagsLogged = true;
-  const flags = {
-    SCHEMA_PATH: process.env.SCHEMA_PATH || null,
-    STRICT_CAPABILITIES: process.env.STRICT_CAPABILITIES || process.env.PLUGIN_STRICT_CAPABILITIES || null,
-    PLUGIN_ALLOW_RUNTIME_DEPS: process.env.PLUGIN_ALLOW_RUNTIME_DEPS || null,
-    REQUIRE_SIGNATURES: process.env.REQUIRE_SIGNATURES || null,
-    PLUGIN_REQUIRE_SIGNED: process.env.PLUGIN_REQUIRE_SIGNED || null
-  };
-  try {
-    console.log('[Registry] Feature Flags:', JSON.stringify(flags));
-  } catch {}
-}
-
 /**
  * Explicit test/helper injection to set the server instance safely.
  * Prefer this over mutating globals directly in tests.
@@ -105,29 +90,6 @@ function registerMCPTool(server, tool, handleToolCall) {
       try {
         const hasArgs = zodRawShape && Object.keys(zodRawShape).length > 0;
         const args = hasArgs ? parsedArgsOrExtra : {};
-        // Attach MCP meta/context if present (progressToken, sessionId, requestId, signal)
-        try {
-          const context = (typeof maybeExtra === 'object') ? maybeExtra : undefined;
-          const meta = {};
-          if (context && context.sessionId) meta.sessionId = context.sessionId;
-          if (context && context.requestId) meta.requestId = context.requestId;
-          if (context && context.signal) meta.signal = context.signal;
-          if (context && context.requestInfo && context.requestInfo.progressToken !== undefined) {
-            meta.progressToken = context.requestInfo.progressToken;
-          }
-          if (Object.keys(meta).length > 0) {
-            args._meta = meta;
-          }
-          // If AbortSignal is provided, wire to our cancellation helper using progressToken
-          try {
-            if (meta.signal && typeof meta.signal.addEventListener === 'function' && meta.progressToken !== undefined) {
-              const { requestCancellation } = require('../mcp/progress_helper');
-              meta.signal.addEventListener('abort', () => {
-                try { requestCancellation(meta.progressToken); } catch {}
-              }, { once: true });
-            }
-          } catch {}
-        } catch {}
         if (validateParams && hasArgs) {
           const validation = validateParams(args);
           if (!validation.success) {
@@ -139,7 +101,7 @@ function registerMCPTool(server, tool, handleToolCall) {
         }
 
         // Execute tool with parsed args
-  const result = await handleToolCall(tool.name, args);
+        const result = await handleToolCall(tool.name, args);
         
         // Ensure result follows MCP CallToolResult interface (PRESERVED LOGIC)
         if (result && typeof result === 'object') {
@@ -520,7 +482,7 @@ async function registerAllTools(server, options = {}) {
         { name: 'proxmox_tools_sdk', category: 'Proxmox' },
         { name: 'snmp_tools_sdk', category: 'SNMP' },
         { name: 'zabbix_tools_sdk', category: 'Zabbix' },
-        { name: 'marketplace_tools_sdk', category: 'Marketplace' },
+  { name: 'marketplace_tools_sdk', category: 'Marketplace' },
         { name: 'debug_validation_sdk', category: 'Debug' },
         { name: 'credentials_tools_sdk', category: 'Credentials' },
         { name: 'registry_tools_sdk', category: 'Registry' }
@@ -601,16 +563,6 @@ async function registerAllTools(server, options = {}) {
       const { loaded, failed } = await pm.loadAllSpecPlugins({ activate: true });
       if (loaded?.length) console.log(`[Registry] 🔌 Loaded ${loaded.length} spec plugin(s)`);
       if (failed?.length) console.warn('[Registry] ⚠️ Plugin load failures:', failed);
-      // Boot-time security summary
-      try {
-        const stats = pm.getStats();
-        console.log('[Registry] 🔒 Plugin Security Summary:', JSON.stringify({
-          total: stats.total,
-          dependencyPolicies: stats.dependencyPolicies,
-          signed: stats.signed,
-          sandbox: stats.sandbox
-        }));
-      } catch {}
     } catch (e) {
       console.warn('[Registry] ⚠️ Plugin manager initialization failed:', e.message);
     }
@@ -779,22 +731,6 @@ async function applyPluginCapabilityDiff(pluginId, diff) {
 
 // (cleanup defined earlier; removed duplicate)
 
-// Aggregate a concise plugin security report for external surfaces (marketplace, health, etc.)
-function getPluginSecurityReport() {
-  try {
-    const pm = getPluginManager();
-    const stats = pm.getStats();
-    return {
-      totalPlugins: stats.total,
-      dependencyPolicies: stats.dependencyPolicies,
-      signatures: stats.signed,
-      sandbox: stats.sandbox
-    };
-  } catch (e) {
-    return { error: e.message };
-  }
-}
-
 module.exports = {
   registerAllTools,
   registerAllResources,
@@ -810,6 +746,5 @@ module.exports = {
   dynamicUnloadModule,
   reregisterModuleTools,
   registerMCPTool,
-  getPluginSecurityReport,
   cleanup
 };

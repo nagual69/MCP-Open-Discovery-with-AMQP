@@ -1,0 +1,10 @@
+{
+  "manifestVersion": "2",
+  "name": "spec-v2-demo",
+  "version": "1.0.0",
+  "entry": "dist/index.mjs",
+  "dist": {
+    "hash": "sha256:5b0032020a229d1bb025530f725133e36138e8182180afc7102ed01d8cea8838"
+  },
+  "permissions": {}
+}

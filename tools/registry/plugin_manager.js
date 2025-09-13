@@ -18,11 +18,7 @@ const os = require('os');
 const crypto = require('crypto');
 const EventEmitter = require('events');
 const axios = require('axios');
-const { loadSpecPlugin, topoSortByDependencies, computeDistHash, computeDistHashDetailed } = require('./plugin_loader');
-let ENV_FLAGS = {};
-try { ENV_FLAGS = require('./env_flags'); } catch {}
-let sandboxDetector;
-try { sandboxDetector = require('../sandbox'); } catch {}
+const { loadSpecPlugin, topoSortByDependencies, computeDistHash } = require('./plugin_loader');
 let AdmZip;
 try { AdmZip = require('adm-zip'); } catch {}
 // Optional credentials manager (used for trusted signing key retrieval)
@@ -49,62 +45,26 @@ class PluginManager extends EventEmitter {
     super();
     this.registry = registry;
     this.plugins = new Map();
-    // Prefer a writable home-based plugins directory by default.
-    // If PLUGINS_ROOT is explicitly set, use it only when writable; otherwise fall back to <home>/plugins, then <cwd>/plugins.
-    const envRoot = (process.env.PLUGINS_ROOT || '').trim() || null;
-    const homeDir = (os.homedir && os.homedir()) || process.env.HOME || process.cwd();
-    const defaultHomeRoot = path.join(homeDir, 'plugins');
-    const defaultCwdRoot = path.join(process.cwd(), 'plugins');
-
-    const isWritableCandidate = (p) => {
-      try {
-        // If path exists, check write access
-        if (fs.existsSync(p)) {
-          fs.accessSync(p, fs.constants.W_OK);
-          return true;
-        }
-        // If it doesn't exist, check that parent is writable (so we can create it)
-        const parent = path.dirname(p);
-        fs.accessSync(parent, fs.constants.W_OK);
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
-    let chosenRoot = null;
-    if (envRoot && isWritableCandidate(envRoot)) {
-      chosenRoot = envRoot;
-    } else if (envRoot && !isWritableCandidate(envRoot)) {
-      console.warn(`[Plugin Manager] ⚠️ PLUGINS_ROOT='${envRoot}' is not writable; falling back to a safe default`);
-    }
-    if (!chosenRoot) {
-      chosenRoot = isWritableCandidate(defaultHomeRoot) ? defaultHomeRoot : defaultCwdRoot;
-    }
-    this.pluginRoot = chosenRoot;
     this.pluginDirs = options.pluginDirs || [
-      path.join(this.pluginRoot, 'tools'),
-      path.join(this.pluginRoot, 'prompts'),
-      path.join(this.pluginRoot, 'resources')
+      path.join(__dirname, '..', 'plugins'),
+      path.join(process.cwd(), 'plugins'),
+      path.join(process.cwd(), 'custom-tools')
     ];
     this.enabled = options.enabled !== false;
     this.sandboxing = options.sandboxing !== false;
     this.maxPlugins = options.maxPlugins || 50;
-  this.defaultInstallDir = options.defaultInstallDir || path.join(this.pluginRoot, 'tools');
-    this.tempDir = options.tempDir || path.join(this.pluginRoot, 'temp');
+  this.defaultInstallDir = options.defaultInstallDir || this.pluginDirs[0];
     // Security/policy flags
     this.policy = {
       requireChecksum: false,
       requireSignature: false,
       strictCapabilities: false,
-      strictSbom: !!ENV_FLAGS.STRICT_SBOM,
       ...(options.policy || {})
     };
-    if (ENV_FLAGS.REQUIRE_SIGNATURES) {
+    if (process.env.PLUGIN_REQUIRE_SIGNED === 'true') {
       this.policy.requireSignature = true;
-      console.log('[Plugin Manager] REQUIRE_SIGNATURES enabled (normalized)');
     }
-  // Cache for trusted keys
+    // Cache for trusted keys
     this._trustedKeysCache = null;
     // Prefer DI; fall back to registry getter if available
     this.validationManager = options.validationManager || (this.registry && typeof this.registry.getValidationManager === 'function'
@@ -124,10 +84,10 @@ class PluginManager extends EventEmitter {
 
     console.log('[Plugin Manager] 🔌 Initializing plugin system...');
     
-  // Ensure root and subdirectories exist
-  await this._ensureDirectory(this.pluginRoot);
-  await this._ensureDirectory(this.tempDir);
-  for (const dir of this.pluginDirs) await this._ensureDirectory(dir);
+    // Create plugin directories if they don't exist
+    for (const dir of this.pluginDirs) {
+      await this._ensureDirectory(dir);
+    }
 
     await this._discoverPlugins();
     console.log(`[Plugin Manager] ✅ Initialized with ${this.plugins.size} plugins discovered`);
@@ -285,25 +245,6 @@ class PluginManager extends EventEmitter {
         // Validate dist hash for spec plugin if present (v2 requirement)
         try {
           if (plugin.manifest.manifestVersion === '2') {
-            // Phase2 Task17: migrate existing lock file early (before hash check) if present
-            try {
-              const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
-              const lockPath = path.join(rootDir, 'install.lock.json');
-              if (fs.existsSync(lockPath)) {
-                let existing = {};
-                try { existing = JSON.parse(await fs.promises.readFile(lockPath,'utf8')); } catch {}
-                const needsUpgrade = !('dependenciesPolicy' in existing) || !('fileCountActual' in existing) || !('schemaPathOverride' in existing);
-                if (needsUpgrade) {
-                  await this._writeExtendedLock(rootDir, plugin.manifest, {
-                    signatureVerified: existing.signatureVerified || plugin._signatureVerified,
-                    signerKeyId: existing.signerKeyId || plugin._signerKeyId
-                  });
-                  console.log(`[Plugin Manager] 🔄 Migrated lock file to v2 schema for ${plugin.id}`);
-                }
-              }
-            } catch (mErr) {
-              console.warn(`[Plugin Manager] Lock migration skipped for ${plugin.id}: ${mErr.message}`);
-            }
             const rootDir = fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
             const distDir = path.join(rootDir, 'dist');
             if (!plugin.manifest.dist || !plugin.manifest.dist.hash) {
@@ -316,19 +257,10 @@ class PluginManager extends EventEmitter {
             if (computed.toLowerCase() !== match[1].toLowerCase()) {
               throw new Error(`dist hash mismatch (manifest ${match[1]} != computed ${computed})`);
             }
-            // Integrity verified
-            this.emit('pluginIntegrityVerified', { id: plugin.id, name: plugin.name, distHash: plugin.manifest.dist.hash });
-            // Pre-emit sandbox required missing condition (if likely)
-            const sandboxAvailable = sandboxDetector && typeof sandboxDetector.isAvailable === 'function' ? !!sandboxDetector.isAvailable() : /^(1|true)$/i.test(process.env.SANDBOX_AVAILABLE || '');
-            if ((plugin.manifest.dependenciesPolicy || 'bundled-only') === 'sandbox-required' && !sandboxAvailable) {
-              this.emit('pluginSandboxRequiredMissing', { id: plugin.id, name: plugin.name });
-            }
             // Strict signature verification (if configured)
             try {
               await this._verifyPluginSignatureIfRequired(plugin, rootDir);
             } catch (sigErr) {
-              // Emit failure event
-              this.emit('pluginSignatureFailed', { id: plugin.id, name: plugin.name, error: sigErr.message });
               // Quarantine plugin directory before failing
               try { await this._quarantinePlugin(plugin, rootDir, sigErr.message); } catch (qErr) {
                 console.warn(`[Plugin Manager] Quarantine failed for ${plugin.id}: ${qErr.message}`);
@@ -363,13 +295,6 @@ class PluginManager extends EventEmitter {
                 prompts: result.captured.prompts.map(p => p.name)
               });
             }
-            // Phase2 Task16: persist capability snapshot onto plugin object for future diff / reporting
-            plugin.capabilitySnapshot = {
-              tools: result.captured.tools.map(t => t.name),
-              resources: result.captured.resources.map(r => r.name),
-              prompts: result.captured.prompts.map(p => p.name),
-              at: new Date().toISOString()
-            };
           }
         } catch (capErr) {
           console.warn(`[Plugin Manager] Capability snapshot failed for ${plugin.id}: ${capErr.message}`);
@@ -388,14 +313,25 @@ class PluginManager extends EventEmitter {
         } catch (e) {
           console.warn(`[Plugin Manager] Hot reload watch failed for ${plugin.id}: ${e.message}`);
         }
-        // Write/Update install.lock.json with extended v2 metadata (Task7)
+        // Write/Update install.lock.json with signature metadata
         try {
-          await this._writeExtendedLock(rootDir, plugin.manifest, {
+          const lockPath = path.join(rootDir, 'install.lock.json');
+          const distHash = plugin.manifest.dist?.hash || null;
+          let existing = {};
+          if (fs.existsSync(lockPath)) {
+            try { existing = JSON.parse(await fs.promises.readFile(lockPath, 'utf8')); } catch {}
+          }
+          const lock = {
+            name: plugin.manifest.name,
+            version: plugin.manifest.version,
+            distHash,
+            installedAt: existing.installedAt || new Date().toISOString(),
             signatureVerified: plugin._signatureVerified || false,
             signerKeyId: plugin._signerKeyId || null
-          });
+          };
+          await fs.promises.writeFile(lockPath, JSON.stringify(lock, null, 2), 'utf8');
         } catch (e) {
-          console.warn(`[Plugin Manager] ⚠️  Failed to write extended lock file for ${plugin.name}: ${e.message}`);
+          console.warn(`[Plugin Manager] ⚠️  Failed to write lock file for ${plugin.name}: ${e.message}`);
         }
       } else {
         // Legacy: Load the plugin module
@@ -565,7 +501,7 @@ class PluginManager extends EventEmitter {
    */
   async installFromUrl(url, opts = {}) {
     if (!url) throw new Error('url is required');
-  await this._ensureDirectory(this.tempDir);
+    await this._ensureDirectory(this.defaultInstallDir);
     const res = await axios.get(url, { responseType: 'arraybuffer' });
     const data = Buffer.from(res.data);
     const urlPath = new URL(url).pathname;
@@ -603,7 +539,7 @@ class PluginManager extends EventEmitter {
       : await this._stageAndValidateJs(data, { suggestedName, pluginId: opts.pluginId });
 
     // Finalize: move into install dir
-  const finalized = await this._finalizeInstall(staged);
+    const finalized = await this._finalizeInstall(staged);
 
     // Discover and optionally auto-load
     await this._discoverPlugins();
@@ -668,7 +604,7 @@ class PluginManager extends EventEmitter {
    */
   async installFromFile(sourcePath, opts = {}) {
     if (!sourcePath) throw new Error('sourcePath is required');
-  await this._ensureDirectory(this.tempDir);
+    await this._ensureDirectory(this.defaultInstallDir);
     const absSrc = path.isAbsolute(sourcePath) ? sourcePath : path.resolve(sourcePath);
     const data = await fs.promises.readFile(absSrc);
     const suggestedName = (opts.pluginId || path.basename(absSrc))
@@ -679,36 +615,7 @@ class PluginManager extends EventEmitter {
       ? await this._stageAndValidateZip(data, { suggestedName, pluginId: opts.pluginId })
       : await this._stageAndValidateJs(data, { suggestedName, pluginId: opts.pluginId });
 
-  const finalized = await this._finalizeInstall(staged);
-    await this._discoverPlugins();
-    if (opts.autoLoad) await this.loadPlugin(finalized.id);
-    return { success: true, id: finalized.id, path: finalized.path };
-  }
-
-  /**
-   * Install a plugin directly from a ZIP buffer already on disk (Phase1 basic implementation)
-   * @param {string} zipPath absolute or relative path to .zip
-   * @param {Object} [opts]
-   * @param {boolean} [opts.autoLoad]
-   * @returns {Promise<Object>} result { success, id, path }
-   */
-  async installFromZip(zipPath, opts = {}) {
-    const abs = path.isAbsolute(zipPath) ? zipPath : path.resolve(zipPath);
-    if (!fs.existsSync(abs)) throw new Error(`ZIP not found: ${abs}`);
-    const data = await fs.promises.readFile(abs);
-    const suggestedName = path.basename(abs).replace(/\.zip$/i, '');
-    const staged = await this._stageAndValidateZip(data, { suggestedName });
     const finalized = await this._finalizeInstall(staged);
-    // Attempt to produce extended lock file (Task7)
-    try {
-      const manifestPath = path.join(finalized.path, 'mcp-plugin.json');
-      if (fs.existsSync(manifestPath)) {
-        const manifest = JSON.parse(await fs.promises.readFile(manifestPath, 'utf8'));
-        await this._writeExtendedLock(finalized.path, manifest, {});
-      }
-    } catch (e) {
-      console.warn(`[Plugin Manager] ⚠️  Failed to write extended lock file (zip) for ${staged.id}: ${e.message}`);
-    }
     await this._discoverPlugins();
     if (opts.autoLoad) await this.loadPlugin(finalized.id);
     return { success: true, id: finalized.id, path: finalized.path };
@@ -827,22 +734,15 @@ class PluginManager extends EventEmitter {
     const stats = {
       total: this.plugins.size,
       states: {},
-      types: {},
-      dependencyPolicies: {},
-      signed: { verified: 0, unsigned: 0 },
-      sandbox: { sandboxRequired: 0 },
+      types: {}
     };
+
     for (const plugin of this.plugins.values()) {
       stats.states[plugin.state] = (stats.states[plugin.state] || 0) + 1;
-      const type = (plugin.manifest && plugin.manifest.type) || (plugin.manifest?.entry ? 'spec-plugin' : 'unknown');
+      const type = plugin.manifest.type || 'unknown';
       stats.types[type] = (stats.types[type] || 0) + 1;
-      if (plugin.manifest && plugin.manifest.dist) {
-        const pol = plugin.manifest.dependenciesPolicy || 'bundled-only';
-        stats.dependencyPolicies[pol] = (stats.dependencyPolicies[pol] || 0) + 1;
-      }
-      if (plugin._signatureVerified) stats.signed.verified++; else stats.signed.unsigned++;
-      if (plugin.manifest && plugin.manifest.dependenciesPolicy === 'sandbox-required') stats.sandbox.sandboxRequired++;
     }
+
     return stats;
   }
 
@@ -951,36 +851,13 @@ class PluginManager extends EventEmitter {
     return h.digest('hex');
   }
 
-  _verifySignature(data, signatureBase64, publicKeyMaterial, algorithm = 'RSA-SHA256') {
+  _verifySignature(data, signatureBase64, publicKeyPem, algorithm = 'RSA-SHA256') {
     try {
+      const verify = crypto.createVerify(algorithm);
+      verify.update(data);
+      verify.end();
       const sig = Buffer.from(signatureBase64, 'base64');
-      // Detect Ed25519 vs RSA/ECDSA based on key material
-      const isPossiblyRawEd25519 = /^[A-Za-z0-9+/=]{43,88}$/.test(publicKeyMaterial.trim()) && !publicKeyMaterial.includes('BEGIN');
-      const isPem = /BEGIN PUBLIC KEY/.test(publicKeyMaterial) || /BEGIN RSA PUBLIC KEY/.test(publicKeyMaterial) || /BEGIN CERTIFICATE/.test(publicKeyMaterial);
-      if (isPossiblyRawEd25519 && sig.length === 64) {
-        // Treat as raw 32-byte Ed25519 public key (base64) signing canonical data (UTF-8 bytes) directly
-        if (typeof crypto.verify === 'function') {
-          return crypto.verify(null, Buffer.from(data, 'utf8'), { key: Buffer.from(publicKeyMaterial, 'base64'), format: 'der', type: 'spki' }, sig);
-        }
-      }
-      if (isPem) {
-        // Use crypto.createVerify for RSA/ECDSA (algorithm param)
-        const verify = crypto.createVerify(algorithm);
-        verify.update(data);
-        verify.end();
-        return verify.verify(publicKeyMaterial, sig);
-      }
-      // Attempt node:crypto ed25519 verify API if available with keyObject
-      if (crypto.createPublicKey) {
-        try {
-          const keyObj = crypto.createPublicKey(publicKeyMaterial);
-          if (keyObj.asymmetricKeyType === 'ed25519') {
-            return crypto.verify(null, Buffer.from(data, 'utf8'), keyObj, sig);
-          }
-        } catch {}
-      }
-      console.warn('[Plugin Manager] ⚠️  Unrecognized public key material format for signature verification');
-      return false;
+      return verify.verify(publicKeyPem, sig);
     } catch (e) {
       console.warn('[Plugin Manager] ⚠️  Signature verify error:', e.message);
       return false;
@@ -989,41 +866,21 @@ class PluginManager extends EventEmitter {
 
   // -------- Signature & Trust Helpers --------
   async _loadTrustedKeysStrict() {
+    if (!credentialsManager) return [];
     if (this._trustedKeysCache) return this._trustedKeysCache;
-    const keys = [];
-    // First: load from credentials manager if configured
     const idsEnv = (process.env.PLUGIN_TRUSTED_KEY_IDS || '').trim();
     const ids = idsEnv ? idsEnv.split(/[,;\s]+/).filter(Boolean) : [];
-    if (credentialsManager && ids.length > 0) {
-      for (const id of ids) {
-        try {
-          const cred = credentialsManager.getCredential(id);
-          if (cred.type !== 'certificate' || !cred.certificate) {
-            console.warn(`[Plugin Manager] Trusted key id ${id} invalid (not certificate or missing field)`);
-            continue;
-          }
-          keys.push({ id, publicKeyPem: cred.certificate });
-        } catch (e) {
-          console.warn(`[Plugin Manager] Failed to load trusted key ${id}: ${e.message}`);
-        }
-      }
-    }
-    // Fallback: tools/plugins/trusted_keys.json
-    if (keys.length === 0) {
+    const keys = [];
+    for (const id of ids) {
       try {
-        const fallbackPath = path.resolve(__dirname, '..', 'plugins', 'trusted_keys.json');
-        if (fs.existsSync(fallbackPath)) {
-          const raw = JSON.parse(await fs.promises.readFile(fallbackPath, 'utf8'));
-          const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.keys) ? raw.keys : []);
-          for (const k of arr) {
-            if (k && k.id && (k.publicKeyPem || k.publicKey)) {
-              keys.push({ id: k.id, publicKeyPem: k.publicKeyPem || k.publicKey });
-            }
-          }
-          if (keys.length > 0) console.log('[Plugin Manager] Loaded trusted keys from fallback file');
+        const cred = credentialsManager.getCredential(id);
+        if (cred.type !== 'certificate' || !cred.certificate) {
+          console.warn(`[Plugin Manager] Trusted key id ${id} invalid (not certificate or missing field)`);
+          continue;
         }
+        keys.push({ id, publicKeyPem: cred.certificate });
       } catch (e) {
-        console.warn('[Plugin Manager] ⚠️  Failed to load fallback trusted keys:', e.message);
+        console.warn(`[Plugin Manager] Failed to load trusted key ${id}: ${e.message}`);
       }
     }
     this._trustedKeysCache = keys;
@@ -1035,18 +892,7 @@ class PluginManager extends EventEmitter {
     const hasSigFile = fs.existsSync(sigPath);
     const requireSig = !!this.policy.requireSignature;
     if (!hasSigFile) {
-      // Fallback: try manifest.signatures[] if present
-      try {
-        const mp = path.join(rootDir, 'mcp-plugin.json');
-        if (fs.existsSync(mp)) {
-          const man = JSON.parse(await fs.promises.readFile(mp, 'utf8'));
-          if (Array.isArray(man.signatures) && man.signatures.length > 0) {
-            await this._verifyManifestSignaturesArray(plugin, man);
-            return;
-          }
-        }
-      } catch {}
-      if (requireSig) throw new Error('Signature required but mcp-plugin.sig or manifest.signatures[] not found');
+      if (requireSig) throw new Error('Signature required but mcp-plugin.sig not found');
       return; // Nothing to verify
     }
     const trusted = await this._loadTrustedKeysStrict();
@@ -1064,8 +910,7 @@ class PluginManager extends EventEmitter {
     if (!signatureB64) throw new Error('Signature file empty');
     const canonicalData = plugin.manifest.dist?.hash || '';
     for (const key of trusted) {
-      if (this._verifySignature(canonicalData, signatureB64, key.publicKeyPem, 'RSA-SHA256') ||
-          this._verifySignature(canonicalData, signatureB64, key.publicKeyPem, 'sha256')) {
+      if (this._verifySignature(canonicalData, signatureB64, key.publicKeyPem)) {
         plugin._signatureVerified = true;
         plugin._signerKeyId = key.id;
         console.log(`[Plugin Manager] 🔐 Signature OK for ${plugin.id} (key ${key.id})`);
@@ -1074,43 +919,6 @@ class PluginManager extends EventEmitter {
     }
     if (requireSig) throw new Error('Signature verification failed for all trusted keys');
     console.warn(`[Plugin Manager] ⚠️  Signature verification failed for ${plugin.id} (non-strict mode, continuing)`);
-  }
-
-  async _verifyManifestSignaturesArray(plugin, manifest) {
-    const trusted = await this._loadTrustedKeysStrict();
-    const requireSig = !!this.policy.requireSignature;
-    if (trusted.length === 0) {
-      if (requireSig) throw new Error('No trusted signing keys configured (PLUGIN_TRUSTED_KEY_IDS)');
-      console.warn('[Plugin Manager] ⚠️  Manifest signatures present but no trusted keys configured; skipping verification');
-      return;
-    }
-    const entries = Array.isArray(manifest.signatures) ? manifest.signatures : [];
-    const canonicalData = manifest.dist?.hash || '';
-    for (const e of entries) {
-      const sig = e?.signature || e?.sig || null;
-      const keyId = e?.keyId || e?.kid || null;
-      if (!sig) continue;
-      if (keyId) {
-        const k = trusted.find(t => t.id === keyId);
-        if (k && this._verifySignature(canonicalData, String(sig), k.publicKeyPem, 'RSA-SHA256')) {
-          plugin._signatureVerified = true;
-          plugin._signerKeyId = k.id;
-          console.log(`[Plugin Manager] 🔐 Signature OK (manifest) for ${plugin.id} (key ${k.id})`);
-          return;
-        }
-      }
-      // Try all trusted keys if keyId unspecified
-      for (const k of trusted) {
-        if (this._verifySignature(canonicalData, String(sig), k.publicKeyPem, 'RSA-SHA256')) {
-          plugin._signatureVerified = true;
-          plugin._signerKeyId = k.id;
-          console.log(`[Plugin Manager] 🔐 Signature OK (manifest) for ${plugin.id} (key ${k.id})`);
-          return;
-        }
-      }
-    }
-    if (requireSig) throw new Error('Manifest signatures[] present but none verified with trusted keys');
-    console.warn(`[Plugin Manager] ⚠️  Manifest signatures[] verification failed for ${plugin.id} (non-strict mode)`);
   }
 
   async _quarantinePlugin(plugin, rootDir, reason) {
@@ -1128,8 +936,7 @@ class PluginManager extends EventEmitter {
   }
 
   async _stageAndValidateJs(data, { suggestedName, pluginId }) {
-  const tmpDir = path.join(this.tempDir, `js-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-  await fs.promises.mkdir(tmpDir, { recursive: true });
+    const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mcpod-js-'));
     const base = (pluginId || suggestedName || 'plugin').replace(/\.js$/i, '');
     const tmpFile = path.join(tmpDir, `${base}.js`);
     await fs.promises.writeFile(tmpFile, data);
@@ -1150,11 +957,9 @@ class PluginManager extends EventEmitter {
 
   async _stageAndValidateZip(data, { suggestedName, pluginId }) {
     if (!AdmZip) throw new Error('ZIP support not available (adm-zip missing)');
-    const zipRoot = path.join(this.tempDir, `zip-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    await fs.promises.mkdir(zipRoot, { recursive: true });
-    const tmpZip = path.join(zipRoot, `plugin.zip`);
+    const tmpZip = path.join(await fs.promises.mkdtemp(path.join(os.tmpdir(), 'mcpod-zip-')), `${Date.now()}.zip`);
     await fs.promises.writeFile(tmpZip, data);
-    const extractRoot = zipRoot;
+    const extractRoot = path.dirname(tmpZip);
     const outDir = path.join(extractRoot, 'extracted');
     await fs.promises.mkdir(outDir, { recursive: true });
     const zip = new AdmZip(tmpZip);
@@ -1164,14 +969,15 @@ class PluginManager extends EventEmitter {
     const entries = await fs.promises.readdir(outDir, { withFileTypes: true });
     const rootDir = entries.length === 1 && entries[0].isDirectory() ? path.join(outDir, entries[0].name) : outDir;
 
+    // Basic checks
+    const indexJs = path.join(rootDir, 'index.js');
+    if (!fs.existsSync(indexJs)) {
+      throw new Error('Archive missing index.js at plugin root');
+    }
+
     const manifest = await this._loadPluginManifest(rootDir);
     if (!manifest || manifest.manifestVersion !== '2') {
       throw new Error('Zip plugin must contain a v2 manifest (manifestVersion="2")');
-    }
-    // Ensure entry exists under dist/
-    const entryAbs = path.join(rootDir, manifest.entry || '');
-    if (!manifest.entry || !fs.existsSync(entryAbs)) {
-      throw new Error(`Manifest entry not found: ${manifest.entry}`);
     }
     const base = (pluginId || manifest?.id || suggestedName || 'plugin').replace(/\.zip$/i, '');
     const id = manifest?.id || base;
@@ -1182,49 +988,31 @@ class PluginManager extends EventEmitter {
       path: rootDir
     };
 
-    // For spec plugins, defer validation to loadSpecPlugin path.
-    return { type: 'dir', id, srcPath: rootDir };
+    // Prevalidate by requiring from staged directory
+    const modulePath = path.join(rootDir, 'index.js');
+    delete require.cache[modulePath];
+    const module = require(modulePath);
+    await this._prevalidatePluginTools(plugin, module);
+
+  return { type: 'dir', id, srcPath: rootDir };
   }
 
   async _finalizeInstall(staged) {
-    const { IntegrityError, PolicyError } = require('./errors');
-    if (!staged || !staged.id || !staged.srcPath) throw new IntegrityError('Invalid staged install');
-    // Ensure base dirs exist
-    await this._ensureDirectory(this.pluginRoot);
-    await this._ensureDirectory(path.join(this.pluginRoot, 'tools'));
-    await this._ensureDirectory(path.join(this.pluginRoot, 'prompts'));
-    await this._ensureDirectory(path.join(this.pluginRoot, 'resources'));
-
+    if (!staged || !staged.id || !staged.srcPath) throw new Error('Invalid staged install');
     if (staged.type === 'file') {
-      // Single-file legacy tool module → tools bucket
-      const dest = path.join(this.pluginRoot, 'tools', `${staged.id}.js`);
-      if (fs.existsSync(dest)) throw new PolicyError(`Plugin already exists: ${staged.id}`);
+      const dest = path.join(this.defaultInstallDir, `${staged.id}.js`);
+      if (fs.existsSync(dest)) throw new Error(`Plugin already exists: ${staged.id}`);
       await fs.promises.copyFile(staged.srcPath, dest);
       return { id: staged.id, path: dest };
     } else if (staged.type === 'dir') {
-      // Spec plugin dir → categorize by capabilities
-      let manifest = null;
-      try {
-        const mp = path.join(staged.srcPath, 'mcp-plugin.json');
-        manifest = JSON.parse(await fs.promises.readFile(mp, 'utf8'));
-      } catch {}
-      let sub = 'tools';
-      if (manifest && manifest.capabilities) {
-        const caps = manifest.capabilities;
-        const t = Array.isArray(caps.tools) ? caps.tools.length : 0;
-        const r = Array.isArray(caps.resources) ? caps.resources.length : 0;
-        const p = Array.isArray(caps.prompts) ? caps.prompts.length : 0;
-        if (t === 0 && r > 0 && p === 0) sub = 'resources';
-        else if (t === 0 && p > 0 && r === 0) sub = 'prompts';
-        else sub = 'tools';
-      }
-      const destDir = path.join(this.pluginRoot, sub, staged.id);
-      if (fs.existsSync(destDir)) throw new PolicyError(`Plugin already exists: ${staged.id}`);
+      const destDir = path.join(this.defaultInstallDir, staged.id);
+      if (fs.existsSync(destDir)) throw new Error(`Plugin already exists: ${staged.id}`);
       await fs.promises.mkdir(destDir, { recursive: true });
+      // Copy directory recursively
       await this._copyDir(staged.srcPath, destDir);
       return { id: staged.id, path: destDir };
     }
-    throw new PolicyError('Unknown staged type');
+    throw new Error('Unknown staged type');
   }
 
   async _copyDir(src, dest) {
@@ -1238,92 +1026,6 @@ class PluginManager extends EventEmitter {
       } else if (e.isFile()) {
         await fs.promises.copyFile(s, d);
       }
-    }
-  }
-
-  // === Extended lock writer (Task7) ===
-  async _writeExtendedLock(rootDir, manifest, extra = {}) {
-    try {
-      if (!manifest || manifest.manifestVersion !== '2') return; // only for v2 plugins
-      const lockPath = path.join(rootDir, 'install.lock.json');
-      let existing = {};
-      if (fs.existsSync(lockPath)) {
-        try { existing = JSON.parse(await fs.promises.readFile(lockPath, 'utf8')); } catch {}
-      }
-      // Collect dist metrics if dist directory exists
-      let distMetrics = {};
-      const distDir = path.join(rootDir, 'dist');
-      if (fs.existsSync(distDir) && fs.statSync(distDir).isDirectory()) {
-        try {
-          const { fileCount, totalBytes } = computeDistHashDetailed(distDir);
-          distMetrics = { fileCount, totalBytes };
-        } catch (e) {
-          console.warn(`[Plugin Manager] Dist metrics failed for lock write: ${e.message}`);
-        }
-      }
-      const externalDeps = Array.isArray(manifest.externalDependencies) ? manifest.externalDependencies : [];
-      const hashes = Array.isArray(manifest.dist?.hashes) ? manifest.dist.hashes : [];
-      const signatures = Array.isArray(manifest.signatures) ? manifest.signatures : [];
-      const sbom = manifest.sbom || null;
-      // Optionally verify SBOM presence
-      let sbomMeta = null;
-      if (sbom && typeof sbom.path === 'string') {
-        const abs = path.join(rootDir, sbom.path.replace(/^\.\//, ''));
-        if (fs.existsSync(abs)) {
-          const data = await fs.promises.readFile(abs);
-          const sha256 = crypto.createHash('sha256').update(data).digest('hex');
-          sbomMeta = { path: sbom.path, sha256 };
-        } else if (this.policy.strictSbom) {
-          console.warn(`[Plugin Manager] ⚠️  SBOM declared but missing at ${sbom.path}`);
-        }
-      }
-      const lock = {
-        name: manifest.name,
-        version: manifest.version,
-        distHash: manifest.dist?.hash || null,
-        hashes,
-        signatures,
-        sbom: sbomMeta,
-        lockVersion: 2,
-        installedAt: existing.installedAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        signatureVerified: extra.signatureVerified || false,
-        signerKeyId: extra.signerKeyId || null,
-        dependenciesPolicy: manifest.dependenciesPolicy || 'bundled-only',
-        externalDependenciesCount: externalDeps.length,
-        coverage: manifest.dist?.coverage || null,
-        fileCountDeclared: manifest.dist?.fileCount || null,
-        totalBytesDeclared: manifest.dist?.totalBytes || null,
-        fileCountActual: distMetrics.fileCount || null,
-        totalBytesActual: distMetrics.totalBytes || null,
-        schemaPathOverride: process.env.SCHEMA_PATH || null,
-        strictCapabilities: this.policy.strictCapabilities || false,
-        requireSignature: this.policy.requireSignature || false
-      };
-      await fs.promises.writeFile(lockPath, JSON.stringify(lock, null, 2), 'utf8');
-    } catch (e) {
-      console.warn(`[Plugin Manager] ⚠️  Extended lock write failed: ${e.message}`);
-    }
-  }
-
-  // Validate lock file against current on-disk state
-  async validateLockFile(rootDir) {
-    try {
-      const lockPath = path.join(rootDir, 'install.lock.json');
-      if (!fs.existsSync(lockPath)) return { ok: false, reason: 'lock-missing' };
-      const lock = JSON.parse(await fs.promises.readFile(lockPath, 'utf8'));
-      const distDir = path.join(rootDir, 'dist');
-      if (!fs.existsSync(distDir)) return { ok: false, reason: 'dist-missing' };
-      const { hashHex, fileCount, totalBytes } = computeDistHashDetailed(distDir);
-      const declared = (lock.distHash || '').replace(/^sha256:/, '').toLowerCase();
-      const ok = declared && declared === hashHex.toLowerCase();
-      const deltas = {
-        fileCount: { declared: lock.fileCountActual, actual: fileCount },
-        totalBytes: { declared: lock.totalBytesActual, actual: totalBytes }
-      };
-      return { ok, deltas };
-    } catch (e) {
-      return { ok: false, reason: e.message };
     }
   }
 }

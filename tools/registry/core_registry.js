@@ -236,11 +236,6 @@ class CoreRegistry {
     this.categories.get(this.currentModule.category).add(toolName);
     
     console.log(`[Core Registry] ✅ Registered tool: ${toolName}`);
-    // Emit tools/list_changed notification (best effort)
-    try {
-      const { publishToolsListChanged } = require('../mcp/list_changed_publisher');
-      publishToolsListChanged();
-    } catch {}
   }
 
   /**
@@ -253,10 +248,6 @@ class CoreRegistry {
     this.registeredResources.add(resourceName);
     // Resources are not currently categorized; future: plugin category mapping
     console.log(`[Core Registry] ✅ Registered resource: ${resourceName}`);
-    try {
-      const { publishResourcesListChanged } = require('../mcp/list_changed_publisher');
-      publishResourcesListChanged();
-    } catch {}
   }
 
   /**
@@ -268,10 +259,6 @@ class CoreRegistry {
     if (this.registeredPrompts.has(promptName)) return;
     this.registeredPrompts.add(promptName);
     console.log(`[Core Registry] ✅ Registered prompt: ${promptName}`);
-    try {
-      const { publishPromptsListChanged } = require('../mcp/list_changed_publisher');
-      publishPromptsListChanged();
-    } catch {}
   }
 
   /**
@@ -289,10 +276,6 @@ class CoreRegistry {
       try { await this.db.removeTool(toolName); } catch {}
     }
     console.log(`[Core Registry] 🗑️ Unregistered tool (internal): ${toolName}`);
-    try {
-      const { publishToolsListChanged } = require('../mcp/list_changed_publisher');
-      publishToolsListChanged();
-    } catch {}
     return true;
   }
 
@@ -304,10 +287,6 @@ class CoreRegistry {
     if (!this.registeredResources.has(resourceName)) return false;
     this.registeredResources.delete(resourceName);
     console.log(`[Core Registry] 🗑️ Unregistered resource (internal): ${resourceName}`);
-    try {
-      const { publishResourcesListChanged } = require('../mcp/list_changed_publisher');
-      publishResourcesListChanged();
-    } catch {}
     return true;
   }
 
@@ -319,10 +298,6 @@ class CoreRegistry {
     if (!this.registeredPrompts.has(promptName)) return false;
     this.registeredPrompts.delete(promptName);
     console.log(`[Core Registry] 🗑️ Unregistered prompt (internal): ${promptName}`);
-    try {
-      const { publishPromptsListChanged } = require('../mcp/list_changed_publisher');
-      publishPromptsListChanged();
-    } catch {}
     return true;
   }
 
@@ -644,28 +619,6 @@ class CoreRegistry {
                     }
                     console.log(`[Core Registry DEBUG] Extracted tool args:`, JSON.stringify(toolArgs, null, 2));
                   }
-
-                  // Attach meta (sessionId, requestId, signal, progressToken)
-                  try {
-                    const meta = {};
-                    if (context && context.sessionId) meta.sessionId = context.sessionId;
-                    if (context && context.requestId) meta.requestId = context.requestId;
-                    if (context && context.signal) meta.signal = context.signal;
-                    if (context && context.requestInfo && context.requestInfo.progressToken !== undefined) {
-                      meta.progressToken = context.requestInfo.progressToken;
-                    }
-                    if (Object.keys(meta).length > 0) {
-                      toolArgs._meta = meta;
-                      if (meta.signal && typeof meta.signal.addEventListener === 'function' && meta.progressToken !== undefined) {
-                        try {
-                          const { requestCancellation } = require('../mcp/progress_helper');
-                          meta.signal.addEventListener('abort', () => {
-                            try { requestCancellation(meta.progressToken); } catch {}
-                          }, { once: true });
-                        } catch {}
-                      }
-                    }
-                  } catch {}
                   
                   // Validate parameters if validator exists
                   if (validateParams) {
