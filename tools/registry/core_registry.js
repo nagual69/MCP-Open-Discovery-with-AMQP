@@ -236,6 +236,11 @@ class CoreRegistry {
     this.categories.get(this.currentModule.category).add(toolName);
     
     console.log(`[Core Registry] ✅ Registered tool: ${toolName}`);
+    // Emit tools/list_changed notification (best effort)
+    try {
+      const { publishToolsListChanged } = require('../mcp/list_changed_publisher');
+      publishToolsListChanged();
+    } catch {}
   }
 
   /**
@@ -248,6 +253,10 @@ class CoreRegistry {
     this.registeredResources.add(resourceName);
     // Resources are not currently categorized; future: plugin category mapping
     console.log(`[Core Registry] ✅ Registered resource: ${resourceName}`);
+    try {
+      const { publishResourcesListChanged } = require('../mcp/list_changed_publisher');
+      publishResourcesListChanged();
+    } catch {}
   }
 
   /**
@@ -259,6 +268,10 @@ class CoreRegistry {
     if (this.registeredPrompts.has(promptName)) return;
     this.registeredPrompts.add(promptName);
     console.log(`[Core Registry] ✅ Registered prompt: ${promptName}`);
+    try {
+      const { publishPromptsListChanged } = require('../mcp/list_changed_publisher');
+      publishPromptsListChanged();
+    } catch {}
   }
 
   /**
@@ -276,6 +289,10 @@ class CoreRegistry {
       try { await this.db.removeTool(toolName); } catch {}
     }
     console.log(`[Core Registry] 🗑️ Unregistered tool (internal): ${toolName}`);
+    try {
+      const { publishToolsListChanged } = require('../mcp/list_changed_publisher');
+      publishToolsListChanged();
+    } catch {}
     return true;
   }
 
@@ -287,6 +304,10 @@ class CoreRegistry {
     if (!this.registeredResources.has(resourceName)) return false;
     this.registeredResources.delete(resourceName);
     console.log(`[Core Registry] 🗑️ Unregistered resource (internal): ${resourceName}`);
+    try {
+      const { publishResourcesListChanged } = require('../mcp/list_changed_publisher');
+      publishResourcesListChanged();
+    } catch {}
     return true;
   }
 
@@ -298,6 +319,10 @@ class CoreRegistry {
     if (!this.registeredPrompts.has(promptName)) return false;
     this.registeredPrompts.delete(promptName);
     console.log(`[Core Registry] 🗑️ Unregistered prompt (internal): ${promptName}`);
+    try {
+      const { publishPromptsListChanged } = require('../mcp/list_changed_publisher');
+      publishPromptsListChanged();
+    } catch {}
     return true;
   }
 

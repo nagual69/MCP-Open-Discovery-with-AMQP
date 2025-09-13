@@ -105,6 +105,29 @@ function registerMCPTool(server, tool, handleToolCall) {
       try {
         const hasArgs = zodRawShape && Object.keys(zodRawShape).length > 0;
         const args = hasArgs ? parsedArgsOrExtra : {};
+        // Attach MCP meta/context if present (progressToken, sessionId, requestId, signal)
+        try {
+          const context = (typeof maybeExtra === 'object') ? maybeExtra : undefined;
+          const meta = {};
+          if (context && context.sessionId) meta.sessionId = context.sessionId;
+          if (context && context.requestId) meta.requestId = context.requestId;
+          if (context && context.signal) meta.signal = context.signal;
+          if (context && context.requestInfo && context.requestInfo.progressToken !== undefined) {
+            meta.progressToken = context.requestInfo.progressToken;
+          }
+          if (Object.keys(meta).length > 0) {
+            args._meta = meta;
+          }
+          // If AbortSignal is provided, wire to our cancellation helper using progressToken
+          try {
+            if (meta.signal && typeof meta.signal.addEventListener === 'function' && meta.progressToken !== undefined) {
+              const { requestCancellation } = require('../mcp/progress_helper');
+              meta.signal.addEventListener('abort', () => {
+                try { requestCancellation(meta.progressToken); } catch {}
+              }, { once: true });
+            }
+          } catch {}
+        } catch {}
         if (validateParams && hasArgs) {
           const validation = validateParams(args);
           if (!validation.success) {
@@ -116,7 +139,7 @@ function registerMCPTool(server, tool, handleToolCall) {
         }
 
         // Execute tool with parsed args
-        const result = await handleToolCall(tool.name, args);
+  const result = await handleToolCall(tool.name, args);
         
         // Ensure result follows MCP CallToolResult interface (PRESERVED LOGIC)
         if (result && typeof result === 'object') {

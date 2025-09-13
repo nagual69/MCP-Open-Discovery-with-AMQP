@@ -10,6 +10,7 @@
 
 const { z } = require('zod');
 const { spawn } = require('child_process');
+const { emitProgress, isCancelled, emitCancelled } = require('./mcp/progress_helper');
 
 /**
  * Sanitize a hostname or IP address to prevent command injection
@@ -37,34 +38,55 @@ function sanitizeHost(host) {
  * @param {Array} commandArray - Command and arguments to execute
  * @returns {Promise<Object>} CallToolResult format
  */
-async function executeCommand(commandArray) {
+async function executeCommand(commandArray, options = {}) {
   return new Promise((resolve, reject) => {
     const command = commandArray[0];
     const args = commandArray.slice(1);
+    const progressToken = options.progressToken;
+    const startTime = Date.now();
     
     console.log(`[MCP NMAP] Running command: ${command} ${args.join(' ')}`);
     
-    const process = spawn(command, args);
+    const child = spawn(command, args);
     let output = '';
     let errorOutput = '';
     
     // Set timeout (10 minutes for nmap scans)
     const timeout = setTimeout(() => {
       console.log(`[MCP NMAP] Command timed out: ${command} ${args.join(' ')}`);
-      process.kill();
+      try { child.kill(); } catch {}
       reject(new Error(`Command timed out after 600 seconds`));
     }, 600000);
     
-    process.stdout.on('data', (data) => {
+    // Emit periodic progress updates if token provided
+    let progressInterval;
+    if (progressToken !== undefined) {
+      progressInterval = setInterval(async () => {
+        try {
+          if (isCancelled(progressToken)) {
+            try { child.kill(); } catch {}
+            clearInterval(progressInterval);
+            clearTimeout(timeout);
+            await emitCancelled(progressToken, 'nmap scan cancelled');
+          } else {
+            const elapsed = (Date.now() - startTime) / 1000;
+            await emitProgress(progressToken, { kind: 'fraction', value: Math.min(0.1 + Math.tanh(elapsed/60)*0.8, 0.95) });
+          }
+        } catch {}
+      }, 2000);
+    }
+
+    child.stdout.on('data', (data) => {
       output += data.toString();
     });
     
-    process.stderr.on('data', (data) => {
+    child.stderr.on('data', (data) => {
       errorOutput += data.toString();
     });
     
-    process.on('close', (code) => {
+    child.on('close', async (code) => {
       clearTimeout(timeout);
+      if (progressInterval) clearInterval(progressInterval);
       
       if (code !== 0) {
         console.log(`[MCP NMAP] Command failed with code ${code}: ${command} ${args.join(' ')}`);
@@ -78,6 +100,9 @@ async function executeCommand(commandArray) {
           isError: true
         });
       } else {
+        if (progressToken !== undefined) {
+          try { await emitProgress(progressToken, { kind: 'fraction', value: 1 }); } catch {}
+        }
         resolve({
           content: [
             {
@@ -89,8 +114,9 @@ async function executeCommand(commandArray) {
       }
     });
     
-    process.on('error', (error) => {
+    child.on('error', async (error) => {
       clearTimeout(timeout);
+      if (progressInterval) clearInterval(progressInterval);
       console.log(`[MCP NMAP] Command error: ${error.message}`);
       resolve({
         content: [
@@ -181,8 +207,8 @@ async function handleToolCall(name, args) {
       try {
         const cmd = ['nmap', '-sn'];
         cmd.push(sanitizeHost(args.target));
-        
-        return await executeCommand(cmd);
+        const progressToken = args && args._meta && args._meta.progressToken;
+        return await executeCommand(cmd, { progressToken });
       } catch (error) {
         return {
           content: [{ type: "text", text: `Error: ${error.message}` }],
@@ -215,8 +241,8 @@ async function handleToolCall(name, args) {
         }
         
         cmd.push(sanitizeHost(args.target));
-        
-        return await executeCommand(cmd);
+        const progressToken = args && args._meta && args._meta.progressToken;
+        return await executeCommand(cmd, { progressToken });
       } catch (error) {
         return {
           content: [{ type: "text", text: `Error: ${error.message}` }],
@@ -245,8 +271,8 @@ async function handleToolCall(name, args) {
         }
         
         cmd.push(sanitizeHost(args.target));
-        
-        return await executeCommand(cmd);
+        const progressToken = args && args._meta && args._meta.progressToken;
+        return await executeCommand(cmd, { progressToken });
       } catch (error) {
         return {
           content: [{ type: "text", text: `Error: ${error.message}` }],
@@ -277,8 +303,8 @@ async function handleToolCall(name, args) {
         }
         
         cmd.push(sanitizeHost(args.target));
-        
-        return await executeCommand(cmd);
+        const progressToken = args && args._meta && args._meta.progressToken;
+        return await executeCommand(cmd, { progressToken });
       } catch (error) {
         return {
           content: [{ type: "text", text: `Error: ${error.message}` }],
@@ -315,8 +341,8 @@ async function handleToolCall(name, args) {
         }
         
         cmd.push(sanitizeHost(args.target));
-        
-        return await executeCommand(cmd);
+        const progressToken = args && args._meta && args._meta.progressToken;
+        return await executeCommand(cmd, { progressToken });
       } catch (error) {
         return {
           content: [{ type: "text", text: `Error: ${error.message}` }],

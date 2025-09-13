@@ -6,6 +6,8 @@
  */
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+const { setDefaultLevel, setSessionLevel, logAndNotify } = require('./tools/mcp/logging_adapter');
+const { broadcast, buildNotification } = require('./tools/mcp/notification_hub');
 const { registerAllTools, registerAllResources, getServerInstance } = require('./tools/registry/index');
 const { registerAllPrompts } = require('./tools/prompts_sdk');
 
@@ -79,6 +81,12 @@ function log(level, message, data = null) {
   } else {
     console.log(logMessage, data ? JSON.stringify(data, null, 2) : '');
   }
+
+  // Emit MCP notifications/message for logs as best-effort
+  // Do not block on failures
+  try {
+    logAndNotify(level, message, data || undefined);
+  } catch {}
 }
 
 /**
@@ -115,9 +123,9 @@ async function createMcpServer() {
     },
     {
       capabilities: {
-        tools: {},
-        resources: {},
-        prompts: {}
+        tools: { listChanged: true },
+        resources: { listChanged: true },
+        prompts: { listChanged: true }
       }
     }
   );
@@ -131,7 +139,7 @@ async function createMcpServer() {
   } catch {}
 
   try {
-    // Register all components
+  // Register all components
     log('info', '[SINGLETON] Starting tool registration');
     await registerAllTools(globalMcpServer);
     // Validate that registry captured the server instance for dynamic ops
@@ -156,6 +164,27 @@ async function createMcpServer() {
 
     serverInitialized = true;
     log('info', '[SINGLETON] ✅ MCP server instance ready for all transports');
+
+    // Register request handler for logging/setLevel (per MCP spec)
+    try {
+      if (typeof globalMcpServer.setRequestHandler === 'function') {
+        globalMcpServer.setRequestHandler('logging/setLevel', async (params, context) => {
+          const level = params?.level;
+          const sessionId = context?.sessionId || globalMcpServer?.server?._transport?.sessionId;
+          if (!level) {
+            return { ok: false, error: 'level is required' };
+          }
+          setDefaultLevel(level);
+          if (sessionId) {
+            setSessionLevel(sessionId, level);
+          }
+          // Acknowledge
+          return { ok: true, level, sessionId };
+        });
+      }
+    } catch (e) {
+      log('warn', 'Failed to register logging/setLevel handler', { error: e.message });
+    }
 
     return globalMcpServer;
 

@@ -261,8 +261,8 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
       routingKey
     });
 
-    // Clean message for sending
-    const cleanMessage = { ...message };
+  // Clean message for sending
+  const cleanMessage = this.sanitizeJsonRpcMessage(message);
 
     console.log('[AMQP] About to send response (first 200 chars):', {
       messageId: cleanMessage.id,
@@ -278,7 +278,7 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
         // Direct response to client's reply queue using pubsubChannel for bidirectional responses
         console.log('[AMQP] Sending direct response to client queue:', replyTo);
         
-        const messageBuffer = Buffer.from(JSON.stringify(cleanMessage));
+  const messageBuffer = Buffer.from(JSON.stringify(cleanMessage));
         
         // Use pubsubChannel for bidirectional message flow
         await this.pubsubChannel.sendToQueue(replyTo, messageBuffer, {
@@ -333,7 +333,8 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
     const routingKey = 'requests.general';
     
     try {
-      const messageBuffer = Buffer.from(JSON.stringify(message));
+      const cleanMessage = this.sanitizeJsonRpcMessage(message);
+      const messageBuffer = Buffer.from(JSON.stringify(cleanMessage));
       
       await this.channel.publish(this.options.exchangeName, routingKey, messageBuffer, {
         persistent: true,
@@ -359,7 +360,8 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
     const routingKey = this.getNotificationRoutingKey(message);
     
     try {
-      const messageBuffer = Buffer.from(JSON.stringify(message));
+      const cleanMessage = this.sanitizeJsonRpcMessage(message);
+      const messageBuffer = Buffer.from(JSON.stringify(cleanMessage));
       
       await this.channel.publish(this.options.exchangeName, routingKey, messageBuffer, {
         persistent: false,
@@ -641,11 +643,11 @@ class RabbitMQServerTransport extends BaseAMQPTransport {
         return 'discovery.proxmox';
       } else if (method.startsWith('zabbix_')) {
         return 'discovery.zabbix';
-      } else if (['ping', 'telnet', 'wget', 'netstat', 'ifconfig', 'arp', 'route'].includes(method)) {
+      } else if (['ping', 'telnet', 'wget', 'netstat', 'ifconfig', 'arp', 'route', 'nslookup', 'tcp_connect', 'whois'].includes(method)) {
         return 'discovery.network';
       } else if (method.startsWith('memory_') || method.startsWith('cmdb_')) {
         return 'discovery.memory';
-      } else if (method.startsWith('creds_')) {
+      } else if (method.startsWith('creds_') || method.startsWith('credentials_')) {
         return 'discovery.credentials';
       } else {
         return 'discovery.general';

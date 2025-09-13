@@ -142,6 +142,24 @@ class BaseAMQPTransport extends Transport {
   }
 
   /**
+   * Ensure outgoing messages conform to JSON-RPC 2.0 and strip transport-internal fields
+   * - Adds jsonrpc: '2.0' if missing
+   * - Removes internal _rabbitMQ* properties that should not leak over the wire
+   * - Shallow clones to avoid mutating caller objects
+   * @param {any} message
+   * @returns {any} sanitizedMessage
+   */
+  sanitizeJsonRpcMessage(message) {
+    const clean = { ...(message || {}) };
+    if (!clean.jsonrpc) clean.jsonrpc = '2.0';
+    // Remove any internal transport props
+    Object.keys(clean)
+      .filter((k) => k.startsWith('_rabbitMQ'))
+      .forEach((k) => delete clean[k]);
+    return clean;
+  }
+
+  /**
    * Determine tool category for routing (matches server-side categories)
    */
   getToolCategory(method) {
@@ -151,7 +169,7 @@ class BaseAMQPTransport extends Transport {
     if (method.startsWith('zabbix_')) return 'zabbix';
     if (['ping', 'telnet', 'wget', 'netstat', 'ifconfig', 'arp', 'route', 'nslookup', 'tcp_connect', 'whois'].includes(method)) return 'network';
     if (method.startsWith('memory_') || method.startsWith('cmdb_')) return 'memory';
-    if (method.startsWith('credentials_')) return 'credentials';
+    if (method.startsWith('credentials_') || method.startsWith('creds_')) return 'credentials';
     if (method.startsWith('registry_')) return 'registry';
     return 'general';
   }

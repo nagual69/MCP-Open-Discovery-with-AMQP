@@ -353,6 +353,14 @@ async function startAllTransports(mcpServer, config = {}) {
       }
     }
     
+    // Persist transport results for Notification Hub broadcasting
+    try {
+      const { setTransportResults } = require('../../mcp/notification_hub');
+      setTransportResults({ transports: results.transports });
+    } catch (e) {
+      logTransport('debug', 'Notification hub not available to record transport results');
+    }
+
     // Log comprehensive summary
     logTransport('info', 'Transport manager startup complete', {
       environment: {
