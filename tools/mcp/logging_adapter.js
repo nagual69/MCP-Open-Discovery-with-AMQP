@@ -2,7 +2,7 @@
  * Logging Adapter - Per-session logging level control with MCP notifications
  */
 
-const { broadcast, buildNotification, sendToSession } = require('./notification_hub');
+const { broadcast, buildNotification, sendToSession, getTransportResults, sendViaStdio, sendViaAmqp } = require('./notification_hub');
 
 const LEVELS = [
   'debug',
@@ -39,16 +39,32 @@ function shouldSend(level, minLevel) {
   return LEVELS.indexOf(level) >= LEVELS.indexOf(minLevel);
 }
 
-// Emit notifications/message to all sessions that requested this level or higher
+// Emit notifications/message to sessions/transports honoring configured levels
 async function emitLog(level, data, loggerName = 'server') {
-  const notification = buildNotification('notifications/message', {
-    level,
-    logger: loggerName,
-    data
-  });
+  const results = getTransportResults();
+  const notification = buildNotification('notifications/message', { level, logger: loggerName, data });
 
-  // Broadcast to all transports; HTTP sessions get individual messages
-  await broadcast(notification);
+  // HTTP: per-session filtering based on set level (fallback to default)
+  const http = results.transports?.http;
+  if (http && http.success && http.transports) {
+    const sessionIds = Object.keys(http.transports);
+    for (const sid of sessionIds) {
+      const minLevel = getSessionLevel(sid);
+      if (shouldSend(level, minLevel)) {
+        try { await sendToSession(sid, notification); } catch {}
+      }
+    }
+  }
+
+  // stdio: single session, use default level
+  if (shouldSend(level, defaultLevel)) {
+    try { await sendViaStdio(notification); } catch {}
+  }
+
+  // AMQP: broadcast when level meets default threshold (no per-session targeting)
+  if (shouldSend(level, defaultLevel)) {
+    try { await sendViaAmqp(notification); } catch {}
+  }
 }
 
 // Convenience wrapper that can be plugged into server log()

@@ -644,6 +644,28 @@ class CoreRegistry {
                     }
                     console.log(`[Core Registry DEBUG] Extracted tool args:`, JSON.stringify(toolArgs, null, 2));
                   }
+
+                  // Attach meta (sessionId, requestId, signal, progressToken)
+                  try {
+                    const meta = {};
+                    if (context && context.sessionId) meta.sessionId = context.sessionId;
+                    if (context && context.requestId) meta.requestId = context.requestId;
+                    if (context && context.signal) meta.signal = context.signal;
+                    if (context && context.requestInfo && context.requestInfo.progressToken !== undefined) {
+                      meta.progressToken = context.requestInfo.progressToken;
+                    }
+                    if (Object.keys(meta).length > 0) {
+                      toolArgs._meta = meta;
+                      if (meta.signal && typeof meta.signal.addEventListener === 'function' && meta.progressToken !== undefined) {
+                        try {
+                          const { requestCancellation } = require('../mcp/progress_helper');
+                          meta.signal.addEventListener('abort', () => {
+                            try { requestCancellation(meta.progressToken); } catch {}
+                          }, { once: true });
+                        } catch {}
+                      }
+                    }
+                  } catch {}
                   
                   // Validate parameters if validator exists
                   if (validateParams) {
