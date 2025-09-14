@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "axios",
+    "ws",
+    "node-fetch",
+    "chalk"
+  ],
+  "notes": "Example global allowlist for runtime external dependencies. Hosts can add/remove entries as needed."
+}

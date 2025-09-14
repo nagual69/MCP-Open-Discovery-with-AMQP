@@ -476,11 +476,37 @@ class HotReloadManager {
     if (!fs.existsSync(distDir) || !fs.statSync(distDir).isDirectory()) return;
     if (this.pluginWatchers.has(pluginId)) return;
     try {
-      const watcher = chokidar.watch(distDir, { ...this.watchOptions, depth: 5 });
-      watcher.on('change', (filePath) => {
-        this.logger.log(`[Hot-Reload] 🔁 Plugin ${pluginId} changed: ${path.relative(distDir, filePath)}`);
-        // Placeholder: plugin-specific reload orchestration to be added.
-      });
+      const manifestPath = path.join(path.dirname(distDir), 'mcp-plugin.json');
+      const watcher = chokidar.watch([distDir, manifestPath], { ...this.watchOptions, depth: 5 });
+      const schedulePluginReload = (reason, filePath) => {
+        const rel = filePath ? path.relative(distDir, filePath) : '';
+        this.logger.log(`[Hot-Reload] 🔁 Plugin ${pluginId} ${reason}: ${rel}`);
+        const key = `plugin:${pluginId}`;
+        const existing = this.pendingReloads.get(key);
+        if (existing) { try { clearTimeout(existing); } catch {} }
+        const tid = setTimeout(async () => {
+          this.pendingReloads.delete(key);
+          try {
+            const { getPluginManager } = require('./index');
+            const pm = typeof getPluginManager === 'function' ? getPluginManager() : null;
+            if (!pm || typeof pm.reloadPlugin !== 'function') {
+              this.logger.warn(`[Hot-Reload] Plugin reload not available for ${pluginId}`);
+              return;
+            }
+            this.logger.log(`[Hot-Reload] 🔄 Reloading plugin due to ${reason}: ${pluginId}`);
+            await pm.reloadPlugin(pluginId);
+            this.logger.log(`[Hot-Reload] ✅ Plugin reloaded: ${pluginId}`);
+          } catch (e) {
+            this.logger.warn(`[Hot-Reload] ⚠️ Plugin reload failed (${pluginId}): ${e.message}`);
+          }
+        }, 400);
+        this.pendingReloads.set(key, tid);
+      };
+  watcher.on('change',   (filePath) => schedulePluginReload('change', filePath));
+  watcher.on('add',      (filePath) => schedulePluginReload('add', filePath));
+  watcher.on('unlink',   (filePath) => schedulePluginReload('unlink', filePath));
+  watcher.on('addDir',   (filePath) => schedulePluginReload('addDir', filePath));
+  watcher.on('unlinkDir',(filePath) => schedulePluginReload('unlinkDir', filePath));
       watcher.on('error', err => {
         this.logger.warn(`[Hot-Reload] Plugin watcher error (${pluginId}): ${err.message}`);
       });

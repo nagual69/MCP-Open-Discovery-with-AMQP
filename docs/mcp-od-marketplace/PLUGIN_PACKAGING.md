@@ -17,7 +17,8 @@ Authoritative reference for MCP OD plugin distribution (manifest v2) covering ha
 | dist.hash | SHA256 of ordered dist/ contents (`sha256:<64hex>`) |
 | dist.checksums.files[] | Optional per-file SHA256 entries for granular verification |
 | externalDependencies[] | Optional, gated list of runtime packages (exact versions) |
-| dependenciesPolicy | `bundled-only` (default) or `external-allowed` (advisory intent) |
+| dependenciesPolicy | `bundled-only` (default), `external-allowed` (advisory), `external-allowlist`, or `sandbox-required` |
+| dependencies[] | Optional list of other plugin names to load before this plugin |
 
 ## Computing dist.hash
 
@@ -67,6 +68,12 @@ Rules:
 - Exact versions only (no ranges ^ ~ > < *).
 - Optional integrity field (SRI-style) for future cross-check.
 - Host cross-validates entries against allowlist `tools/plugins/allowlist-deps.json`.
+- Example allowlist file is provided at `docs/allowlist-deps.json` (copy or adapt into `tools/plugins/allowlist-deps.json` on the server).
+- Policies:
+  - `bundled-only`: no externals permitted.
+  - `external-allowed`: externals permitted if `PLUGIN_ALLOW_RUNTIME_DEPS=1`; allowlist usage emits warnings.
+  - `external-allowlist`: externals require both `PLUGIN_ALLOW_RUNTIME_DEPS=1` and allowlist inclusion.
+  - `sandbox-required`: same as allowlist when externals present, and may also require sandbox availability.
 
 ## Rejection Conditions
 
@@ -74,6 +81,7 @@ Rules:
 |-----------|-----------|
 | Missing or malformed `dist.hash` | integrityError |
 | Hash mismatch (recomputed != manifest) | integrityError |
+| Signature required but missing/unverified | signatureError |
 | External import with flag disabled | policyError |
 | Undeclared external import with flag enabled | policyError |
 | Version range in externalDependencies.version | validationError |
@@ -108,7 +116,7 @@ Recommended CI Steps:
 
 ## install.lock.json
 
-Example:
+Example (v2 enriched):
 ```json
 {
   "name": "net-utils",
@@ -116,7 +124,14 @@ Example:
   "sourceUrl": "https://marketplace.example.com/plugins/net-utils-1.1.0.zip",
   "sha256": "<64hex>",
   "installedAt": "2025-09-09T12:00:00Z",
-  "signature": "<base64-optional>"
+  "signature": "<base64-optional>",
+  "fileCount": 12,
+  "totalBytes": 81234,
+  "policy": {
+    "STRICT_INTEGRITY": true,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
 }
 ```
 Used for provenance, audit, and possible offline revalidation.
@@ -129,8 +144,9 @@ Used for provenance, audit, and possible offline revalidation.
 4. Compare to manifest `dist.hash`
 5. Verify checksums (if provided)
 6. Scan imports; apply policy rules
-7. Enforce externalDependencies allowlist (if flag)
-8. Continue capability capture / reconciliation only if integrity passes
+7. Enforce externalDependencies allowlist (policy-aware, with global allowlist)
+8. Verify signature(s) when required; signed payload is manifest `dist.hash` string and algorithm is honored
+9. Continue capability capture / reconciliation only if integrity passes
 
 ## Sandbox Roadmap (Summary)
 

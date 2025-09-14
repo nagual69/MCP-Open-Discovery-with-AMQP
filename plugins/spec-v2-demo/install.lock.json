@@ -2,7 +2,15 @@
   "name": "spec-v2-demo",
   "version": "1.0.0",
   "distHash": "sha256:5b0032020a229d1bb025530f725133e36138e8182180afc7102ed01d8cea8838",
-  "installedAt": "2025-09-13T18:14:45.946Z",
+  "fileCount": 1,
+  "totalBytes": 324,
+  "installedAt": "2025-09-13T20:01:01.863Z",
+  "updatedAt": "2025-09-14T19:25:42.003Z",
   "signatureVerified": false,
-  "signerKeyId": null
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
 }

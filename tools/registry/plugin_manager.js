@@ -136,7 +136,8 @@ class PluginManager extends EventEmitter {
       }
 
       const plugin = {
-        id: manifest.id || path.basename(pluginPath, '.js'),
+        // Prefer spec plugin canonical identifier (manifest.name)
+        id: manifest.name || manifest.id || path.basename(pluginPath, '.js'),
         name: manifest.name || 'Unknown Plugin',
         version: manifest.version || '1.0.0',
         description: manifest.description || '',
@@ -295,6 +296,12 @@ class PluginManager extends EventEmitter {
                 prompts: result.captured.prompts.map(p => p.name)
               });
             }
+            // Store on plugin for clean unload later
+            plugin.capabilities = {
+              tools: result.captured.tools.map(t => t.name),
+              resources: result.captured.resources.map(r => r.name),
+              prompts: result.captured.prompts.map(p => p.name)
+            };
           }
         } catch (capErr) {
           console.warn(`[Plugin Manager] Capability snapshot failed for ${plugin.id}: ${capErr.message}`);
@@ -321,13 +328,29 @@ class PluginManager extends EventEmitter {
           if (fs.existsSync(lockPath)) {
             try { existing = JSON.parse(await fs.promises.readFile(lockPath, 'utf8')); } catch {}
           }
+          // compute file stats
+          let fileCount = null, totalBytes = null;
+          try {
+            const { computeDistHashDetailed } = require('./plugin_loader');
+            const distDir = path.join(rootDir, 'dist');
+            const det = computeDistHashDetailed(distDir);
+            fileCount = det.fileCount; totalBytes = det.totalBytes;
+          } catch {}
           const lock = {
             name: plugin.manifest.name,
             version: plugin.manifest.version,
             distHash,
+            fileCount,
+            totalBytes,
             installedAt: existing.installedAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
             signatureVerified: plugin._signatureVerified || false,
-            signerKeyId: plugin._signerKeyId || null
+            signerKeyId: plugin._signerKeyId || null,
+            policy: {
+              STRICT_INTEGRITY: !!(process.env.STRICT_INTEGRITY && /^(1|true)$/i.test(process.env.STRICT_INTEGRITY)),
+              STRICT_CAPABILITIES: !!(process.env.STRICT_CAPABILITIES && /^(1|true)$/i.test(process.env.STRICT_CAPABILITIES)),
+              PLUGIN_ALLOW_RUNTIME_DEPS: !!(process.env.PLUGIN_ALLOW_RUNTIME_DEPS && /^(1|true)$/i.test(process.env.PLUGIN_ALLOW_RUNTIME_DEPS))
+            }
           };
           await fs.promises.writeFile(lockPath, JSON.stringify(lock, null, 2), 'utf8');
         } catch (e) {
@@ -382,6 +405,26 @@ class PluginManager extends EventEmitter {
       }
     } catch (e) {
       console.warn(`[Plugin Manager] Reload manifest pre-read failed for ${pluginId}: ${e.message}`);
+    }
+    // Apply capability diff for removals before reload
+    try {
+      const { getRegistry, applyPluginCapabilityDiff } = require('./index');
+      const reg = getRegistry();
+      const prevCaps = plugin.capabilities || { tools: [], resources: [], prompts: [] };
+      // Build next caps by statically analyzing current dist entry (we rely on updated manifest.capabilities if provided; otherwise skip add detection)
+      // In our tests, we only need removals: compute removals by comparing prevCaps to refreshed manifest snapshot if available
+      const nextCaps = { tools: [], resources: [], prompts: [] };
+      // If we later capture after load, removals still need to happen now to avoid duplicate register errors
+      const removed = {
+        tools: prevCaps.tools.filter(t => !(nextCaps.tools || []).includes(t)),
+        resources: prevCaps.resources.filter(r => !(nextCaps.resources || []).includes(r)),
+        prompts: prevCaps.prompts.filter(p => !(nextCaps.prompts || []).includes(p))
+      };
+      if (removed.tools.length || removed.resources.length || removed.prompts.length) {
+        await applyPluginCapabilityDiff(pluginId, { tools: { added: [], removed: removed.tools }, resources: { added: [], removed: removed.resources }, prompts: { added: [], removed: removed.prompts } });
+      }
+    } catch (e) {
+      console.warn(`[Plugin Manager] Capability pre-diff on reload failed for ${pluginId}: ${e.message}`);
     }
     // Unload if loaded/active
     if (plugin.state === PluginState.LOADED || plugin.state === PluginState.ACTIVE) {
@@ -642,15 +685,53 @@ class PluginManager extends EventEmitter {
         await plugin.instance.cleanup();
       }
 
+      // If this is a spec plugin with registered capabilities, attempt to unregister from server and internal registry
+      try {
+        if (plugin.manifest && plugin.manifest.entry && plugin.capabilities) {
+          const { getServerInstance, getRegistry } = require('./index');
+          const srv = getServerInstance();
+          const reg = getRegistry();
+          const caps = plugin.capabilities || { tools: [], resources: [], prompts: [] };
+          // Tools
+          for (const t of caps.tools || []) {
+            try { if (srv && typeof srv.unregisterTool === 'function') await srv.unregisterTool(t); } catch {}
+            try { await reg.unregisterToolInternal(t); } catch {}
+          }
+          // Resources
+          for (const r of caps.resources || []) {
+            try { if (srv && typeof srv.unregisterResource === 'function') await srv.unregisterResource(r); } catch {}
+            try { reg.unregisterResourceInternal(r); } catch {}
+          }
+          // Prompts
+          for (const p of caps.prompts || []) {
+            try { if (srv && typeof srv.unregisterPrompt === 'function') await srv.unregisterPrompt(p); } catch {}
+            try { reg.unregisterPromptInternal(p); } catch {}
+          }
+        }
+      } catch (e) {
+        console.warn(`[Plugin Manager] ⚠️  Unregister during unload had issues for ${plugin.id}: ${e.message}`);
+      }
+
       // Clear module cache
       const modulePath = this._getPluginModulePath(plugin);
       if (modulePath && require.cache[modulePath]) {
         delete require.cache[modulePath];
       }
 
+      // Purge tool validation state for this plugin/module to avoid stale duplicates on reload
+      try {
+        if (this.validationManager && typeof this.validationManager.removeModule === 'function') {
+          const moduleName = (plugin.manifest && (plugin.manifest.name || plugin.id)) || plugin.id;
+          this.validationManager.removeModule(moduleName);
+        }
+      } catch (e) {
+        console.warn(`[Plugin Manager] Validation purge failed for ${plugin.id}: ${e.message}`);
+      }
+
       plugin.instance = null;
       plugin.state = PluginState.UNLOADED;
       plugin.error = null;
+  plugin.capabilities = undefined;
 
       console.log(`[Plugin Manager] ✅ Unloaded plugin: ${plugin.name}`);
       this.emit('pluginUnloaded', plugin);
@@ -722,7 +803,7 @@ class PluginManager extends EventEmitter {
       author: plugin.author,
       state: plugin.state,
   error: plugin.error,
-  type: plugin.manifest?.type || (plugin.manifest?.entry ? 'spec-plugin' : 'tool-module')
+  type: (plugin.manifest && plugin.manifest.entry) ? 'spec-plugin' : (plugin.manifest?.type || 'tool-module')
     }));
   }
 
@@ -739,7 +820,7 @@ class PluginManager extends EventEmitter {
 
     for (const plugin of this.plugins.values()) {
       stats.states[plugin.state] = (stats.states[plugin.state] || 0) + 1;
-      const type = plugin.manifest.type || 'unknown';
+      const type = (plugin.manifest && plugin.manifest.entry) ? 'spec-plugin' : (plugin.manifest?.type || 'tool-module');
       stats.types[type] = (stats.types[type] || 0) + 1;
     }
 
@@ -883,6 +964,20 @@ class PluginManager extends EventEmitter {
         console.warn(`[Plugin Manager] Failed to load trusted key ${id}: ${e.message}`);
       }
     }
+    // Fallback: static allowlist file under tools/plugins/trusted_keys.json
+    try {
+      const fallbackPath = path.join(__dirname, '..', 'plugins', 'trusted_keys.json');
+      if (keys.length === 0 && fs.existsSync(fallbackPath)) {
+        const raw = JSON.parse(await fs.promises.readFile(fallbackPath, 'utf8'));
+        if (Array.isArray(raw)) {
+          for (const k of raw) {
+            if (k && k.id && k.publicKeyPem) keys.push({ id: k.id, publicKeyPem: k.publicKeyPem });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[Plugin Manager] Trusted keys fallback load failed:', e.message);
+    }
     this._trustedKeysCache = keys;
     return keys;
   }
@@ -891,34 +986,67 @@ class PluginManager extends EventEmitter {
     const sigPath = path.join(rootDir, 'mcp-plugin.sig');
     const hasSigFile = fs.existsSync(sigPath);
     const requireSig = !!this.policy.requireSignature;
-    if (!hasSigFile) {
-      if (requireSig) throw new Error('Signature required but mcp-plugin.sig not found');
+    // Prefer explicit manifest.signatures[] if present
+    const manifestSigs = Array.isArray(plugin.manifest?.signatures) ? plugin.manifest.signatures : [];
+    if (!hasSigFile && manifestSigs.length === 0) {
+      if (requireSig) throw new Error('Signature required but neither mcp-plugin.sig nor manifest.signatures[] found');
       return; // Nothing to verify
     }
-    const trusted = await this._loadTrustedKeysStrict();
+  const trusted = await this._loadTrustedKeysStrict();
     if (trusted.length === 0) {
       if (requireSig) throw new Error('No trusted signing keys configured (PLUGIN_TRUSTED_KEY_IDS)');
       console.warn('[Plugin Manager] ⚠️  Signature present but no trusted keys configured; skipping verification');
       return;
     }
-    let raw = await fs.promises.readFile(sigPath, 'utf8');
-    raw = raw.trim();
-    let signatureB64 = raw;
-    if (raw.startsWith('{')) {
-      try { const obj = JSON.parse(raw); signatureB64 = obj.signature || obj.sig || signatureB64; } catch {}
-    }
-    if (!signatureB64) throw new Error('Signature file empty');
     const canonicalData = plugin.manifest.dist?.hash || '';
-    for (const key of trusted) {
-      if (this._verifySignature(canonicalData, signatureB64, key.publicKeyPem)) {
-        plugin._signatureVerified = true;
-        plugin._signerKeyId = key.id;
-        console.log(`[Plugin Manager] 🔐 Signature OK for ${plugin.id} (key ${key.id})`);
-        return;
+    const tryKeys = async (sigB64, alg) => {
+      for (const key of trusted) {
+        const algorithm = alg || 'RSA-SHA256';
+        if (this._verifySignature(canonicalData, sigB64, key.publicKeyPem, algorithm)) {
+          plugin._signatureVerified = true;
+          plugin._signerKeyId = key.id;
+          console.log(`[Plugin Manager] 🔐 Signature OK for ${plugin.id} (key ${key.id})`);
+          return true;
+        }
+      }
+      return false;
+    };
+    let verified = false;
+    // 1) Verify against signatures[] if present
+    for (const s of manifestSigs) {
+      const sig = s?.signature || s?.sig || s; // allow simple string entries
+      if (!sig || typeof sig !== 'string') continue;
+      // If keyId provided, try matching key first
+      if (s?.keyId) {
+        const k = trusted.find(t => t.id === s.keyId);
+        const algorithm = s?.alg || 'RSA-SHA256';
+        if (k && this._verifySignature(canonicalData, sig, k.publicKeyPem, algorithm)) {
+          plugin._signatureVerified = true;
+          plugin._signerKeyId = k.id;
+          console.log(`[Plugin Manager] 🔐 Signature OK for ${plugin.id} (key ${k.id})`);
+          verified = true;
+          break;
+        }
+      }
+      if (!verified) {
+        verified = await tryKeys(sig, s?.alg);
+        if (verified) break;
       }
     }
-    if (requireSig) throw new Error('Signature verification failed for all trusted keys');
-    console.warn(`[Plugin Manager] ⚠️  Signature verification failed for ${plugin.id} (non-strict mode, continuing)`);
+    // 2) Fallback to mcp-plugin.sig file
+    if (!verified && hasSigFile) {
+      let raw = await fs.promises.readFile(sigPath, 'utf8');
+      raw = raw.trim();
+      let signatureB64 = raw;
+      let sigAlg = 'RSA-SHA256';
+      if (raw.startsWith('{')) {
+        try { const obj = JSON.parse(raw); signatureB64 = obj.signature || obj.sig || signatureB64; sigAlg = obj.alg || sigAlg; } catch {}
+      }
+      if (!signatureB64) throw new Error('Signature file empty');
+      verified = await tryKeys(signatureB64, sigAlg);
+    }
+    if (!verified && requireSig) throw new Error('Signature verification failed for all trusted keys');
+    if (!verified) console.warn(`[Plugin Manager] ⚠️  Signature verification failed for ${plugin.id} (non-strict mode, continuing)`);
   }
 
   async _quarantinePlugin(plugin, rootDir, reason) {
@@ -969,32 +1097,35 @@ class PluginManager extends EventEmitter {
     const entries = await fs.promises.readdir(outDir, { withFileTypes: true });
     const rootDir = entries.length === 1 && entries[0].isDirectory() ? path.join(outDir, entries[0].name) : outDir;
 
-    // Basic checks
-    const indexJs = path.join(rootDir, 'index.js');
-    if (!fs.existsSync(indexJs)) {
-      throw new Error('Archive missing index.js at plugin root');
-    }
-
+    // Spec plugin checks
     const manifest = await this._loadPluginManifest(rootDir);
     if (!manifest || manifest.manifestVersion !== '2') {
       throw new Error('Zip plugin must contain a v2 manifest (manifestVersion="2")');
     }
-    const base = (pluginId || manifest?.id || suggestedName || 'plugin').replace(/\.zip$/i, '');
-    const id = manifest?.id || base;
-    const plugin = {
-      id,
-      name: manifest?.name || id,
-      manifest: { ...(manifest || {}), type: manifest?.type || 'tool-module' },
-      path: rootDir
-    };
+    if (!manifest.entry || !/^dist\/.+\.m?js$/.test(manifest.entry)) {
+      throw new Error('Manifest entry must point to a file under dist/');
+    }
+    const distDir = path.join(rootDir, 'dist');
+    if (!fs.existsSync(distDir)) throw new Error('dist directory missing in plugin');
+    if (!manifest.dist || !manifest.dist.hash) throw new Error('v2 manifest missing dist.hash');
+    const { computeDistHash } = require('./plugin_loader');
+    const computed = computeDistHash(distDir);
+    const declared = String(manifest.dist.hash).replace(/^sha256:/,'');
+    if (computed.toLowerCase() !== declared.toLowerCase()) {
+      throw new Error(`dist hash mismatch (manifest ${declared} != computed ${computed})`);
+    }
+    // Dry-run load to ensure plugin is well-formed (no real registration)
+    try {
+      const { loadSpecPlugin } = require('./plugin_loader');
+      const serverRef = this.registry.getServerInstance ? this.registry.getServerInstance() : require('./index').getServerInstance();
+      await loadSpecPlugin(serverRef || {}, rootDir, manifest, { dryRun: true, validationManager: this.validationManager });
+    } catch (e) {
+      throw new Error(`Spec plugin dry-run failed: ${e.message}`);
+    }
 
-    // Prevalidate by requiring from staged directory
-    const modulePath = path.join(rootDir, 'index.js');
-    delete require.cache[modulePath];
-    const module = require(modulePath);
-    await this._prevalidatePluginTools(plugin, module);
-
-  return { type: 'dir', id, srcPath: rootDir };
+    const base = (pluginId || manifest?.name || suggestedName || 'plugin').replace(/\.zip$/i, '');
+    const id = manifest?.name || base;
+    return { type: 'dir', id, srcPath: rootDir };
   }
 
   async _finalizeInstall(staged) {

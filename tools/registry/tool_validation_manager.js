@@ -328,6 +328,34 @@ class ToolValidationManager {
   }
 
   /**
+   * Remove all validation results and duplicate tracking entries for a given module.
+   * This is used by the plugin manager on unload/reload to avoid stale duplicates.
+   * @param {string} moduleName
+   */
+  removeModule(moduleName) {
+    if (!moduleName) return;
+    // Remove tool validation results belonging to this module
+    for (const [toolName, result] of this.validationResults) {
+      if (result && result.moduleName === moduleName) {
+        this.validationResults.delete(toolName);
+      }
+    }
+    // Remove the module from duplicate tracker entries
+    for (const [toolName, modules] of this.duplicateTracker) {
+      const idx = modules.indexOf(moduleName);
+      if (idx !== -1) {
+        modules.splice(idx, 1);
+        if (modules.length === 0) {
+          this.duplicateTracker.delete(toolName);
+        } else {
+          this.duplicateTracker.set(toolName, modules);
+        }
+      }
+    }
+    this.logger.log(`[Tool Validation] Purged validation state for module: ${moduleName}`);
+  }
+
+  /**
    * Update validation configuration
    * @param {Object} newConfig - New configuration options
    */

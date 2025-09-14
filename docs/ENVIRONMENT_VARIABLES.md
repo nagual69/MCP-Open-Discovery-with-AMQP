@@ -71,6 +71,7 @@ Centralized boolean flags (parsed in `tools/registry/env_flags.js`):
 - REQUIRE_SIGNATURES / PLUGIN_REQUIRE_SIGNED
   - What: Require plugin signature to verify against trusted keys (`mcp-plugin.sig` or `manifest.signatures[]`).
   - Default: false.
+  - Details: Signed payload is the manifest v2 `dist.hash` string (e.g., `sha256:<64hex>`). The verification algorithm is taken from the signature entry; trusted keys are resolved from credentials (see PLUGIN_TRUSTED_KEY_IDS) or fallback file.
 
 - SCHEMA_PATH
   - What: Override path to `mcp-plugin.schema.v2.json` for development/testing.
@@ -99,6 +100,7 @@ Global allowlist:
 - tools/plugins/allowlist-deps.json (file, not env)
   - What: Ops-controlled list of allowed external modules for plugins.
   - Format: `{ "dependencies": ["axios", "ws", ...] }` or simple array.
+  - Enforcement: Required when `dependenciesPolicy` is `external-allowlist` or `sandbox-required` with externals; advisory warnings for `external-allowed`.
 
 ## Credentials and persistence
 
@@ -122,6 +124,7 @@ SNMP/Proxmox/Nmap/etc. may have their own tool-specific vars (see respective `to
 - Container images mount a persistent volume at `/home/mcpuser/plugins`:
   - Downloads/staging at `/home/mcpuser/plugins/temp`
   - Installed plugins categorized under `/home/mcpuser/plugins/tools`, `/home/mcpuser/plugins/resources`, `/home/mcpuser/plugins/prompts`.
+  - Hot reload: spec plugins are watched – changes under `<root>/dist/` or `mcp-plugin.json` trigger automatic reload via `PluginManager.reloadPlugin()`.
 
 ## Quick examples
 

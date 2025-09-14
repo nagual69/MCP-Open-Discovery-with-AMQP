@@ -46,7 +46,12 @@ const tools = [
       url: z.string().url().optional().describe('HTTP(S) URL to a JS plugin file'),
       filePath: z.string().optional().describe('Local path to a JS plugin file'),
       pluginId: z.string().optional().describe('Explicit plugin ID/filename (optional)'),
-      autoLoad: z.boolean().optional().describe('Automatically load after install')
+      autoLoad: z.boolean().optional().describe('Automatically load after install'),
+      checksum: z.string().optional().describe('Optional checksum for the payload'),
+      checksumAlgorithm: z.string().optional().describe('Checksum algorithm (default sha256)'),
+      signature: z.string().optional().describe('Base64 signature'),
+      publicKey: z.string().optional().describe('PEM public key'),
+      signatureAlgorithm: z.string().optional().describe('Signature algorithm (default RSA-SHA256)')
     })
   },
   {
@@ -104,7 +109,7 @@ async function handleToolCall(name, args) {
       if (!plugin) return { content: [{ type: 'text', text: 'Plugin not found' }], isError: true };
       const rootDir = fs.existsSync(plugin.path) && fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
       const distDir = path.join(rootDir, 'dist');
-      const { computeDistHashDetailed } = require('./registry/plugin_loader');
+  const { computeDistHashDetailed } = require('./registry/plugin_loader');
       const strictIntegrity = args?.strictIntegrity || /^(1|true)$/i.test(process.env.STRICT_INTEGRITY || '');
       const report = { pluginId: plugin.id, issues: [] };
       if (!plugin.manifest?.dist?.hash) {
@@ -158,6 +163,11 @@ async function handleToolCall(name, args) {
         return { content: [{ type: 'text', text: 'Either url or filePath is required' }], isError: true };
       }
       const opts = { pluginId: args?.pluginId, autoLoad: !!args?.autoLoad };
+      if (args?.checksum) { opts.checksum = args.checksum; }
+      if (args?.checksumAlgorithm) { opts.checksumAlgorithm = args.checksumAlgorithm; }
+      if (args?.signature) { opts.signature = args.signature; }
+      if (args?.publicKey) { opts.publicKey = args.publicKey; }
+      if (args?.signatureAlgorithm) { opts.signatureAlgorithm = args.signatureAlgorithm; }
       const res = args.url
         ? await pm.installFromUrl(args.url, opts)
         : await pm.installFromFile(args.filePath, opts);
@@ -190,7 +200,7 @@ async function handleToolCall(name, args) {
       const rootDir = fs.existsSync(plugin.path) && fs.statSync(plugin.path).isDirectory() ? plugin.path : path.dirname(plugin.path);
       const distDir = path.join(rootDir, 'dist');
       if (!fs.existsSync(distDir)) return { content: [{ type: 'text', text: 'dist directory missing' }], isError: true };
-      const { computeDistHashDetailed } = require('./registry/plugin_loader');
+  const { computeDistHashDetailed } = require('./registry/plugin_loader');
       const { hashHex, fileCount, totalBytes } = computeDistHashDetailed(distDir);
       const declared = (plugin.manifest.dist.hash || '').replace(/^sha256:/,'');
       const match = hashHex.toLowerCase() === declared.toLowerCase();

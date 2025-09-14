@@ -398,6 +398,23 @@ this.server.tool(
 
 ### **Security**
 
+## 🔐 Integrity & Signing (v2 quick guide)
+
+When exporting a v2 plugin package, include a deterministic integrity hash and (optionally) a detached signature:
+
+- dist.hash: Compute SHA256 over the ordered `dist/` tree (relative POSIX paths + file bytes). The value format is `sha256:<64hex>`.
+- Signed payload: The exact dist.hash string (e.g., `sha256:0123...`). If you sign, attach either a `mcp-plugin.sig` file or fill `manifest.signatures[]`.
+
+Author workflow (CLI-agnostic):
+1) Build your plugin to `dist/`.
+2) Compute SHA256 over dist (use the Marketplace builder or a local script); set `manifest.dist.hash`.
+3) (Optional) Sign the dist hash string with your private key; attach signature.
+4) Download/package. The Marketplace and OD server will recompute and verify on install.
+
+Notes:
+- External runtime deps are disabled by default; prefer fully bundled plugins.
+- If your org allows externals, the host must set `PLUGIN_ALLOW_RUNTIME_DEPS=1` and approve deps via a global allowlist.
+
 - **Sanitize inputs**: Especially for network tools and file operations
 - **Limit scope**: Only request necessary permissions
 - **Validate data**: Use type checking and bounds checking

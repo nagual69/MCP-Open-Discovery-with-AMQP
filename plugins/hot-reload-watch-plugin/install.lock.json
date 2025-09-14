@@ -1,0 +1,16 @@
+{
+  "name": "hot-reload-watch-plugin",
+  "version": "1.0.0",
+  "distHash": "sha256:a19fca8074bf7725bb2c731f539417f3a902ecc71b38ed4211fbfe99d4a88d80",
+  "fileCount": 1,
+  "totalBytes": 242,
+  "installedAt": "2025-09-14T19:25:42.021Z",
+  "updatedAt": "2025-09-14T19:25:42.444Z",
+  "signatureVerified": false,
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
+}

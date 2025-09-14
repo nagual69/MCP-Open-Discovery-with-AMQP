@@ -13,7 +13,31 @@
 **World’s first dynamic Model Context Protocol (MCP) discovery server with hot‑reloadable tool registry, pluggable marketplace, and secure AMQP transport layer.**
 
 </div>
+<!-- BEGIN UNIFIED BRAND HEADER (copy/paste to other repos) -->
+<div align="center">
 
+  <p>
+    <img src="./docs/mcp-open-discovery-logo-white.png" alt="MCP Open Discovery" width="128" height="128" />
+    <img src="./docs/VibeForge01.png" alt="VibeForge Systems" width="128" height="128" />
+    <img src="./docs/CodedwithAI-white-transparent.png" alt="Coded with AI" width="128" height="128" />
+  </p>
+
+  <p><em>Forging Intelligent Systems with Purpose</em></p>
+  <p><strong>Unified launch: MCP Open Discovery • AMQP Transport • VS Code Bridge</strong></p>
+  <p>
+    <a href="https://modelcontextprotocol.io/" target="_blank">Model Context Protocol</a>
+    ·
+    <a href="https://github.com/nagual69/mcp-open-discovery" target="_blank">MCP Open Discovery</a>
+    ·
+    <a href="https://github.com/nagual69/AMQPConnectorforMCP" target="_blank">AMQP Transport</a>
+    ·
+    <a href="https://github.com/nagual69/vscode-mcp-open-discovery-amqp-bridge" target="_blank">VS Code AMQP Bridge</a>
+    ·
+    <a href="https://vibeforgesystems.com/" target="_blank">VibeForge Systems</a>
+  </p>
+
+</div>
+<!-- END UNIFIED BRAND HEADER -->
 ---
 
 ## Why Enterprises Choose MCP Open Discovery

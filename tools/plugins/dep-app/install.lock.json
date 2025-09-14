@@ -2,7 +2,15 @@
   "name": "dep-app",
   "version": "1.0.0",
   "distHash": "sha256:cd3ec8010af1ab0c2e535046659f22f1eeb087340f1e389ea44fcd091677e638",
+  "fileCount": 1,
+  "totalBytes": 419,
   "installedAt": "2025-09-13T18:13:23.301Z",
+  "updatedAt": "2025-09-14T19:25:41.967Z",
   "signatureVerified": false,
-  "signerKeyId": null
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
 }

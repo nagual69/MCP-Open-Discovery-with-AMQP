@@ -68,6 +68,7 @@ async function run() {
   assert(!reg.registeredPrompts.has('p_remove'), 'p_remove still present after reload');
   assert(reg.registeredTools.has('t_keep'), 't_keep missing after reload');
   console.log('Integration capability diff test passed');
+  process.exit(0);
 }
 
 if (require.main === module) {

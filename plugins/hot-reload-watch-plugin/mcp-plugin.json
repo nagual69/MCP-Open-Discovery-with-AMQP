@@ -1,0 +1,10 @@
+{
+  "manifestVersion": "2",
+  "name": "hot-reload-watch-plugin",
+  "version": "1.0.0",
+  "entry": "dist/index.mjs",
+  "dist": {
+    "hash": "sha256:a19fca8074bf7725bb2c731f539417f3a902ecc71b38ed4211fbfe99d4a88d80"
+  },
+  "permissions": {}
+}

@@ -482,7 +482,7 @@ async function registerAllTools(server, options = {}) {
         { name: 'proxmox_tools_sdk', category: 'Proxmox' },
         { name: 'snmp_tools_sdk', category: 'SNMP' },
         { name: 'zabbix_tools_sdk', category: 'Zabbix' },
-  { name: 'marketplace_tools_sdk', category: 'Marketplace' },
+        { name: 'marketplace_tools_sdk', category: 'Marketplace' },
         { name: 'debug_validation_sdk', category: 'Debug' },
         { name: 'credentials_tools_sdk', category: 'Credentials' },
         { name: 'registry_tools_sdk', category: 'Registry' }
@@ -644,13 +644,22 @@ function getPluginManager() {
     // Wire plugin events for capability bookkeeping
     try {
       pluginManager.on('pluginLoaded', (p) => {
-        if (p.manifest && p.manifest.capabilities) {
+        // Prefer capability snapshot captured during load (PluginManager sets plugin.capabilities from loader result)
+        const reg = getRegistry();
+        const actual = p.capabilities;
+        if (actual) {
+          const tools = new Set(actual.tools || []);
+          const resources = new Set(actual.resources || []);
+          const prompts = new Set(actual.prompts || []);
+          pluginCapabilities.set(p.id, { tools, resources, prompts });
+          reg.registerPluginCapabilities(p.id, { tools: [...tools], resources: [...resources], prompts: [...prompts] });
+        } else if (p.manifest && p.manifest.capabilities) {
+          // Fallback to declared if no captured available
           const caps = p.manifest.capabilities;
           const tools = new Set((caps.tools || []).map(t=>t.name));
           const resources = new Set((caps.resources || []).map(r=>r.name));
           const prompts = new Set((caps.prompts || []).map(r=>r.name));
           pluginCapabilities.set(p.id, { tools, resources, prompts });
-          const reg = getRegistry();
           reg.registerPluginCapabilities(p.id, { tools: [...tools], resources: [...resources], prompts: [...prompts] });
         }
       });
@@ -742,6 +751,9 @@ module.exports = {
   setServerInstance,
   getServerInstance,
   getPluginManager,
+  // Export capability diff helpers for plugin manager/reload flows
+  diffPluginCapabilities,
+  applyPluginCapabilityDiff,
   dynamicLoadModule,
   dynamicUnloadModule,
   reregisterModuleTools,

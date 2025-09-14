@@ -1,0 +1,16 @@
+{
+  "name": "diff-test-plugin",
+  "version": "1.0.0",
+  "distHash": "sha256:7662cd8f97f8c91154df6e8d7ac1e3d86c585e878cc17421382c13de937ded04",
+  "fileCount": 1,
+  "totalBytes": 1063,
+  "installedAt": "2025-09-13T20:01:23.416Z",
+  "updatedAt": "2025-09-14T19:25:41.991Z",
+  "signatureVerified": false,
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
+}

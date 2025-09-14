@@ -2,7 +2,15 @@
   "name": "remote-demo",
   "version": "1.0.0",
   "distHash": "sha256:f3acd2010566daa6bd3e67587342c7070345ecd93ee4722fc8c3d4b27ecc06aa",
-  "installedAt": "2025-09-13T18:14:45.960Z",
+  "fileCount": 1,
+  "totalBytes": 230,
+  "installedAt": "2025-09-13T20:01:01.876Z",
+  "updatedAt": "2025-09-14T19:25:41.997Z",
   "signatureVerified": false,
-  "signerKeyId": null
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
 }

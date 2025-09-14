@@ -2,7 +2,15 @@
   "name": "dep-lib",
   "version": "1.0.0",
   "distHash": "sha256:651bc695e9edc525011dc3ff413b5756e77fb5eff37b5c3f452b43ac0d7beaec",
+  "fileCount": 1,
+  "totalBytes": 339,
   "installedAt": "2025-09-13T18:13:23.307Z",
+  "updatedAt": "2025-09-14T19:25:41.977Z",
   "signatureVerified": false,
-  "signerKeyId": null
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
 }

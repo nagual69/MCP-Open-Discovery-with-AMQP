@@ -2,7 +2,15 @@
   "name": "spec-minimal",
   "version": "1.0.0",
   "distHash": "sha256:66dc8cf316b225be9dd04ada3a0828915d4b5037fb3a1a8a677dcf5a6412e7d4",
+  "fileCount": 1,
+  "totalBytes": 312,
   "installedAt": "2025-09-13T18:13:23.312Z",
+  "updatedAt": "2025-09-14T19:25:41.983Z",
   "signatureVerified": false,
-  "signerKeyId": null
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": false,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
 }

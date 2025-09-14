@@ -74,6 +74,17 @@
       "maxItems": 25,
       "uniqueItems": true
     },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-_]+$",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "maxItems": 50,
+      "description": "Other plugin names this plugin depends on (load before this plugin)."
+    },
     "dist": {
       "type": "object",
       "required": ["hash"],
