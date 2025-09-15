@@ -4,9 +4,7 @@
 
 **Enterprise Multi-Transport MCP Discovery & Automation Platform**
 
-[▶ Executive Overview (One‑Pager)](./docs/Executive-One-Pager.md) • [Website](https://vibeforgesystems.com/) • [Architecture Diagram](./open_mcp_architecture.mmd)
-
-**Developed & Supported by [VibeForge Systems](https://vibeforgesystems.com/) — enterprise integration, deployment, and customization services available.**
+[▶ Executive Overview (One‑Pager)](./docs/Executive-One-Pager.md) • [Website](https://www.linkedin.com/in/toby-schmeling-2200556/) • [Architecture Diagram](./open_mcp_architecture.mmd)
 
 <br/>
 
@@ -18,7 +16,6 @@
 
   <p>
     <img src="./docs/mcp-open-discovery-logo-white.png" alt="MCP Open Discovery" width="128" height="128" />
-    <img src="./docs/VibeForge01.png" alt="VibeForge Systems" width="128" height="128" />
     <img src="./docs/CodedwithAI-white-transparent.png" alt="Coded with AI" width="128" height="128" />
   </p>
 
@@ -33,12 +30,11 @@
     ·
     <a href="https://github.com/nagual69/vscode-mcp-open-discovery-amqp-bridge" target="_blank">VS Code AMQP Bridge</a>
     ·
-    <a href="https://vibeforgesystems.com/" target="_blank">VibeForge Systems</a>
+    <a href="https://www.linkedin.com/in/toby-schmeling-2200556/" target="_blank">LinkedIn Profile</a>
   </p>
 
 </div>
 <!-- END UNIFIED BRAND HEADER -->
----
 
 ## Why Choose MCP Open Discovery
 
@@ -145,15 +141,6 @@ The platform ships with a policy-aware plugin marketplace enabling governed exte
 | Discovery | Proxmox, SNMP, Nmap, Zabbix | Unified multi-surface infrastructure mapping |
 | Extensibility | Marketplace APIs | Install, inspect, rescan, govern plugins |
 | Observability | Analytics snapshot | Policy/signature/sandbox adoption metrics |
-
----
-
-## Commercial Support & Integration Services
-
-For enterprise deployment architecture, regulated environment hardening, custom plugin development, private marketplace federation, or transport extensions:
-
-**Visit: https://vibeforgesystems.com/**  
-Or open an issue referencing “Enterprise Integration” for a scoping workshop.
 
 ---
 
