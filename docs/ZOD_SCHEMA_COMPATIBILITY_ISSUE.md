@@ -94,7 +94,7 @@ server.registerTool({
 ### ✅ Working Components
 
 - **AMQP Transport**: ✅ Complete success - VSCode integration working
-- **HTTP Transport**: ✅ Active on port 3000 with health endpoints
+- **HTTP Transport**: ✅ Active on port 6270 with health endpoints
 - **Server startup**: ✅ Complete success with all modules loaded
 - **Tool registration**: ✅ 57+ tools across 8 categories successfully registered
 - **Tool discovery**: ✅ VSCode discovers and lists all tools

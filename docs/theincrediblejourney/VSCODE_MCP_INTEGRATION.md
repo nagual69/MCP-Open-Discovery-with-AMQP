@@ -8,7 +8,7 @@
 
 ## The Problem You Encountered
 
-VS Code's MCP extension was trying to connect to `http://localhost:3000/` but our MCP server endpoint is at `http://localhost:3000/mcp`. Additionally, **VS Code's MCP extension typically expects stdio transport, not HTTP**.
+VS Code's MCP extension was trying to connect to `http://localhost:6270/` but our MCP server endpoint is at `http://localhost:6270/mcp`. Additionally, **VS Code's MCP extension typically expects stdio transport, not HTTP**.
 
 ## 🎯 Primary Solution: HTTP Transport (Enterprise Focus)
 
@@ -21,8 +21,8 @@ For enterprise container deployments, HTTP transport is the standard:
 docker-compose up -d
 
 # Verify HTTP endpoint
-curl http://localhost:3000/health
-curl http://localhost:3000/mcp
+curl http://localhost:6270/health
+curl http://localhost:6270/mcp
 ```
 
 ### Direct HTTP Testing

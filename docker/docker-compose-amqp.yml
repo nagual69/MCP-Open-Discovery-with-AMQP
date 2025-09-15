@@ -11,11 +11,11 @@ services:
     build: .
     container_name: mcp-discovery-amqp
     ports:
-      - "3000:3000"    # HTTP transport
+      - "6270:6270"    # HTTP transport
     environment:
       # Enhanced transport mode with AMQP
       - TRANSPORT_MODE=http,amqp
-      - HTTP_PORT=3000
+      - HTTP_PORT=6270
       - LOG_LEVEL=info
       
       # AMQP Configuration
@@ -34,7 +34,7 @@ services:
     networks:
       - mcp-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:6270/health"]
       interval: 30s
       timeout: 10s
       retries: 3

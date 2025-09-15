@@ -6,7 +6,7 @@ services:
     image: mcp-open-discovery
     container_name: mcp-open-discovery
     ports:
-      - "3000:3000"
+      - "6270:6270"
     environment:
       - ZABBIX_BASE_URL=http://172.20.0.23:8080
       - ZABBIX_USERNAME=Admin
@@ -15,7 +15,7 @@ services:
       - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
       - AMQP_ENABLED=true
       - TRANSPORT_MODE=http,amqp
-      - HTTP_PORT=3000
+      - HTTP_PORT=6270
       - LOG_LEVEL=info
       # AMQP Tuning and Routing
       - AMQP_QUEUE_PREFIX=mcp.discovery
@@ -42,7 +42,7 @@ services:
       - NET_ADMIN
       - NET_BIND_SERVICE
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:6270/health"]
       interval: 30s
       timeout: 10s
       retries: 3

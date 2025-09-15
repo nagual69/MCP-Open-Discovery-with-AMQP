@@ -43,7 +43,7 @@ TRANSPORT_MODE=http,amqp          # Multiple transports
 TRANSPORT_MODE=stdio,http,amqp    # All transports
 
 # HTTP Configuration
-HTTP_PORT=3000
+HTTP_PORT=6270
 OAUTH_ENABLED=true
 OAUTH_PROTECTED_ENDPOINTS=/mcp
 
@@ -115,7 +115,7 @@ const results = await startAllTransports(mcpServer, config);
 ```javascript
 // Full configuration with OAuth and AMQP
 const config = createTransportConfig(environment, {
-  HTTP_PORT: 3000,
+  HTTP_PORT: 6270,
   OAUTH_ENABLED: true,
   AMQP_ENABLED: true,
   oauthHandlers: { protectedResourceMetadataHandler },
@@ -141,7 +141,7 @@ docker run -e TRANSPORT_MODE=grpc -e GRPC_PORT=50051 mcp-open-discovery
 | Transport | Status    | Port  | Use Case                | Features                   |
 | --------- | --------- | ----- | ----------------------- | -------------------------- |
 | **stdio** | ✅ Active | -     | CLI tools, development  | Direct I/O                 |
-| **HTTP**  | ✅ Active | 3000  | Web clients, REST APIs  | OAuth 2.1, SSE             |
+| **HTTP**  | ✅ Active | 6270  | Web clients, REST APIs  | OAuth 2.1, SSE             |
 | **AMQP**  | ✅ Active | 5672  | Message queues, pub/sub | Auto-recovery, persistence |
 | **gRPC**  | 🚧 Ready  | 50051 | High-performance RPC    | Streaming, typed APIs      |
 
@@ -184,7 +184,7 @@ const status = getAllTransportStatus(transportResults);
   manager: { version: '2.0.0', status: 'active' },
   transports: {
     stdio: { available: true, description: '...' },
-    http: { available: true, port: 3000, oauth: 'enabled' },
+  http: { available: true, port: 6270, oauth: 'enabled' },
     amqp: { available: true, autoRecovery: 'active' }
   },
   summary: { total: 3, active: 3, failed: 0 }
@@ -286,7 +286,7 @@ const {
 
 // Environment variables
 (TRANSPORT_MODE = stdio), http, amqp; // Transport selection
-HTTP_PORT = 3000; // HTTP port
+HTTP_PORT = 6270; // HTTP port (default remains 3000 if env unset)
 OAUTH_ENABLED = true; // OAuth 2.1 support
 AMQP_ENABLED = true; // AMQP messaging
 GRPC_PORT = 50051; // gRPC port (future)

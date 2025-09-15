@@ -75,11 +75,11 @@ ENV TRANSPORT_MODE=http
 ENV PLUGINS_ROOT=/home/mcpuser/plugins
 
 # Expose the port
-EXPOSE 3000
+EXPOSE 6270
 
 # Set health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD wget --quiet --tries=1 --spider http://localhost:6270/health || exit 1
 
 # Use the non-root user
 USER mcpuser

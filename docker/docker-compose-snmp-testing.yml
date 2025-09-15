@@ -6,13 +6,13 @@ services:
       dockerfile: Dockerfile.modular
     container_name: busybox-network-mcp
     ports:
-      - "3000:3000"
+      - "6270:6270"
       - "161:161/udp"
     networks:
       - mcp-testing
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:6270/health"]
       interval: 30s
       timeout: 10s
       retries: 3

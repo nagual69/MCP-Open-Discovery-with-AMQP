@@ -177,7 +177,7 @@ This README aims to describe current capabilities plainly and avoid over‑claim
 
 ## Current Transport Support
 
-- HTTP: supported and enabled by default (port 3000)
+- HTTP: supported and enabled by default (port 3000). Recommended convention for remote clients: port 6270 (set HTTP_PORT=6270).
 - Stdio: supported for local/embedded scenarios
 - AMQP (RabbitMQ): available; evaluated in practice. Suitable for non-interactive integrations. For IDE integrations, confirm MCP transport compliance in your environment.
 - gRPC: not enabled; future consideration
@@ -241,7 +241,7 @@ docker compose -f docker/docker-compose.yml up -d
 Verify:
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:6270/health
 ```
 
 ### Runtime paths
@@ -294,7 +294,7 @@ For a lean, production-only deployment of the MCP server:
 Network ping:
 
 ```bash
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"ping","arguments":{"host":"127.0.0.1","count":2}}}'
 ```
@@ -302,7 +302,7 @@ curl -X POST http://localhost:3000/mcp \
 SNMP device inventory:
 
 ```bash
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"snmp_device_inventory","arguments":{"host":"192.168.1.10","version":"2c","community":"public"}}}'
 ```
@@ -310,7 +310,7 @@ curl -X POST http://localhost:3000/mcp \
 Zabbix host discovery:
 
 ```bash
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"zabbix_host_discover","arguments":{"baseUrl":"http://localhost:8080","username":"Admin","password":"zabbix"}}}'
 ```
@@ -362,7 +362,7 @@ The platform uses a unified credential system supporting multiple credential typ
 
 ```bash
 # Add Proxmox credentials
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
   -d '{
     "method": "tools/call",
@@ -380,7 +380,7 @@ curl -X POST http://localhost:3000/mcp \
   }'
 
 # Add Zabbix credentials
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
   -d '{
     "method": "tools/call",
@@ -398,12 +398,12 @@ curl -X POST http://localhost:3000/mcp \
   }'
 
 # List all credentials (secure - only metadata shown)
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
   -d '{"method": "tools/call", "params": {"name": "credentials_list"}}'
 
 # Use credentials with tools (auto-detected or specify creds_id)
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
   -d '{"method": "tools/call", "params": {"name": "zabbix_host_discover", "arguments": {"creds_id": "zabbix-main"}}}'
 ````
@@ -660,7 +660,7 @@ docker compose -f docker/docker-compose.yml up -d --scale mcp-server=3
 
 # Monitor health and logs
 docker compose -f docker/docker-compose.yml logs -f mcp-server
-curl http://localhost:3000/health
+curl http://localhost:6270/health
 ```
 
 ### **🔧 Configuration Options**
@@ -739,13 +739,13 @@ Our comprehensive testing against **real production infrastructure** achieved:
 
 ```bash
 # Discover complete Proxmox cluster
-curl -X POST localhost:3000/mcp -d '{
+curl -X POST localhost:6270/mcp -d '{
   "method": "tools/call",
   "params": {"name": "proxmox_cluster_resources"}
 }'
 
 # SNMP device inventory across network
-curl -X POST localhost:3000/mcp -d '{
+curl -X POST localhost:6270/mcp -d '{
   "method": "tools/call",
   "params": {"name": "snmp_discover", "arguments": {"targetRange": "192.168.1.0/24"}}
 }'
@@ -755,7 +755,7 @@ curl -X POST localhost:3000/mcp -d '{
 
 ```bash
 # Get expert network topology analysis
-curl -X POST localhost:3000/mcp -d '{
+curl -X POST localhost:6270/mcp -d '{
   "method": "prompts/get",
   "params": {"name": "network_topology_analysis", "arguments": {
     "networkData": "...", "subnet": "192.168.1.0/24"

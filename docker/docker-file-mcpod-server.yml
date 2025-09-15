@@ -6,11 +6,11 @@ services:
     image: mcp-open-discovery
     container_name: mcp-open-discovery
     ports:
-      - "3000:3000"
+      - "6270:6270"
     environment:
       # Core server runtime
       - TRANSPORT_MODE=${TRANSPORT_MODE:-http}  # Override to http,amqp when running with RabbitMQ profile
-      - HTTP_PORT=3000
+      - HTTP_PORT=6270
       - LOG_LEVEL=info
 
       # AMQP (optional; used when running with the 'with-amqp' profile)
@@ -40,7 +40,7 @@ services:
       - NET_BIND_SERVICE
 
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+  test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:6270/health"]
       interval: 30s
       timeout: 10s
       retries: 3
