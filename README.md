@@ -277,9 +277,18 @@ For a lean, production-only deployment of the MCP server:
 
 - Windows (full stack or server-only):
   - Full/dev stack: `./rebuild_deploy.ps1` (uses `docker/docker-compose.yml`)
-  - Minimal production server: `./rebuild_deploy_prod.ps1` (add `-WithAmqp` to include RabbitMQ)
+  - Minimal production server: `./rebuild_deploy_prod.ps1`
+    - Transports (choose any): `-Http`, `-Amqp`, `-Stdio` (default `-Http` if none specified)
+    - RabbitMQ container: `-WithRabbitMq` (optional; use with `-Amqp` if you want an in-stack broker)
+    - Project scoping: `-ProjectName <name>` (overrides `COMPOSE_PROJECT_NAME`; auto-lowercased for Docker)
+    - Deprecated: `-WithAmqp` (alias of `-Amqp -WithRabbitMq`)
 - Linux/macOS:
   - Full/dev stack: `./rebuild_redeploy.sh` (uses `docker/docker-compose.yml`)
+  - Minimal production server: `./rebuild_redeploy_prod.sh`
+    - Transports: `--http`, `--amqp`, `--stdio` (default `--http` if none specified)
+    - RabbitMQ container: `--with-rabbitmq` (optional)
+    - Project scoping: `--project-name <name>` or `COMPOSE_PROJECT_NAME` (will be normalized to lowercase)
+    - Deprecated: `--with-amqp` (alias of `--amqp --with-rabbitmq`)
 
 ## Security notes
 

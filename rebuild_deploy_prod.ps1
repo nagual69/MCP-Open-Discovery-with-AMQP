@@ -4,7 +4,19 @@
 # Uses docker/docker-file-mcpod-server.yml and optionally RabbitMQ via profile
 
 param(
+    # Transport selection (choose any combination)
+    [switch]$Stdio,
+    [switch]$Http,
+    [switch]$Amqp,
+
+    # Container profile selection
+    [switch]$WithRabbitMq,
+
+    # Back-compat alias: implies -Amqp and -WithRabbitMq
     [switch]$WithAmqp,
+
+    # General
+    [string]$ProjectName,
     [switch]$NoLogs,
     [switch]$Help
 )
@@ -13,6 +25,11 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Set-Location -Path $PSScriptRoot
+
+# Determine a compose project name for scoping (precedence: parameter > COMPOSE_PROJECT_NAME > default)
+if ([string]::IsNullOrWhiteSpace($ProjectName)) {
+    $ProjectName = if ($env:COMPOSE_PROJECT_NAME) { $env:COMPOSE_PROJECT_NAME } else { 'mcp-open-discovery-production' }
+}
 
 function Invoke-Compose {
     param([Parameter(ValueFromRemainingArguments = $true)][string[]]$ComposeArgs)
@@ -31,8 +48,16 @@ function Remove-ContainerIfExists {
     try {
         $id = (& docker ps -a --filter "name=^/$Name$" -q | Select-Object -First 1)
         if ($id) {
-            Write-Host "Removing existing container: $Name" -ForegroundColor DarkYellow
-            & docker rm -f $Name | Out-Null
+            # Only remove if the container belongs to this compose project (safety guard)
+            $composeProjectLabel = (& docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' $Name 2>$null)
+            if ($composeProjectLabel -and $composeProjectLabel -eq $ProjectName) {
+                Write-Host "Removing existing container: $Name (project: $composeProjectLabel)" -ForegroundColor DarkYellow
+                & docker rm -f $Name | Out-Null
+            }
+            else {
+                Write-Host "Skip removing container '$Name' — not owned by compose project '$ProjectName'." -ForegroundColor Yellow
+                Write-Host "If this causes a name conflict, set COMPOSE_PROJECT_NAME to a unique value or remove it manually." -ForegroundColor DarkYellow
+            }
         }
     }
     catch {
@@ -46,46 +71,68 @@ if (-not (Test-Path -Path $composeFile)) { throw "Compose file not found: $compo
 if ($Help) {
     Write-Host "Minimal production deploy" -ForegroundColor Cyan
     Write-Host "Usage:" -ForegroundColor Yellow
-    Write-Host "  .\rebuild_deploy_prod.ps1            # HTTP-only server" 
-    Write-Host "  .\rebuild_deploy_prod.ps1 -WithAmqp  # Server + RabbitMQ profile (AMQP)" 
-    Write-Host "  .\rebuild_deploy_prod.ps1 -NoLogs    # Don't tail logs"
+    Write-Host "  .\rebuild_deploy_prod.ps1 -Http                 # HTTP-only (default if no flags/env)" 
+    Write-Host "  .\rebuild_deploy_prod.ps1 -Amqp -WithRabbitMq   # AMQP transport + RabbitMQ container" 
+    Write-Host "  .\rebuild_deploy_prod.ps1 -Amqp                 # AMQP transport only (external broker)" 
+    Write-Host "  .\rebuild_deploy_prod.ps1 -Stdio -Http          # StdIO + HTTP transports" 
+    Write-Host "  .\rebuild_deploy_prod.ps1 -NoLogs               # Don't tail logs"
+    Write-Host "  Deprecated: -WithAmqp (equivalent to -Amqp -WithRabbitMq)" -ForegroundColor DarkYellow
+    Write-Host "  Options: -ProjectName <name>  # Overrides COMPOSE_PROJECT_NAME for this run"
+    Write-Host "  Note: Compose project is scoped as '$ProjectName' (override with -ProjectName or COMPOSE_PROJECT_NAME)"
     exit 0
 }
 
-# Determine profile args once
-$profileArgs = @()
-if ($WithAmqp) { $profileArgs = @('--profile', 'with-amqp') }
-
-# Ensure TRANSPORT_MODE aligns with selected profile
+# Handle deprecated alias
 if ($WithAmqp) {
-    $env:TRANSPORT_MODE = 'http,amqp'
+    Write-Host "DEPRECATED: -WithAmqp is replaced by -Amqp -WithRabbitMq" -ForegroundColor DarkYellow
+    $Amqp = $true
+    if (-not $WithRabbitMq) { $WithRabbitMq = $true }
 }
-else {
-    if (-not $env:TRANSPORT_MODE -or $env:TRANSPORT_MODE -ne 'http') {
-        $env:TRANSPORT_MODE = 'http'
-    }
+
+# Build TRANSPORT_MODE from flags
+$selectedTransports = @()
+if ($Stdio) { $selectedTransports += 'stdio' }
+if ($Http)  { $selectedTransports += 'http' }
+if ($Amqp)  { $selectedTransports += 'amqp' }
+
+if ($selectedTransports.Count -gt 0) {
+    $env:TRANSPORT_MODE = ($selectedTransports -join ',')
+}
+elseif (-not $env:TRANSPORT_MODE) {
+    # Default when no flags and no pre-set env: HTTP only
+    $env:TRANSPORT_MODE = 'http'
+}
+
+Write-Host ("TRANSPORT_MODE = {0}" -f $env:TRANSPORT_MODE) -ForegroundColor Cyan
+
+# Determine compose profile for RabbitMQ container
+$profileArgs = @()
+if ($WithRabbitMq) { $profileArgs = @('--profile', 'with-amqp') }
+
+if ($WithRabbitMq -and -not $Amqp) {
+    Write-Host "Warning: -WithRabbitMq specified without -Amqp. Deploying RabbitMQ container but AMQP transport not enabled." -ForegroundColor DarkYellow
 }
 
 # Stop/remove
 Write-Host "Stopping containers..." -ForegroundColor Yellow
-try { Invoke-Compose -ComposeArgs ($profileArgs + @('-f', $composeFile, 'down', '--remove-orphans')) } catch { Write-Host "down failed or not running" -ForegroundColor DarkGray }
+try { Invoke-Compose -ComposeArgs (@('-p', $ProjectName) + $profileArgs + @('-f', $composeFile, 'down', '--remove-orphans')) } catch { Write-Host "down failed or not running" -ForegroundColor DarkGray }
 
 # Proactively resolve name conflicts from other projects
 Remove-ContainerIfExists -Name 'mcp-open-discovery'
-if ($WithAmqp) { Remove-ContainerIfExists -Name 'mcp-rabbitmq' }
+if ($WithRabbitMq) { Remove-ContainerIfExists -Name 'mcp-rabbitmq' }
 
 # Build
 Write-Host "Building images..." -ForegroundColor Yellow
-Invoke-Compose -ComposeArgs ($profileArgs + @('-f', $composeFile, 'build', '--no-cache'))
+Invoke-Compose -ComposeArgs (@('-p', $ProjectName) + $profileArgs + @('-f', $composeFile, 'build', '--no-cache'))
 
 # Start
 Write-Host "Starting containers..." -ForegroundColor Yellow
-Invoke-Compose -ComposeArgs ($profileArgs + @('-f', $composeFile, 'up', '-d', '--remove-orphans'))
+Invoke-Compose -ComposeArgs (@('-p', $ProjectName) + $profileArgs + @('-f', $composeFile, 'up', '-d', '--remove-orphans'))
 
 # Post start
 Start-Sleep -Seconds 8
-Invoke-Compose -ComposeArgs ($profileArgs + @('-f', $composeFile, 'ps'))
+Invoke-Compose -ComposeArgs (@('-p', $ProjectName) + $profileArgs + @('-f', $composeFile, 'ps'))
 
 if (-not $NoLogs) {
-    Invoke-Compose -ComposeArgs ($profileArgs + @('-f', $composeFile, 'logs', '-f'))
+    Invoke-Compose -ComposeArgs (@('-p', $ProjectName) + $profileArgs + @('-f', $composeFile, 'logs', '-f'))
 }

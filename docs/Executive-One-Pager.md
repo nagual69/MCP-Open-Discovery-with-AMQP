@@ -36,7 +36,7 @@ A production-ready Model Context Protocol (MCP) server that unifies infrastructu
 
 ## Deployment & operations
 
-- Standard Docker Compose (`docker/docker-compose.yml`); Windows PowerShell script provided (`rebuild_deploy.ps1`). Minimal production server: `rebuild_deploy_prod.ps1` (add `-WithAmqp` to include RabbitMQ).
+- Standard Docker Compose (`docker/docker-compose.yml`); Windows PowerShell script provided (`rebuild_deploy.ps1`). Minimal production server scripts: Windows `rebuild_deploy_prod.ps1` and Linux `rebuild_redeploy_prod.sh` with flags to enable transports (`-Http`/`--http`, `-Amqp`/`--amqp`, `-Stdio`/`--stdio`) and optional RabbitMQ (`-WithRabbitMq`/`--with-rabbitmq`). Use `-ProjectName`/`--project-name` to scope the Compose project safely.
 - Health checks and logs; hot‑reload for safe iteration
 - Works locally, in CI, or in container platforms
 
