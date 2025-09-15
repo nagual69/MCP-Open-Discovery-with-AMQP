@@ -13,11 +13,21 @@ console.log('  • Network: 172.20.0.0/16 (Docker network)');
 console.log('  • snmp-agent-1: 172.20.0.10:1161 (Docker Test Lab)');
 console.log('  • snmp-agent-2: 172.20.0.11:2161 (Docker Test Lab 2)');
 console.log('  • snmp-agent-3: 172.20.0.12:3161 (Docker Test Lab 3 + testcommunity)');
-console.log('  • mcp-server: 172.20.0.1:3000 (MCP Open Discovery)\n');
+try {
+	const { port } = require('./test_http_port');
+	console.log(`  • mcp-server: 172.20.0.1:${port} (MCP Open Discovery)\n`);
+} catch (e) {
+	console.log('  • mcp-server: 172.20.0.1:3000 (MCP Open Discovery)\n');
+}
 
 console.log('🧪 How to Test SNMP Discovery:');
 console.log('1. Connect MCP Inspector:');
-console.log('   npx @modelcontextprotocol/inspector http://localhost:3000/mcp\n');
+try {
+	const { mcpUrl } = require('./test_http_port');
+	console.log(`   npx @modelcontextprotocol/inspector ${mcpUrl}\n`);
+} catch (e) {
+  console.log('   npx @modelcontextprotocol/inspector http://localhost:3000/mcp\n');
+}
 
 console.log('2. Test SNMP Discovery tool with target network:');
 console.log('   Tool: snmp_discover');

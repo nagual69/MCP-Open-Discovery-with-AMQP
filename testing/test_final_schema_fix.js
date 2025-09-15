@@ -7,6 +7,7 @@
  */
 
 console.log("🧪 Testing Final Schema Fix - MCP Open Discovery v2.0");
+const { mcpUrl } = require('./test_http_port');
 console.log("=" .repeat(60));
 
 // Test various tool types that previously failed with keyValidator._parse
@@ -14,7 +15,7 @@ const testCases = [
   {
     name: "Memory Tool (Standard Library)",
     method: "POST", 
-    url: "http://localhost:3000/mcp",
+  url: mcpUrl,
     data: {
       jsonrpc: "2.0",
       id: 1,
@@ -28,7 +29,7 @@ const testCases = [
   {
     name: "Network Tool (Standard Library)", 
     method: "POST",
-    url: "http://localhost:3000/mcp", 
+  url: mcpUrl, 
     data: {
       jsonrpc: "2.0",
       id: 2,
@@ -45,7 +46,7 @@ const testCases = [
   {
     name: "SNMP Array Tool (Custom Conversion)",
     method: "POST",
-    url: "http://localhost:3000/mcp",
+  url: mcpUrl,
     data: {
       jsonrpc: "2.0",
       id: 3,
@@ -147,7 +148,7 @@ async function testToolList() {
   
   // First establish session
   try {
-    const initResponse = await fetch("http://localhost:3000/mcp", {
+  const initResponse = await fetch(mcpUrl, {
       method: "POST",
       headers: { 
         'Content-Type': 'application/json',
@@ -191,7 +192,7 @@ async function testToolList() {
     }
     
     // Send initialized notification (required by MCP protocol)
-    const notifyResponse = await fetch("http://localhost:3000/mcp", {
+  const notifyResponse = await fetch(mcpUrl, {
       method: "POST", 
       headers: {
         'Content-Type': 'application/json',
@@ -208,7 +209,7 @@ async function testToolList() {
     console.log(`📡 Initialized notification sent: ${notifyResponse.ok ? 'SUCCESS' : 'FAILED'}`);
     
     // Now test tools/list
-    const response = await fetch("http://localhost:3000/mcp", {
+  const response = await fetch(mcpUrl, {
       method: "POST",
       headers: { 
         'Content-Type': 'application/json',

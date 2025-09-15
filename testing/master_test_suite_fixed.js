@@ -32,12 +32,14 @@ if (fs.existsSync(envPath)) {
   });
 }
 
+const { mcpUrl, healthUrl } = require('./test_http_port');
+
 // Configuration
 const CONFIG = {
   // Transport settings
   transports: {
     stdio: { enabled: true },
-    http: { enabled: true, url: 'http://localhost:3000/mcp', healthUrl: 'http://localhost:3000/health' }
+  http: { enabled: true, url: mcpUrl, healthUrl: healthUrl }
   },
   
   // Test timeouts

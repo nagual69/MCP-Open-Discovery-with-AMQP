@@ -9,9 +9,10 @@
  */
 
 const axios = require('axios');
+const { mcpUrl } = require('./test_http_port');
 
-// Test configuration
-const MCP_SERVER_URL = 'http://localhost:3000/mcp';
+// Test configuration (dynamic via env)
+const MCP_SERVER_URL = mcpUrl;
 const TEST_TIMEOUT = 30000;
 
 // Test tools that previously failed with keyValidator._parse error
@@ -70,7 +71,7 @@ class TransportLevelFixTester {
         throw new Error(`Initialize failed: ${response.data.error.message}`);
       }
 
-      console.log('✅ MCP session initialized successfully');
+  console.log(`✅ MCP session initialized successfully (server: ${MCP_SERVER_URL})`);
       console.log('📋 Server capabilities:', JSON.stringify(response.data.result.capabilities, null, 2));
       
       // Send initialized notification
