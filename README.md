@@ -40,7 +40,7 @@
 <!-- END UNIFIED BRAND HEADER -->
 ---
 
-## Why Enterprises Choose MCP Open Discovery
+## Why Choose MCP Open Discovery
 
 | Capability | Enterprise Outcome |
 | ---------- | ------------------ |
@@ -52,8 +52,6 @@
 | Sandbox & Allowlist Enforcement | Runtime risk reduction for third‑party extensions |
 | Proxmox • SNMP • Zabbix • Nmap | Unified infrastructure discovery & monitoring fabric |
 | Marketplace Analytics | Operational insight (policy distribution, signatures, sandbox adoption) |
-
-> For enterprise support, integration blueprints, or bespoke plugin development: visit **https://vibeforgesystems.com/** or open a support request.
 
 ---
 
@@ -330,7 +328,7 @@ curl -X POST http://localhost:3000/mcp \
 
 ## License
 
-Apache-2.0. See `LICENSE` for details.
+Mozilla Public License 2.0 (MPL-2.0). See `LICENSE` for details.
 
 ## Plugin Dependency Policies & Integrity (v2)
 
@@ -893,7 +891,7 @@ npm run test:mcp
 
 ## 📄 **License**
 
-MIT License - See [LICENSE](./LICENSE) for details.
+Mozilla Public License 2.0 (MPL-2.0) — see [LICENSE](./LICENSE) for details.
 
 ---
 

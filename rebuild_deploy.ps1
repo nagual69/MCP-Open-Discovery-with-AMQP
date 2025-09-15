@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# SPDX-License-Identifier: MPL-2.0
 # Script to rebuild and redeploy MCP Open Discovery server with modular architecture
 
 param(

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 /**
  * AMQP Transport Integration for MCP Open Discovery Server v2.0
  * 

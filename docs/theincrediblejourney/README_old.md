@@ -422,7 +422,7 @@ npm run test:mcp
 
 ## 📄 **License**
 
-MIT License - See [LICENSE](./LICENSE) for details.
+Note: This is a historical document. The current project license is Mozilla Public License 2.0 (MPL-2.0). See the repository root [LICENSE](../../LICENSE) for details.
 
 ---
 
@@ -1004,7 +1004,7 @@ For instructions on how to connect this MCP server to VS Code, refer to [VSCODE_
 
 ## License
 
-MIT License
+Note: This is a historical document. The current project license is Mozilla Public License 2.0 (MPL-2.0). See the repository root [LICENSE](../../LICENSE) for details.
 
 ## Project Structure
 

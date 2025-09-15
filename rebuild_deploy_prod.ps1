@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# SPDX-License-Identifier: MPL-2.0
 # Minimal production deploy for MCP Open Discovery (PowerShell)
 # Uses docker/docker-file-mcpod-server.yml and optionally RabbitMQ via profile
 

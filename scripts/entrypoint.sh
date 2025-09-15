@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MPL-2.0
 set -e
 
 # Ensure data and logs exist and are owned by mcpuser

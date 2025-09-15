@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MPL-2.0
 # Script to rebuild and redeploy MCP Open Discovery server with modular architecture (feature parity with PowerShell)
 
 set -euo pipefail

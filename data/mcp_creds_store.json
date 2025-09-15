@@ -2,13 +2,13 @@
   "test_toby": {
     "type": "password",
     "username": "mcpuser",
-    "password": "Chu58Cqz2dYzmWOS1TOqbg==:kSGxjJdmYp0Wv6sZxXGs0g=="
+    "password": "ajxmT1HtqiXLc0GAbK5pDw==:4/os2jVz0R46sbqG6DOlxw=="
   },
   "proxmox-env": {
     "type": "password",
     "username": "root",
     "url": "https://192.168.200.10:8006",
-    "password": "aByxR3hpC5+VKuCdYM/TxQ==:/Rc3XH5dJ1IOSSUYDghYbA==",
+    "password": "4ierZuGDb/AtUcwZGLKqPQ==:CShSTRVHu6Fyg4fhLVE6pQ==",
     "notes": "realm:pam,verify_ssl:false,auto-added from .env file"
   }
 }

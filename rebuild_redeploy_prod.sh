@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MPL-2.0
 # Minimal production deploy for MCP Open Discovery (Bash)
 # Uses docker/docker-file-mcpod-server.yml and optional RabbitMQ profile
 set -euo pipefail

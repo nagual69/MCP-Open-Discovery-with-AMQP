@@ -1,11 +1,11 @@
 {
   "name": "spec-minimal",
   "version": "1.0.0",
-  "distHash": "sha256:66dc8cf316b225be9dd04ada3a0828915d4b5037fb3a1a8a677dcf5a6412e7d4",
+  "distHash": "sha256:3cfddf53959e550ad856ff677878f8739c01dad89c48bec8fa432a21afb2ffd3",
   "fileCount": 1,
-  "totalBytes": 312,
-  "installedAt": "2025-09-13T18:13:23.312Z",
-  "updatedAt": "2025-09-14T19:25:41.983Z",
+  "totalBytes": 449,
+  "installedAt": "2025-09-15T01:11:21.538Z",
+  "updatedAt": "2025-09-15T01:11:21.538Z",
   "signatureVerified": false,
   "signerKeyId": null,
   "policy": {

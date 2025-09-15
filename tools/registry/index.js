@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 /**
  * Tool Registry Index - MCP Types Integration (Unified)
  * 
