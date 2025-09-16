@@ -122,7 +122,7 @@ The platform ships with a policy-aware plugin marketplace enabling governed exte
 | `tool_store_show` | Detailed plugin manifest + lock metrics |
 | `tool_store_rescan_integrity` | Recompute distribution hash & validate coverage |
 
-> Need custom discovery modules or private plugin distribution? Engage **VibeForge Systems** for secure supply-chain onboarding.
+Looking for custom discovery modules or private plugin distribution? Contact the maintainers to discuss secure supply‑chain onboarding.
 
 ---
 
