@@ -61,7 +61,7 @@ const CONFIG = {
     zabbix: {
       baseUrl: process.env.ZABBIX_BASE_URL || 'http://172.20.0.23:8080',
       username: process.env.ZABBIX_USERNAME || 'Admin',
-      password: process.env.ZABBIX_PASSWORD || 'OpenMCPD1sc0v3ry!'
+  password: process.env.ZABBIX_PASSWORD || 'zabbix'
     },
     snmp: {
       agents: [

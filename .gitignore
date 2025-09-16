@@ -5,6 +5,24 @@ npm-debug.log
 # Environment configuration
 .env
 
+# Sensitive runtime data (never commit)
+data/
+!data/.gitkeep
+
+# Secrets and keys (defense-in-depth)
+*.key
+*.pem
+*.p12
+*.pfx
+*.der
+*.crt
+*.cer
+*.sig
+*.asc
+
+# Local overrides
+docker-compose.override.yml
+
 # Build output
 dist/
 build/

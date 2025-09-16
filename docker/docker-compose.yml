@@ -10,7 +10,8 @@ services:
     environment:
       - ZABBIX_BASE_URL=http://172.20.0.23:8080
       - ZABBIX_USERNAME=Admin
-      - ZABBIX_PASSWORD=OpenMCPD1sc0v3ry!
+  # Use environment or .env file; do not commit real passwords
+  - "ZABBIX_PASSWORD=${ZABBIX_PASSWORD:-change_me}"
       # AMQP Transport Configuration
       - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
       - AMQP_ENABLED=true

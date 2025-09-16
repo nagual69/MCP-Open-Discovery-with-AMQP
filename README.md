@@ -390,7 +390,7 @@ curl -X POST http://localhost:6270/mcp \
         "id": "zabbix-main",
         "type": "password",
         "username": "Admin",
-        "password": "OpenMCPD1sc0v3ry!",
+  "password": "<your-password>",
         "url": "http://172.20.0.22:8080",
         "notes": "Zabbix server main admin"
       }

@@ -1,0 +1,2 @@
+# Placeholder file to keep the data/ directory in the repo without committing runtime secrets.
+# Actual contents of this folder (keys, audit logs, sqlite db) are ignored via .gitignore.

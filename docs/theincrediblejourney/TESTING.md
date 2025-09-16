@@ -146,7 +146,7 @@ docker-compose -f testing/docker-compose-zabbix-testing.yml up -d
 
 - **Image:** zabbix/zabbix-appliance:latest
 - **Default URL:** http://172.20.0.22:8080
-- **Default Credentials:** Admin / OpenMCPD1sc0v3ry!
+- **Default Credentials:** Admin / <your-password>
 - **Docker Network:** 172.20.0.0/16 unified with MCP and SNMP test agents
 
 This environment is used to validate all Zabbix tools, including host discovery, metrics, alerts, inventory, problems, events, and triggers. Example test call:
@@ -161,7 +161,7 @@ curl -X POST http://localhost:3000/mcp \
       "arguments": {
         "baseUrl": "http://172.20.0.22:8080",
         "username": "Admin",
-        "password": "OpenMCPD1sc0v3ry!",
+  "password": "<your-password>",
         "limit": 3
       }
     }
