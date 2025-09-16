@@ -148,7 +148,7 @@ Looking for custom discovery modules or private plugin distribution? Contact the
 
 <div align="left">
   <div align="center">
-  <img src="docs/mcp-open-discovery-logo-white.png" alt="MCP Open Discovery Logo" width="200" />
+  <img src="./docs/mcp-open-discovery-logo-white.png" alt="MCP Open Discovery Logo" width="200" />
   </div>
 
 Enterprise-grade Model Context Protocol (MCP) server for infrastructure discovery, lightweight CMDB, and tooling orchestration. Designed for security-conscious environments, built on the official MCP SDK, and deployable with containers by default.
