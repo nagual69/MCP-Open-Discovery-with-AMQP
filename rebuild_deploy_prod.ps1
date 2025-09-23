@@ -95,6 +95,11 @@ if ($Stdio) { $selectedTransports += 'stdio' }
 if ($Http)  { $selectedTransports += 'http' }
 if ($Amqp)  { $selectedTransports += 'amqp' }
 
+# Ensure HTTP is present when using RabbitMQ profile so healthcheck works
+if ($WithRabbitMq -and $selectedTransports.Count -gt 0 -and -not ($selectedTransports -contains 'http')) {
+    $selectedTransports = @('http') + $selectedTransports
+}
+
 if ($selectedTransports.Count -gt 0) {
     $env:TRANSPORT_MODE = ($selectedTransports -join ',')
 }

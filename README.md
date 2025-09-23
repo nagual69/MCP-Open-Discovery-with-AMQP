@@ -267,6 +267,7 @@ For a lean, production-only deployment of the MCP server:
   - Minimal production server: `./rebuild_deploy_prod.ps1`
     - Transports (choose any): `-Http`, `-Amqp`, `-Stdio` (default `-Http` if none specified)
     - RabbitMQ container: `-WithRabbitMq` (optional; use with `-Amqp` if you want an in-stack broker)
+    - Note: the prod script will include HTTP alongside AMQP when `-WithRabbitMq` is used so the container's HTTP healthcheck stays green. If invoking Compose manually with the RabbitMQ profile, set `TRANSPORT_MODE=http,amqp`.
     - Project scoping: `-ProjectName <name>` (overrides `COMPOSE_PROJECT_NAME`; auto-lowercased for Docker)
     - Deprecated: `-WithAmqp` (alias of `-Amqp -WithRabbitMq`)
 - Linux/macOS:
