@@ -45,15 +45,29 @@ class PluginManager extends EventEmitter {
     super();
     this.registry = registry;
     this.plugins = new Map();
+    // Resolve plugins root: env PLUGINS_ROOT or fallbacks
+    const envRoot = process.env.PLUGINS_ROOT && String(process.env.PLUGINS_ROOT).trim();
+    const defaultRoot = path.join(__dirname, '..', 'plugins');
+    const resolvedRoot = envRoot ? (path.isAbsolute(envRoot) ? envRoot : path.resolve(envRoot)) : defaultRoot;
+    this.pluginsRoot = options.pluginsRoot || resolvedRoot;
+    // Categorized install directories per marketplace guidance
+    this.categorizedDirs = {
+      tools: path.join(this.pluginsRoot, 'tools'),
+      resources: path.join(this.pluginsRoot, 'resources'),
+      prompts: path.join(this.pluginsRoot, 'prompts'),
+    };
+    // Discovery search order: categorized + legacy fallbacks
     this.pluginDirs = options.pluginDirs || [
-      path.join(__dirname, '..', 'plugins'),
+      this.categorizedDirs.tools,
+      this.categorizedDirs.resources,
+      this.categorizedDirs.prompts,
       path.join(process.cwd(), 'plugins'),
       path.join(process.cwd(), 'custom-tools')
     ];
     this.enabled = options.enabled !== false;
     this.sandboxing = options.sandboxing !== false;
     this.maxPlugins = options.maxPlugins || 50;
-  this.defaultInstallDir = options.defaultInstallDir || this.pluginDirs[0];
+  this.defaultInstallDir = options.defaultInstallDir || this.categorizedDirs.tools;
     // Security/policy flags
     this.policy = {
       requireChecksum: false,
@@ -85,6 +99,11 @@ class PluginManager extends EventEmitter {
     console.log('[Plugin Manager] 🔌 Initializing plugin system...');
     
     // Create plugin directories if they don't exist
+    // Ensure root and categories exist
+    await this._ensureDirectory(this.pluginsRoot);
+    for (const dir of Object.values(this.categorizedDirs)) {
+      await this._ensureDirectory(dir);
+    }
     for (const dir of this.pluginDirs) {
       await this._ensureDirectory(dir);
     }
@@ -544,7 +563,7 @@ class PluginManager extends EventEmitter {
    */
   async installFromUrl(url, opts = {}) {
     if (!url) throw new Error('url is required');
-    await this._ensureDirectory(this.defaultInstallDir);
+  await this._ensureDirectory(this.defaultInstallDir);
     const res = await axios.get(url, { responseType: 'arraybuffer' });
     const data = Buffer.from(res.data);
     const urlPath = new URL(url).pathname;
@@ -582,7 +601,7 @@ class PluginManager extends EventEmitter {
       : await this._stageAndValidateJs(data, { suggestedName, pluginId: opts.pluginId });
 
     // Finalize: move into install dir
-    const finalized = await this._finalizeInstall(staged);
+  const finalized = await this._finalizeInstall(staged);
 
     // Discover and optionally auto-load
     await this._discoverPlugins();
@@ -647,7 +666,7 @@ class PluginManager extends EventEmitter {
    */
   async installFromFile(sourcePath, opts = {}) {
     if (!sourcePath) throw new Error('sourcePath is required');
-    await this._ensureDirectory(this.defaultInstallDir);
+  await this._ensureDirectory(this.defaultInstallDir);
     const absSrc = path.isAbsolute(sourcePath) ? sourcePath : path.resolve(sourcePath);
     const data = await fs.promises.readFile(absSrc);
     const suggestedName = (opts.pluginId || path.basename(absSrc))
@@ -1136,7 +1155,8 @@ class PluginManager extends EventEmitter {
       await fs.promises.copyFile(staged.srcPath, dest);
       return { id: staged.id, path: dest };
     } else if (staged.type === 'dir') {
-      const destDir = path.join(this.defaultInstallDir, staged.id);
+      // For spec plugins (directories), install under tools/ by default
+      const destDir = path.join(this.categorizedDirs.tools, staged.id);
       if (fs.existsSync(destDir)) throw new Error(`Plugin already exists: ${staged.id}`);
       await fs.promises.mkdir(destDir, { recursive: true });
       // Copy directory recursively

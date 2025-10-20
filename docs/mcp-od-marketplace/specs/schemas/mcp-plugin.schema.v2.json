@@ -5,7 +5,7 @@
   "description": "Extended plugin manifest with external dependency declaration and distribution integrity metadata.",
   "type": "object",
   "required": ["name", "version", "entry", "dist"],
-  "additionalProperties": false,
+  "additionalProperties": true,
   "patternProperties": {
     "^x-[a-zA-Z0-9_-]+$": {}
   },
@@ -64,6 +64,30 @@
       "pattern": "^dist/.+\\.m?js$"
     },
     "description": {"type": "string", "maxLength": 300},
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tools": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "maxItems": 500,
+          "uniqueItems": true
+        },
+        "resources": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "maxItems": 500,
+          "uniqueItems": true
+        },
+        "prompts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "maxItems": 500,
+          "uniqueItems": true
+        }
+      }
+    },
     "author": {"type": "string", "maxLength": 120},
     "license": {"type": "string", "maxLength": 50},
     "homepage": {"type": "string", "format": "uri"},

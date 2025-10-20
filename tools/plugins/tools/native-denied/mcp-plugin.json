@@ -1,0 +1,9 @@
+{
+  "manifestVersion": "2",
+  "name": "native-denied",
+  "version": "1.0.0",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:f7b39f614810e7656d6431ec97edebbfb4cc78de5e61f891bf612b5c81fb18e7"
+  }
+}

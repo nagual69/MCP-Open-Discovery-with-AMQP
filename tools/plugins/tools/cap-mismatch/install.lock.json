@@ -1,0 +1,16 @@
+{
+  "name": "cap-mismatch",
+  "version": "1.0.0",
+  "distHash": "sha256:679d1713a334d852e55074c33f8c8afa4019469bca8db393d4221c8707e05fe8",
+  "fileCount": 1,
+  "totalBytes": 215,
+  "installedAt": "2025-10-20T00:13:26.167Z",
+  "updatedAt": "2025-10-20T00:13:26.167Z",
+  "signatureVerified": false,
+  "signerKeyId": null,
+  "policy": {
+    "STRICT_INTEGRITY": false,
+    "STRICT_CAPABILITIES": true,
+    "PLUGIN_ALLOW_RUNTIME_DEPS": false
+  }
+}

@@ -81,9 +81,14 @@ Centralized boolean flags (parsed in `tools/registry/env_flags.js`):
   - What: Hint to sandbox detector for `sandbox-required` policy (tests and local runs).
   - Default: false; real detector may check runtime.
 
+- PLUGIN_ALLOW_NATIVE
+  - What: Allow native addon (`.node`) requires in plugins.
+  - Default: false. When false, native requires are blocked during createPlugin() and flagged by static scan.
+
 - PLUGINS_ROOT
   - What: Root directory for plugin store. In containers, the default writable location is `/home/mcpuser/plugins`.
-  - Default resolution order: `PLUGINS_ROOT` (if set and writable) → `<home>/plugins` → `<cwd>/plugins`.
+  - Layout: Categorized installs under `<PLUGINS_ROOT>/{tools,resources,prompts}`. Default category for installs is `tools`.
+  - Default resolution order: `PLUGINS_ROOT` (if set) → internal default at `tools/plugins`.
 
 - DEBUG_REGISTRY
   - What: Enable extra registry/loader debug summaries.
@@ -99,7 +104,7 @@ Global allowlist:
 
 - tools/plugins/allowlist-deps.json (file, not env)
   - What: Ops-controlled list of allowed external modules for plugins.
-  - Format: `{ "dependencies": ["axios", "ws", ...] }` or simple array.
+  - Format: simple array `["axios", "ws"]`, or `{ "dependencies": [ ... ] }`, or legacy `{ "allow": [ ... ] }`.
   - Enforcement: Required when `dependenciesPolicy` is `external-allowlist` or `sandbox-required` with externals; advisory warnings for `external-allowed`.
 
 ## Credentials and persistence

@@ -1,0 +1,14 @@
+{
+  "manifestVersion": "2",
+  "name": "cap-mismatch",
+  "version": "1.0.0",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:679d1713a334d852e55074c33f8c8afa4019469bca8db393d4221c8707e05fe8"
+  },
+  "capabilities": {
+    "tools": [
+      "cap_tool"
+    ]
+  }
+}

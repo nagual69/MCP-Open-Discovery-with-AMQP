@@ -15,12 +15,12 @@ See also: `./mcp-spec-tools.md`, `./mcp-spec-resources.md`, `./mcp-spec-prompts.
 | version | semver | semver (exact required for external deps) |
 | sdk | required range | informational (host pins SDK) |
 | entry | path | must live under `dist/` (ESM) |
-| capabilities | declared lists | same |
+| capabilities | declared lists | same (arrays of strings for tools/resources/prompts) |
 | permissions | array of `{id,reason}` | object booleans (network, fsRead, fsWrite, exec) |
 | metadata | nested display object | flattened top-level (description, author, license, homepage, repository, keywords) |
 | dist | — | REQUIRED `{ hash: "sha256:<64hex>", checksums? }` |
 | externalDependencies | — | optional (feature-flagged) |
-| dependenciesPolicy | — | `bundled-only` (default) or `external-allowed` |
+| dependenciesPolicy | — | `bundled-only` (default), `external-allowed`, `external-allowlist`, or `sandbox-required` |
 | dependencies | — | optional array of other plugin names to load first |
 
 ### v2 Example (abridged)
@@ -34,7 +34,7 @@ See also: `./mcp-spec-tools.md`, `./mcp-spec-resources.md`, `./mcp-spec-prompts.
 	"author": "Acme",
 	"dist": { "hash": "sha256:0123abcd..." },
 	"permissions": { "network": true },
-	"capabilities": { "tools": [{ "name": "ping" }] },
+	"capabilities": { "tools": ["ping"], "resources": [], "prompts": [] },
 	"externalDependencies": [],
 	"dependenciesPolicy": "bundled-only"
 }
@@ -68,12 +68,14 @@ Controlled External Dependency Mode (`PLUGIN_ALLOW_RUNTIME_DEPS=1`):
 * Validate each `externalDependencies[]` package@version against allowlist `tools/plugins/allowlist-deps.json`.
 * Only exact versions permitted (no ^ ~ ranges).
 * Future: isolated `vendor/node_modules` + integrity map (roadmap).
-* Policy nuances: `external-allowed` (advisory), `external-allowlist` (strict allowlist), `sandbox-required` (allowlist + sandbox availability when externals present).
+* Policy nuances: `external-allowed` (advisory), `external-allowlist` (strict allowlist), `sandbox-required` (strict allowlist + sandbox availability required).
+* Allowlist file formats: `tools/plugins/allowlist-deps.json` may be a simple array `["axios","ws"]`, `{ "dependencies": [ ... ] }`, or legacy `{ "allow": [ ... ] }`.
+* Sandbox enforcement: when `dependenciesPolicy="sandbox-required"`, the host loader requires sandbox availability (`SANDBOX_AVAILABLE=true` or an affirmative sandbox detector) and fails otherwise.
 
 Reject Criteria:
 * Non‑allowlisted external import when runtime deps disabled.
 * Semver ranges (^, ~, *, >, <) in external dependency versions.
-* Native addons (`.node`) unless `PLUGIN_ALLOW_NATIVE=1` (future flag).
+* Native addons (`.node`) unless `PLUGIN_ALLOW_NATIVE=1`.
 
 ## Dependency Graph
 
@@ -98,7 +100,11 @@ Forward compatible – unknown keys must be ignored.
 
 ## Lock File
 
-`install.lock.json` stores `{ name, version, sourceUrl?, sha256, signature?, installedAt, fileCount?, totalBytes?, policy? }` enabling audit, integrity, and reproducibility metadata.
+`install.lock.json` stores `{ name, version, distHash, installedAt, updatedAt, fileCount?, totalBytes?, signatureVerified?, signerKeyId?, policy? }` where `policy` includes `{ STRICT_INTEGRITY, STRICT_CAPABILITIES, PLUGIN_ALLOW_RUNTIME_DEPS }`. This enables audit, integrity, and reproducibility metadata.
+
+Notes:
+- `distHash` equals the manifest v2 `dist.hash` value (sha256:<hex>), recomputed and verified at load.
+- Signature status, when configured, is recorded as `signatureVerified` and `signerKeyId`.
 
 ## Versioning
 
@@ -112,6 +118,8 @@ Tier 3 (Planned): worker isolation + resource quotas + termination on violation.
 
 Permissions metadata is advisory; enforcement occurs in host runtime.
 Signatures: when required, verification uses the literal `dist.hash` string as payload and honors per-signature algorithms and trusted key resolution via credentials.
+
+Dev schema override: the host loader supports `SCHEMA_PATH` to override the path to `mcp-plugin.schema.v2.json` for development/testing.
 ## Hot Reload Behavior (Host)
 
 Hosts may watch spec plugin directories. In MCP Open Discovery, changes to a plugin `dist/` or its `mcp-plugin.json` trigger automatic reload via `PluginManager.reloadPlugin()`. The registry applies capability diffs so removed tools/resources/prompts are unregistered before re-registration.

@@ -19,3 +19,5 @@ Builder UX
 Publishing
 
 - Private/public, semver, validation of argument schema and sample messages.
+
+Note: If a plugin manifest declares `capabilities.prompts` (string array), entries must match the prompt names registered via the SDK. Hosts may enforce STRICT_CAPABILITIES to fail load on mismatches.

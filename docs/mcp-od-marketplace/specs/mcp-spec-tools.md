@@ -22,3 +22,5 @@ Builder UX
 Publishing
 
 - Private/public toggle, semantic versioning, changelog. Server-side validation runs JSON schema checks and minimal linting.
+
+Note: If a plugin manifest declares `capabilities.tools` (string array), the names must exactly match the tool names registered via the SDK (server.tool/registerTool). Hosts may enforce STRICT_CAPABILITIES to fail load on mismatches.

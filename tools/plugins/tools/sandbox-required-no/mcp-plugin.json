@@ -1,0 +1,10 @@
+{
+  "manifestVersion": "2",
+  "name": "sandbox-required-no",
+  "version": "1.0.0",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:dd7521bb74e68cef7323911853dab818afabbb9a8b2be81e3e5fb14268331eeb"
+  },
+  "dependenciesPolicy": "sandbox-required"
+}

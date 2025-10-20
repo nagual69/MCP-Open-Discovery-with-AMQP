@@ -127,6 +127,36 @@ const results = {
 };
 
 /**
+ * Run additional policy-level tests (schema override, capability strictness, sandbox-required, native gate)
+ */
+async function runPolicyTests() {
+  try {
+    log('test', 'Running policy enforcement tests...');
+    const proc = spawn(process.execPath, [path.join(__dirname, 'test_policy_enforcements.js')], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env }
+    });
+    let out = '', err = '';
+    proc.stdout.on('data', d => out += d.toString());
+    proc.stderr.on('data', d => err += d.toString());
+    const code = await new Promise((resolve) => proc.on('close', resolve));
+    const success = code === 0;
+    if (success) {
+      log('success', 'Policy tests passed');
+    } else {
+      log('error', 'Policy tests failed', { out, err });
+      results.errors.push({ name: 'policy_tests', out, err });
+    }
+    results.details.push({ name: 'policy_tests', passed: success });
+    if (!success) results.summary.failed++; else results.summary.passed++;
+  } catch (e) {
+    log('error', 'Policy tests run error', { error: e.message || String(e) });
+    results.details.push({ name: 'policy_tests', passed: false, error: e.message || String(e) });
+    results.summary.failed++;
+  }
+}
+
+/**
  * Enhanced logging with emojis and colors
  */
 function log(level, message, data = null) {
@@ -927,6 +957,9 @@ class MasterTestSuite {
     } catch (e) {
       log('error', 'Error running extended plugin integrity & policy tests (non-blocking)', e.message);
     }
+
+    // Run policy tests (strict capabilities, sandbox-required, native gate, schema override)
+    await runPolicyTests();
 
     log('success', 'Master test suite completed!');
     return results;

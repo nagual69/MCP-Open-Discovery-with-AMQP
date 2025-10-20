@@ -97,6 +97,7 @@ async function handleToolCall(name, args) {
         SANDBOX_AVAILABLE: process.env.SANDBOX_AVAILABLE || null,
         STRICT_SBOM: String(!!FLAGS.STRICT_SBOM),
         STRICT_INTEGRITY: String(!!FLAGS.STRICT_INTEGRITY),
+        PLUGIN_ALLOW_NATIVE: String(!!FLAGS.ALLOW_NATIVE),
       };
       return { content: [{ type: 'text', text: JSON.stringify({ flags }, null, 2) }] };
     }

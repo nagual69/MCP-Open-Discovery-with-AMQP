@@ -13,6 +13,7 @@ function getFlags() {
     STRICT_INTEGRITY: bool('STRICT_INTEGRITY', false),
     STRICT_SBOM: bool('STRICT_SBOM', false),
     REQUIRE_SIGNATURES: bool('REQUIRE_SIGNATURES', false) || bool('PLUGIN_REQUIRE_SIGNED', false),
+    ALLOW_NATIVE: bool('PLUGIN_ALLOW_NATIVE', false),
   };
 }
 

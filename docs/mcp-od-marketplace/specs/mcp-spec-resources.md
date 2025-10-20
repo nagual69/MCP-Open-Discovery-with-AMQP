@@ -27,3 +27,5 @@ Storage and validation
 
 - Validate that uri or uriTemplate is present and RFC6570 format for templates.
 - Optional mimeType.
+
+Note: If a plugin manifest declares `capabilities.resources` (string array), entries must match the resource names registered via the SDK. Hosts may enforce STRICT_CAPABILITIES to fail load on mismatches.

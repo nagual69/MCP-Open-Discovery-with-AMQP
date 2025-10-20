@@ -1,0 +1,9 @@
+{
+  "manifestVersion": "2",
+  "name": "schema-path-ok",
+  "version": "1.0.0",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:bb34b207c863e34b4bf8131935ef4e92330f295bcbcd2aaddc71233d0c90dd78"
+  }
+}

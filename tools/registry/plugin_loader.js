@@ -26,7 +26,13 @@ let compiledV2 = null;
 function loadV2Schema() {
   if (compiledV2) return compiledV2;
   const ajv = new Ajv({ allErrors: true, strict: false });
-  const v2Path = path.resolve(__dirname, '..', '..', 'docs', 'mcp-od-marketplace', 'specs', 'schemas', 'mcp-plugin.schema.v2.json');
+  // Allow override via SCHEMA_PATH for development/testing
+  let v2Path = process.env.SCHEMA_PATH && String(process.env.SCHEMA_PATH).trim();
+  if (v2Path) {
+    v2Path = path.isAbsolute(v2Path) ? v2Path : path.resolve(v2Path);
+  } else {
+    v2Path = path.resolve(__dirname, '..', '..', 'docs', 'mcp-od-marketplace', 'specs', 'schemas', 'mcp-plugin.schema.v2.json');
+  }
   if (!fs.existsSync(v2Path)) throw new Error('mcp-plugin.schema.v2.json not found');
   const v2Raw = JSON.parse(fs.readFileSync(v2Path, 'utf8'));
   compiledV2 = ajv.compile(v2Raw);
@@ -213,6 +219,7 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
       const raw = JSON.parse(fs.readFileSync(allowFile, 'utf8'));
       if (Array.isArray(raw)) globalAllow = new Set(raw);
       else if (raw && Array.isArray(raw.allow)) globalAllow = new Set(raw.allow);
+      else if (raw && Array.isArray(raw.dependencies)) globalAllow = new Set(raw.dependencies);
     }
   } catch {}
   // Helper to detect core vs relative vs package request
@@ -220,6 +227,19 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
   const isCoreModule = (req) => {
     try { return require('module').builtinModules.includes(req); } catch { return false; }
   };
+  // If sandbox-required policy is set, ensure sandbox availability (env or detector)
+  if (depPolicy === 'sandbox-required') {
+    try {
+      const sandbox = require(path.resolve(__dirname, '..', 'sandbox.js'));
+      const available = typeof sandbox.isSandboxAvailable === 'function' ? sandbox.isSandboxAvailable() : /^(1|true)$/i.test(process.env.SANDBOX_AVAILABLE || '');
+      if (!available) {
+        throw new Error(`dependenciesPolicy 'sandbox-required' but SANDBOX_AVAILABLE=false`);
+      }
+    } catch (e) {
+      throw new Error(`dependenciesPolicy 'sandbox-required' but sandbox not available (${e.message})`);
+    }
+  }
+
   let mod;
   try {
     Module._load = function(request, parent, isMain) {
@@ -252,6 +272,15 @@ async function loadSpecPlugin(server, rootDir, manifest, options = {}) {
           }
         }
       }
+      // Native addon gate: block direct requires ending in .node unless explicitly allowed
+      try {
+        if (typeof request === 'string' && /\.node$/i.test(request)) {
+          const allowNative = !!(FLAGS && FLAGS.ALLOW_NATIVE);
+          if (!allowNative) {
+            throw new Error(`Native addon requires are disabled (PLUGIN_ALLOW_NATIVE=false): ${request}`);
+          }
+        }
+      } catch {}
       return originalLoad.apply(this, arguments);
     };
     mod = await import(entryUrl);
@@ -442,16 +471,20 @@ function staticSecurityScan(distDir, manifest) {
               violations.push(`${modName} import in ${path.relative(distDir, full)}`);
             }
           }
-          // Sandbox-required: flag obvious dynamic code execution
+          // Native addon usage: flag unless explicitly allowed
+          try {
+            const allowNative = !!(FLAGS && FLAGS.ALLOW_NATIVE);
+            if (!allowNative && /require\(\s*['"][^'"]+\.node['"]\s*\)/.test(src)) {
+              violations.push(`native addon (.node) require in ${path.relative(distDir, full)} (PLUGIN_ALLOW_NATIVE=false)`);
+            }
+          } catch {}
+          // Sandbox-required: flag obvious dynamic code execution always; loader will enforce availability
           if (depPolicy === 'sandbox-required') {
             if (/\beval\s*\(/.test(src)) {
               violations.push(`eval() usage in ${path.relative(distDir, full)}`);
             }
             if (/new\s+Function\s*\(/.test(src)) {
               violations.push(`new Function() usage in ${path.relative(distDir, full)}`);
-            }
-            if (/require\(\s*['\"][^'\"]+\.node['\"]\s*\)/.test(src)) {
-              violations.push(`native addon (.node) require in ${path.relative(distDir, full)}`);
             }
           }
       }
