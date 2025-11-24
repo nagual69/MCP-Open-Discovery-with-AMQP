@@ -11,19 +11,19 @@ RUN sed -i -E 's#https?://[^/]+/alpine#https://dl-4.alpinelinux.org/alpine#g' /e
 # - libcap provides setcap; grant capabilities to nmap
 # - SNMP tools (no dev headers to keep image slim)
 RUN set -eux; \
-    for i in 1 2 3; do \
-    apk add --no-cache \
-    ca-certificates \
-    wget \
-    curl \
-    bash \
-    nmap \
-    libcap \
-    net-snmp \
-    && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap \
-    && break \
-    || (echo 'apk add failed, retrying...' && apk update && sleep 3); \
-    done
+        for i in 1 2 3; do \
+        apk add --no-cache \
+        ca-certificates \
+        wget \
+        curl \
+        bash \
+        nmap \
+        libcap \
+        net-snmp \
+        && setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap \
+        && break \
+        || (echo 'apk add failed, retrying...' && apk update && sleep 3); \
+        done
 
 # Setup SNMP configuration
 RUN mkdir -p /etc/snmp \
@@ -55,7 +55,22 @@ WORKDIR /home/mcpuser/app
 
 # Copy package.json and install dependencies
 COPY package.json ./
-RUN npm install --no-fund --no-audit
+# Install build dependencies needed for native modules, run npm install, then remove build deps
+RUN set -eux; \
+    apk update; \
+    apk add --no-cache --virtual .build-deps \
+        build-base \
+        python3 \
+        python3-dev \
+        py3-pip \
+        py3-setuptools \
+        sqlite-dev \
+        linux-headers \
+    ; \
+    ln -sf /usr/bin/python3 /usr/bin/python || true; \
+    # Prefer building native modules from source to avoid prebuilt download/SSL issues
+    npm_config_build_from_source=true npm install --no-fund --no-audit; \
+    apk del .build-deps || true
 
 # Copy application files
 COPY mcp_open_discovery_server.js ./
