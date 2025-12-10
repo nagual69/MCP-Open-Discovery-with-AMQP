@@ -34,6 +34,8 @@ const OAUTH_CONFIG = {
   // Authorization server configuration (for token introspection)
   AUTHORIZATION_SERVER: process.env.OAUTH_AUTHORIZATION_SERVER || null,
   INTROSPECTION_ENDPOINT: process.env.OAUTH_INTROSPECTION_ENDPOINT || null,
+  CLIENT_ID: process.env.OAUTH_CLIENT_ID || null,
+  CLIENT_SECRET: process.env.OAUTH_CLIENT_SECRET || null,
   
   // Token validation settings
   TOKEN_CACHE_TTL: parseInt(process.env.OAUTH_TOKEN_CACHE_TTL) || 300, // 5 minutes
@@ -141,42 +143,78 @@ async function introspectToken(token) {
   // For demo purposes, we'll create a simple token validation
   // In production, this would make an HTTP request to the auth server
   try {
-    // Mock validation - in real implementation, call introspection endpoint
+    // Real RFC 7662 Token Introspection
     if (OAUTH_CONFIG.INTROSPECTION_ENDPOINT) {
-      // TODO: Implement real token introspection
-      // const response = await fetch(OAUTH_CONFIG.INTROSPECTION_ENDPOINT, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      //   body: new URLSearchParams({ token })
-      // });
-      // const result = await response.json();
-      // return result.active ? result : null;
-    }
-
-    // Simple demo validation - accept tokens that start with 'mcp_'
-    if (token.startsWith('mcp_') && isValidTokenFormat(token)) {
-      const tokenData = {
-        active: true,
-        sub: 'demo-user',
-        scope: 'mcp:read mcp:tools mcp:resources',
-        exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
-        aud: OAUTH_CONFIG.RESOURCE_SERVER_URI,
-        iss: OAUTH_CONFIG.AUTHORIZATION_SERVER || 'demo-auth-server',
-        client_id: 'demo-client'
+      const body = new URLSearchParams({ token });
+      const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       };
 
-      // Cache the validated token
-      tokenCache.set(token, tokenData);
-      
-      log('info', 'Token validated successfully', { 
-        sub: tokenData.sub, 
-        scope: tokenData.scope 
+      // Add Basic Auth if client credentials are provided
+      if (OAUTH_CONFIG.CLIENT_ID && OAUTH_CONFIG.CLIENT_SECRET) {
+        const auth = Buffer.from(`${OAUTH_CONFIG.CLIENT_ID}:${OAUTH_CONFIG.CLIENT_SECRET}`).toString('base64');
+        headers['Authorization'] = `Basic ${auth}`;
+      }
+
+      const response = await fetch(OAUTH_CONFIG.INTROSPECTION_ENDPOINT, {
+        method: 'POST',
+        headers,
+        body
       });
+
+      if (!response.ok) {
+        throw new Error(`Introspection endpoint returned ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
       
-      return tokenData;
+      // RFC 7662: "active" is a boolean indicator of whether or not the token is currently active
+      if (result.active) {
+        // Cache the validated token
+        // Use exp from token if available, otherwise default TTL
+        const ttl = result.exp ? (result.exp * 1000) - Date.now() : (OAUTH_CONFIG.TOKEN_CACHE_TTL * 1000);
+        if (ttl > 0) {
+           // Convert ms back to seconds for cache set (which expects seconds)
+           tokenCache.set(token, result, Math.floor(ttl / 1000));
+        }
+
+        log('debug', 'Token introspection successful', { sub: result.sub, scope: result.scope });
+        return result;
+      } else {
+        log('debug', 'Token is not active');
+        return null;
+      }
     }
 
-    log('warn', 'Token validation failed', { tokenPrefix: token.substring(0, 10) + '...' });
+    // Fallback: Demo/Dev Mode Validation
+    // ONLY active if no introspection endpoint is configured AND not in production
+    if (process.env.NODE_ENV !== 'production') {
+      // Simple demo validation - accept tokens that start with 'mcp_'
+      if (token.startsWith('mcp_') && isValidTokenFormat(token)) {
+        const tokenData = {
+          active: true,
+          sub: 'demo-user',
+          scope: 'mcp:read mcp:tools mcp:resources',
+          exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour from now
+          aud: OAUTH_CONFIG.RESOURCE_SERVER_URI,
+          iss: OAUTH_CONFIG.AUTHORIZATION_SERVER || 'demo-auth-server',
+          client_id: 'demo-client'
+        };
+
+        // Cache the validated token
+        tokenCache.set(token, tokenData);
+        
+        log('info', 'DEV MODE: Mock token validated successfully', { 
+          sub: tokenData.sub, 
+          scope: tokenData.scope 
+        });
+        
+        return tokenData;
+      }
+    }
+
+    log('warn', 'Token validation failed (No introspection endpoint & invalid mock format)', { tokenPrefix: token.substring(0, 10) + '...' });
     return null;
 
   } catch (error) {

@@ -186,6 +186,26 @@ Notes:
 
 - Transport selection can be tailored per deployment. Validate AMQP behavior with your client stack before relying on it.
 
+## OAuth 2.1 Authorization (Production)
+
+The server supports OAuth 2.1 (RFC 6749/9728) for the HTTP transport. This is **disabled by default** and must be explicitly configured.
+
+### Configuration
+To enable OAuth, set the following environment variables:
+
+```bash
+OAUTH_ENABLED=true
+OAUTH_INTROSPECTION_ENDPOINT=https://auth.example.com/realms/mcp/protocol/openid-connect/token/introspect
+OAUTH_CLIENT_ID=mcp-resource-server
+OAUTH_CLIENT_SECRET=your-client-secret
+```
+
+### Features
+- **RFC 7662 Introspection**: Validates tokens against your Identity Provider (Keycloak, Auth0, etc.).
+- **RFC 9728 Discovery**: Exposes `/.well-known/oauth-protected-resource` for clients to discover auth servers.
+- **Scope Enforcement**: Enforces `mcp:read`, `mcp:tools`, etc. via `WWW-Authenticate` challenges.
+- **Dev Mode**: If `OAUTH_ENABLED=true` but no introspection endpoint is set (and not in production), a mock validator accepts tokens starting with `mcp_`.
+
 ## Tooling Scope (overview)
 
 The server typically registers 70+ tools across these categories (exact counts can vary by build):

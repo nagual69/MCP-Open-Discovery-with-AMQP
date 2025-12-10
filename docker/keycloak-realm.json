@@ -1,0 +1,93 @@
+{
+  "realm": "mcp-open-discovery",
+  "enabled": true,
+  "users": [
+    {
+      "username": "mcpuser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "MCP",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mcp0pendisc0very",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-mcp-open-discovery"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "mcp-open-discovery",
+      "name": "MCP Open Discovery Server",
+      "description": "Resource Server for MCP",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "0dcb635218fdbfeeb32dcceb9885f1dc38547f11141948a89235d083b4369729",
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:6270/*",
+        "https://oauth.pstmn.io/v1/callback",
+        "https://appoxiotechnologiesincdemo3.service-now.com/oauth_redirect.do"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1733850000",
+        "backchannel.logout.session.required": "true",
+        "post.logout.redirect.uris": "+"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email",
+        "mcp:read",
+        "mcp:tools",
+        "mcp:resources"
+      ]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "mcp:read",
+      "description": "Read access to MCP server",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true"
+      }
+    },
+    {
+      "name": "mcp:tools",
+      "description": "Execute MCP tools",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true"
+      }
+    },
+    {
+      "name": "mcp:resources",
+      "description": "Access MCP resources",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true"
+      }
+    }
+  ]
+}

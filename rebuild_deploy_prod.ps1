@@ -11,6 +11,7 @@ param(
 
     # Container profile selection
     [switch]$WithRabbitMq,
+    [switch]$WithOAuth,
 
     # Back-compat alias: implies -Amqp and -WithRabbitMq
     [switch]$WithAmqp,
@@ -73,6 +74,7 @@ if ($Help) {
     Write-Host "Usage:" -ForegroundColor Yellow
     Write-Host "  .\rebuild_deploy_prod.ps1 -Http                 # HTTP-only (default if no flags/env)" 
     Write-Host "  .\rebuild_deploy_prod.ps1 -Amqp -WithRabbitMq   # AMQP transport + RabbitMQ container" 
+    Write-Host "  .\rebuild_deploy_prod.ps1 -WithOAuth            # Enable OAuth 2.1 + Keycloak container"
     Write-Host "  .\rebuild_deploy_prod.ps1 -Amqp                 # AMQP transport only (external broker)" 
     Write-Host "  .\rebuild_deploy_prod.ps1 -Stdio -Http          # StdIO + HTTP transports" 
     Write-Host "  .\rebuild_deploy_prod.ps1 -NoLogs               # Don't tail logs"
@@ -112,7 +114,11 @@ Write-Host ("TRANSPORT_MODE = {0}" -f $env:TRANSPORT_MODE) -ForegroundColor Cyan
 
 # Determine compose profile for RabbitMQ container
 $profileArgs = @()
-if ($WithRabbitMq) { $profileArgs = @('--profile', 'with-amqp') }
+if ($WithRabbitMq) { $profileArgs += @('--profile', 'with-amqp') }
+if ($WithOAuth) { 
+    $profileArgs += @('--profile', 'with-oauth') 
+    $env:OAUTH_ENABLED = 'true'
+}
 
 if ($WithRabbitMq -and -not $Amqp) {
     Write-Host "Warning: -WithRabbitMq specified without -Amqp. Deploying RabbitMQ container but AMQP transport not enabled." -ForegroundColor DarkYellow
@@ -125,6 +131,7 @@ try { Invoke-Compose -ComposeArgs (@('-p', $ProjectName) + $profileArgs + @('-f'
 # Proactively resolve name conflicts from other projects
 Remove-ContainerIfExists -Name 'mcp-open-discovery'
 if ($WithRabbitMq) { Remove-ContainerIfExists -Name 'mcp-rabbitmq' }
+if ($WithOAuth) { Remove-ContainerIfExists -Name 'mcp-keycloak' }
 
 # Build
 Write-Host "Building images..." -ForegroundColor Yellow

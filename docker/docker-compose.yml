@@ -10,14 +10,20 @@ services:
     environment:
       - ZABBIX_BASE_URL=http://172.20.0.23:8080
       - ZABBIX_USERNAME=Admin
-  # Use environment or .env file; do not commit real passwords
-  - "ZABBIX_PASSWORD=${ZABBIX_PASSWORD:-change_me}"
+      # Use environment or .env file; do not commit real passwords
+      - ZABBIX_PASSWORD=${ZABBIX_PASSWORD:-change_me}
       # AMQP Transport Configuration
       - AMQP_URL=amqp://mcp:discovery@rabbitmq:5672
       - AMQP_ENABLED=true
       - TRANSPORT_MODE=http,amqp
       - HTTP_PORT=6270
       - LOG_LEVEL=info
+      # OAuth Configuration
+      - OAUTH_ENABLED=true
+      - OAUTH_REALM=mcp-open-discovery
+      - OAUTH_INTROSPECTION_ENDPOINT=http://keycloak:8080/realms/mcp-open-discovery/protocol/openid-connect/token/introspect
+      - OAUTH_CLIENT_ID=mcp-open-discovery
+      - OAUTH_CLIENT_SECRET=0dcb635218fdbfeeb32dcceb9885f1dc38547f11141948a89235d083b4369729
       # AMQP Tuning and Routing
       - AMQP_QUEUE_PREFIX=mcp.discovery
       - AMQP_EXCHANGE=mcp.notifications
@@ -50,6 +56,8 @@ services:
       start_period: 5s
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
 
   # RabbitMQ for AMQP Transport
@@ -289,6 +297,29 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # Keycloak Identity Provider (OAuth 2.1 Authorization Server)
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: mcp-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak-realm.json:/opt/keycloak/data/import/realm.json
+    ports:
+      - "8080:8080"
+    networks:
+      mcp-network:
+        ipv4_address: 172.20.0.30
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080; echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3; cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
 
 networks:
   mcp-network:

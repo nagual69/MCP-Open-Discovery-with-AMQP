@@ -23,6 +23,13 @@ services:
       - AMQP_MESSAGE_TTL=3600000
       - AMQP_QUEUE_TTL=7200000
 
+      # OAuth Configuration (enable with: --profile with-oauth)
+      - OAUTH_ENABLED=${OAUTH_ENABLED:-false}
+      - OAUTH_REALM=mcp-open-discovery
+      - OAUTH_INTROSPECTION_ENDPOINT=http://keycloak:8080/realms/mcp-open-discovery/protocol/openid-connect/token/introspect
+      - OAUTH_CLIENT_ID=mcp-open-discovery
+      - OAUTH_CLIENT_SECRET=0dcb635218fdbfeeb32dcceb9885f1dc38547f11141948a89235d083b4369729
+
     volumes:
       - mcp_data:/home/mcpuser/app/data
       - mcp_logs:/home/mcpuser/app/logs
@@ -69,6 +76,29 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 30s
+
+  # Optional Keycloak Identity Provider (enable with: --profile with-oauth)
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: mcp-keycloak
+    profiles: ["with-oauth"]
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak-realm.json:/opt/keycloak/data/import/realm.json
+    ports:
+      - "8080:8080"
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080; echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3; cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
       start_period: 30s
 
 networks:
