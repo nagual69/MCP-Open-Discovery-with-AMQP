@@ -4,6 +4,8 @@ npm-debug.log
 
 # Environment configuration
 .env
+.env.local
+env.local
 
 # Sensitive runtime data (never commit)
 data/
