@@ -200,6 +200,24 @@ function setupMcpEndpoints(app, mcpServer, options = {}) {
         await mcpServer.connect(transport);
         await transport.handleRequest(req, res, req.body);
         return; // Already handled
+      } else if (!sessionId && req.body?.jsonrpc === '2.0') {
+        // Stateless request (e.g. from ServiceNow or simple clients)
+        // Create a temporary transport just for this request
+        logHttp('info', 'Handling stateless MCP request', { method: req.body.method });
+        
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          onsessioninitialized: (sid) => {
+            logHttp('debug', `Stateless session initialized`, { sessionId: sid });
+          }
+        });
+
+        // Connect server and handle request
+        await mcpServer.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+        
+        // Note: We don't store this transport in the map as it's one-off
+        return;
       } else {
         // Invalid request - no session ID or not initialization request
         res.status(400).json({

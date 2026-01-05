@@ -5,12 +5,12 @@
   "fileCount": 1,
   "totalBytes": 215,
   "installedAt": "2025-10-20T00:13:26.167Z",
-  "updatedAt": "2025-10-20T00:13:26.167Z",
+  "updatedAt": "2025-12-10T21:33:01.219Z",
   "signatureVerified": false,
   "signerKeyId": null,
   "policy": {
     "STRICT_INTEGRITY": false,
-    "STRICT_CAPABILITIES": true,
+    "STRICT_CAPABILITIES": false,
     "PLUGIN_ALLOW_RUNTIME_DEPS": false
   }
 }
