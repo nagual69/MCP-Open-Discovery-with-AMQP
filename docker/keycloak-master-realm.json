@@ -1,0 +1,101 @@
+{
+  "realm": "master",
+  "enabled": true,
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Keycloak",
+      "lastName": "Administrator",
+      "email": "admin@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "manage-clients",
+          "manage-events",
+          "manage-realm",
+          "view-events",
+          "view-users",
+          "view-clients",
+          "view-realm"
+        ],
+        "account-console": [
+          "manage-account",
+          "view-profile"
+        ],
+        "account": [
+          "manage-account",
+          "view-profile"
+        ]
+      },
+      "realmRoles": [
+        "default-roles-master",
+        "offline_access",
+        "admin",
+        "create-realm",
+        "master-realm-admin"
+      ]
+    },
+    {
+      "username": "mcpuser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "MCP",
+      "lastName": "User",
+      "email": "mcpuser@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "mcp0pendisc0very",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "manage-clients",
+          "view-events",
+          "view-users",
+          "view-clients",
+          "view-realm"
+        ]
+      },
+      "realmRoles": [
+        "default-roles-master",
+        "offline_access"
+      ]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrator role"
+      },
+      {
+        "name": "create-realm",
+        "description": "Create realm"
+      },
+      {
+        "name": "master-realm-admin",
+        "description": "Master realm administrator"
+      },
+      {
+        "name": "default-roles-master",
+        "description": "Default roles for master realm"
+      }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-master",
+    "description": "$Default roles for new users"
+  }
+}

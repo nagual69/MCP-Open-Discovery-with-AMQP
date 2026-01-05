@@ -75,6 +75,16 @@ try {
         Write-Host "Stopping MCP server container only..." -ForegroundColor Yellow
         try { Invoke-Compose -ComposeArgs @('-f', $composeFile, 'stop', 'mcp-server') } catch { Write-Host "mcp-server not running or stop failed, continuing..." -ForegroundColor DarkGray }
         try { Invoke-Compose -ComposeArgs @('-f', $composeFile, 'rm', '-f', 'mcp-server') } catch { Write-Host "mcp-server not present to remove, continuing..." -ForegroundColor DarkGray }
+        
+        # Force remove conflicting network (fixes subnet overlap errors)
+        Write-Host "Removing conflicting network if present..." -ForegroundColor Yellow
+        try {
+            & docker network rm docker_mcp-network 2>$null
+            Write-Host "Removed docker_mcp-network" -ForegroundColor DarkGray
+        }
+        catch {
+            Write-Host "Network removal skipped or already removed, continuing..." -ForegroundColor DarkGray
+        }
     }
 
     # Build the image(s)

@@ -307,8 +307,12 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
+      # HTTPS Proxy Configuration (for ngrok and reverse proxies)
+      KC_PROXY: reencrypt
+      KC_PROXY_HEADERS: xforwarded
     volumes:
-      - ./keycloak-realm.json:/opt/keycloak/data/import/realm.json
+      - ./keycloak-master-realm.json:/opt/keycloak/data/import/master-realm.json
+      - ./keycloak-realm.json:/opt/keycloak/data/import/mcp-open-discovery-realm.json
     ports:
       - "8080:8080"
     networks:
