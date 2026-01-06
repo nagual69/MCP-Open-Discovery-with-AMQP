@@ -40,6 +40,7 @@
 
 | Capability | Enterprise Outcome |
 | ---------- | ------------------ |
+| **MCP 2025-11-25 Compliant** | Full implementation of latest Model Context Protocol specification with SSE resumability, session TTL, and Origin validation |
 | Multi-Transport (HTTP • Stdio • AMQP) | Integrate AI + infra workflows across IDEs, services, message buses |
 | Dynamic Tool Registry & Hot‑Reload | Zero-downtime extension & controlled change windows |
 | Signed & Policy-Governed Plugins | Supply‑chain integrity + runtime dependency governance |
@@ -48,6 +49,65 @@
 | Sandbox & Allowlist Enforcement | Runtime risk reduction for third‑party extensions |
 | Proxmox • SNMP • Zabbix • Nmap | Unified infrastructure discovery & monitoring fabric |
 | Marketplace Analytics | Operational insight (policy distribution, signatures, sandbox adoption) |
+
+---
+
+## MCP 2025-11-25 Compliance & HTTP Session Robustness
+
+The HTTP transport implements the complete [Model Context Protocol specification (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25) with production-ready session management:
+
+### Session Management Features
+
+- **Session TTL with Reconnection**: Sessions survive SSE disconnections for 10 minutes (configurable via `MCP_SESSION_TTL_MS`), enabling clients to reconnect with `Last-Event-ID` header without re-initialization
+- **SSE Resumability (SEP-1699)**: Clients receive `retry` field indicating reconnection interval; server supports polling pattern with graceful disconnect/reconnect cycles
+- **Origin Validation (Security)**: MUST respond with 403 Forbidden for invalid `Origin` headers per MCP specification security requirements (prevents DNS rebinding attacks)
+- **Enhanced Diagnostics**: Comprehensive logging of session lifecycle events (creation, activity, expiration, closure) with session metadata tracking
+- **Stateless Request Support**: One-off requests without session management for simple clients (e.g., ServiceNow integrations)
+
+### Session Lifecycle
+
+```
+┌─────────────┐
+│ Initialize  │  POST /mcp (no session ID)
+│   Request   │  → Server creates session, returns MCP-Session-Id header
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   Active    │  Subsequent requests include MCP-Session-Id header
+│   Session   │  Activity refreshes TTL (default: 10 min from last activity)
+└──────┬──────┘
+       │
+       ├──► SSE Stream Opens (GET /mcp)
+       │    │
+       │    ├──► Server MAY disconnect at will (sends retry field)
+       │    │
+       │    └──► Client reconnects with Last-Event-ID (within TTL)
+       │         Session preserved, stream resumed
+       │
+       ├──► Explicit DELETE /mcp → Immediate cleanup
+       │
+       └──► TTL Expires → 404 on next request
+            Client re-initializes (POST /mcp without session ID)
+```
+
+### Configuration
+
+```bash
+# Session management (default values shown)
+MCP_SESSION_TTL_MS=600000          # 10 minutes
+MCP_SSE_RETRY_MS=3000              # 3 seconds
+
+# Security (MCP spec requirement)
+MCP_VALIDATE_ORIGIN=true           # Enable Origin validation
+MCP_ALLOWED_ORIGINS=http://localhost,http://127.0.0.1
+```
+
+### Client Compatibility
+
+- **VS Code MCP Extension**: Fully compatible; reconnects automatically within TTL window
+- **ServiceNow/Simple Clients**: Use stateless mode (omit `MCP-Session-Id` header)
+- **Long-Running Integrations**: Benefit from session persistence across network disruptions
 
 ---
 
@@ -228,6 +288,8 @@ Refer to the code under `tools/` for the authoritative list and schemas.
 - Registry: `tools/registry/index.js` centralizes tool loading/registration and hot‑reload management.
 - Persistence: `tools/memory_tools_sdk.js` uses SQLite (via `tools/registry/database_layer.js`) to persist CI data.
 - Credentials: encrypted storage with audit trails (see `tools/credentials_tools_sdk.js`).
+- HTTP Transport: `tools/transports/core/http-transport.js` implements MCP 2025-11-25 specification with session TTL, SSE resumability, and Origin validation.
+- Transport Manager: `tools/transports/core/transport-manager.js` orchestrates multi-transport lifecycle with singleton server pattern.
 
 ### Architecture diagram
 

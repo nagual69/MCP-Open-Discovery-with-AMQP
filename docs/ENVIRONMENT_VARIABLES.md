@@ -16,6 +16,30 @@ Note: Booleans accept 1/true/yes/on (case-insensitive). Strings are used as-is.
   - Default: 3000 if unspecified.
   - Example: `HTTP_PORT=3000`
 
+- MCP_SESSION_TTL_MS
+  - What: Session time-to-live in milliseconds for HTTP transport. Sessions survive SSE disconnections within this window, enabling reconnection with Last-Event-ID per MCP 2025-11-25 spec.
+  - Default: 600000 (10 minutes).
+  - Example: `MCP_SESSION_TTL_MS=300000` (5 minutes)
+  - Compliance: Implements SSE resumability and polling support from MCP spec changelog SEP-1699.
+
+- MCP_SSE_RETRY_MS
+  - What: Retry interval in milliseconds sent to clients via SSE retry field. Clients should wait this duration before attempting reconnection.
+  - Default: 3000 (3 seconds).
+  - Example: `MCP_SSE_RETRY_MS=5000`
+  - Compliance: MCP 2025-11-25 transport spec requirement for SSE polling.
+
+- MCP_VALIDATE_ORIGIN
+  - What: Enable Origin header validation for HTTP transport (DNS rebinding attack prevention).
+  - Default: true.
+  - Security: MUST respond with 403 Forbidden for invalid Origin headers per MCP 2025-11-25 specification.
+  - Example: `MCP_VALIDATE_ORIGIN=false` (not recommended for production)
+
+- MCP_ALLOWED_ORIGINS
+  - What: Comma-separated list of allowed Origin values when MCP_VALIDATE_ORIGIN is true.
+  - Default: `http://localhost,http://127.0.0.1`.
+  - Example: `MCP_ALLOWED_ORIGINS=http://localhost,https://app.example.com,https://studio.example.com`
+  - Security: Protects against DNS rebinding attacks; always bind to localhost in development.
+
 - OAUTH_ENABLED
   - What: Enable OAuth middleware for HTTP transport.
   - Default: false.
@@ -153,8 +177,20 @@ SNMP/Proxmox/Nmap/etc. may have their own tool-specific vars (see respective `to
 ## Source references
 
 - Transport manager: `tools/transports/core/transport-manager.js`
+- HTTP transport (session TTL, Origin validation): `tools/transports/core/http-transport.js`
 - AMQP integration: `tools/transports/amqp-transport-integration.js`
 - Plugin loader: `tools/registry/plugin_loader.js`
 - Plugin manager: `tools/registry/plugin_manager.js`
 - Env flags parser: `tools/registry/env_flags.js`
 - OAuth integration (HTTP transport): `tools/transports/core/http-transport.js` (middleware optional)
+
+## MCP 2025-11-25 Compliance
+
+The HTTP transport implements the following requirements from the [MCP specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25):
+
+- **Session Management** (Section 2.5): Session IDs in `MCP-Session-Id` header; 404 response for expired sessions
+- **SSE Resumability** (Section 2.4): Event IDs and `Last-Event-ID` header support for reconnection
+- **SSE Polling** (SEP-1699): Server-initiated disconnection with `retry` field; clients reconnect within TTL
+- **Origin Validation** (Security Warning 2.0.1): MUST respond 403 Forbidden for invalid Origin headers
+- **Protocol Version Header** (Section 2.7): `MCP-Protocol-Version` header tracked per session
+- **Stateless Requests**: One-off requests without session management for simple clients

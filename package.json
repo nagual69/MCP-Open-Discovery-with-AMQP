@@ -13,6 +13,8 @@
     "start-both": "set TRANSPORT_MODE=both&& node mcp_open_discovery_server.js",
     "start-oauth": "set TRANSPORT_MODE=http&& set OAUTH_ENABLED=true&& node mcp_open_discovery_server.js",
   "test": "node testing/master_test_suite.js",
+  "test:http-session": "node testing/test_http_session_ttl.js http://localhost:3000",
+  "test:http-session:docker": "node testing/test_http_session_ttl.js http://localhost:6270",
   "test:smoke": "node testing/master_test_suite.js --smoke",
   "test:amqp": "node testing/test-amqp-transport.js",
   "test:audit": "node testing/audit_mcp_compliance.js",
