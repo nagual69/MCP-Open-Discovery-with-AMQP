@@ -19,8 +19,10 @@ const HTTP_CONFIG = {
   CORS_ORIGINS: '*',
   TRANSPORT_NAME: 'http',
   DESCRIPTION: 'HTTP transport with SSE for web clients',
-  // Session management (MCP 2025-11-25 compliance)
-  SESSION_TTL_MS: parseInt(process.env.MCP_SESSION_TTL_MS) || 600000, // 10 minutes default
+  // Session management (2025-03-26 compatible; TTL optional for 2025-11-25)
+  // Default: -1 (no TTL, sessions persist until explicit DELETE) per 2025-03-26 spec
+  // Set MCP_SESSION_TTL_MS=600000 to enable 10min TTL for 2025-11-25 compliance
+  SESSION_TTL_MS: parseInt(process.env.MCP_SESSION_TTL_MS) ?? -1, // -1 = disabled
   SESSION_CLEANUP_INTERVAL_MS: 60000, // 1 minute
   SSE_RETRY_MS: parseInt(process.env.MCP_SSE_RETRY_MS) || 3000, // 3 seconds default
   // Security (MCP 2025-11-25 requirement)
@@ -194,8 +196,13 @@ function setupMcpEndpoints(app, mcpServer, options = {}) {
   const transports = {}; // Map to store transports by session ID
   const sessionMetadata = {}; // Track last activity, creation time, etc.
   
-  // Session cleanup with TTL (MCP 2025-11-25 compliance)
+  // Session cleanup with TTL (MCP 2025-03-26 compatible; TTL optional)
   const cleanupExpiredSessions = () => {
+    // Skip cleanup if TTL is disabled (-1)
+    if (HTTP_CONFIG.SESSION_TTL_MS < 0) {
+      return;
+    }
+    
     const now = Date.now();
     const expiredSessions = [];
     
@@ -524,12 +531,24 @@ async function startHttpTransport(mcpServer, options = {}) {
     
     // Start the HTTP server
     const server = app.listen(port, () => {
+      const ttlMode = HTTP_CONFIG.SESSION_TTL_MS < 0 
+        ? 'disabled (2025-03-26 mode: sessions persist indefinitely)'
+        : `enabled (${HTTP_CONFIG.SESSION_TTL_MS}ms)`;
+      
       logHttp('info', `HTTP server listening on port ${port}`);
       logHttp('info', `Health endpoint: http://localhost:${port}/health`);
       logHttp('info', `MCP endpoint: http://localhost:${port}/mcp`);
-      logHttp('info', `Session TTL: ${HTTP_CONFIG.SESSION_TTL_MS}ms`);
+      logHttp('info', `MCP Compatibility: ${HTTP_CONFIG.SESSION_TTL_MS < 0 ? '2025-03-26 (backward compatible)' : '2025-11-25 (with TTL support)'}`);
+      logHttp('info', `Session TTL: ${ttlMode}`);
       logHttp('info', `SSE retry interval: ${HTTP_CONFIG.SSE_RETRY_MS}ms`);
       logHttp('info', `Origin validation: ${HTTP_CONFIG.VALIDATE_ORIGIN ? 'enabled' : 'disabled'}`);
+      
+      // Log compatibility-specific hints
+      if (HTTP_CONFIG.SESSION_TTL_MS < 0) {
+        logHttp('info', '💡 Tip: ServiceNow and legacy clients work unchanged. Set MCP_SESSION_TTL_MS=600000 to enable 2025-11-25 mode with session resumability.');
+      } else {
+        logHttp('info', `💡 Tip: Sessions will auto-expire after ${HTTP_CONFIG.SESSION_TTL_MS / 1000} seconds of inactivity. Clients can reconnect with Last-Event-ID header.`);
+      }
     });
     
     return {

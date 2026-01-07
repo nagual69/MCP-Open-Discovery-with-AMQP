@@ -17,10 +17,12 @@ Note: Booleans accept 1/true/yes/on (case-insensitive). Strings are used as-is.
   - Example: `HTTP_PORT=3000`
 
 - MCP_SESSION_TTL_MS
-  - What: Session time-to-live in milliseconds for HTTP transport. Sessions survive SSE disconnections within this window, enabling reconnection with Last-Event-ID per MCP 2025-11-25 spec.
-  - Default: 600000 (10 minutes).
-  - Example: `MCP_SESSION_TTL_MS=300000` (5 minutes)
-  - Compliance: Implements SSE resumability and polling support from MCP spec changelog SEP-1699.
+  - What: Session time-to-live in milliseconds for HTTP transport (optional). When set, sessions automatically expire after inactivity. Supports 2025-11-25 SSE resumability with Last-Event-ID reconnection.
+  - Default: -1 (disabled; sessions persist until explicit DELETE, per MCP 2025-03-26 spec)
+  - Set to: 600000 for 10-minute TTL, 300000 for 5-minute TTL, etc.
+  - Example: `MCP_SESSION_TTL_MS=600000` (enables 10-minute TTL for 2025-11-25 compliance)
+  - Backward Compatibility: Defaults to -1 to match 2025-03-26 spec (ServiceNow, legacy clients). ServiceNow can keep sessions alive indefinitely until explicit DELETE.
+  - 2025-11-25 Mode: Set `MCP_SESSION_TTL_MS=600000` for automatic expiration + SSE resumability.
 
 - MCP_SSE_RETRY_MS
   - What: Retry interval in milliseconds sent to clients via SSE retry field. Clients should wait this duration before attempting reconnection.

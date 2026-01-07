@@ -52,6 +52,12 @@
 
 ---
 
+## Backward Compatibility: MCP 2025-03-26 & 2025-11-25
+
+**Default Mode (Out-of-box):** ServiceNow and legacy 2025-03-26 clients work without any changes. Sessions persist indefinitely unless explicitly deleted. **[→ See Backward Compatibility Guide](./docs/BACKWARD_COMPATIBILITY.md)** for configuration options and client integration patterns.
+
+---
+
 ## MCP 2025-11-25 Compliance & HTTP Session Robustness
 
 The HTTP transport implements the complete [Model Context Protocol specification (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25) with production-ready session management:
@@ -937,6 +943,18 @@ services:
 - **[Migration Guide](./docs/theincrediblejourney/MCP_SDK_MIGRATION_PLAN.md)** - Upgrading from legacy versions
 - **[Live Testing Report](./docs/theincrediblejourney/LIVE_TESTING_REPORT.md)** - Complete testing results
 - **[VS Code Integration](./docs/theincrediblejourney/VSCODE_MCP_INTEGRATION.md)** - IDE integration guide
+
+---
+
+## 📚 **Complete Documentation**
+
+| Document | Purpose |
+| -------- | ------- |
+| [Backward Compatibility Guide](./docs/BACKWARD_COMPATIBILITY.md) | **Start here** if integrating with ServiceNow or legacy 2025-03-26 clients. Includes configuration, integration patterns, and troubleshooting. |
+| [Quick Reference](./docs/QUICK_REFERENCE.md) | One-page cheat sheet for operators. Configuration matrix, test commands, common issues. |
+| [HTTP Transport Architecture](./docs/TRANSPORT_MANAGER.md) | Deep dive into session management, SSL/TLS, OAuth, and transport lifecycle. |
+| [Environment Variables](./docs/ENVIRONMENT_VARIABLES.md) | Complete reference for all configuration options. |
+| [Multi-Transport Architecture](./docs/MULTI_TRANSPORT_ARCHITECTURE.md) | Overview of HTTP, Stdio, and AMQP transports and how to mix them. |
 
 ---
 
