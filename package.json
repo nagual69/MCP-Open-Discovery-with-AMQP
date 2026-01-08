@@ -50,7 +50,7 @@
     "node": ">=23"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "1.12.1",
     "@types/amqplib": "^0.10.7",
     "amqplib": "^0.10.8",
   "adm-zip": "^0.5.10",

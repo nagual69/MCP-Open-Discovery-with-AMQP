@@ -18,16 +18,7 @@ const HTTP_CONFIG = {
   MAX_PAYLOAD_SIZE: '10mb',
   CORS_ORIGINS: '*',
   TRANSPORT_NAME: 'http',
-  DESCRIPTION: 'HTTP transport with SSE for web clients',
-  // Session management (2025-03-26 compatible; TTL optional for 2025-11-25)
-  // Default: -1 (no TTL, sessions persist until explicit DELETE) per 2025-03-26 spec
-  // Set MCP_SESSION_TTL_MS=600000 to enable 10min TTL for 2025-11-25 compliance
-  SESSION_TTL_MS: parseInt(process.env.MCP_SESSION_TTL_MS) ?? -1, // -1 = disabled
-  SESSION_CLEANUP_INTERVAL_MS: 60000, // 1 minute
-  SSE_RETRY_MS: parseInt(process.env.MCP_SSE_RETRY_MS) || 3000, // 3 seconds default
-  // Security (MCP 2025-11-25 requirement)
-  VALIDATE_ORIGIN: process.env.MCP_VALIDATE_ORIGIN !== 'false', // true by default
-  ALLOWED_ORIGINS: process.env.MCP_ALLOWED_ORIGINS ? process.env.MCP_ALLOWED_ORIGINS.split(',') : ['http://localhost', 'http://127.0.0.1']
+  DESCRIPTION: 'HTTP transport with SSE for web clients'
 };
 
 /**
@@ -55,38 +46,11 @@ function createExpressApp(options = {}) {
   // JSON parsing middleware
   app.use(express.json({ limit: options.maxPayloadSize || HTTP_CONFIG.MAX_PAYLOAD_SIZE }));
   
-  // CORS and Origin validation middleware (MCP 2025-11-25 security requirement)
+  // CORS middleware for web clients
   app.use((req, res, next) => {
-    // Origin validation for security (prevents DNS rebinding attacks)
-    if (HTTP_CONFIG.VALIDATE_ORIGIN && req.headers.origin) {
-      const origin = req.headers.origin;
-      const isAllowed = HTTP_CONFIG.ALLOWED_ORIGINS.some(allowed => 
-        origin.startsWith(allowed) || allowed === '*'
-      );
-      
-      if (!isAllowed) {
-        logHttp('warn', 'Invalid Origin header detected - responding with 403 Forbidden', { 
-          origin, 
-          ip: req.ip,
-          path: req.path
-        });
-        // MCP spec: MUST respond with 403 Forbidden for invalid Origin
-        res.status(403).json({
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: 'Forbidden: Invalid Origin header'
-          },
-          id: null
-        });
-        return;
-      }
-    }
-    
     res.header('Access-Control-Allow-Origin', options.corsOrigins || HTTP_CONFIG.CORS_ORIGINS);
     res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, last-event-id, mcp-protocol-version, Authorization');
-    res.header('Access-Control-Expose-Headers', 'mcp-session-id');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, mcp-session-id, last-event-id, Authorization');
     
     if (req.method === 'OPTIONS') {
       res.sendStatus(200);
@@ -192,61 +156,7 @@ function setupOAuthEndpoints(app, oauthHandlers = {}, oauthConfig = {}) {
  * @param {Object} options - Configuration options
  */
 function setupMcpEndpoints(app, mcpServer, options = {}) {
-  // Session storage with TTL tracking
   const transports = {}; // Map to store transports by session ID
-  const sessionMetadata = {}; // Track last activity, creation time, etc.
-  
-  // Session cleanup with TTL (MCP 2025-03-26 compatible; TTL optional)
-  const cleanupExpiredSessions = () => {
-    // Skip cleanup if TTL is disabled (-1)
-    if (HTTP_CONFIG.SESSION_TTL_MS < 0) {
-      return;
-    }
-    
-    const now = Date.now();
-    const expiredSessions = [];
-    
-    for (const [sessionId, metadata] of Object.entries(sessionMetadata)) {
-      if (now - metadata.lastActivity > HTTP_CONFIG.SESSION_TTL_MS) {
-        expiredSessions.push(sessionId);
-      }
-    }
-    
-    for (const sessionId of expiredSessions) {
-      logHttp('info', 'Session expired due to TTL', { 
-        sessionId,
-        lastActivity: sessionMetadata[sessionId]?.lastActivity,
-        ttlMs: HTTP_CONFIG.SESSION_TTL_MS
-      });
-      
-      // Close transport gracefully
-      if (transports[sessionId] && typeof transports[sessionId].close === 'function') {
-        try {
-          transports[sessionId].close();
-        } catch (err) {
-          logHttp('error', 'Error closing expired session transport', { sessionId, error: err.message });
-        }
-      }
-      
-      delete transports[sessionId];
-      delete sessionMetadata[sessionId];
-    }
-    
-    if (expiredSessions.length > 0) {
-      logHttp('debug', `Cleaned up ${expiredSessions.length} expired session(s)`);
-    }
-  };
-  
-  // Start periodic cleanup
-  const cleanupInterval = setInterval(cleanupExpiredSessions, HTTP_CONFIG.SESSION_CLEANUP_INTERVAL_MS);
-  
-  // Helper to update session activity
-  const touchSession = (sessionId) => {
-    if (sessionMetadata[sessionId]) {
-      sessionMetadata[sessionId].lastActivity = Date.now();
-      logHttp('debug', 'Session activity updated', { sessionId });
-    }
-  };
   
   // MCP POST endpoint for requests
   app.post('/mcp', async (req, res) => {
@@ -259,32 +169,12 @@ function setupMcpEndpoints(app, mcpServer, options = {}) {
 
     try {
       const sessionId = req.headers['mcp-session-id'];
-      const protocolVersion = req.headers['mcp-protocol-version'] || '2025-03-26'; // Default per spec
       let transport;
 
-      // Check for expired session (MCP spec: respond with 404)
-      if (sessionId && !transports[sessionId]) {
-        logHttp('warn', 'Session not found or expired - client should re-initialize', { 
-          sessionId,
-          method: req.body?.method,
-          protocolVersion
-        });
-        res.status(404).json({
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: 'Session not found or expired. Please send a new initialize request without session ID.'
-          },
-          id: req.body?.id || null
-        });
-        return;
-      }
-
       if (sessionId && transports[sessionId]) {
-        // Reuse existing transport and update activity
+        // Reuse existing transport
         transport = transports[sessionId];
-        touchSession(sessionId);
-        logHttp('debug', 'Reusing existing transport', { sessionId, method: req.body?.method });
+        logHttp('debug', 'Reusing existing transport', { sessionId });
       } else if (!sessionId && req.body?.method === 'initialize') {
         // New initialization request
         logHttp('info', 'Creating new HTTP transport session');
@@ -292,32 +182,17 @@ function setupMcpEndpoints(app, mcpServer, options = {}) {
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (newSessionId) => {
-            logHttp('info', `HTTP session initialized`, { 
-              sessionId: newSessionId,
-              ttlMs: HTTP_CONFIG.SESSION_TTL_MS,
-              protocolVersion
-            });
+            logHttp('info', `HTTP session initialized`, { sessionId: newSessionId });
             transports[newSessionId] = transport;
-            sessionMetadata[newSessionId] = {
-              createdAt: Date.now(),
-              lastActivity: Date.now(),
-              protocolVersion,
-              clientIp
-            };
           }
         });
 
-        // Set up onclose handler with enhanced diagnostics (no immediate deletion)
+        // Set up onclose handler to clean up transport when closed
         transport.onclose = () => {
           const sid = transport.sessionId;
-          if (sid) {
-            logHttp('info', `HTTP transport SSE stream closed (session kept alive for TTL)`, { 
-              sessionId: sid,
-              ttlMs: HTTP_CONFIG.SESSION_TTL_MS,
-              reason: 'SSE stream ended or client disconnected'
-            });
-            // Don't delete session immediately - let TTL cleanup handle it
-            // This allows reconnection with Last-Event-ID per MCP 2025-11-25
+          if (sid && transports[sid]) {
+            logHttp('info', `HTTP transport closed`, { sessionId: sid });
+            delete transports[sid];
           }
         };
 
@@ -325,45 +200,96 @@ function setupMcpEndpoints(app, mcpServer, options = {}) {
         await mcpServer.connect(transport);
         await transport.handleRequest(req, res, req.body);
         return; // Already handled
-      } else if (!sessionId && req.body?.jsonrpc === '2.0') {
-        // Stateless request (e.g. from ServiceNow or simple clients)
-        // Create a temporary transport just for this request
-        logHttp('info', 'Handling stateless MCP request', { 
-          method: req.body.method,
-          clientIp,
-          protocolVersion,
-          note: 'One-off request without session management'
+      } else if (req.body?.jsonrpc === '2.0' && (!sessionId || !transports[sessionId])) {
+        // Stateless request OR request with unknown/stale session ID
+        // This handles: ServiceNow, simple clients, and clients with cached stale session IDs
+        // For backward compatibility: treat unknown session as stateless instead of 404
+        const requestMethod = req.body.method;
+        logHttp('info', 'Handling stateless MCP request', {
+          method: requestMethod,
+          staleSessionId: sessionId && !transports[sessionId] ? sessionId : undefined
         });
-        
+
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sid) => {
-            logHttp('debug', `Stateless session initialized (temporary)`, { 
-              sessionId: sid,
-              method: req.body.method
-            });
+            logHttp('debug', `Stateless session initialized`, { sessionId: sid });
           }
         });
 
-        // Connect server and handle request
+        // Connect server to transport
         await mcpServer.connect(transport);
-        await transport.handleRequest(req, res, req.body);
-        
-        logHttp('debug', 'Stateless request completed', { method: req.body.method });
+
+        // For non-initialize requests, we need to auto-initialize first
+        // The SDK requires initialize to be called before any other method
+        if (requestMethod !== 'initialize') {
+          logHttp('debug', 'Auto-initializing for stateless request');
+
+          // Create a mock response to capture the initialize response
+          const initRes = {
+            headersSent: false,
+            setHeader: () => {},
+            getHeader: () => null,
+            status: function() { return this; },
+            json: function() {},
+            send: function() {},
+            end: function() {},
+            write: function() { return true; },
+            writeHead: function() {},
+            on: function() { return this; },
+            once: function() { return this; },
+            emit: function() { return this; },
+            removeListener: function() { return this; },
+            flushHeaders: function() {}
+          };
+
+          // Create initialize request
+          const initReq = {
+            method: 'POST',
+            headers: {
+              ...req.headers,
+              'accept': 'application/json, text/event-stream'
+            },
+            body: {
+              jsonrpc: '2.0',
+              id: `auto-init-${Date.now()}`,
+              method: 'initialize',
+              params: {
+                protocolVersion: '2024-11-05',
+                capabilities: {},
+                clientInfo: {
+                  name: 'stateless-client',
+                  version: '1.0.0'
+                }
+              }
+            }
+          };
+
+          // Send implicit initialize
+          await transport.handleRequest(initReq, initRes, initReq.body);
+          logHttp('debug', 'Auto-initialization complete');
+        }
+
+        // Now handle the actual request - include session ID and proper Accept header
+        const actualReq = {
+          ...req,
+          headers: {
+            ...req.headers,
+            'accept': 'application/json, text/event-stream',
+            'mcp-session-id': transport.sessionId
+          }
+        };
+        await transport.handleRequest(actualReq, res, req.body);
+
         // Note: We don't store this transport in the map as it's one-off
         return;
       } else {
         // Invalid request - no session ID or not initialization request
-        logHttp('warn', 'Bad request: missing session or not initialize', {
-          hasSessionId: !!sessionId,
-          method: req.body?.method,
-          clientIp
-        });
         res.status(400).json({
           jsonrpc: '2.0',
           error: {
             code: -32000,
-            message: 'Bad Request: No valid session ID provided. Send an initialize request without session ID to create a new session, or include a valid MCP-Session-Id header.',
+            message: 'Bad Request: No valid session ID provided or invalid request',
           },
           id: req.body?.id || null,
         });
@@ -392,82 +318,40 @@ function setupMcpEndpoints(app, mcpServer, options = {}) {
     }
   });
 
-  // Handle GET requests for SSE streams (with resumability support)
+  // Handle GET requests for SSE streams
   app.get('/mcp', async (req, res) => {
     const sessionId = req.headers['mcp-session-id'];
+    if (!sessionId || !transports[sessionId]) {
+      res.status(400).send('Invalid or missing session ID');
+      return;
+    }
+
     const lastEventId = req.headers['last-event-id'];
-    
-    // Check for missing/expired session (MCP spec: 404 for expired, 400 for missing)
-    if (!sessionId) {
-      logHttp('warn', 'GET /mcp: Missing session ID header', { lastEventId });
-      res.status(400).send('Missing MCP-Session-Id header');
-      return;
-    }
-    
-    if (!transports[sessionId]) {
-      logHttp('warn', 'GET /mcp: Session not found or expired', { 
-        sessionId,
-        lastEventId,
-        note: 'Client should re-initialize'
-      });
-      // MCP spec: 404 when session expired
-      res.status(404).send('Session not found or expired. Please send a new initialize request.');
-      return;
-    }
-
-    // Update session activity
-    touchSession(sessionId);
-
     if (lastEventId) {
-      logHttp('info', `Client reconnecting SSE stream with Last-Event-ID`, { 
-        sessionId, 
-        lastEventId,
-        note: 'Attempting to resume stream per MCP 2025-11-25'
-      });
+      logHttp('debug', `Client reconnecting with Last-Event-ID: ${lastEventId}`, { sessionId });
     } else {
-      logHttp('info', `Establishing new SSE stream`, { sessionId });
+      logHttp('debug', `Establishing new SSE stream`, { sessionId });
     }
 
     const transport = transports[sessionId];
-    
-    // Send retry field per MCP spec for SSE polling support
-    res.setHeader('X-SSE-Retry-MS', HTTP_CONFIG.SSE_RETRY_MS);
-    
     await transport.handleRequest(req, res);
   });
 
-  // Handle DELETE requests for explicit session termination
+  // Handle DELETE requests for session termination
   app.delete('/mcp', async (req, res) => {
     const sessionId = req.headers['mcp-session-id'];
-    if (!sessionId) {
-      res.status(400).send('Missing MCP-Session-Id header');
-      return;
-    }
-    
-    if (!transports[sessionId]) {
-      logHttp('warn', 'DELETE /mcp: Session already terminated or expired', { sessionId });
-      res.status(404).send('Session not found');
+    if (!sessionId || !transports[sessionId]) {
+      res.status(400).send('Invalid or missing session ID');
       return;
     }
 
-    logHttp('info', `Explicit session termination requested`, { 
-      sessionId,
-      age: Date.now() - (sessionMetadata[sessionId]?.createdAt || 0)
-    });
-    
+    logHttp('info', `Received session termination request`, { sessionId });
     try {
       const transport = transports[sessionId];
       await transport.handleRequest(req, res);
-      
-      // Clean up session immediately on explicit DELETE
-      delete transports[sessionId];
-      delete sessionMetadata[sessionId];
-      
-      logHttp('info', 'Session terminated and cleaned up', { sessionId });
     } catch (error) {
       logHttp('error', 'Error handling session termination', {
         error: error.message,
-        stack: error.stack,
         sessionId
       });
       if (!res.headersSent) {
@@ -476,13 +360,7 @@ function setupMcpEndpoints(app, mcpServer, options = {}) {
     }
   });
   
-  return { 
-    transports, 
-    sessionMetadata,
-    cleanupInterval,
-    touchSession,
-    cleanupExpiredSessions
-  };
+  return { transports };
 }
 
 /**
@@ -527,28 +405,13 @@ async function startHttpTransport(mcpServer, options = {}) {
     }
     
     // Setup MCP endpoints
-    const { transports, sessionMetadata, cleanupInterval, touchSession, cleanupExpiredSessions } = setupMcpEndpoints(app, mcpServer, options);
+    const { transports } = setupMcpEndpoints(app, mcpServer, options);
     
     // Start the HTTP server
     const server = app.listen(port, () => {
-      const ttlMode = HTTP_CONFIG.SESSION_TTL_MS < 0 
-        ? 'disabled (2025-03-26 mode: sessions persist indefinitely)'
-        : `enabled (${HTTP_CONFIG.SESSION_TTL_MS}ms)`;
-      
       logHttp('info', `HTTP server listening on port ${port}`);
       logHttp('info', `Health endpoint: http://localhost:${port}/health`);
       logHttp('info', `MCP endpoint: http://localhost:${port}/mcp`);
-      logHttp('info', `MCP Compatibility: ${HTTP_CONFIG.SESSION_TTL_MS < 0 ? '2025-03-26 (backward compatible)' : '2025-11-25 (with TTL support)'}`);
-      logHttp('info', `Session TTL: ${ttlMode}`);
-      logHttp('info', `SSE retry interval: ${HTTP_CONFIG.SSE_RETRY_MS}ms`);
-      logHttp('info', `Origin validation: ${HTTP_CONFIG.VALIDATE_ORIGIN ? 'enabled' : 'disabled'}`);
-      
-      // Log compatibility-specific hints
-      if (HTTP_CONFIG.SESSION_TTL_MS < 0) {
-        logHttp('info', '💡 Tip: ServiceNow and legacy clients work unchanged. Set MCP_SESSION_TTL_MS=600000 to enable 2025-11-25 mode with session resumability.');
-      } else {
-        logHttp('info', `💡 Tip: Sessions will auto-expire after ${HTTP_CONFIG.SESSION_TTL_MS / 1000} seconds of inactivity. Clients can reconnect with Last-Event-ID header.`);
-      }
     });
     
     return {
@@ -558,10 +421,6 @@ async function startHttpTransport(mcpServer, options = {}) {
       server: server,
       app: app,
       transports: transports,
-      sessionMetadata: sessionMetadata,
-      cleanupInterval: cleanupInterval,
-      touchSession: touchSession,
-      cleanupExpiredSessions: cleanupExpiredSessions,
       timestamp: new Date().toISOString()
     };
     
@@ -606,28 +465,6 @@ function getHttpStatus(serverInfo = {}) {
  * @param {Object} serverInfo - Server information including server instance
  */
 async function cleanupHttpTransport(serverInfo = {}) {
-  // Clear session cleanup interval
-  if (serverInfo.cleanupInterval) {
-    clearInterval(serverInfo.cleanupInterval);
-    logHttp('info', 'Session cleanup interval cleared');
-  }
-  
-  // Close all active transports
-  if (serverInfo.transports) {
-    const sessionIds = Object.keys(serverInfo.transports);
-    for (const sessionId of sessionIds) {
-      try {
-        if (typeof serverInfo.transports[sessionId].close === 'function') {
-          serverInfo.transports[sessionId].close();
-        }
-      } catch (err) {
-        logHttp('error', 'Error closing transport during cleanup', { sessionId, error: err.message });
-      }
-    }
-    logHttp('info', `Closed ${sessionIds.length} active session(s)`);
-  }
-  
-  // Close HTTP server
   if (serverInfo.server) {
     return new Promise((resolve) => {
       serverInfo.server.close(() => {
