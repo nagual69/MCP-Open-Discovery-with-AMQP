@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-Content syslog.json | Select-Object -First 1 | ForEach-Object { $_Substring\\(0, [Math]::Min\\(2000, $_Length\\)\\) }\")",
+      "Bash(head:*)",
+      "Bash(python3:*)",
+      "Bash(node -e:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker restart:*)",
+      "Bash(pwsh:*)",
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File ./rebuild_deploy_prod.ps1)",
+      "Bash(powershell -Command:*)",
+      "Bash(docker exec:*)",
+      "Bash(git add:*)",
+      "Bash(git push)"
+    ]
+  }
+}
