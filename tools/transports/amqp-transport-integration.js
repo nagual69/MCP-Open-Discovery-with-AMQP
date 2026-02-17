@@ -18,25 +18,6 @@ const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { RabbitMQServerTransport } = require('./amqp-server-transport.js');
 
 /**
- * Enhanced configuration with AMQP support for MCP Open Discovery Server v2.0
- */
-const AMQP_CONFIG = {
-  AMQP_URL: process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',
-  AMQP_QUEUE_PREFIX: process.env.AMQP_QUEUE_PREFIX || 'mcp.discovery',
-  AMQP_EXCHANGE: process.env.AMQP_EXCHANGE || 'mcp.notifications',
-  AMQP_RECONNECT_DELAY: parseInt(process.env.AMQP_RECONNECT_DELAY) || 5000,
-  AMQP_MAX_RECONNECT_ATTEMPTS: parseInt(process.env.AMQP_MAX_RECONNECT_ATTEMPTS) || 10,
-  AMQP_PREFETCH_COUNT: parseInt(process.env.AMQP_PREFETCH_COUNT) || 1,
-  AMQP_MESSAGE_TTL: parseInt(process.env.AMQP_MESSAGE_TTL) || 3600000, // 1 hour
-  AMQP_QUEUE_TTL: parseInt(process.env.AMQP_QUEUE_TTL) || 7200000, // 2 hours
-  
-  // Enterprise discovery server specific settings
-  REGISTRY_BROADCAST_ENABLED: process.env.REGISTRY_BROADCAST_ENABLED !== 'false',
-  TOOL_CATEGORY_ROUTING: process.env.TOOL_CATEGORY_ROUTING !== 'false',
-  HOT_RELOAD_AMQP_SYNC: process.env.HOT_RELOAD_AMQP_SYNC !== 'false'
-};
-
-/**
  * Tool category mappings for your enterprise platform
  */
 const TOOL_CATEGORIES = {
@@ -49,6 +30,41 @@ const TOOL_CATEGORIES = {
   credentials: ['creds_'],
   registry: ['registry_', 'tool_']
 };
+
+/**
+ * Determine tool category based on tool name (for routing strategy)
+ */
+function getToolCategory(toolName) {
+  for (const [category, prefixes] of Object.entries(TOOL_CATEGORIES)) {
+    for (const prefix of prefixes) {
+      if (toolName.startsWith(prefix) || toolName === prefix) {
+        return category;
+      }
+    }
+  }
+  return 'general'; // Default category for unmatched tools
+}
+
+/**
+ * Configuration factory function that reads environment at call time (S3)
+ */
+function getDefaultConfig() {
+  return {
+    AMQP_URL: process.env.AMQP_URL || 'amqp://guest:guest@localhost:5672',  // Updated credentials (S5)
+    AMQP_QUEUE_PREFIX: process.env.AMQP_QUEUE_PREFIX || 'mcp.discovery',
+    AMQP_EXCHANGE: process.env.AMQP_EXCHANGE || 'mcp.notifications',
+    AMQP_RECONNECT_DELAY: parseInt(process.env.AMQP_RECONNECT_DELAY) || 5000,
+    AMQP_MAX_RECONNECT_ATTEMPTS: parseInt(process.env.AMQP_MAX_RECONNECT_ATTEMPTS) || 10,
+    AMQP_PREFETCH_COUNT: parseInt(process.env.AMQP_PREFETCH_COUNT) || 1,
+    AMQP_MESSAGE_TTL: parseInt(process.env.AMQP_MESSAGE_TTL) || 3600000, // 1 hour
+    AMQP_QUEUE_TTL: parseInt(process.env.AMQP_QUEUE_TTL) || 7200000, // 2 hours
+    
+    // Enterprise discovery server specific settings
+    REGISTRY_BROADCAST_ENABLED: process.env.REGISTRY_BROADCAST_ENABLED !== 'false',
+    TOOL_CATEGORY_ROUTING: process.env.TOOL_CATEGORY_ROUTING !== 'false',
+    HOT_RELOAD_AMQP_SYNC: process.env.HOT_RELOAD_AMQP_SYNC !== 'false'
+  };
+}
 
 /**
  * Enhanced transport mode parsing to support AMQP with your server's capabilities
@@ -129,6 +145,9 @@ async function startAmqpServer(createServerFn, log, options = {}) {
   log('info', 'Starting enhanced AMQP server for MCP Open Discovery v2.0...');
   
   try {
+    // Get configuration dynamically
+    const config = getDefaultConfig();
+    
     // Initialize configuration
     initializeAmqpIntegration(log);
     
@@ -164,16 +183,27 @@ async function startAmqpServer(createServerFn, log, options = {}) {
     // Create the MCP server instance
     const mcpServer = await createServerFn();
     
-    // Create AMQP transport
+    // Create routing key strategy for Open Discovery-specific routing (C7)
+    const routingKeyStrategy = (message) => {
+      const messageType = message.method ? 'request' : (message.result || message.error ? 'response' : 'notification');
+      if (message.method) {
+        const category = getToolCategory(message.method);
+        return `mcp.${messageType}.${category}.${message.method}`;
+      }
+      return `mcp.${messageType}.general`;
+    };
+    
+    // Create AMQP transport with routing strategy injection (C7)
     const transport = new RabbitMQServerTransport({
-      amqpUrl: AMQP_CONFIG.AMQP_URL,
-      queuePrefix: AMQP_CONFIG.AMQP_QUEUE_PREFIX,
-      exchangeName: AMQP_CONFIG.AMQP_EXCHANGE,
-      reconnectDelay: AMQP_CONFIG.AMQP_RECONNECT_DELAY,
-      maxReconnectAttempts: AMQP_CONFIG.AMQP_MAX_RECONNECT_ATTEMPTS,
-      prefetchCount: AMQP_CONFIG.AMQP_PREFETCH_COUNT,
-      messageTTL: AMQP_CONFIG.AMQP_MESSAGE_TTL,
-      queueTTL: AMQP_CONFIG.AMQP_QUEUE_TTL
+      amqpUrl: config.AMQP_URL,
+      queuePrefix: config.AMQP_QUEUE_PREFIX,
+      exchangeName: config.AMQP_EXCHANGE,
+      reconnectDelay: config.AMQP_RECONNECT_DELAY,
+      maxReconnectAttempts: config.AMQP_MAX_RECONNECT_ATTEMPTS,
+      prefetchCount: config.AMQP_PREFETCH_COUNT,
+      messageTTL: config.AMQP_MESSAGE_TTL,
+      queueTTL: config.AMQP_QUEUE_TTL,
+      routingKeyStrategy: routingKeyStrategy  // Inject strategy (C7)
     });
     
     // Store transport globally for health checks and shutdown handling
@@ -213,19 +243,19 @@ async function startAmqpServer(createServerFn, log, options = {}) {
     };
     
     // Connect server to transport
-    console.log('[AMQP] Connecting MCP server to AMQP transport...');
+    if (process.env.DEBUG_AMQP === 'true') console.log('[AMQP] Connecting MCP server to AMQP transport...');
     
     // CRITICAL FIX: Let MCP SDK manage transport lifecycle completely
     // The SDK calls transport.start() automatically during connect()
     // Manual start() calls interfere with SDK's transport ownership
-    console.log('[AMQP] Allowing SDK to start transport automatically...');
+    if (process.env.DEBUG_AMQP === 'true') console.log('[AMQP] Allowing SDK to start transport automatically...');
     
     // Connect the server - SDK will call transport.start() internally
     await mcpServer.connect(transport);
-    console.log('[AMQP] MCP server connected to AMQP transport successfully');
+    if (process.env.DEBUG_AMQP === 'true') console.log('[AMQP] MCP server connected to AMQP transport successfully');
     
     // Verify the connection by checking transport properties
-    console.log('[AMQP] Post-connection transport verification:', {
+    if (process.env.DEBUG_AMQP === 'true') console.log('[AMQP] Post-connection transport verification:', {
       hasTransport: !!mcpServer.server._transport,
       transportType: mcpServer.server._transport ? mcpServer.server._transport.constructor.name : 'none',
       sessionId: mcpServer.server._transport ? mcpServer.server._transport.sessionId : 'none',
@@ -287,23 +317,24 @@ async function startAmqpServer(createServerFn, log, options = {}) {
     }
     
     // Set up registry integration for your revolutionary hot-reload system
-    if (AMQP_CONFIG.REGISTRY_BROADCAST_ENABLED) {
+    // Reuse config from line 159 instead of redeclaring
+    if (config.REGISTRY_BROADCAST_ENABLED) {
       await setupRegistryIntegration(transport, log);
     }
     
     // Set up tool category routing for your 61-tool platform
-    if (AMQP_CONFIG.TOOL_CATEGORY_ROUTING) {
+    if (config.TOOL_CATEGORY_ROUTING) {
       await setupToolCategoryRouting(transport, log);
     }
     
     log('info', 'Enhanced AMQP server started successfully with MCP Open Discovery v2.0 enhancements', {
-      amqpUrl: AMQP_CONFIG.AMQP_URL,
-      queuePrefix: AMQP_CONFIG.AMQP_QUEUE_PREFIX,
-      exchangeName: AMQP_CONFIG.AMQP_EXCHANGE,
-      prefetchCount: AMQP_CONFIG.AMQP_PREFETCH_COUNT,
+      amqpUrl: config.AMQP_URL,
+      queuePrefix: config.AMQP_QUEUE_PREFIX,
+      exchangeName: config.AMQP_EXCHANGE,
+      prefetchCount: config.AMQP_PREFETCH_COUNT,
       autoRecovery: autoRecoveryEnabled,
-      registryIntegration: AMQP_CONFIG.REGISTRY_BROADCAST_ENABLED,
-      categoryRouting: AMQP_CONFIG.TOOL_CATEGORY_ROUTING,
+      registryIntegration: config.REGISTRY_BROADCAST_ENABLED,
+      categoryRouting: config.TOOL_CATEGORY_ROUTING,
       gracefulShutdown: true
     });
     
@@ -311,13 +342,14 @@ async function startAmqpServer(createServerFn, log, options = {}) {
     return transport;
     
   } catch (error) {
+    const config = getDefaultConfig();
     log('error', 'Failed to start enhanced AMQP server', {
       error: error.message,
       stack: error.stack,
       config: {
-        amqpUrl: AMQP_CONFIG.AMQP_URL,
-        queuePrefix: AMQP_CONFIG.AMQP_QUEUE_PREFIX,
-        exchangeName: AMQP_CONFIG.AMQP_EXCHANGE
+        amqpUrl: config.AMQP_URL,
+        queuePrefix: config.AMQP_QUEUE_PREFIX,
+        exchangeName: config.AMQP_EXCHANGE
       }
     });
     
@@ -393,19 +425,9 @@ async function startAmqpAutoRecovery(createServerFn, log, retryConfig = {}) {
       process.amqpTransport = amqpTransport;
       recovery.status = 'connected';
       
-      // Set up disconnect handler to restart auto-recovery if connection is lost again
-      if (amqpTransport.onclose) {
-        const originalOnClose = amqpTransport.onclose;
-        amqpTransport.onclose = () => {
-          originalOnClose();
-          log('warn', 'AMQP connection lost, restarting auto-recovery...');
-          process.amqpTransport = null;
-          recovery.status = 'waiting';
-          retryCount = 0;
-          retryInterval = config.retryInterval;
-          scheduleNextRetry();
-        };
-      }
+      // Note: SDK manages transport.onclose, don't intercept it (C6)
+      // Auto-recovery will restart if the connection drops again via
+      // the onclose handler set in startAmqpServer()
       
       // Stop the recovery process
       recovery.stop = true;
@@ -541,6 +563,7 @@ function getAmqpStatus() {
  */
 function enhanceHealthCheck(originalHealthResponse) {
   const amqpStatus = getAmqpStatus();
+  const config = getDefaultConfig();
   
   const enhanced = {
     ...originalHealthResponse,
@@ -551,9 +574,9 @@ function enhanceHealthCheck(originalHealthResponse) {
         connected: amqpStatus.connected,
         autoRecovery: amqpStatus.recovery,
         config: {
-          queuePrefix: AMQP_CONFIG.AMQP_QUEUE_PREFIX,
-          exchangeName: AMQP_CONFIG.AMQP_EXCHANGE,
-          prefetchCount: AMQP_CONFIG.AMQP_PREFETCH_COUNT
+          queuePrefix: config.AMQP_QUEUE_PREFIX,
+          exchangeName: config.AMQP_EXCHANGE,
+          prefetchCount: config.AMQP_PREFETCH_COUNT
         }
       }
     }
@@ -571,38 +594,43 @@ function enhanceHealthCheck(originalHealthResponse) {
 }
 
 /**
- * Configuration validator for AMQP settings
+ * Configuration validator for AMQP settings with URL scheme validation (S4)
  */
 function validateAmqpConfig() {
   const errors = [];
+  const config = getDefaultConfig();
   
   // Validate AMQP URL
   try {
-    new URL(AMQP_CONFIG.AMQP_URL);
+    const parsedUrl = new URL(config.AMQP_URL);
+    // Validate URL scheme (S4)
+    if (parsedUrl.protocol !== 'amqp:' && parsedUrl.protocol !== 'amqps:') {
+      errors.push(`Invalid AMQP URL scheme: ${parsedUrl.protocol}. Must be amqp: or amqps:`);
+    }
   } catch (error) {
-    errors.push(`Invalid AMQP_URL: ${AMQP_CONFIG.AMQP_URL}`);
+    errors.push(`Invalid AMQP_URL: ${config.AMQP_URL}`);
   }
   
   // Validate queue prefix
-  if (!AMQP_CONFIG.AMQP_QUEUE_PREFIX || AMQP_CONFIG.AMQP_QUEUE_PREFIX.trim() === '') {
+  if (!config.AMQP_QUEUE_PREFIX || config.AMQP_QUEUE_PREFIX.trim() === '') {
     errors.push('AMQP_QUEUE_PREFIX cannot be empty');
   }
   
   // Validate exchange name
-  if (!AMQP_CONFIG.AMQP_EXCHANGE || AMQP_CONFIG.AMQP_EXCHANGE.trim() === '') {
+  if (!config.AMQP_EXCHANGE || config.AMQP_EXCHANGE.trim() === '') {
     errors.push('AMQP_EXCHANGE cannot be empty');
   }
   
   // Validate numeric values
-  if (AMQP_CONFIG.AMQP_RECONNECT_DELAY < 1000) {
+  if (config.AMQP_RECONNECT_DELAY < 1000) {
     errors.push('AMQP_RECONNECT_DELAY must be at least 1000ms');
   }
   
-  if (AMQP_CONFIG.AMQP_MAX_RECONNECT_ATTEMPTS < 1) {
+  if (config.AMQP_MAX_RECONNECT_ATTEMPTS < 1) {
     errors.push('AMQP_MAX_RECONNECT_ATTEMPTS must be at least 1');
   }
   
-  if (AMQP_CONFIG.AMQP_PREFETCH_COUNT < 1) {
+  if (config.AMQP_PREFETCH_COUNT < 1) {
     errors.push('AMQP_PREFETCH_COUNT must be at least 1');
   }
   
@@ -615,26 +643,28 @@ function validateAmqpConfig() {
 function initializeAmqpIntegration(log) {
   log('info', 'Initializing AMQP integration...');
   
+  const config = getDefaultConfig();
+  
   // Validate configuration
   const configErrors = validateAmqpConfig();
   if (configErrors.length > 0) {
     log('error', 'AMQP configuration validation failed', {
       errors: configErrors,
-      config: AMQP_CONFIG
+      config: config
     });
     throw new Error(`AMQP configuration errors: ${configErrors.join(', ')}`);
   }
   
   log('info', 'AMQP configuration validated for MCP Open Discovery Server v2.0', {
-    amqpUrl: AMQP_CONFIG.AMQP_URL,
-    queuePrefix: AMQP_CONFIG.AMQP_QUEUE_PREFIX,
-    exchangeName: AMQP_CONFIG.AMQP_EXCHANGE,
-    reconnectDelay: AMQP_CONFIG.AMQP_RECONNECT_DELAY,
-    maxReconnectAttempts: AMQP_CONFIG.AMQP_MAX_RECONNECT_ATTEMPTS,
-    prefetchCount: AMQP_CONFIG.AMQP_PREFETCH_COUNT,
-    registryBroadcast: AMQP_CONFIG.REGISTRY_BROADCAST_ENABLED,
-    toolCategoryRouting: AMQP_CONFIG.TOOL_CATEGORY_ROUTING,
-    hotReloadSync: AMQP_CONFIG.HOT_RELOAD_AMQP_SYNC
+    amqpUrl: config.AMQP_URL,
+    queuePrefix: config.AMQP_QUEUE_PREFIX,
+    exchangeName: config.AMQP_EXCHANGE,
+    reconnectDelay: config.AMQP_RECONNECT_DELAY,
+    maxReconnectAttempts: config.AMQP_MAX_RECONNECT_ATTEMPTS,
+    prefetchCount: config.AMQP_PREFETCH_COUNT,
+    registryBroadcast: config.REGISTRY_BROADCAST_ENABLED,
+    toolCategoryRouting: config.TOOL_CATEGORY_ROUTING,
+    hotReloadSync: config.HOT_RELOAD_AMQP_SYNC
   });
   
   return true;
@@ -729,10 +759,12 @@ async function setupToolCategoryRouting(transport, log) {
   try {
     log('info', 'Setting up tool category routing for MCP Open Discovery tools...');
     
+    const config = getDefaultConfig();
+    
     // Set up category-specific exchanges for your tool suite
     const categories = Object.keys(TOOL_CATEGORIES);
     for (const category of categories) {
-      const exchangeName = `${AMQP_CONFIG.AMQP_EXCHANGE}.tools.${category}`;
+      const exchangeName = `${config.AMQP_EXCHANGE}.tools.${category}`;
       
       // This will be handled by the underlying AMQP transport
       // The transport should create topic exchanges for each category
@@ -753,24 +785,11 @@ async function setupToolCategoryRouting(transport, log) {
 }
 
 /**
- * Determine tool category based on tool name (for your 61-tool platform)
- */
-function getToolCategory(toolName) {
-  for (const [category, prefixes] of Object.entries(TOOL_CATEGORIES)) {
-    for (const prefix of prefixes) {
-      if (toolName.startsWith(prefix) || toolName === prefix) {
-        return category;
-      }
-    }
-  }
-  return 'other'; // Default category for unmatched tools
-}
-
-/**
  * Enhanced health check with registry and tool information
  */
 function enhanceHealthCheckWithRegistry(originalHealthResponse) {
   const enhanced = enhanceHealthCheck(originalHealthResponse);
+  const config = getDefaultConfig();
   
   // Add tool category breakdown for your tool platform
   if (process.amqpTransport) {
@@ -783,8 +802,8 @@ function enhanceHealthCheckWithRegistry(originalHealthResponse) {
           total: toolCounts.total || 999,
           categories: toolCounts.categories || {},
           amqpEnabled: true,
-          categoryRoutingEnabled: AMQP_CONFIG.TOOL_CATEGORY_ROUTING,
-          registryBroadcastEnabled: AMQP_CONFIG.REGISTRY_BROADCAST_ENABLED
+          categoryRoutingEnabled: config.TOOL_CATEGORY_ROUTING,
+          registryBroadcastEnabled: config.REGISTRY_BROADCAST_ENABLED
         };
       }
     } catch (error) {
@@ -811,7 +830,7 @@ function enhanceHealthCheckWithRegistry(originalHealthResponse) {
 }
 
 module.exports = {
-  AMQP_CONFIG,
+  getDefaultConfig,
   TOOL_CATEGORIES,
   parseTransportMode,
   startAmqpServer,
@@ -827,3 +846,13 @@ module.exports = {
   setupToolCategoryRouting,
   getToolCategory
 };
+
+/**
+ * Backward compatibility getter for AMQP_CONFIG
+ */
+Object.defineProperty(module.exports, 'AMQP_CONFIG', {
+  get: function() {
+    return getDefaultConfig();
+  },
+  enumerable: true
+});

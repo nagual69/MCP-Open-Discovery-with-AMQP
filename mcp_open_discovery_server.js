@@ -60,7 +60,7 @@ const CONFIG = {
   OAUTH_PROTECTED_ENDPOINTS: (process.env.OAUTH_PROTECTED_ENDPOINTS || '/mcp').split(','),
   
   // AMQP Configuration
-  AMQP_URL: process.env.AMQP_URL || 'amqp://mcp:discovery@rabbitmq:5672',
+  AMQP_URL: process.env.AMQP_URL || 'amqp://guest:guest@rabbitmq:5672',
   AMQP_QUEUE_PREFIX: process.env.AMQP_QUEUE_PREFIX || 'mcp.discovery',
   AMQP_EXCHANGE: process.env.AMQP_EXCHANGE || 'mcp.notifications',
   

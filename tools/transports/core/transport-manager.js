@@ -265,7 +265,7 @@ async function startAllTransports(mcpServer, config = {}) {
               
               // Start AMQP server with createServerFn wrapper
               const amqpResult = await startAmqpServer(createServerFn, logTransport, {
-                amqpUrl: config.AMQP_URL || process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',
+                amqpUrl: config.AMQP_URL || process.env.AMQP_URL || 'amqp://guest:guest@localhost:5672',
                 queuePrefix: config.AMQP_QUEUE_PREFIX || process.env.AMQP_QUEUE_PREFIX || 'mcp.discovery',
                 exchange: config.AMQP_EXCHANGE || process.env.AMQP_EXCHANGE || 'mcp.notifications',
                 // Pass through any additional AMQP configuration
@@ -711,7 +711,7 @@ function createTransportConfig(environment = null, overrides = {}) {
     // Core transport settings
     HTTP_PORT: overrides.HTTP_PORT || env.httpPort || 3000,
     OAUTH_ENABLED: overrides.OAUTH_ENABLED || env.oauthEnabled || false,
-    AMQP_URL: overrides.AMQP_URL || process.env.AMQP_URL || 'amqp://mcp:discovery@localhost:5672',
+    AMQP_URL: overrides.AMQP_URL || process.env.AMQP_URL || 'amqp://guest:guest@localhost:5672',
     AMQP_ENABLED: overrides.AMQP_ENABLED || env.amqpEnabled,
     
     // OAuth configuration

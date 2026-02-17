@@ -62,8 +62,9 @@ Note: Booleans accept 1/true/yes/on (case-insensitive). Strings are used as-is.
 ## AMQP transport
 
 - AMQP_URL
-  - What: AMQP broker URL (user:pass@host:port).
-  - Default: `amqp://mcp:discovery@localhost:5672`.
+  - What: AMQP broker URL (user:pass@host:port). Scheme must be amqp:// or amqps://.
+  - Default: `amqp://guest:guest@localhost:5672`.
+  - Security: Changed from custom mcp:discovery credentials to standard RabbitMQ defaults for better compatibility.
 
 - AMQP_QUEUE_PREFIX
   - What: Queue prefix for server/client routing.
@@ -72,6 +73,13 @@ Note: Booleans accept 1/true/yes/on (case-insensitive). Strings are used as-is.
 - AMQP_EXCHANGE
   - What: Exchange base for notifications/routing.
   - Default: `mcp.notifications`.
+
+- DEBUG_AMQP
+  - What: Enable detailed AMQP transport debug logging (for development/troubleshooting).
+  - Default: false (disabled; production runs silently).
+  - Example: `DEBUG_AMQP=true npm start`
+  - Details: When enabled, emits detailed logs for connection lifecycle, message routing, JSON-RPC validation, response correlation, and reconnection attempts. Logs include [AMQP] or [AMQP Client] prefixes.
+  - Production: Keep disabled to avoid log noise; enable only when diagnosing transport issues.
 
 ## Registry, plugins, and security policies
 

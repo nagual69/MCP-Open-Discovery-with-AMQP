@@ -6,6 +6,22 @@
  * reducing code duplication and ensuring consistent behavior across the MCP Open Discovery platform.
  */
 
+const { randomUUID } = require('node:crypto');
+
+/**
+ * Debug logging utility - conditional on DEBUG_AMQP environment variable
+ */
+const DEBUG_AMQP = process.env.DEBUG_AMQP === 'true';
+function debugLog(prefix, message, data) {
+  if (DEBUG_AMQP) {
+    if (data) {
+      console.log(`[${prefix}]`, message, data);
+    } else {
+      console.log(`[${prefix}]`, message);
+    }
+  }
+}
+
 /**
  * Base Transport interface (compatible with MCP SDK)
  */
@@ -50,8 +66,17 @@ class BaseAMQPTransport extends Transport {
       lastError: null
     };
     
-    // Generate unique session ID for MCP routing
-    this.sessionId = `${this.getTransportType()}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    // Closing flag to prevent reconnect loops (C4)
+    this._closing = false;
+    
+    // Message size validation (S1)
+    this.maxMessageSize = options.maxMessageSize || 1048576; // 1 MB default
+    
+    // Routing key strategy (C7, M8)
+    this.routingKeyStrategy = options.routingKeyStrategy || null;
+    
+    // Generate unique session ID for MCP routing using crypto.randomUUID (M6, T1)
+    this.sessionId = randomUUID();
   }
 
   /**
@@ -65,6 +90,19 @@ class BaseAMQPTransport extends Transport {
    * Initialize AMQP connection with error handling
    */
   async initializeConnection(amqpUrl) {
+    // Validate AMQP URL scheme (S4)
+    try {
+      const parsedUrl = new URL(amqpUrl);
+      if (parsedUrl.protocol !== 'amqp:' && parsedUrl.protocol !== 'amqps:') {
+        throw new Error(`Invalid AMQP URL scheme: ${parsedUrl.protocol}. Must be amqp: or amqps:`);
+      }
+    } catch (error) {
+      if (error.message.includes('Invalid URL')) {
+        throw new Error(`Invalid AMQP URL format: ${amqpUrl}`);
+      }
+      throw error;
+    }
+    
     // Dynamic import to handle environments where amqplib might not be available
     let amqp;
     try {
@@ -83,11 +121,15 @@ class BaseAMQPTransport extends Transport {
       if (this.onerror) {
         this.onerror(error);
       }
+      // Don't reconnect if closing (C4)
+      if (this._closing) return;
       this.scheduleReconnect();
     });
 
     this.connection.on('close', () => {
       this.connectionState.connected = false;
+      // Don't reconnect if closing (C4)
+      if (this._closing) return;
       this.scheduleReconnect();
     });
 
@@ -136,15 +178,45 @@ class BaseAMQPTransport extends Transport {
   }
 
   /**
-   * Legacy compatibility method - delegates to detectMessageType
+   * Validate JSON-RPC message format (C3)
+   * @param {any} message - The message to validate
+   * @returns {Object} { valid: boolean, reason?: string }
    */
-  getMessageType(message) {
-    return this.detectMessageType(message);
+  validateJsonRpc(message) {
+    if (!message || typeof message !== 'object') {
+      return { valid: false, reason: 'Message must be an object' };
+    }
+    
+    if (message.jsonrpc !== '2.0') {
+      return { valid: false, reason: 'Missing or invalid jsonrpc field (must be "2.0")' };
+    }
+    
+    // Must have either method (request/notification) or result/error (response)
+    const hasMethod = message.method !== undefined;
+    const hasResult = message.result !== undefined;
+    const hasError = message.error !== undefined;
+    
+    if (!hasMethod && !hasResult && !hasError) {
+      return { valid: false, reason: 'Message must have method, result, or error field' };
+    }
+    
+    return { valid: true };
+  }
+
+  /**
+   * Validate message size (S1)
+   * @param {string|Buffer} content - The message content
+   * @returns {Object} { valid: boolean, size: number, limit: number }
+   */
+  validateMessageSize(content) {
+    const size = Buffer.byteLength(content);
+    const valid = size <= this.maxMessageSize;
+    return { valid, size, limit: this.maxMessageSize };
   }
 
   /**
    * Ensure outgoing messages conform to JSON-RPC 2.0 and strip transport-internal fields
-   * - Adds jsonrpc: '2.0' if missing
+   * - Warns if jsonrpc field is missing (SDK should provide it) (S2)
    * - Removes internal _rabbitMQ* properties that should not leak over the wire
    * - Shallow clones to avoid mutating caller objects
    * @param {any} message
@@ -152,7 +224,13 @@ class BaseAMQPTransport extends Transport {
    */
   sanitizeJsonRpcMessage(message) {
     const clean = { ...(message || {}) };
-    if (!clean.jsonrpc) clean.jsonrpc = '2.0';
+    
+    // Warn if SDK didn't provide jsonrpc field (S2)
+    if (!clean.jsonrpc) {
+      console.warn('[AMQP] SDK message missing jsonrpc field, adding "2.0"');
+      clean.jsonrpc = '2.0';
+    }
+    
     // Remove any internal transport props
     Object.keys(clean)
       .filter((k) => k.startsWith('_rabbitMQ'))
@@ -161,25 +239,27 @@ class BaseAMQPTransport extends Transport {
   }
 
   /**
-   * Determine tool category for routing (matches server-side categories)
+   * Get routing key for message with optional strategy (C7, M8)
+   * @param {Object} message - The JSON-RPC message
+   * @returns {string} The routing key
    */
-  getToolCategory(method) {
-    if (method.startsWith('nmap_')) return 'nmap';
-    if (method.startsWith('snmp_')) return 'snmp';
-    if (method.startsWith('proxmox_')) return 'proxmox';
-    if (method.startsWith('zabbix_')) return 'zabbix';
-    if (['ping', 'telnet', 'wget', 'netstat', 'ifconfig', 'arp', 'route', 'nslookup', 'tcp_connect', 'whois'].includes(method)) return 'network';
-    if (method.startsWith('memory_') || method.startsWith('cmdb_')) return 'memory';
-    if (method.startsWith('credentials_') || method.startsWith('creds_')) return 'credentials';
-    if (method.startsWith('registry_')) return 'registry';
-    return 'general';
+  getRoutingKey(message) {
+    // Use custom strategy if provided
+    if (this.routingKeyStrategy && typeof this.routingKeyStrategy === 'function') {
+      return this.routingKeyStrategy(message);
+    }
+    
+    // Default routing key format: mcp.{messageType}.{method}
+    const messageType = this.detectMessageType(message);
+    const method = message.method || 'unknown';
+    return `mcp.${messageType}.${method}`;
   }
 
   /**
-   * Generate correlation ID for message tracking
+   * Generate correlation ID for message tracking using crypto.randomUUID (M6, T1)
    */
   generateCorrelationId() {
-    return `${this.sessionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return randomUUID();
   }
 
   /**
@@ -199,6 +279,8 @@ class BaseAMQPTransport extends Transport {
    * Close connection with proper cleanup
    */
   async close() {
+    // Set closing flag first (C4)
+    this._closing = true;
     this.connectionState.connected = false;
     
     try {
@@ -267,5 +349,6 @@ class BaseAMQPTransport extends Transport {
 
 module.exports = {
   Transport,
-  BaseAMQPTransport
+  BaseAMQPTransport,
+  debugLog
 };

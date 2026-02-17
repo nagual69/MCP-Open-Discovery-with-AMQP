@@ -17,6 +17,7 @@
   "test:http-session:docker": "node testing/test_http_session_ttl.js http://localhost:6270",
   "test:smoke": "node testing/master_test_suite.js --smoke",
   "test:amqp": "node testing/test-amqp-transport.js",
+  "test:amqp:unit": "node testing/test-amqp-transport-unit.js",
   "test:audit": "node testing/audit_mcp_compliance.js",
   "test:zod": "node testing/test_native_zod_validation.js",
   "test:oauth": "node testing/test_oauth_implementation.js",

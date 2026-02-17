@@ -5,7 +5,7 @@
  * through RabbitMQ/AMQP message queues for distributed network discovery operations.
  */
 
-const { BaseAMQPTransport } = require('./base-amqp-transport.js');
+const { BaseAMQPTransport, debugLog } = require('./base-amqp-transport.js');
 
 /**
  * AMQP client transport for connecting to MCP Open Discovery Server
@@ -61,28 +61,21 @@ class AMQPClientTransport extends BaseAMQPTransport {
       throw new Error('Transport not connected');
     }
 
-    console.log('[AMQP Client] Sending message:', {
+    debugLog('AMQP Client', 'Sending message:', {
       messageId: message.id,
       method: message.method,
-      messageType: this.getMessageType(message)
+      messageType: this.detectMessageType(message)
     });
 
-    // Create envelope with correlation ID for response routing
+    // Create correlation ID for response routing
     const correlationId = this.generateCorrelationId();
-    
-    const envelope = {
-      message,
-      timestamp: Date.now(),
-      type: this.getMessageType(message),
-      correlationId: correlationId
-    };
+    const messageType = this.detectMessageType(message);
 
     // For requests, set up response handling
-    if (envelope.type === 'request' && message.id !== undefined) {
-      envelope.replyTo = this.responseQueue;
+    if (messageType === 'request' && message.id !== undefined) {
       this.setupRequestTimeout(correlationId, message.id);
       
-      console.log('[AMQP Client] Set up request tracking:', {
+      debugLog('AMQP Client', 'Set up request tracking:', {
         messageId: message.id,
         correlationId: correlationId,
         replyTo: this.responseQueue,
@@ -90,25 +83,27 @@ class AMQPClientTransport extends BaseAMQPTransport {
       });
     }
 
-    // Send to the NEW bidirectional routing system instead of legacy direct queue
-    const exchangeName = `${this.options.exchangeName}.mcp.routing`;
-    const routingKey = this.getMcpRoutingKey(message);
-    const messageBuffer = Buffer.from(JSON.stringify(envelope));
+    // Send raw JSON-RPC directly (no envelope) (C1, M1)
+    const cleanMessage = this.sanitizeJsonRpcMessage(message);
+    const exchangeName = this.options.exchangeName;
+    const routingKey = this.getRoutingKey(message);  // Use base class method (C7)
+    const messageBuffer = Buffer.from(JSON.stringify(cleanMessage));
 
-    console.log('[AMQP Client] Publishing to MCP bidirectional routing (NEW SYSTEM):', {
+    debugLog('AMQP Client', 'Publishing raw JSON-RPC:', {
       exchange: exchangeName,
       routingKey: routingKey,
       messageId: message.id,
       method: message.method,
-      correlationId: correlationId,
-      replyTo: envelope.replyTo
+      correlationId: correlationId
     });
 
+    // Transport metadata goes in AMQP properties only, not in message body (M1)
     await this.channel.publish(exchangeName, routingKey, messageBuffer, {
       correlationId: correlationId,
-      replyTo: envelope.replyTo,
+      replyTo: messageType === 'request' ? this.responseQueue : undefined,
       persistent: false,
-      timestamp: envelope.timestamp
+      timestamp: Date.now(),
+      contentType: 'application/json'  // Add contentType (M7)
     });
   }
 
@@ -130,9 +125,8 @@ class AMQPClientTransport extends BaseAMQPTransport {
     // Use base class connection initialization
     await this.initializeConnection(this.options.amqpUrl);
 
-    // Assert the MCP bidirectional routing exchange (needed for new routing system)
-    const mcpExchangeName = `${this.options.exchangeName}.mcp.routing`;
-    await this.assertExchange(mcpExchangeName, 'topic');
+    // Assert the exchange
+    await this.assertExchange(this.options.exchangeName, 'topic');
 
     // Create exclusive response queue for this client session  
     const responseQueueResult = await this.channel.assertQueue('', {
@@ -141,7 +135,7 @@ class AMQPClientTransport extends BaseAMQPTransport {
     });
     this.responseQueue = responseQueueResult.queue;
 
-    console.log('[AMQP Client] Created response queue:', {
+    debugLog('AMQP Client', 'Created response queue:', {
       queue: this.responseQueue,
       sessionId: this.sessionId
     });
@@ -159,25 +153,33 @@ class AMQPClientTransport extends BaseAMQPTransport {
 
   handleResponse(msg) {
     try {
+      // Check message size (S1)
+      const sizeCheck = this.validateMessageSize(msg.content);
+      if (!sizeCheck.valid) {
+        console.error('[AMQP Client] Response too large:', {
+          size: sizeCheck.size,
+          limit: sizeCheck.limit
+        });
+        return;
+      }
+      
       const correlationId = msg.properties.correlationId;
       
-      console.log('[AMQP Client] Received response:', {
+      debugLog('AMQP Client', 'Received response:', {
         correlationId,
         hasContent: !!msg.content,
         contentLength: msg.content ? msg.content.length : 0
       });
       
-      // Parse the response - should be direct JSON-RPC now, not envelope
+      // Parse raw JSON-RPC response directly (C1)
       let response;
       try {
         response = JSON.parse(msg.content.toString());
-        console.log('[AMQP Client] Parsed response structure:', {
+        debugLog('AMQP Client', 'Parsed response structure:', {
           hasId: response.id !== undefined && response.id !== null,
           hasJsonrpc: !!response.jsonrpc,
           hasResult: !!response.result,
           hasError: !!response.error,
-          resultKeys: response.result ? Object.keys(response.result).slice(0, 5) : null,
-          responseKeys: Object.keys(response),
           actualId: response.id
         });
       } catch (parseError) {
@@ -189,12 +191,12 @@ class AMQPClientTransport extends BaseAMQPTransport {
       if (this.pendingRequests.has(correlationId)) {
         clearTimeout(this.pendingRequests.get(correlationId));
         this.pendingRequests.delete(correlationId);
-        console.log('[AMQP Client] ✅ Response received for correlation ID:', correlationId);
+        debugLog('AMQP Client', '✅ Response received for correlation ID:', correlationId);
       } else {
         console.warn('[AMQP Client] ⚠️ Received response for unknown correlation ID:', correlationId);
       }
       
-      // Forward response directly to MCP client (no envelope unwrapping needed)
+      // Forward response directly to MCP client (already raw JSON-RPC)
       if (this.onmessage) {
         this.onmessage(response);
       }
@@ -215,22 +217,19 @@ class AMQPClientTransport extends BaseAMQPTransport {
       autoDelete: true
     });
     
-    // Bind to MCP notification routing keys
-    const mcpExchangeName = `${this.options.exchangeName}.mcp.routing`;
-    const routingKeys = [
-      'mcp.notification.#',
-      'mcp.event.#',
-      'discovery.notification.#',
-      'discovery.event.#'
-    ];
+    // Bind to mcp.notification.# only (M8)
+    const exchangeName = this.options.exchangeName;
+    await this.channel.bindQueue(
+      notificationQueue.queue,
+      exchangeName,
+      'mcp.notification.#'
+    );
     
-    for (const routingKey of routingKeys) {
-      await this.channel.bindQueue(
-        notificationQueue.queue,
-        mcpExchangeName,
-        routingKey
-      );
-    }
+    debugLog('AMQP Client', 'Subscribed to notifications:', {
+      queue: notificationQueue.queue,
+      exchange: exchangeName,
+      pattern: 'mcp.notification.#'
+    });
     
     // Set up notification consumer
     await this.channel.consume(notificationQueue.queue, (msg) => {
@@ -242,10 +241,32 @@ class AMQPClientTransport extends BaseAMQPTransport {
 
   handleNotification(msg) {
     try {
-      const envelope = JSON.parse(msg.content.toString());
+      // Check message size (S1)
+      const sizeCheck = this.validateMessageSize(msg.content);
+      if (!sizeCheck.valid) {
+        console.error('[AMQP Client] Notification too large:', {
+          size: sizeCheck.size,
+          limit: sizeCheck.limit
+        });
+        return;
+      }
+      
+      // Parse raw JSON-RPC directly (C1)
+      const parseResult = this.parseMessage(msg.content);
+      if (!parseResult.success) {
+        console.error('[AMQP Client] Failed to parse notification:', parseResult.error);
+        return;
+      }
+      
+      // Validate JSON-RPC format (C3)
+      const validation = this.validateJsonRpc(parseResult.message);
+      if (!validation.valid) {
+        console.warn('[AMQP Client] Invalid JSON-RPC notification:', validation.reason);
+        return;
+      }
       
       if (this.onmessage) {
-        this.onmessage(envelope.message);
+        this.onmessage(parseResult.message);
       }
     } catch (error) {
       if (this.onerror) {
@@ -275,11 +296,24 @@ class AMQPClientTransport extends BaseAMQPTransport {
     this.pendingRequests.set(correlationId, timeoutId);
   }
 
+  /**
+   * Schedule reconnection with proper _closing flag handling (C4, C5)
+   */
   scheduleReconnect() {
+    // Don't reconnect if closing (C4)
+    if (this._closing) {
+      debugLog('AMQP Client', 'Not reconnecting - transport is closing');
+      return;
+    }
+    
     if (this.connectionState.reconnectAttempts >= this.options.maxReconnectAttempts) {
       const error = new Error('Maximum reconnection attempts exceeded');
       if (this.onerror) {
         this.onerror(error);
+      }
+      // Call onclose after max attempts (C5)
+      if (this.onclose) {
+        this.onclose();
       }
       return;
     }
@@ -287,6 +321,8 @@ class AMQPClientTransport extends BaseAMQPTransport {
     this.connectionState.reconnectAttempts++;
     
     setTimeout(async () => {
+      if (this._closing) return; // Check again before attempting
+      
       try {
         await this.connect();
         this.connectionState.connected = true;
@@ -296,32 +332,6 @@ class AMQPClientTransport extends BaseAMQPTransport {
         this.scheduleReconnect();
       }
     }, this.options.reconnectDelay);
-  }
-
-  /**
-   * Detect message type following MCP v2025-06-18 specification
-   * 
-   * JSON-RPC 2.0 message type detection:
-  getTargetQueueName(message) {
-    // Legacy method - kept for reference but not used in MCP bidirectional routing
-    return `${this.options.serverQueuePrefix}.requests`;
-  }
-
-  /**
-   * Get MCP routing key for bidirectional message routing
-   * Implements the MCP session/stream-based routing pattern
-   */
-  getMcpRoutingKey(message) {
-    // For client-to-server requests, we need to route to any available server session
-    // Use a general routing pattern that servers can bind to
-    if (message.method) {
-      // Route based on tool category for load balancing
-      const toolCategory = this.getToolCategory(message.method);
-      return `mcp.request.${toolCategory}.${message.method}`;
-    }
-    
-    // Fallback for other message types
-    return 'mcp.request.general';
   }
 }
 
