@@ -1,0 +1,1237 @@
+{
+  "summary": {
+    "totalTools": 62,
+    "passed": 57,
+    "failed": 5,
+    "skipped": 0,
+    "successRate": 91.93548387096774
+  },
+  "categories": {
+    "memory": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "network": {
+      "total": 9,
+      "passed": 8,
+      "failed": 1,
+      "skipped": 0
+    },
+    "nmap": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "snmp": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "proxmox": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "zabbix": {
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "credentials": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "registry": {
+      "total": 5,
+      "passed": 1,
+      "failed": 4,
+      "skipped": 0
+    }
+  },
+  "transports": {
+    "stdio": {
+      "total": 62,
+      "passed": 57,
+      "failed": 5,
+      "categories": {
+        "memory": {
+          "total": 9,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "memory_get": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "No CI found for key: test:memory:item"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_set": {
+              "status": "passed",
+              "duration": 14,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully stored CI with key: test:memory:item\nSaved to persistent storage: Yes\nStored data: {\n  \"test\": true,\n  \"timestamp\": 1771291858933\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_query": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Found 1 matching CIs for pattern: test:*\n\n{\n  \"test:memory:item\": {\n    \"test\": true,\n    \"timestamp\": 1771291858933\n  }\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_merge": {
+              "status": "passed",
+              "duration": 15,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully merged data into CI with key: test:memory:merge\nSaved to persistent storage: Yes\nMerged data: {}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_clear": {
+              "status": "passed",
+              "duration": 8,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully cleared 2 CIs from memory and SQLite persistent storage"
+                  }
+                ],
+                "isError": false
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_stats": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Memory Statistics:\nIn-Memory CIs: 0\nSQLite CIs: 0\nEncrypted CIs: 0\nTotal Storage Size: 0 bytes\nAudit Entries: 112\nOldest CI: N/A\nNewest CI: N/A\nAuto-Save Enabled: true\nAuto-Save Interval: 30000ms"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_save": {
+              "status": "passed",
+              "duration": 0,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully saved 0 CIs to SQLite persistent storage"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_rotate_key": {
+              "status": "passed",
+              "duration": 8,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully rotated memory encryption key and re-encrypted all data"
+                  }
+                ],
+                "isError": false
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "memory_migrate_from_filesystem": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error migrating memory data: Old data file not found at path: D:\\github-development\\mcp-open-discovery\\data\\memory_data.json"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "network": {
+          "total": 9,
+          "passed": 8,
+          "failed": 1,
+          "skipped": 0,
+          "tools": {
+            "ping": {
+              "status": "passed",
+              "duration": 21,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command failed with code 1"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "nslookup": {
+              "status": "passed",
+              "duration": 156,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Server:  cdns01.comcast.net\r\nAddress:  75.75.75.75\r\n\r\nName:    google.com\r\nAddresses:  2607:f8b0:4008:805::200e\r\n\t  192.178.50.46\r\n\r\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "netstat": {
+              "status": "failed",
+              "duration": 30013,
+              "error": "Request timeout for tools/call"
+            },
+            "ifconfig": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command error: spawn ifconfig ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "route": {
+              "status": "passed",
+              "duration": 25,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command failed with code 1: \r\nManipulates network routing tables.\r\n\r\nROUTE [-f] [-p] [-4|-6] command [destination]\r\n                  [MASK netmask]  [gateway] [METRIC metric]  [IF interface]\r\n\r\n  -f           Clears the routing tables of all gateway entries.  If this is\r\n               used in conjunction with one of the commands, the tables are\r\n               cleared prior to running the command.\r\n               \r\n  -p           When used with the ADD command, makes a route persistent across\r\n               boots of the system. By default, routes are not preserved\r\n               when the system is restarted. Ignored for all other commands, \r\n               which always affect the appropriate persistent routes.\r\n               \r\n  -4\t       Force using IPv4.\r\n\r\n  -6           Force using IPv6. \r\n  \r\n  command      One of these:\r\n                 PRINT     Prints  a route\r\n                 ADD       Adds    a route\r\n                 DELETE    Deletes a route\r\n                 CHANGE    Modifies an existing route\t\r\n  destination  Specifies the host.\r\n  MASK         Specifies that the next parameter is the 'netmask' value.\r\n  netmask      Specifies a subnet mask value for this route entry.\r\n               If not specified, it defaults to 255.255.255.255.\r\n  gateway      Specifies gateway.\r\n  interface    the interface number for the specified route.\r\n  METRIC       specifies the metric, ie. cost for the destination.\r\n\r\nAll symbolic names used for destination are looked up in the network database\r\nfile NETWORKS. The symbolic names for gateway are looked up in the host name\r\ndatabase file HOSTS.\r\n\r\nIf the command is PRINT or DELETE. Destination or gateway can be a wildcard,\r\n(wildcard is specified as a star '*'), or the gateway argument may be omitted.\r\n\r\nIf Dest contains a * or ?, it is treated as a shell pattern, and only\r\nmatching destination routes are printed. The '*' matches any string,\r\nand '?' matches any one char. Examples: 157.*.1, 157.*, 127.*, *224*.\r\n\r\nPattern match is only allowed in PRINT command.\r\nDiagnostic Notes:\r\n    Invalid MASK generates an error, that is when (DEST & MASK) != DEST.\r\n    Example> route ADD 157.0.0.0 MASK 155.0.0.0 157.55.80.1 IF 1\r\n             The route addition failed: The specified mask parameter is invalid. (Destination & Mask) != Destination.\r\n\r\nExamples:\r\n\r\n    > route PRINT\r\n    > route PRINT -4\r\n    > route PRINT -6\r\n    > route PRINT 157*          .... Only prints those matching 157*\r\n\t\r\n    > route ADD 157.0.0.0 MASK 255.0.0.0  157.55.80.1 METRIC 3 IF 2\r\n             destination^      ^mask      ^gateway     metric^    ^\r\n                                                         Interface^\r\n      If IF is not given, it tries to find the best interface for a given \r\n      gateway.\r\n    > route ADD 3ffe::/32 3ffe::1\r\n    \r\n    > route CHANGE 157.0.0.0 MASK 255.0.0.0 157.55.80.5 METRIC 2 IF 2\r\n    \r\n      CHANGE is used to modify gateway and/or metric only.\r\n    \r\n    > route DELETE 157.0.0.0\r\n    > route DELETE 3ffe::/32\r\n"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "arp": {
+              "status": "passed",
+              "duration": 37,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "\r\nInterface: 192.168.200.50 --- 0x9\r\n  Internet Address      Physical Address      Type\r\n  192.168.200.1         c0-c9-e3-cb-e7-8b     dynamic   \r\n  192.168.200.8         5c-e9-31-a3-fd-18     dynamic   \r\n  192.168.200.10        6c-4b-90-07-30-4d     dynamic   \r\n  192.168.200.81        f8-9e-94-29-e5-0a     dynamic   \r\n  192.168.200.82        e8-78-65-6a-45-25     dynamic   \r\n  192.168.200.85        1c-7b-23-ed-c8-ce     dynamic   \r\n  192.168.200.100       24-2f-d0-02-06-28     dynamic   \r\n  192.168.200.103       d8-10-68-f8-ae-95     dynamic   \r\n  192.168.200.105       90-9a-4a-91-62-80     dynamic   \r\n  192.168.200.107       5c-8b-6b-c1-49-51     dynamic   \r\n  192.168.200.110       24-4c-e3-2c-5b-1b     dynamic   \r\n  192.168.200.112       38-e7-c0-61-f7-ff     dynamic   \r\n  192.168.200.113       88-66-5a-0c-1f-3a     dynamic   \r\n  192.168.200.115       c4-ac-59-a6-df-a2     dynamic   \r\n  192.168.200.250       bc-24-11-50-bb-bd     dynamic   \r\n  192.168.200.255       ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  224.0.0.252           01-00-5e-00-00-fc     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 192.168.208.1 --- 0x16\r\n  Internet Address      Physical Address      Type\r\n  192.168.223.255       ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "tcp_connect": {
+              "status": "passed",
+              "duration": 7,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command error: spawn nc ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "wget": {
+              "status": "passed",
+              "duration": 387,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\": \"identity\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"Wget/1.21.4\", \n    \"X-Amzn-Trace-Id\": \"Root=1-6993c4f1-7fda2689439439cd6c8a4035\"\n  }, \n  \"origin\": \"73.55.3.125\", \n  \"url\": \"http://httpbin.org/get\"\n}\n"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "whois": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command error: spawn whois ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "nmap": {
+          "total": 5,
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "nmap_ping_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "nmap_tcp_connect_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "nmap_tcp_syn_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "nmap_udp_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "nmap_version_scan": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "snmp": {
+          "total": 12,
+          "passed": 12,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "snmp_create_session": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP session created for 172.20.0.10\\n\\n{\n  \"sessionId\": {\n    \"sessionId\": \"68559ce7-389b-4ee5-ac47-24b2cb971b6d\"\n  }\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_close_session": {
+              "status": "passed",
+              "duration": 0,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP session test-session-id closed\\n\\n{\n  \"success\": true\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_get": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_get_next": {
+              "status": "passed",
+              "duration": 0,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_walk": {
+              "status": "passed",
+              "duration": 0,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_table": {
+              "status": "passed",
+              "duration": 0,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_discover": {
+              "status": "passed",
+              "duration": 138,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Discovery results for 172.20.0.0/24\\n\\n[]"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_device_inventory": {
+              "status": "passed",
+              "duration": 190,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Device inventory for 172.20.0.10\\n\\n{\n  \"error\": \"SNMP GET failed: Command failed with code 1: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.\\n\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_interface_discovery": {
+              "status": "passed",
+              "duration": 177,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Interface discovery for 172.20.0.10\\n\\n{\n  \"error\": \"SNMP WALK failed: Command failed with code 1: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.\\n\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_service_discovery": {
+              "status": "passed",
+              "duration": 179,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Service discovery for 172.20.0.10\\n\\n{\n  \"ip\": \"172.20.0.10\",\n  \"services\": [],\n  \"tcpPorts\": [],\n  \"udpPorts\": [],\n  \"processError\": \"SNMP WALK failed: Command failed with code 1: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.\\n\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_system_health": {
+              "status": "passed",
+              "duration": 357,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "System health for 172.20.0.10\\n\\n{\n  \"ip\": \"172.20.0.10\",\n  \"system\": {\n    \"error\": \"SNMP GET failed: Command failed with code 1: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.\\n\"\n  },\n  \"memory\": {},\n  \"interfaces\": {\n    \"error\": \"Interface metrics not available: SNMP WALK failed: Command failed with code 1: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.\\n\"\n  }\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "snmp_network_topology": {
+              "status": "passed",
+              "duration": 133,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Network topology for 172.20.0.0/24\\n\\n{\n  \"error\": \"No SNMP-enabled devices found in network range\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "proxmox": {
+          "total": 10,
+          "passed": 10,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "proxmox_list_nodes": {
+              "status": "passed",
+              "duration": 110,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Proxmox Cluster Nodes:\\n\\n[\n  {\n    \"id\": \"node/ccctc16gb01\",\n    \"node\": \"ccctc16gb01\",\n    \"maxcpu\": 8,\n    \"maxdisk\": 70608257024,\n    \"status\": \"online\",\n    \"uptime\": 1381394,\n    \"type\": \"node\",\n    \"cpu\": 0.00867735997896398,\n    \"maxmem\": 16658124800,\n    \"ssl_fingerprint\": \"09:7E:74:35:25:32:67:AC:3C:7A:2C:F6:27:1E:65:00:49:CC:D6:66:F1:56:95:B0:1B:46:C1:26:AE:59:51:D8\",\n    \"mem\": 1853726720,\n    \"level\": \"\",\n    \"disk\": 8208441344\n  },\n  {\n    \"ssl_fingerprint\": \"E2:FB:95:17:2B:97:4B:D1:07:59:D8:B5:2C:D1:5D:AC:E1:42:83:97:04:B6:1E:70:2C:F2:F7:B3:2A:A5:50:2A\",\n    \"maxmem\": 16657985536,\n    \"level\": \"\",\n    \"mem\": 1811636224,\n    \"disk\": 8211251200,\n    \"id\": \"node/ccctc16gb02\",\n    \"node\": \"ccctc16gb02\",\n    \"maxdisk\": 70608257024,\n    \"maxcpu\": 8,\n    \"type\": \"node\",\n    \"cpu\": 0.00853690570002627,\n    \"status\": \"online\",\n    \"uptime\": 1381381\n  },\n  {\n    \"disk\": 8572645376,\n    \"ssl_fingerprint\": \"10:6D:29:F2:DE:22:48:14:5C:31:2E:C5:77:62:FF:1A:2E:EA:EB:12:90:AC:37:73:1B:80:81:E4:70:67:ED:74\",\n    \"maxmem\": 33544245248,\n    \"level\": \"\",\n    \"mem\": 4411842560,\n    \"maxdisk\": 70608257024,\n    \"maxcpu\": 8,\n    \"cpu\": 0.0124010865713948,\n    \"type\": \"node\",\n    \"uptime\": 1380999,\n    \"status\": \"online\",\n    \"id\": \"node/ccctc32gb03\",\n    \"node\": \"ccctc32gb03\"\n  },\n  {\n    \"ssl_fingerprint\": \"40:12:84:0A:29:45:B2:37:FC:B4:FE:9C:48:0F:71:F3:35:A1:D4:3B:A6:79:23:66:11:AA:3D:74:04:AD:D7:FB\",\n    \"maxmem\": 33544241152,\n    \"level\": \"\",\n    \"mem\": 2258604032,\n    \"disk\": 14186029056,\n    \"id\": \"node/ccctc32gb04\",\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 70608257024,\n    \"maxcpu\": 8,\n    \"type\": \"node\",\n    \"cpu\": 0.00966435940969048,\n    \"status\": \"online\",\n    \"uptime\": 1380895\n  },\n  {\n    \"disk\": 8589504512,\n    \"mem\": 4799934464,\n    \"level\": \"\",\n    \"maxmem\": 33544376320,\n    \"ssl_fingerprint\": \"2E:24:75:0C:94:E6:F2:A0:72:30:64:F1:DA:E8:85:37:D1:74:6E:88:C8:9A:1C:8C:22:F6:D4:59:9A:8E:99:38\",\n    \"uptime\": 1381299,\n    \"status\": \"online\",\n    \"type\": \"node\",\n    \"cpu\": 0.0106382978723404,\n    \"maxcpu\": 8,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb01\",\n    \"id\": \"node/ccctc32gb01\"\n  },\n  {\n    \"mem\": 3910823936,\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"ED:06:05:79:88:30:82:68:A2:B7:B0:28:50:AE:98:D8:6B:A5:0C:13:C0:EA:50:43:8E:1C:23:7C:20:C7:BB:6A\",\n    \"maxmem\": 33540460544,\n    \"disk\": 8513531904,\n    \"id\": \"node/ccctc32gb02\",\n    \"node\": \"ccctc32gb02\",\n    \"type\": \"node\",\n    \"cpu\": 0.00878859857482185,\n    \"status\": \"online\",\n    \"uptime\": 1381006,\n    \"maxdisk\": 70608257024,\n    \"maxcpu\": 8\n  }\n]"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_get_node_details": {
+              "status": "passed",
+              "duration": 318,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Node Details for proxmox-test:\\n\\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_list_vms": {
+              "status": "passed",
+              "duration": 324,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "VMs on node proxmox-test:\\n\\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_get_vm_details": {
+              "status": "passed",
+              "duration": 91,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "VM 100 details on node proxmox-test:\\n\\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_list_containers": {
+              "status": "passed",
+              "duration": 329,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "LXC containers on node proxmox-test:\\n\\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_get_container_details": {
+              "status": "passed",
+              "duration": 195,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Container 100 details on node proxmox-test:\\n\\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_list_storage": {
+              "status": "passed",
+              "duration": 313,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Storage resources on node proxmox-test:\\n\\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_list_networks": {
+              "status": "passed",
+              "duration": 134,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Network configuration for node proxmox-test:\\n\\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_cluster_resources": {
+              "status": "passed",
+              "duration": 56,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Proxmox Cluster Resources:\\n\\n[\n  {\n    \"type\": \"lxc\",\n    \"cpu\": 0,\n    \"status\": \"stopped\",\n    \"uptime\": 0,\n    \"maxcpu\": 8,\n    \"maxdisk\": 68719476736,\n    \"template\": 0,\n    \"id\": \"lxc/100\",\n    \"node\": \"ccctc32gb01\",\n    \"netin\": 0,\n    \"disk\": 0,\n    \"netout\": 0,\n    \"name\": \"mastercontol.k9content.com\",\n    \"mem\": 0,\n    \"diskread\": 0,\n    \"diskwrite\": 0,\n    \"vmid\": 100,\n    \"maxmem\": 25769803776\n  },\n  {\n    \"netout\": 0,\n    \"disk\": 0,\n    \"name\": \"ccc-home-automation.k9content.com\",\n    \"mem\": 0,\n    \"diskread\": 0,\n    \"diskwrite\": 0,\n    \"vmid\": 101,\n    \"maxmem\": 8589934592,\n    \"type\": \"qemu\",\n    \"cpu\": 0,\n    \"status\": \"stopped\",\n    \"uptime\": 0,\n    \"maxdisk\": 68719476736,\n    \"maxcpu\": 4,\n    \"template\": 0,\n    \"id\": \"qemu/101\",\n    \"node\": \"ccctc32gb04\",\n    \"netin\": 0\n  },\n  {\n    \"status\": \"running\",\n    \"uptime\": 1380787,\n    \"cpu\": 0,\n    \"type\": \"lxc\",\n    \"template\": 0,\n    \"maxcpu\": 2,\n    \"maxdisk\": 4294967296,\n    \"id\": \"lxc/102\",\n    \"node\": \"ccctc32gb04\",\n    \"netin\": 747891192,\n    \"netout\": 10494502,\n    \"disk\": 52297728,\n    \"name\": \"ccc-file-server.k9content.com\",\n    \"diskread\": 24100864,\n    \"mem\": 13774848,\n    \"maxmem\": 2147483648,\n    \"diskwrite\": 0,\n    \"vmid\": 102\n  },\n  {\n    \"node\": \"ccctc32gb04\",\n    \"id\": \"lxc/103\",\n    \"netin\": 0,\n    \"uptime\": 0,\n    \"status\": \"stopped\",\n    \"cpu\": 0,\n    \"type\": \"lxc\",\n    \"template\": 1,\n    \"maxcpu\": 8,\n    \"maxdisk\": 137438953472,\n    \"diskread\": 0,\n    \"mem\": 0,\n    \"maxmem\": 25769803776,\n    \"vmid\": 103,\n    \"diskwrite\": 0,\n    \"netout\": 0,\n    \"disk\": 0,\n    \"name\": \"ai-cluster-template\"\n  },\n  {\n    \"node\": \"ccctc32gb03\",\n    \"id\": \"lxc/104\",\n    \"netin\": 155161009,\n    \"cpu\": 0.00543744408542818,\n    \"type\": \"lxc\",\n    \"uptime\": 35708,\n    \"status\": \"running\",\n    \"maxdisk\": 100861726720,\n    \"maxcpu\": 4,\n    \"template\": 0,\n    \"mem\": 569909248,\n    \"diskread\": 1541603328,\n    \"vmid\": 104,\n    \"diskwrite\": 1019842560,\n    \"maxmem\": 8589934592,\n    \"netout\": 16795465,\n    \"disk\": 25747451904,\n    \"name\": \"vibeforge-dev01\"\n  },\n  {\n    \"status\": \"stopped\",\n    \"uptime\": 0,\n    \"cpu\": 0,\n    \"type\": \"lxc\",\n    \"template\": 0,\n    \"maxcpu\": 2,\n    \"maxdisk\": 8589934592,\n    \"node\": \"ccctc32gb04\",\n    \"id\": \"lxc/600\",\n    \"netin\": 0,\n    \"netout\": 0,\n    \"disk\": 0,\n    \"name\": \"dist-llama01\",\n    \"diskread\": 0,\n    \"mem\": 0,\n    \"maxmem\": 14999879680,\n    \"vmid\": 600,\n    \"diskwrite\": 0\n  },\n  {\n    \"disk\": 14186029056,\n    \"mem\": 2258604032,\n    \"level\": \"\",\n    \"cgroup-mode\": 2,\n    \"maxmem\": 33544241152,\n    \"type\": \"node\",\n    \"cpu\": 0.00966435940969048,\n    \"uptime\": 1380895,\n    \"status\": \"online\",\n    \"maxcpu\": 8,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb04\",\n    \"id\": \"node/ccctc32gb04\"\n  },\n  {\n    \"maxdisk\": 70608257024,\n    \"maxcpu\": 8,\n    \"uptime\": 1381299,\n    \"status\": \"online\",\n    \"type\": \"node\",\n    \"cpu\": 0.0106382978723404,\n    \"id\": \"node/ccctc32gb01\",\n    \"node\": \"ccctc32gb01\",\n    \"disk\": 8589504512,\n    \"maxmem\": 33544376320,\n    \"cgroup-mode\": 2,\n    \"level\": \"\",\n    \"mem\": 4799934464\n  },\n  {\n    \"maxdisk\": 70608257024,\n    \"maxcpu\": 8,\n    \"status\": \"online\",\n    \"uptime\": 1381006,\n    \"cpu\": 0.00878859857482185,\n    \"type\": \"node\",\n    \"id\": \"node/ccctc32gb02\",\n    \"node\": \"ccctc32gb02\",\n    \"disk\": 8513531904,\n    \"maxmem\": 33540460544,\n    \"cgroup-mode\": 2,\n    \"mem\": 3910823936,\n    \"level\": \"\"\n  },\n  {\n    \"id\": \"node/ccctc16gb01\",\n    \"node\": \"ccctc16gb01\",\n    \"maxcpu\": 8,\n    \"maxdisk\": 70608257024,\n    \"cpu\": 0.00867735997896398,\n    \"type\": \"node\",\n    \"status\": \"online\",\n    \"uptime\": 1381394,\n    \"cgroup-mode\": 2,\n    \"maxmem\": 16658124800,\n    \"level\": \"\",\n    \"mem\": 1853726720,\n    \"disk\": 8208441344\n  },\n  {\n    \"type\": \"node\",\n    \"cpu\": 0.0124010865713948,\n    \"status\": \"online\",\n    \"uptime\": 1380999,\n    \"maxcpu\": 8,\n    \"maxdisk\": 70608257024,\n    \"id\": \"node/ccctc32gb03\",\n    \"node\": \"ccctc32gb03\",\n    \"disk\": 8572645376,\n    \"mem\": 4411842560,\n    \"level\": \"\",\n    \"cgroup-mode\": 2,\n    \"maxmem\": 33544245248\n  },\n  {\n    \"level\": \"\",\n    \"mem\": 1811636224,\n    \"cgroup-mode\": 2,\n    \"maxmem\": 16657985536,\n    \"disk\": 8211251200,\n    \"id\": \"node/ccctc16gb02\",\n    \"node\": \"ccctc16gb02\",\n    \"type\": \"node\",\n    \"cpu\": 0.00853690570002627,\n    \"status\": \"online\",\n    \"uptime\": 1381381,\n    \"maxdisk\": 70608257024,\n    \"maxcpu\": 8\n  },\n  {\n    \"plugintype\": \"zfspool\",\n    \"id\": \"storage/ccctc32gb04/archive-pool-zfs-4tb\",\n    \"content\": \"rootdir,images\",\n    \"node\": \"ccctc32gb04\",\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"disk\": 1216512,\n    \"status\": \"available\",\n    \"storage\": \"archive-pool-zfs-4tb\",\n    \"maxdisk\": 3861712470016\n  },\n  {\n    \"plugintype\": \"rbd\",\n    \"node\": \"ccctc32gb04\",\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc32gb04/USB-DRIVE-POOL\",\n    \"shared\": 1,\n    \"disk\": 67037864917,\n    \"type\": \"storage\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"maxdisk\": 351830582229\n  },\n  {\n    \"type\": \"storage\",\n    \"disk\": 67037864917,\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"maxdisk\": 351830582229,\n    \"plugintype\": \"rbd\",\n    \"node\": \"ccctc32gb01\",\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc32gb01/USB-DRIVE-POOL\",\n    \"shared\": 1\n  },\n  {\n    \"disk\": 67037864917,\n    \"type\": \"storage\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"maxdisk\": 351830680533,\n    \"plugintype\": \"rbd\",\n    \"id\": \"storage/ccctc32gb02/USB-DRIVE-POOL\",\n    \"content\": \"images,rootdir\",\n    \"node\": \"ccctc32gb02\",\n    \"shared\": 1\n  },\n  {\n    \"shared\": 1,\n    \"id\": \"storage/ccctc16gb01/USB-DRIVE-POOL\",\n    \"content\": \"images,rootdir\",\n    \"node\": \"ccctc16gb01\",\n    \"plugintype\": \"rbd\",\n    \"maxdisk\": 351830582229,\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"type\": \"storage\",\n    \"disk\": 67037864917\n  },\n  {\n    \"shared\": 1,\n    \"plugintype\": \"rbd\",\n    \"node\": \"ccctc32gb03\",\n    \"id\": \"storage/ccctc32gb03/USB-DRIVE-POOL\",\n    \"content\": \"images,rootdir\",\n    \"maxdisk\": 351830680533,\n    \"type\": \"storage\",\n    \"disk\": 67037864917,\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"status\": \"available\"\n  },\n  {\n    \"maxdisk\": 351830680533,\n    \"disk\": 67037864917,\n    \"type\": \"storage\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"shared\": 1,\n    \"plugintype\": \"rbd\",\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc16gb02/USB-DRIVE-POOL\",\n    \"node\": \"ccctc16gb02\"\n  },\n  {\n    \"node\": \"ccctc32gb04\",\n    \"content\": \"rootdir,images\",\n    \"id\": \"storage/ccctc32gb04/local-lvm\",\n    \"plugintype\": \"lvmthin\",\n    \"shared\": 0,\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"type\": \"storage\",\n    \"disk\": 67426657186,\n    \"maxdisk\": 134691684352\n  },\n  {\n    \"shared\": 0,\n    \"plugintype\": \"lvmthin\",\n    \"node\": \"ccctc32gb01\",\n    \"content\": \"rootdir,images\",\n    \"id\": \"storage/ccctc32gb01/local-lvm\",\n    \"maxdisk\": 134691684352,\n    \"disk\": 68423375650,\n    \"type\": \"storage\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\"\n  },\n  {\n    \"shared\": 0,\n    \"node\": \"ccctc32gb02\",\n    \"id\": \"storage/ccctc32gb02/local-lvm\",\n    \"content\": \"rootdir,images\",\n    \"plugintype\": \"lvmthin\",\n    \"maxdisk\": 134691684352,\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"type\": \"storage\",\n    \"disk\": 0\n  },\n  {\n    \"maxdisk\": 134691684352,\n    \"status\": \"available\",\n    \"storage\": \"local-lvm\",\n    \"type\": \"storage\",\n    \"disk\": 0,\n    \"shared\": 0,\n    \"content\": \"rootdir,images\",\n    \"id\": \"storage/ccctc16gb01/local-lvm\",\n    \"node\": \"ccctc16gb01\",\n    \"plugintype\": \"lvmthin\"\n  },\n  {\n    \"maxdisk\": 134691684352,\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"type\": \"storage\",\n    \"disk\": 0,\n    \"shared\": 0,\n    \"id\": \"storage/ccctc32gb03/local-lvm\",\n    \"content\": \"rootdir,images\",\n    \"node\": \"ccctc32gb03\",\n    \"plugintype\": \"lvmthin\"\n  },\n  {\n    \"maxdisk\": 134691684352,\n    \"disk\": 0,\n    \"type\": \"storage\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"shared\": 0,\n    \"plugintype\": \"lvmthin\",\n    \"id\": \"storage/ccctc16gb02/local-lvm\",\n    \"content\": \"rootdir,images\",\n    \"node\": \"ccctc16gb02\"\n  },\n  {\n    \"shared\": 0,\n    \"plugintype\": \"zfspool\",\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc32gb04/data-pool-zfs\",\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 5804111429632,\n    \"disk\": 397202613120,\n    \"type\": \"storage\",\n    \"status\": \"available\",\n    \"storage\": \"data-pool-zfs\"\n  },\n  {\n    \"node\": \"ccctc32gb04\",\n    \"content\": \"snippets,iso,vztmpl,import\",\n    \"id\": \"storage/ccctc32gb04/usb_cephfs\",\n    \"plugintype\": \"cephfs\",\n    \"shared\": 1,\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"type\": \"storage\",\n    \"disk\": 272629760,\n    \"maxdisk\": 285061677056\n  },\n  {\n    \"shared\": 1,\n    \"plugintype\": \"cephfs\",\n    \"node\": \"ccctc32gb01\",\n    \"content\": \"snippets,iso,vztmpl,import\",\n    \"id\": \"storage/ccctc32gb01/usb_cephfs\",\n    \"maxdisk\": 285061677056,\n    \"type\": \"storage\",\n    \"disk\": 272629760,\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\"\n  },\n  {\n    \"type\": \"storage\",\n    \"disk\": 272629760,\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"maxdisk\": 285061677056,\n    \"plugintype\": \"cephfs\",\n    \"content\": \"snippets,iso,vztmpl,import\",\n    \"id\": \"storage/ccctc32gb02/usb_cephfs\",\n    \"node\": \"ccctc32gb02\",\n    \"shared\": 1\n  },\n  {\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"disk\": 272629760,\n    \"type\": \"storage\",\n    \"maxdisk\": 285061677056,\n    \"node\": \"ccctc16gb01\",\n    \"content\": \"snippets,iso,vztmpl,import\",\n    \"id\": \"storage/ccctc16gb01/usb_cephfs\",\n    \"plugintype\": \"cephfs\",\n    \"shared\": 1\n  },\n  {\n    \"content\": \"snippets,iso,vztmpl,import\",\n    \"id\": \"storage/ccctc32gb03/usb_cephfs\",\n    \"node\": \"ccctc32gb03\",\n    \"plugintype\": \"cephfs\",\n    \"shared\": 1,\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"disk\": 272629760,\n    \"type\": \"storage\",\n    \"maxdisk\": 285061677056\n  },\n  {\n    \"node\": \"ccctc16gb02\",\n    \"id\": \"storage/ccctc16gb02/usb_cephfs\",\n    \"content\": \"snippets,iso,vztmpl,import\",\n    \"plugintype\": \"cephfs\",\n    \"shared\": 1,\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"disk\": 272629760,\n    \"type\": \"storage\",\n    \"maxdisk\": 285061677056\n  },\n  {\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"type\": \"storage\",\n    \"disk\": 14186029056,\n    \"maxdisk\": 70608257024,\n    \"id\": \"storage/ccctc32gb04/local\",\n    \"content\": \"backup,iso,vztmpl\",\n    \"node\": \"ccctc32gb04\",\n    \"plugintype\": \"dir\",\n    \"shared\": 0\n  },\n  {\n    \"shared\": 0,\n    \"node\": \"ccctc32gb01\",\n    \"content\": \"backup,iso,vztmpl\",\n    \"id\": \"storage/ccctc32gb01/local\",\n    \"plugintype\": \"dir\",\n    \"maxdisk\": 70608257024,\n    \"status\": \"available\",\n    \"storage\": \"local\",\n    \"type\": \"storage\",\n    \"disk\": 8589504512\n  },\n  {\n    \"shared\": 0,\n    \"plugintype\": \"dir\",\n    \"node\": \"ccctc32gb02\",\n    \"id\": \"storage/ccctc32gb02/local\",\n    \"content\": \"backup,iso,vztmpl\",\n    \"maxdisk\": 70608257024,\n    \"type\": \"storage\",\n    \"disk\": 8513531904,\n    \"storage\": \"local\",\n    \"status\": \"available\"\n  },\n  {\n    \"shared\": 0,\n    \"id\": \"storage/ccctc16gb01/local\",\n    \"content\": \"backup,iso,vztmpl\",\n    \"node\": \"ccctc16gb01\",\n    \"plugintype\": \"dir\",\n    \"maxdisk\": 70608257024,\n    \"status\": \"available\",\n    \"storage\": \"local\",\n    \"disk\": 8208445440,\n    \"type\": \"storage\"\n  },\n  {\n    \"maxdisk\": 70608257024,\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"disk\": 8572645376,\n    \"type\": \"storage\",\n    \"shared\": 0,\n    \"content\": \"backup,iso,vztmpl\",\n    \"id\": \"storage/ccctc32gb03/local\",\n    \"node\": \"ccctc32gb03\",\n    \"plugintype\": \"dir\"\n  },\n  {\n    \"status\": \"available\",\n    \"storage\": \"local\",\n    \"disk\": 8211255296,\n    \"type\": \"storage\",\n    \"maxdisk\": 70608257024,\n    \"id\": \"storage/ccctc16gb02/local\",\n    \"content\": \"backup,iso,vztmpl\",\n    \"node\": \"ccctc16gb02\",\n    \"plugintype\": \"dir\",\n    \"shared\": 0\n  },\n  {\n    \"type\": \"sdn\",\n    \"node\": \"ccctc32gb04\",\n    \"status\": \"ok\",\n    \"id\": \"sdn/ccctc32gb04/localnetwork\",\n    \"sdn\": \"localnetwork\"\n  },\n  {\n    \"sdn\": \"localnetwork\",\n    \"status\": \"ok\",\n    \"id\": \"sdn/ccctc32gb01/localnetwork\",\n    \"node\": \"ccctc32gb01\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"type\": \"sdn\",\n    \"status\": \"ok\",\n    \"sdn\": \"localnetwork\",\n    \"id\": \"sdn/ccctc32gb02/localnetwork\",\n    \"node\": \"ccctc32gb02\"\n  },\n  {\n    \"type\": \"sdn\",\n    \"status\": \"ok\",\n    \"id\": \"sdn/ccctc16gb01/localnetwork\",\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc16gb01\"\n  },\n  {\n    \"node\": \"ccctc32gb03\",\n    \"id\": \"sdn/ccctc32gb03/localnetwork\",\n    \"status\": \"ok\",\n    \"sdn\": \"localnetwork\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc16gb02/localnetwork\",\n    \"status\": \"ok\",\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc16gb02\"\n  },\n  {\n    \"status\": \"available\",\n    \"sdn\": \"k8svxlan\",\n    \"id\": \"sdn/ccctc16gb01/k8svxlan\",\n    \"node\": \"ccctc16gb01\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc16gb02/k8svxlan\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc16gb02\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc32gb01/k8svxlan\",\n    \"status\": \"available\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb01\"\n  },\n  {\n    \"id\": \"sdn/ccctc32gb02/k8svxlan\",\n    \"status\": \"available\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb02\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"node\": \"ccctc32gb03\",\n    \"status\": \"available\",\n    \"sdn\": \"k8svxlan\",\n    \"id\": \"sdn/ccctc32gb03/k8svxlan\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"id\": \"sdn/ccctc32gb04/k8svxlan\",\n    \"status\": \"available\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb04\",\n    \"type\": \"sdn\"\n  }\n]"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "proxmox_get_metrics": {
+              "status": "passed",
+              "duration": 228,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Metrics for node proxmox-test:\\n\\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "zabbix": {
+          "total": 7,
+          "passed": 7,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "zabbix_host_discover": {
+              "status": "passed",
+              "duration": 33,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error discovering Zabbix hosts: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_problems": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix problems: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_alerts": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix alerts: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_metrics": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix metrics: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_events": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix events: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_triggers": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix triggers: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "zabbix_get_inventory": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix inventory: Failed to authenticate with Zabbix: fetch failed"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "credentials": {
+          "total": 5,
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "credentials_add": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully added credential: test-credential"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "id": "test-credential",
+                  "type": "password"
+                },
+                "isError": false
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "credentials_get": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"type\": \"password\",\n  \"username\": \"testuser\",\n  \"password\": \"testpass123\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "credential": {
+                    "type": "password",
+                    "username": "testuser",
+                    "password": "testpass123"
+                  }
+                },
+                "isError": false
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "credentials_list": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "[\n  {\n    \"id\": \"test_toby\",\n    \"type\": \"password\",\n    \"username\": \"mcpuser\"\n  },\n  {\n    \"id\": \"proxmox-env\",\n    \"type\": \"password\",\n    \"username\": \"root\",\n    \"url\": \"https://192.168.200.10:8006\"\n  },\n  {\n    \"id\": \"test-credential\",\n    \"type\": \"password\",\n    \"username\": \"testuser\"\n  }\n]"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "credentials": [
+                    {
+                      "id": "test_toby",
+                      "type": "password",
+                      "username": "mcpuser"
+                    },
+                    {
+                      "id": "proxmox-env",
+                      "type": "password",
+                      "username": "root",
+                      "url": "https://192.168.200.10:8006"
+                    },
+                    {
+                      "id": "test-credential",
+                      "type": "password",
+                      "username": "testuser"
+                    }
+                  ]
+                },
+                "isError": false
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "credentials_remove": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully removed credential: test-credential"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "id": "test-credential"
+                },
+                "isError": false
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "credentials_rotate_key": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Successfully rotated encryption key and re-encrypted all credentials"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Key rotation completed successfully"
+                },
+                "isError": false
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "registry": {
+          "total": 5,
+          "passed": 1,
+          "failed": 4,
+          "skipped": 0,
+          "tools": {
+            "registry_get_status": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"registry_status\": {\n    \"state\": \"ready\",\n    \"modules\": 10,\n    \"tools\": 90,\n    \"resources\": 1,\n    \"prompts\": 1,\n    \"categories\": 11,\n    \"dbInitialized\": true,\n    \"hotReloadEnabled\": true,\n    \"categoryBreakdown\": {\n      \"Memory\": 9,\n      \"Network\": 9,\n      \"NMAP\": 5,\n      \"Proxmox\": 10,\n      \"SNMP\": 12,\n      \"Zabbix\": 7,\n      \"Marketplace\": 9,\n      \"Debug\": 2,\n      \"Credentials\": 5,\n      \"Registry\": 16,\n      \"Plugin\": 6\n    }\n  },\n  \"hot_reload\": {\n    \"enabled\": true,\n    \"state\": \"watching\",\n    \"watchedModules\": 10,\n    \"cachedModules\": 0,\n    \"totalReloads\": 0,\n    \"successfulReloads\": 0,\n    \"failedReloads\": 0,\n    \"modules\": {\n      \"memory_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\memory_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"network_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\network_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"nmap_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\nmap_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"proxmox_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\proxmox_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"snmp_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\snmp_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"zabbix_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\zabbix_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"marketplace_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\marketplace_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"debug_validation_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\debug_validation_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"credentials_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\credentials_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      },\n      \"registry_tools_sdk\": {\n        \"watching\": true,\n        \"filePath\": \"D:\\\\github-development\\\\mcp-open-discovery\\\\tools\\\\registry_tools_sdk.js\",\n        \"lastReload\": null,\n        \"reloads\": 0,\n        \"lastError\": null\n      }\n    }\n  },\n  \"validation\": {\n    \"totalToolsValidated\": 90,\n    \"validTools\": 90,\n    \"invalidTools\": 0,\n    \"totalErrors\": 0,\n    \"totalWarnings\": 8,\n    \"totalInfo\": 66,\n    \"duplicatesFound\": 0,\n    \"moduleBreakdown\": {}\n  },\n  \"timestamp\": \"2026-02-17T01:31:33.018Z\"\n}"
+                  }
+                ]
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "registry_load_module": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 60,
+                "error": {
+                  "code": -32602,
+                  "message": "MCP error -32602: Invalid arguments for tool registry_load_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"modulePath\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_load_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"modulePath\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_load_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"modulePath\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+            },
+            "registry_unload_module": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 61,
+                "error": {
+                  "code": -32602,
+                  "message": "MCP error -32602: Invalid arguments for tool registry_unload_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_unload_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_unload_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+            },
+            "registry_reload_module": {
+              "status": "failed",
+              "duration": 0,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 62,
+                "error": {
+                  "code": -32602,
+                  "message": "MCP error -32602: Invalid arguments for tool registry_reload_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_reload_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_reload_module: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"moduleName\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+            },
+            "registry_toggle_hotreload": {
+              "status": "failed",
+              "duration": 1,
+              "response": {
+                "jsonrpc": "2.0",
+                "id": 63,
+                "error": {
+                  "code": -32602,
+                  "message": "MCP error -32602: Invalid arguments for tool registry_toggle_hotreload: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"boolean\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"enabled\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_toggle_hotreload: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"boolean\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"enabled\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: MCP error -32602: Invalid arguments for tool registry_toggle_hotreload: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"boolean\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"enabled\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+            }
+          }
+        }
+      }
+    }
+  },
+  "details": [],
+  "errors": [
+    {
+      "transport": "http",
+      "error": ""
+    }
+  ],
+  "infrastructure": {
+    "health": {
+      "mcp": {
+        "status": "unhealthy",
+        "error": ""
+      },
+      "proxmox": {
+        "status": "reachable",
+        "endpoint": "192.168.200.10:8006"
+      },
+      "zabbix": {
+        "status": "unreachable",
+        "error": "Health check timeout",
+        "endpoint": "http://172.20.0.23:8080"
+      },
+      "snmp": {
+        "agents": {
+          "172.20.0.10": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.11": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.12": {
+            "status": "available",
+            "community": "public"
+          }
+        }
+      }
+    },
+    "connectivity": {}
+  }
+}
