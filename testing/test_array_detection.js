@@ -3,19 +3,36 @@
  */
 
 const { adaptToolToMCPTypes, getValidationSummary } = require('../tools/registry/mcp_types_adapter');
+const { captureTypedPlugin } = require('./helpers/typed_plugin_harness');
+
+function hasArrayParameters(tool) {
+  const shape = tool?.inputSchema?._def?.shape;
+  const resolvedShape = typeof shape === 'function' ? shape() : shape;
+  if (!resolvedShape || typeof resolvedShape !== 'object') {
+    return false;
+  }
+
+  return Object.values(resolvedShape).some((value) => {
+    const typeName = value?._def?.typeName;
+    return typeName === 'ZodArray' || (typeName === 'ZodOptional' && value?._def?.innerType?._def?.typeName === 'ZodArray');
+  });
+}
+
+function getRegistrationMethod(tool) {
+  return tool?.inputSchema?._def ? 'zod-object' : 'unknown';
+}
 
 async function testArrayDetection() {
   console.log('🔧 Testing Array Parameter Detection');
   
-  // Load modules with array parameters
-  const snmpTools = require('../tools/snmp_tools_sdk');
-  const zabbixTools = require('../tools/zabbix_tools_sdk');
+  const snmpTools = await captureTypedPlugin('snmp');
+  const zabbixTools = await captureTypedPlugin('zabbix');
   
   // Test SNMP tools with arrays
   console.log('\n📋 SNMP Tools with Arrays:');
   
-  const snmpGet = snmpTools.tools.find(tool => tool.name === 'snmp_get');
-  const snmpGetNext = snmpTools.tools.find(tool => tool.name === 'snmp_get_next');
+  const snmpGet = snmpTools.tools.find(tool => tool.name === 'mcp_od_snmp_get');
+  const snmpGetNext = snmpTools.tools.find(tool => tool.name === 'mcp_od_snmp_get_next');
   
   if (snmpGet) {
     console.log('snmp_get:');
@@ -48,7 +65,7 @@ async function testArrayDetection() {
   // Test Zabbix tools with arrays
   console.log('\n📋 Zabbix Tools with Arrays:');
   
-  const zabbixAlerts = zabbixTools.tools.find(tool => tool.name === 'zabbix_get_alerts');
+  const zabbixAlerts = zabbixTools.tools.find(tool => tool.name === 'mcp_od_zabbix_get_alerts');
   
   if (zabbixAlerts) {
     console.log('zabbix_get_alerts:');
@@ -76,8 +93,8 @@ async function testArrayDetection() {
   
   // Test a non-array tool for comparison
   console.log('\n📋 Non-Array Tool for Comparison:');
-  const memoryTools = require('../tools/memory_tools_sdk');
-  const memoryStats = memoryTools.tools.find(tool => tool.name === 'memory_stats');
+  const memoryTools = await captureTypedPlugin('memory-cmdb');
+  const memoryStats = memoryTools.tools.find(tool => tool.name === 'mcp_od_memory_stats');
   
   if (memoryStats) {
     console.log('memory_stats:');

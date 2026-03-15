@@ -1,0 +1,1 @@
+module.exports = require('./zabbix_tools_sdk.js.deprecated');

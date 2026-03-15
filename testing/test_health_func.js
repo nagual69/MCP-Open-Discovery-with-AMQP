@@ -1,53 +1,82 @@
 'use strict';
-// Reproduce the exact server startup to test if getHealthData is wired correctly
-const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
-const pluginRegistry = require('../tools/plugins/plugin-registry');
-const {
-  startAllTransports,
-  detectEnvironment,
-  createTransportConfig,
-  parseTransportMode
-} = require('../tools/transports/core/transport-manager');
 
 const http = require('http');
+const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+const {
+  startConfiguredTransports,
+  stopConfiguredTransports,
+  getTransportStatus,
+} = require('../dist-ts/src/transports/core/transport-manager.js');
 
-function getHealthData() {
-  const stats = pluginRegistry.getStats();
-  console.log('[getHealthData] called — stats:', JSON.stringify(stats));
-  return {
-    status: 'healthy',
-    version: '2.0.0',
-    registry: stats,
-    uptime: process.uptime()
-  };
+const config = {
+  nodeEnv: 'test',
+  transportModes: ['http'],
+  port: 7777,
+  host: '127.0.0.1',
+  pluginsRoot: './plugins',
+  dataDir: './data',
+  requireSignatures: false,
+  allowRuntimeDependencies: true,
+  strictCapabilities: false,
+  strictIntegrity: false,
+  oauth: {
+    enabled: false,
+    realm: 'test',
+    protectedEndpoints: [],
+  },
+};
+
+function fetchHealth() {
+  return new Promise((resolve, reject) => {
+    const request = http.request(
+      { hostname: '127.0.0.1', port: 7777, path: '/health' },
+      (response) => {
+        let body = '';
+        response.on('data', (chunk) => {
+          body += chunk;
+        });
+        response.on('end', () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+    );
+
+    request.on('error', reject);
+    request.end();
+  });
 }
 
-(async () => {
-  const server = new McpServer({ name: 'test', version: '1.0.0' });
+async function main() {
+  const server = new McpServer({ name: 'typed-health-test', version: '1.0.0' });
+  const { managed } = await startConfiguredTransports(server, config);
 
-  await pluginRegistry.initialize(server);
-  console.log('Initialized. Stats:', JSON.stringify(pluginRegistry.getStats()));
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-  const env = detectEnvironment();
-  const cfg = createTransportConfig(env, {
-    HTTP_PORT: 7777,
-    getHealthData: getHealthData
-  });
+    const health = await fetchHealth();
+    const status = getTransportStatus(config, managed);
 
-  console.log('cfg.getHealthData is:', typeof cfg.getHealthData, cfg.getHealthData === getHealthData ? '(same ref)' : '(DIFFERENT ref!)');
+    if (health.status !== 'healthy') {
+      throw new Error(`Expected health endpoint status healthy, got ${health.status}`);
+    }
 
-  await startAllTransports(server, ['http'], cfg);
-  console.log('Transport started. Checking health...');
+    if (!status.active.includes('http')) {
+      throw new Error('Expected HTTP transport to be active');
+    }
 
-  await new Promise(r => setTimeout(r, 1000));
+    console.log('Health response:', JSON.stringify(health));
+    console.log('Transport status:', JSON.stringify(status));
+    console.log('PASS test_health_func');
+  } finally {
+    await stopConfiguredTransports(managed);
+  }
+}
 
-  const req = http.request({ hostname: 'localhost', port: 7777, path: '/health' }, res => {
-    let d = '';
-    res.on('data', c => d += c);
-    res.on('end', () => {
-      console.log('Health response:', d);
-      process.exit(0);
-    });
-  });
-  req.end();
-})().catch(e => { console.error(e); process.exit(1); });
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

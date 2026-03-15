@@ -48,6 +48,6 @@ exports.RotateKeyInputShape = {
 };
 exports.SaveMemoryInputShape = {};
 exports.MigrateFilesystemInputShape = {
-    oldDataPath: zod_1.z.string().optional().describe('Optional path to legacy filesystem memory data JSON'),
+    oldDataPath: zod_1.z.string().optional().describe('Optional path to filesystem memory data JSON'),
 };
 //# sourceMappingURL=types.js.map

@@ -10,6 +10,10 @@
 const { spawn } = require('child_process');
 const http = require('http');
 const path = require('path');
+const { captureTypedPlugin } = require('./helpers/typed_plugin_harness');
+
+const typedServerModulePath = path.resolve('./dist-ts/src/server.js');
+const typedServerMainPath = path.resolve('./dist-ts/src/main.js');
 
 // Test configuration
 const CONFIG = {
@@ -62,7 +66,7 @@ async function runTest(testName, testFunction) {
  * Test 1: Server Module Loading
  */
 async function testServerModuleLoading() {
-  const serverPath = path.resolve('./mcp_open_discovery_server.js');
+  const serverPath = typedServerModulePath;
   
   try {
     // Try to require the server module
@@ -83,24 +87,21 @@ async function testServerModuleLoading() {
  */
 async function testToolRegistryLoading() {
   try {
-    const { registerAllTools, getToolCounts } = require('./tools/sdk_tool_registry');
-    
-    if (typeof registerAllTools !== 'function') {
-      throw new Error('registerAllTools is not a function');
+    const serverModule = require(typedServerModulePath);
+    const { getStats } = require('../dist-ts/src/plugins/plugin-registry.js');
+
+    await serverModule.createMcpServer();
+    const stats = getStats();
+
+    if (!stats || typeof stats.activeTools !== 'number') {
+      throw new Error('Typed plugin registry did not return valid tool counts');
     }
-    
-    const toolCounts = getToolCounts();
-    
-    if (!toolCounts || typeof toolCounts.total !== 'number') {
-      throw new Error('getToolCounts did not return valid tool counts');
+
+    log('info', `Typed plugin registry loaded successfully. Active tools: ${stats.activeTools}`);
+
+    if (stats.activeTools < 50) {
+      throw new Error(`Expected at least 50 active tools, got ${stats.activeTools}`);
     }
-    
-    log('info', `Tool registry loaded successfully. Total tools: ${toolCounts.total}`);
-    
-    if (toolCounts.total < 50) {
-      throw new Error(`Expected at least 50 tools, got ${toolCounts.total}`);
-    }
-    
   } catch (error) {
     throw new Error(`Failed to load tool registry: ${error.message}`);
   }
@@ -111,7 +112,7 @@ async function testToolRegistryLoading() {
  */
 async function testMcpStdioProtocol() {
   return new Promise((resolve, reject) => {
-    const serverPath = path.resolve('./mcp_open_discovery_server.js');
+    const serverPath = typedServerMainPath;
     
     // Start server with stdio transport
     const server = spawn('node', [serverPath], {
@@ -248,20 +249,20 @@ async function testHttpHealthEndpoint() {
  */
 async function testResourceRegistry() {
   try {
-    const { registerAllResources, getResourceCounts } = require('./tools/resource_registry');
-    
-    if (typeof registerAllResources !== 'function') {
-      throw new Error('registerAllResources is not a function');
+    const serverModule = require(typedServerModulePath);
+    const { getStats } = require('../dist-ts/src/plugins/plugin-registry.js');
+
+    await serverModule.createMcpServer();
+    const stats = getStats();
+
+    if (!stats || typeof stats.activePrompts !== 'number' || typeof stats.activeResources !== 'number') {
+      throw new Error('Typed plugin registry did not return valid prompt/resource counts');
     }
-    
-    const resourceCounts = getResourceCounts();
-    
-    if (!resourceCounts || typeof resourceCounts.total !== 'number') {
-      throw new Error('getResourceCounts did not return valid resource counts');
-    }
-    
-    log('info', `Resource registry loaded successfully. Total resources: ${resourceCounts.total}`);
-    
+
+    log('info', 'Typed registry resource state loaded successfully', {
+      activeResources: stats.activeResources,
+      activePrompts: stats.activePrompts,
+    });
   } catch (error) {
     throw new Error(`Failed to load resource registry: ${error.message}`);
   }
@@ -296,30 +297,28 @@ async function testCredentialManager() {
  * Test 7: Individual Tool Modules
  */
 async function testIndividualToolModules() {
-  const toolModules = [
-    './tools/network_tools_sdk',
-    './tools/memory_tools_sdk', 
-    './tools/nmap_tools_sdk',
-    './tools/proxmox_tools_sdk',
-    './tools/snmp_tools_sdk',
-    './tools/zabbix_tools_sdk',
-    './tools/registry_tools_sdk',
-    './tools/credentials_tools_sdk'
+  const pluginNames = [
+    'net-utils',
+    'memory-cmdb',
+    'nmap',
+    'proxmox',
+    'snmp',
+    'zabbix',
+    'registry-tools',
+    'credentials'
   ];
   
-  for (const modulePath of toolModules) {
+  for (const pluginName of pluginNames) {
     try {
-      const module = require(modulePath);
+      const plugin = await captureTypedPlugin(pluginName);
       
-      // Check that module exports expected functions
-      const moduleExports = Object.keys(module);
-      if (moduleExports.length === 0) {
-        throw new Error(`Module ${modulePath} exports nothing`);
+      if (!Array.isArray(plugin.tools) || plugin.tools.length === 0) {
+        throw new Error(`Typed plugin ${pluginName} registered no tools`);
       }
       
-      log('info', `✓ ${modulePath} loaded successfully`);
+      log('info', `✓ typed plugin ${pluginName} loaded successfully`);
     } catch (error) {
-      throw new Error(`Failed to load ${modulePath}: ${error.message}`);
+      throw new Error(`Failed to load typed plugin ${pluginName}: ${error.message}`);
     }
   }
 }

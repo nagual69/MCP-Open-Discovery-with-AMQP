@@ -401,11 +401,11 @@ const toolDefinitions: ToolRegistration[] = [
           return {
             id: plugin.id,
             state: plugin.lifecycle_state,
-            dependenciesPolicy: plugin.manifest.dependenciesPolicy || 'legacy',
+            dependenciesPolicy: plugin.manifest.dependenciesPolicy || 'unspecified',
             permissions: plugin.manifest.permissions || {},
             hasLock: fs.existsSync(lockPath),
             lockVerified,
-            manifestVersion: plugin.manifest.manifestVersion || 'legacy',
+            manifestVersion: plugin.manifest.manifestVersion || 'unknown',
           };
         });
         const data = {
@@ -420,7 +420,7 @@ const toolDefinitions: ToolRegistration[] = [
           pluginDetails: details,
           summary: {
             unsignedPlugins: details.filter((detail) => !detail.lockVerified).length,
-            legacyPlugins: details.filter((detail) => detail.manifestVersion === 'legacy').length,
+            nonV2Plugins: details.filter((detail) => detail.manifestVersion !== '2').length,
           },
         };
         return buildTextResponse(data, JSON.stringify(data, null, 2), response_format);

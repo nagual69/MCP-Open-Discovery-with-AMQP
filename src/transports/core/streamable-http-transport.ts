@@ -15,6 +15,8 @@ export interface HttpTransportRuntime {
 export interface StartHttpTransportOptions {
   getHealthResponse?: () => HealthResponse;
   oauthMiddleware?: ((options: { requiredScope: string; skipPaths: string[] }) => express.RequestHandler) | null;
+  protectedResourceMetadataHandler?: express.RequestHandler | null;
+  authorizationServer?: string | null;
 }
 
 function log(level: 'debug' | 'info' | 'warn' | 'error', message: string, data?: unknown): void {
@@ -70,22 +72,73 @@ function setupCors(app: Express): void {
 async function createSessionTransport(
   server: McpServer,
   sessions: Record<string, StreamableHTTPServerTransport>,
+  persistSession = true,
 ): Promise<StreamableHTTPServerTransport> {
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (sessionId) => {
-      sessions[sessionId] = transport;
+      if (persistSession) {
+        sessions[sessionId] = transport;
+      }
     },
   });
 
   transport.onclose = () => {
-    if (transport.sessionId && sessions[transport.sessionId]) {
+    if (persistSession && transport.sessionId && sessions[transport.sessionId]) {
       delete sessions[transport.sessionId];
     }
   };
 
   await server.connect(transport);
   return transport;
+}
+
+function createMockResponse(): Response {
+  const mock = {
+    headersSent: false,
+    locals: {},
+    setHeader() {
+      return this;
+    },
+    getHeader() {
+      return undefined;
+    },
+    status() {
+      return this;
+    },
+    json() {
+      return this;
+    },
+    send() {
+      return this;
+    },
+    end() {
+      return this;
+    },
+    write() {
+      return true;
+    },
+    writeHead() {
+      return this;
+    },
+    on() {
+      return this;
+    },
+    once() {
+      return this;
+    },
+    emit() {
+      return true;
+    },
+    removeListener() {
+      return this;
+    },
+    flushHeaders() {
+      return this;
+    },
+  };
+
+  return mock as unknown as Response;
 }
 
 async function handlePostRequest(
@@ -97,14 +150,72 @@ async function handlePostRequest(
   const sessionIdHeader = request.headers['mcp-session-id'];
   const sessionId = Array.isArray(sessionIdHeader) ? sessionIdHeader[0] : sessionIdHeader;
   const existingTransport = sessionId ? sessions[sessionId] : undefined;
+  const requestBody = request.body as { id?: unknown; method?: string; jsonrpc?: string } | undefined;
 
   if (existingTransport) {
-    await existingTransport.handleRequest(request, response, request.body);
+    await existingTransport.handleRequest(request, response, requestBody);
     return;
   }
 
-  const transport = await createSessionTransport(server, sessions);
-  await transport.handleRequest(request, response, request.body);
+  if (!sessionId && requestBody?.method === 'initialize') {
+    const transport = await createSessionTransport(server, sessions, true);
+    await transport.handleRequest(request, response, requestBody);
+    return;
+  }
+
+  if (requestBody?.jsonrpc === '2.0') {
+    const transport = await createSessionTransport(server, sessions, false);
+
+    if (requestBody.method !== 'initialize') {
+      const initializeRequest = {
+        method: 'POST',
+        headers: {
+          ...request.headers,
+          accept: 'application/json, text/event-stream',
+        },
+        body: {
+          jsonrpc: '2.0',
+          id: `auto-init-${Date.now()}`,
+          method: 'initialize',
+          params: {
+            protocolVersion: '2024-11-05',
+            capabilities: {},
+            clientInfo: {
+              name: 'stateless-client',
+              version: '1.0.0',
+            },
+          },
+        },
+      };
+
+      await transport.handleRequest(
+        initializeRequest as unknown as Request,
+        createMockResponse(),
+        initializeRequest.body,
+      );
+    }
+
+    const actualRequest = {
+      ...request,
+      headers: {
+        ...request.headers,
+        accept: 'application/json, text/event-stream',
+        'mcp-session-id': transport.sessionId,
+      },
+    };
+
+    await transport.handleRequest(actualRequest as Request, response, requestBody);
+    return;
+  }
+
+  response.status(400).json({
+    jsonrpc: '2.0',
+    error: {
+      code: -32000,
+      message: 'Bad Request: No valid session ID provided or invalid request',
+    },
+    id: requestBody?.id ?? null,
+  });
 }
 
 function setupRoutes(
@@ -128,8 +239,27 @@ function setupRoutes(
       },
       oauth: {
         enabled: config.oauthEnabled,
+        oauth_metadata: config.oauthEnabled ? '/.well-known/oauth-protected-resource' : undefined,
+        authorizationServer: options.authorizationServer ?? null,
       },
     });
+  });
+
+  if (options.protectedResourceMetadataHandler) {
+    app.get('/.well-known/oauth-protected-resource', options.protectedResourceMetadataHandler);
+    app.get('/oauth-metadata', options.protectedResourceMetadataHandler);
+  }
+
+  app.get('/.well-known/oauth-authorization-server', (_request, response) => {
+    if (!options.authorizationServer) {
+      response.status(404).json({
+        error: 'not_found',
+        error_description: 'Authorization server not configured',
+      });
+      return;
+    }
+
+    response.redirect(302, `${options.authorizationServer}/.well-known/oauth-authorization-server`);
   });
 
   if (config.oauthEnabled && options.oauthMiddleware) {

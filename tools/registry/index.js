@@ -486,7 +486,6 @@ async function registerAllTools(server, options = {}) {
         { name: 'snmp_tools_sdk', category: 'SNMP' },
         { name: 'zabbix_tools_sdk', category: 'Zabbix' },
         { name: 'marketplace_tools_sdk', category: 'Marketplace' },
-        { name: 'debug_validation_sdk', category: 'Debug' },
         { name: 'credentials_tools_sdk', category: 'Credentials' },
         { name: 'registry_tools_sdk', category: 'Registry' }
       ];

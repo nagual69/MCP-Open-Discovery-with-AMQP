@@ -109,11 +109,11 @@ function runStaticAudit() {
   console.log('🔍 Starting Static MCP Response Format Compliance Audit...\n');
   
   const toolFiles = [
-    './tools/network_tools_sdk.js',
-    './tools/memory_tools_sdk.js', 
-    './tools/nmap_tools_sdk.js',
-    './tools/proxmox_tools_sdk.js',
-    './tools/snmp_tools_sdk.js'
+    './plugins/src/net-utils/src/index.ts',
+    './plugins/src/memory-cmdb/src/index.ts', 
+    './plugins/src/nmap/src/index.ts',
+    './plugins/src/proxmox/src/index.ts',
+    './plugins/src/snmp/src/index.ts'
   ];
   
   const results = [];

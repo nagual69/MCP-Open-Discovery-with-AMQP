@@ -74,6 +74,12 @@ else {
 }
 
 try {
+    Write-Host "Running TypeScript typecheck..." -ForegroundColor Yellow
+    & npm run typecheck
+    if ($LASTEXITCODE -ne 0) {
+        throw "TypeScript typecheck failed. Aborting deploy."
+    }
+
     # Stop containers based on scope
     if ($BuildAll) {
         Write-Host "Stopping ALL containers..." -ForegroundColor Yellow

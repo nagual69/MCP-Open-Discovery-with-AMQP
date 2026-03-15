@@ -1,3 +1,4 @@
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { RequestHandler } from 'express';
 import type { HealthResponse, TransportManagerResult, TransportMode } from '../../types';
@@ -11,6 +12,7 @@ export interface EnvironmentInfo {
     transportMode?: string;
 }
 export interface ManagedTransports {
+    stdioTransport?: StdioServerTransport;
     http?: HttpTransportRuntime;
     amqpRuntime?: AmqpTransportRuntime;
     startedModes: TransportMode[];
@@ -20,6 +22,7 @@ export interface StartTransportOptions {
         requiredScope: string;
         skipPaths: string[];
     }) => RequestHandler) | null;
+    protectedResourceMetadataHandler?: RequestHandler | null;
     amqpRuntime?: AmqpTransportRuntime;
 }
 export declare function determineEnabledTransports(config: Pick<AppConfig, 'transportModes'>, environment?: EnvironmentInfo): TransportMode[];

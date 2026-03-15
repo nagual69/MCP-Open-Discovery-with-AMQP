@@ -2,17 +2,17 @@
  * Test specific tool that's failing with keyValidator._parse error
  */
 
+const { captureTypedPlugin } = require('./helpers/typed_plugin_harness');
+
 async function testFailingTool() {
-  console.log('🔧 Testing Specific Failing Tool: registry_get_status');
+  console.log('🔧 Testing Typed Tool: mcp_od_registry_list_plugins');
   
-  // Load the registry tools module directly
-  const registryTools = require('../tools/registry_tools_sdk');
+  const registryTools = await captureTypedPlugin('registry-tools');
   
   console.log('\n📋 Registry Tools Module:');
   console.log('Tools count:', registryTools.tools.length);
   
-  // Find the registry_get_status tool
-  const getStatusTool = registryTools.tools.find(tool => tool.name === 'registry_get_status');
+  const getStatusTool = registryTools.tools.find(tool => tool.name === 'mcp_od_registry_list_plugins');
   
   if (getStatusTool) {
     console.log('\n📋 registry_get_status tool:');
@@ -23,7 +23,7 @@ async function testFailingTool() {
     // Test calling the tool directly
     try {
       console.log('\n📋 Testing direct tool call...');
-      const result = await registryTools.handleToolCall('registry_get_status', {});
+      const result = await getStatusTool.handler({ filter_state: 'all', limit: 5, offset: 0, response_format: 'json' });
       console.log('✅ Direct tool call successful');
       console.log('Result type:', typeof result);
       console.log('Result keys:', Object.keys(result || {}));
@@ -53,17 +53,17 @@ async function testFailingTool() {
     }
     
   } else {
-    console.log('❌ registry_get_status tool not found');
+    console.log('❌ mcp_od_registry_list_plugins tool not found');
   }
 }
 
 // Test a tool that requires parameters
 async function testParameterTool() {
-  console.log('\n🔧 Testing Tool with Parameters: credentials_add');
+  console.log('\n🔧 Testing Tool with Parameters: mcp_od_credentials_add');
   
-  const credentialsTools = require('../tools/credentials_tools_sdk');
+  const credentialsTools = await captureTypedPlugin('credentials');
   
-  const addCredsTool = credentialsTools.tools.find(tool => tool.name === 'credentials_add');
+  const addCredsTool = credentialsTools.tools.find(tool => tool.name === 'mcp_od_credentials_add');
   
   if (addCredsTool) {
     console.log('\n📋 credentials_add tool schema:');

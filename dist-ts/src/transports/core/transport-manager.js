@@ -5,9 +5,11 @@ exports.startConfiguredTransports = startConfiguredTransports;
 exports.stopConfiguredTransports = stopConfiguredTransports;
 exports.getTransportStatus = getTransportStatus;
 const stdio_js_1 = require("@modelcontextprotocol/sdk/server/stdio.js");
+const transport_state_1 = require("../../runtime/transport-state");
 const utils_1 = require("../../utils");
 const plugin_registry_1 = require("../../plugins/plugin-registry");
 const amqp_transport_1 = require("../amqp/amqp-transport");
+const amqp_server_transport_1 = require("../amqp/amqp-server-transport");
 const streamable_http_transport_1 = require("./streamable-http-transport");
 const logger = (0, utils_1.createLogger)('TRANSPORT_MANAGER');
 function detectEnvironment() {
@@ -60,27 +62,32 @@ function createHttpConfig(config) {
         oauthEnabled: config.oauth.enabled,
     };
 }
-function createAmqpConfig() {
+function createAmqpConfig(config) {
     return {
-        enabled: process.env.AMQP_ENABLED !== 'false',
+        enabled: config.amqp.enabled,
         mode: 'amqp',
-        url: process.env.AMQP_URL || 'amqp://guest:guest@localhost:5672',
-        exchange: process.env.AMQP_EXCHANGE || 'mcp.notifications',
-        queuePrefix: process.env.AMQP_QUEUE_PREFIX || 'mcp.discovery',
-        prefetch: Number.parseInt(process.env.AMQP_PREFETCH_COUNT || '1', 10),
+        url: config.amqp.url,
+        exchange: config.amqp.exchange,
+        queuePrefix: config.amqp.queuePrefix,
+        prefetch: config.amqp.prefetch,
+        reconnectDelay: config.amqp.reconnectDelay,
+        maxReconnectAttempts: config.amqp.maxReconnectAttempts,
+        messageTTL: config.amqp.messageTTL,
+        queueTTL: config.amqp.queueTTL,
     };
 }
 async function startConfiguredTransports(server, config, options = {}) {
     const enabled = determineEnabledTransports(config);
     const results = [];
     const managed = {
-        amqpRuntime: options.amqpRuntime ?? new amqp_transport_1.LegacyAmqpRuntimeAdapter(),
+        amqpRuntime: options.amqpRuntime ?? new amqp_server_transport_1.NativeAmqpRuntimeAdapter(),
         startedModes: [],
     };
     for (const mode of enabled) {
         if (mode === 'stdio') {
             const transport = new stdio_js_1.StdioServerTransport();
             await server.connect(transport);
+            managed.stdioTransport = transport;
             results.push({ mode: 'stdio', started: true, details: 'Stdio transport connected' });
             managed.startedModes.push('stdio');
             continue;
@@ -88,6 +95,8 @@ async function startConfiguredTransports(server, config, options = {}) {
         if (mode === 'http') {
             const http = await (0, streamable_http_transport_1.startStreamableHttpTransport)(server, createHttpConfig(config), {
                 oauthMiddleware: options.oauthMiddleware ?? null,
+                protectedResourceMetadataHandler: options.protectedResourceMetadataHandler ?? null,
+                authorizationServer: config.oauth.authorizationServer,
                 getHealthResponse: () => buildHealthResponse(config, (0, amqp_transport_1.getAmqpTransportStatus)(managed.amqpRuntime)),
             });
             managed.http = http.runtime;
@@ -96,13 +105,14 @@ async function startConfiguredTransports(server, config, options = {}) {
             continue;
         }
         if (mode === 'amqp') {
-            const amqpResult = await (0, amqp_transport_1.startAmqpTransport)(server, createAmqpConfig(), managed.amqpRuntime);
+            const amqpResult = await (0, amqp_transport_1.startAmqpTransport)(server, createAmqpConfig(config), managed.amqpRuntime);
             results.push(amqpResult);
             if (amqpResult.started) {
                 managed.startedModes.push('amqp');
             }
         }
     }
+    (0, transport_state_1.setManagedTransports)(managed);
     logger.info('Transport startup complete', {
         enabled,
         started: results.filter((result) => result.started).map((result) => result.mode),
@@ -117,6 +127,7 @@ async function stopConfiguredTransports(managed) {
     if (managed.amqpRuntime?.stop) {
         await managed.amqpRuntime.stop();
     }
+    (0, transport_state_1.clearManagedTransports)();
 }
 function getTransportStatus(config, managed = { startedModes: [] }) {
     const environment = detectEnvironment();

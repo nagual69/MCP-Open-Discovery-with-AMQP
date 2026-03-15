@@ -1,0 +1,1 @@
+module.exports = require('./memory_tools_sdk.js.deprecated');

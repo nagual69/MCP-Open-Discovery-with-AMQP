@@ -1,0 +1,1 @@
+module.exports = require('./nmap_tools_sdk.js.deprecated');

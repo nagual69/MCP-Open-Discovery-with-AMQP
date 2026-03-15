@@ -1,19 +1,8 @@
-import { createAppConfig, startServer } from './server';
+import { createAppConfig, runServerAsMain } from './server';
 
 async function main(): Promise<void> {
   const config = createAppConfig();
-  const { stats } = await startServer(config);
-  console.log(
-    JSON.stringify(
-      {
-        status: 'started',
-        transportModes: config.transportModes,
-        registry: stats,
-      },
-      null,
-      2,
-    ),
-  );
+  await runServerAsMain(config);
 }
 
 main().catch((error) => {

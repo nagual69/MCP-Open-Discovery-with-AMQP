@@ -15,6 +15,8 @@ const http = require('http');
 const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 
+const TYPED_SERVER_MAIN = path.join(__dirname, '..', 'dist-ts', 'src', 'main.js');
+
 // Load environment variables from .env file manually
 const envPath = path.join(__dirname, '..', '.env');
 if (fs.existsSync(envPath)) {
@@ -302,9 +304,9 @@ class StdioTransportClient {
 
   async start() {
     return new Promise((resolve, reject) => {
-      this.server = spawn('node', ['mcp_open_discovery_server.js'], {
+      this.server = spawn('node', [TYPED_SERVER_MAIN], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, MCP_TRANSPORT: 'stdio' },
+        env: { ...process.env, TRANSPORT_MODE: 'stdio' },
         cwd: path.join(__dirname, '..')
       });
 

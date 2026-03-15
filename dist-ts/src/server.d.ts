@@ -8,6 +8,9 @@ export declare function startServer(config?: AppConfig): Promise<{
     server: McpServer;
     stats: ReturnType<typeof getStats>;
 }>;
+export declare function stopServer(): Promise<void>;
+export declare function installProcessHandlers(): void;
+export declare function runServerAsMain(config?: AppConfig): Promise<void>;
 export declare function getServerInstance(): McpServer | null;
 export declare function getManagedTransports(): ManagedTransports | null;
 //# sourceMappingURL=server.d.ts.map

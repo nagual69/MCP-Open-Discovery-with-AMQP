@@ -20,6 +20,10 @@ export interface AmqpTransportConfig extends BaseTransportConfig {
     exchange: string;
     queuePrefix: string;
     prefetch?: number;
+    reconnectDelay?: number;
+    maxReconnectAttempts?: number;
+    messageTTL?: number;
+    queueTTL?: number;
 }
 export type TransportConfig = StdioTransportConfig | HttpTransportConfig | AmqpTransportConfig;
 export interface TransportStartResult {

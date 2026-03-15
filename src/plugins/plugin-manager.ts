@@ -33,6 +33,11 @@ import { loadAndRegisterPlugin, type CapturedRegistrations } from './plugin-load
 import { verifySignatures } from './integrity/signature-verifier';
 import { MarketplaceClient } from './marketplace/marketplace-client';
 import { importPluginFromFile } from './marketplace/local-import';
+import {
+  publishPromptsListChanged,
+  publishResourcesListChanged,
+  publishToolsListChanged,
+} from '../runtime/notifications';
 
 let mcpServerRef: McpServer | null = null;
 const activeRegistrations = new Map<string, CapturedRegistrations>();
@@ -59,6 +64,24 @@ interface ExtendedMcpServer extends McpServer {
 
 function pluginId(manifest: PluginManifestV2): string {
   return `${manifest.name}@${manifest.version}`;
+}
+
+async function publishCapabilityListChanged(manifest: PluginManifestV2): Promise<void> {
+  const tasks: Array<Promise<boolean>> = [];
+
+  if ((manifest.capabilities?.tools?.length ?? 0) > 0) {
+    tasks.push(publishToolsListChanged());
+  }
+  if ((manifest.capabilities?.resources?.length ?? 0) > 0) {
+    tasks.push(publishResourcesListChanged());
+  }
+  if ((manifest.capabilities?.prompts?.length ?? 0) > 0) {
+    tasks.push(publishPromptsListChanged());
+  }
+
+  if (tasks.length > 0) {
+    await Promise.allSettled(tasks);
+  }
 }
 
 async function ensureDirectory(directoryPath: string): Promise<void> {
@@ -335,6 +358,7 @@ export async function activate(pluginIdValue: string, options: PluginActivateOpt
   }
   setPluginLifecycleState(pluginIdValue, 'active');
   auditLog(plugin.id, plugin.name, plugin.version, 'activated', options.actor ?? 'system');
+  await publishCapabilityListChanged(manifest);
   return {
     activated: true,
     pluginId: pluginIdValue,
@@ -356,6 +380,7 @@ export async function deactivate(
   await unregisterCaptured(pluginIdValue);
   setPluginLifecycleState(pluginIdValue, 'inactive');
   auditLog(plugin.id, plugin.name, plugin.version, 'deactivated', options.actor ?? 'system');
+  await publishCapabilityListChanged(JSON.parse(plugin.manifest_json) as PluginManifestV2);
   return { deactivated: true, pluginId: pluginIdValue };
 }
 
@@ -403,6 +428,7 @@ export async function uninstall(
   setPluginLifecycleState(pluginIdValue, 'uninstalling');
   deletePlugin(pluginIdValue);
   auditLog(plugin.id, plugin.name, plugin.version, 'uninstalled', options.actor ?? 'system');
+  await publishCapabilityListChanged(JSON.parse(plugin.manifest_json) as PluginManifestV2);
   return { uninstalled: true, pluginId: pluginIdValue };
 }
 

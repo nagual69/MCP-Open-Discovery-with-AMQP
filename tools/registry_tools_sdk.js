@@ -1,0 +1,1 @@
+module.exports = require('./registry_tools_sdk.js.deprecated');

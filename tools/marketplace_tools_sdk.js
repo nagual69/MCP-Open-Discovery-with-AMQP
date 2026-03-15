@@ -1,0 +1,1 @@
+module.exports = require('./marketplace_tools_sdk.js.deprecated');

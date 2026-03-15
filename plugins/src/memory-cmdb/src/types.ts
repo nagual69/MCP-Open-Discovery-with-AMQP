@@ -69,7 +69,7 @@ export const RotateKeyInputShape = {
 export const SaveMemoryInputShape = {} satisfies z.ZodRawShape;
 
 export const MigrateFilesystemInputShape = {
-  oldDataPath: z.string().optional().describe('Optional path to legacy filesystem memory data JSON'),
+  oldDataPath: z.string().optional().describe('Optional path to filesystem memory data JSON'),
 } satisfies z.ZodRawShape;
 
 export type CiValue = z.infer<typeof CiValueSchema>;

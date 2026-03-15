@@ -24,6 +24,7 @@ const plugin_loader_1 = require("./plugin-loader");
 const signature_verifier_1 = require("./integrity/signature-verifier");
 const marketplace_client_1 = require("./marketplace/marketplace-client");
 const local_import_1 = require("./marketplace/local-import");
+const notifications_1 = require("../runtime/notifications");
 let mcpServerRef = null;
 const activeRegistrations = new Map();
 const PLUGINS_ROOT = process.env.PLUGINS_ROOT || path_1.default.join(process.cwd(), 'plugins');
@@ -31,6 +32,21 @@ const EXTRACT_ROOT = path_1.default.join(PLUGINS_ROOT, '.installed');
 const BUILTIN_SOURCE_ROOT = path_1.default.join(process.cwd(), 'plugins', 'src');
 function pluginId(manifest) {
     return `${manifest.name}@${manifest.version}`;
+}
+async function publishCapabilityListChanged(manifest) {
+    const tasks = [];
+    if ((manifest.capabilities?.tools?.length ?? 0) > 0) {
+        tasks.push((0, notifications_1.publishToolsListChanged)());
+    }
+    if ((manifest.capabilities?.resources?.length ?? 0) > 0) {
+        tasks.push((0, notifications_1.publishResourcesListChanged)());
+    }
+    if ((manifest.capabilities?.prompts?.length ?? 0) > 0) {
+        tasks.push((0, notifications_1.publishPromptsListChanged)());
+    }
+    if (tasks.length > 0) {
+        await Promise.allSettled(tasks);
+    }
 }
 async function ensureDirectory(directoryPath) {
     await promises_1.default.mkdir(directoryPath, { recursive: true });
@@ -274,6 +290,7 @@ async function activate(pluginIdValue, options = {}) {
     }
     (0, plugin_db_1.setPluginLifecycleState)(pluginIdValue, 'active');
     (0, plugin_db_1.auditLog)(plugin.id, plugin.name, plugin.version, 'activated', options.actor ?? 'system');
+    await publishCapabilityListChanged(manifest);
     return {
         activated: true,
         pluginId: pluginIdValue,
@@ -290,6 +307,7 @@ async function deactivate(pluginIdValue, options = {}) {
     await unregisterCaptured(pluginIdValue);
     (0, plugin_db_1.setPluginLifecycleState)(pluginIdValue, 'inactive');
     (0, plugin_db_1.auditLog)(plugin.id, plugin.name, plugin.version, 'deactivated', options.actor ?? 'system');
+    await publishCapabilityListChanged(JSON.parse(plugin.manifest_json));
     return { deactivated: true, pluginId: pluginIdValue };
 }
 async function update(pluginName, newSource, options = {}) {
@@ -323,6 +341,7 @@ async function uninstall(pluginIdValue, options = {}) {
     (0, plugin_db_1.setPluginLifecycleState)(pluginIdValue, 'uninstalling');
     (0, plugin_db_1.deletePlugin)(pluginIdValue);
     (0, plugin_db_1.auditLog)(plugin.id, plugin.name, plugin.version, 'uninstalled', options.actor ?? 'system');
+    await publishCapabilityListChanged(JSON.parse(plugin.manifest_json));
     return { uninstalled: true, pluginId: pluginIdValue };
 }
 function list(filter) {

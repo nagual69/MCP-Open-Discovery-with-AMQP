@@ -7,13 +7,11 @@ exports.getPluginDb = getPluginDb;
 exports.getPluginManager = getPluginManager;
 const node_fs_1 = __importDefault(require("node:fs"));
 const node_path_1 = __importDefault(require("node:path"));
-function loadModule(candidates) {
-    for (const candidate of candidates) {
-        if (node_fs_1.default.existsSync(candidate)) {
-            return require(candidate);
-        }
+function loadTypedModule(modulePath) {
+    if (!node_fs_1.default.existsSync(modulePath)) {
+        throw new Error(`Unable to locate typed host module at ${modulePath}. Build the typed host before loading this plugin.`);
     }
-    throw new Error(`Unable to locate host module. Tried: ${candidates.join(', ')}`);
+    return require(modulePath);
 }
 function normalizeBoolean(value) {
     return value === true || value === 1 || value === '1';
@@ -45,8 +43,7 @@ function normalizePluginSummary(record) {
 }
 function getPluginDb() {
     const typedPath = node_path_1.default.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'db', 'plugin-db.js');
-    const legacyPath = node_path_1.default.join(process.cwd(), 'tools', 'plugins', 'db', 'plugin-db.js');
-    const module = loadModule([typedPath, legacyPath]);
+    const module = loadTypedModule(typedPath);
     return {
         getPlugin(pluginId) {
             const record = module.getPlugin(pluginId);
@@ -56,21 +53,16 @@ function getPluginDb() {
             return 'manifest_json' in record ? record : normalizePluginRecord(record);
         },
         getAllPlugins(filter) {
-            return module.getAllPlugins(filter).map((record) => normalizePluginSummary(record));
+            return module.getAllPlugins(filter);
         },
         getCurrentExtraction(pluginId) {
-            const extraction = module.getCurrentExtraction(pluginId);
-            if (!extraction || typeof extraction.extraction_path !== 'string') {
-                return undefined;
-            }
-            return { extraction_path: extraction.extraction_path };
+            return module.getCurrentExtraction(pluginId);
         },
     };
 }
 function getPluginManager() {
     const typedPath = node_path_1.default.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'plugin-manager.js');
-    const legacyPath = node_path_1.default.join(process.cwd(), 'tools', 'plugins', 'plugin-manager.js');
-    const module = loadModule([typedPath, legacyPath]);
+    const module = loadTypedModule(typedPath);
     return {
         async install(source, options) {
             return module.install(source, options);

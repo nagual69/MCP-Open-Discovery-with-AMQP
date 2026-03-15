@@ -1,0 +1,1 @@
+module.exports = require('./proxmox_tools_sdk.js.deprecated');

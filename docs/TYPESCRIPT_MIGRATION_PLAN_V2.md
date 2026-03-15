@@ -14,6 +14,28 @@ The built-in typed plugin conversion wave is effectively complete in this reposi
 
 The legacy JavaScript plugin host and package path remains in the tree as a compatibility fallback while the broader server and transport migration finishes, but it is no longer the preferred target for new plugin work. New capability work should land in the typed packages and typed host manager first.
 
+### Status Snapshot — 2026-03-15
+
+What is complete now:
+- Built-in typed plugin packages are implemented under `plugins/src/` for `credentials`, `marketplace`, `memory-cmdb`, `net-utils`, `nmap`, `prompts`, `proxmox`, `registry-tools`, `snmp`, and `zabbix`.
+- Packaged lifecycle validation has passed for the typed built-in plugin set.
+- The typed host manager supports install-time checksum, signature, and `pluginId` override inputs needed for marketplace parity.
+- The extracted TypeScript path is self-contained with no direct runtime imports back into `tools/` from `src/` or `plugins/src/`.
+- Native typed AMQP transport exists under `src/transports/amqp/` and the typed HTTP/transport smoke tests are passing.
+- Typed runtime parity is now implemented in `src/` for `logging/setLevel`, session-aware log notifications, OAuth middleware and protected-resource metadata endpoints, stateless HTTP MCP requests, graceful shutdown/error handling, and lifecycle-driven list-changed notifications.
+- Package startup scripts, Docker container startup, and `rebuild_deploy.ps1` now default to the typed runtime path and the deploy script runs the typed typecheck gate first.
+- Runtime-facing smoke tests now target the typed runtime path, including `test_health_func`, `test_transport_manager`, `test_transport_integration`, `test_sdk_server`, and the stdio startup paths used by the master suites.
+
+What is not complete yet:
+- The typed plugin manager/loader still needs final hardening for full lifecycle-policy parity before `src/` can replace the legacy runtime cleanly.
+- The broader test suite still has many imports against `tools/...` and legacy startup surfaces.
+- README and the final end-to-end verification flows still need to be updated to describe and validate the typed runtime as the primary path.
+
+Operational interpretation:
+- Tool and plugin migration is effectively complete.
+- Server/runtime cutover is substantially complete.
+- The remaining work is primarily cutover, parity hardening, and cleanup rather than new built-in capability migration.
+
 mcp-open-discovery = https://github.com/nagual69/MCP-Open-Discovery-with-AMQP.git
 mcp-od-marketplace = https://github.com/nagual69/mcp-od-marketplace.git
 
@@ -1361,40 +1383,59 @@ curl -s -X POST http://localhost:6270/mcp -H "Content-Type: application/json" \
 
 ## Migration Tracking Checklist
 
+## Current Cutover Plan
+
+The remaining work should be executed in this order so `src/` becomes the only runtime required for extraction:
+
+### 1. Lifecycle Hardening
+- Tighten typed plugin-manager and loader policy enforcement so typed config flags are operational rather than only parsed.
+- Re-check activate/deactivate/update/uninstall behavior against the legacy lifecycle edge cases now that notifications and startup cutover are in place.
+
+### 2. Test Migration
+- Continue replacing legacy test imports of `tools/...` and `mcp_open_discovery_server.js` with typed harnesses and typed runtime entrypoints.
+- Prioritize plugin-manager, integrity, AMQP, and the remaining legacy-heavy master/audit paths because the core transport/runtime entrypoints are already migrated.
+- Keep converting partial migrations by replacing whole legacy-heavy test files rather than mixing old and new bodies.
+
+### 3. Finalization
+- Update README, Docker, and deployment scripts to the typed runtime.
+- Archive or isolate remaining legacy JS below compatibility-only scope.
+- Re-run the end-to-end verification suite after cutover.
+
 ### Phase 0 — Toolchain Setup
-- [ ] TypeScript + dev tooling installed
-- [ ] `tsconfig.json` and `tsconfig.strict.json` created
-- [ ] `src/` directory skeleton created
-- [ ] `better-sqlite3` installed (replaces `sqlite3`)
-- [ ] CI typecheck gate added to deploy scripts
+- [x] TypeScript + dev tooling installed
+- [x] `tsconfig.json` and `tsconfig.strict.json` created
+- [x] `src/` directory skeleton created
+- [x] `better-sqlite3` installed (replaces `sqlite3`)
+- [x] CI typecheck gate added to deploy scripts
 
 ### Phase 1 — Type Definitions
-- [ ] `src/types/manifest.types.ts` — full `PluginManifestV2` hierarchy
-- [ ] `src/types/lifecycle.types.ts` — lifecycle state machine types
-- [ ] `src/types/signing.types.ts` — signing authority types
-- [ ] `src/types/marketplace.types.ts` — pull contract types
-- [ ] `src/types/tool.types.ts` — response types, pagination utilities
-- [ ] `src/types/transport.types.ts` — (from V1 plan, unchanged)
-- [ ] `src/types/index.ts` — barrel export
-- [ ] `npm run typecheck` — zero errors on types-only files
+- [x] `src/types/manifest.types.ts` — full `PluginManifestV2` hierarchy
+- [x] `src/types/lifecycle.types.ts` — lifecycle state machine types
+- [x] `src/types/signing.types.ts` — signing authority types
+- [x] `src/types/marketplace.types.ts` — pull contract types
+- [x] `src/types/tool.types.ts` — response types, pagination utilities
+- [x] `src/types/transport.types.ts` — (from V1 plan, unchanged)
+- [x] `src/types/index.ts` — barrel export
+- [x] Typed source tree compiles via `npm run build:ts`
 
 ### Phase 2 — Plugin Infrastructure
-- [ ] `src/plugins/db/plugin-db.ts` — fully typed
-- [ ] `src/plugins/plugin-manager.ts` — fully typed
-- [ ] `src/plugins/plugin-registry.ts` — fully typed
-- [ ] `src/plugins/integrity/hash-utils.ts`
-- [ ] `src/plugins/integrity/signature-verifier.ts`
-- [ ] `src/plugins/marketplace/marketplace-client.ts`
-- [ ] `src/plugins/marketplace/local-import.ts`
-- [ ] `npm run typecheck` — plugin infrastructure clean
+- [x] `src/plugins/db/plugin-db.ts` — fully typed
+- [x] `src/plugins/plugin-manager.ts` — fully typed
+- [x] `src/plugins/plugin-registry.ts` — fully typed
+- [x] `src/plugins/integrity/hash-utils.ts`
+- [x] `src/plugins/integrity/signature-verifier.ts`
+- [x] `src/plugins/marketplace/marketplace-client.ts`
+- [x] `src/plugins/marketplace/local-import.ts`
+- [x] Typed plugin infrastructure compiles and validates in packaged flows
 
 ### Phase 3 — Transport Layer
-- [ ] `src/transports/core/transport-manager.ts`
-- [ ] `src/transports/core/streamable-http-transport.ts`
-- [ ] `src/transports/amqp/amqp-transport.ts`
-- [ ] `src/index.ts` — main entry
-- [ ] `npm run build` — compiles to `dist/`
-- [ ] Docker build uses `dist/index.js`
+- [x] `src/transports/core/transport-manager.ts`
+- [x] `src/transports/core/streamable-http-transport.ts`
+- [x] `src/transports/amqp/amqp-transport.ts`
+- [x] `src/index.ts` — main entry
+- [x] `src/server.ts` now provides typed runtime parity for logging, OAuth metadata/middleware, stateless HTTP handling, shutdown hooks, and lifecycle list-changed notifications
+- [x] Focused typed transport smoke tests are passing
+- [x] Docker build and container runtime use the typed entrypoint (`dist-ts/src/main.js`)
 
 ### Phase 4 — Typed Plugin Packages
 - [x] `plugins/src/net-utils/` — typed and packaged validation complete
@@ -1420,8 +1461,8 @@ curl -s -X POST http://localhost:6270/mcp -H "Content-Type: application/json" \
 - [ ] Server `MarketplaceClient` connects to Marketplace endpoints
 
 ### Phase 6 — Signing Authority
-- [ ] `src/plugins/integrity/signature-verifier.ts` handles both VibeForge and enterprise keys
-- [ ] VibeForge public key seeded from `VIBEFORGE_PUBLIC_KEY_PEM` env
+- [x] `src/plugins/integrity/signature-verifier.ts` handles both VibeForge and enterprise keys
+- [x] VibeForge public key seeded from `VIBEFORGE_PUBLIC_KEY_PEM` env
 - [ ] Enterprise key management via `mcp_od_registry_add_signing_key` tool
 - [ ] Marketplace `SigningService` signs bundles at publish time
 - [ ] Enterprise self-signing workflow documented and tested
@@ -1435,10 +1476,18 @@ curl -s -X POST http://localhost:6270/mcp -H "Content-Type: application/json" \
 
 ### Phase 8 — Finalization
 - [ ] Legacy `tools/` JS files archived or reduced below compatibility-fallback scope
-- [ ] `Dockerfile` updated
-- [ ] `rebuild_deploy.ps1` includes typecheck gate
+- [x] `Dockerfile` updated
+- [x] `rebuild_deploy.ps1` includes typecheck gate
 - [ ] Full smoke test (deactivate/reactivate, hot swap, audit log)
 - [ ] README updated with plugin architecture and TypeScript build instructions
+
+## Immediate Next Work
+
+The next implementation pass should stay tightly scoped to hardening and cleanup around the typed runtime rather than expanding plugin surface area:
+
+1. Tighten plugin-manager and loader lifecycle-policy behavior now that the typed runtime path is the default startup path.
+2. Continue migrating the remaining legacy-heavy tests and audit flows off `tools/...` and other old runtime surfaces.
+3. Update README and run the final end-to-end cutover verification suite against the typed runtime defaults.
 
 ---
 

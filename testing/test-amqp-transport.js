@@ -341,7 +341,7 @@ async function testNotifications(transport) {
 async function runTests() {
   log('info', 'Starting AMQP transport tests...');
   log('info', 'Note: Make sure RabbitMQ is running and MCP server is started with AMQP transport');
-  log('info', 'Run: TRANSPORT_MODE=amqp node mcp_open_discovery_server.js');
+  log('info', 'Run: npm run start-amqp');
   
   const results = {
     connection: false,

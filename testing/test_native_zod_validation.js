@@ -3,15 +3,14 @@
  */
 
 const { z } = require('zod');
-
-// Test network tools
-const networkTools = require('../tools/network_tools_sdk');
+const { captureTypedPlugin } = require('./helpers/typed_plugin_harness');
 
 console.log('🧪 Testing Native Zod Tools Validation');
 console.log('=====================================');
 
 async function testToolSchemas() {
   try {
+    const networkTools = await captureTypedPlugin('net-utils');
     console.log('\n📋 Network Tools:');
     console.log(`   Total tools: ${networkTools.tools.length}`);
     
@@ -24,7 +23,7 @@ async function testToolSchemas() {
         
         // Test schema parsing with a simple object
         try {
-          if (tool.name === 'ping') {
+          if (tool.name === 'mcp_od_net_ping') {
             const testInput = { host: '8.8.8.8' };
             const parsed = tool.inputSchema.parse(testInput);
             console.log(`     ✅ Schema validation works`);
@@ -39,20 +38,19 @@ async function testToolSchemas() {
 
     // Test handleToolCall function
     console.log('\n🔧 Testing handleToolCall function:');
-    if (typeof networkTools.handleToolCall === 'function') {
-      console.log('   ✅ handleToolCall function exists');
-      
-      // Test a simple ping call
+    const pingTool = networkTools.tools.find((tool) => tool.name === 'mcp_od_net_ping');
+    if (pingTool && typeof pingTool.handler === 'function') {
+      console.log('   ✅ typed tool handler exists');
       try {
         console.log('   🧪 Testing ping tool...');
-        const result = await networkTools.handleToolCall('ping', { host: '8.8.8.8', count: 1 });
+        const result = await pingTool.handler({ host: '8.8.8.8', count: 1 });
         console.log('   ✅ Ping tool executed successfully');
         console.log(`   📊 Result type: ${typeof result}`);
       } catch (toolError) {
         console.log(`   ⚠️  Tool execution failed: ${toolError.message}`);
       }
     } else {
-      console.log('   ❌ handleToolCall function missing!');
+      console.log('   ❌ Ping tool handler missing!');
     }
 
   } catch (error) {

@@ -72,15 +72,15 @@ export declare const PingInputSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     timeout?: number;
     host?: string;
+    size?: number;
     response_format?: "json" | "markdown";
     count?: number;
-    size?: number;
 }, {
     timeout?: number;
     host?: string;
+    size?: number;
     response_format?: "json" | "markdown";
     count?: number;
-    size?: number;
 }>;
 export declare const WgetInputSchema: z.ZodObject<{
     url: z.ZodString;

@@ -33,25 +33,12 @@ type TypedPluginManager = {
   uninstall(pluginId: string, options?: { actor?: string }): Promise<{ uninstalled: boolean; pluginId: string }>;
 };
 
-type LegacyPluginDb = {
-  getPlugin(pluginId: string): UnknownRecord | undefined;
-  getAllPlugins(filter?: UnknownRecord): UnknownRecord[];
-  getCurrentExtraction(pluginId: string): UnknownRecord | undefined;
-};
-
-type LegacyPluginManager = {
-  install(source: string, options?: UnknownRecord): Promise<PluginInstallResult>;
-  uninstall(pluginId: string, options?: UnknownRecord): Promise<{ uninstalled?: boolean; pluginId?: string }>;
-};
-
-function loadModule<T>(candidates: string[]): T {
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return require(candidate) as T;
-    }
+function loadTypedModule<T>(modulePath: string): T {
+  if (!fs.existsSync(modulePath)) {
+    throw new Error(`Unable to locate typed host module at ${modulePath}. Build the typed host before loading this plugin.`);
   }
 
-  throw new Error(`Unable to locate host module. Tried: ${candidates.join(', ')}`);
+  return require(modulePath) as T;
 }
 
 function normalizeBoolean(value: unknown): boolean {
@@ -91,8 +78,7 @@ export function getPluginDb(): {
   getCurrentExtraction(pluginId: string): PluginExtractionRecord | undefined;
 } {
   const typedPath = path.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'db', 'plugin-db.js');
-  const legacyPath = path.join(process.cwd(), 'tools', 'plugins', 'db', 'plugin-db.js');
-  const module = loadModule<TypedPluginDb | LegacyPluginDb>([typedPath, legacyPath]);
+  const module = loadTypedModule<TypedPluginDb>(typedPath);
 
   return {
     getPlugin(pluginId: string): PluginRecord | undefined {
@@ -103,14 +89,10 @@ export function getPluginDb(): {
       return 'manifest_json' in record ? (record as PluginRecord) : normalizePluginRecord(record as UnknownRecord);
     },
     getAllPlugins(filter?: { state?: string }): PluginSummaryRecord[] {
-      return module.getAllPlugins(filter).map((record) => normalizePluginSummary(record as UnknownRecord));
+      return module.getAllPlugins(filter);
     },
     getCurrentExtraction(pluginId: string): PluginExtractionRecord | undefined {
-      const extraction = module.getCurrentExtraction(pluginId) as UnknownRecord | undefined;
-      if (!extraction || typeof extraction.extraction_path !== 'string') {
-        return undefined;
-      }
-      return { extraction_path: extraction.extraction_path };
+      return module.getCurrentExtraction(pluginId);
     },
   };
 }
@@ -132,8 +114,7 @@ export function getPluginManager(): {
   uninstall(pluginId: string, options?: { actor?: string }): Promise<{ uninstalled: boolean; pluginId: string }>;
 } {
   const typedPath = path.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'plugin-manager.js');
-  const legacyPath = path.join(process.cwd(), 'tools', 'plugins', 'plugin-manager.js');
-  const module = loadModule<TypedPluginManager | LegacyPluginManager>([typedPath, legacyPath]);
+  const module = loadTypedModule<TypedPluginManager>(typedPath);
 
   return {
     async install(

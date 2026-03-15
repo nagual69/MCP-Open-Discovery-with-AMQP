@@ -8,6 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { captureTypedPlugin } = require('./helpers/typed_plugin_harness');
 
 // Mock console to capture all log output
 const originalConsoleLog = console.log;
@@ -36,10 +37,13 @@ console.debug = (...args) => captureLog('DEBUG', ...args);
 
 async function testParameterDetection() {
   try {
-    console.log('=== Testing MCP Parameter Detection ===');
+    console.log('=== Testing Typed Plugin Parameter Handling ===');
     
-    // Import the memory tools directly to test parameter handling
-    const memoryTools = require('../tools/memory_tools_sdk');
+    const memoryTools = await captureTypedPlugin('memory-cmdb');
+    const memorySetTool = memoryTools.tools.find((tool) => tool.name === 'mcp_od_memory_set');
+    if (!memorySetTool) {
+      throw new Error('mcp_od_memory_set tool not found');
+    }
     
     console.log('Memory tools loaded successfully');
     console.log('Available memory tools:', memoryTools.tools.map(t => t.name));
@@ -56,58 +60,12 @@ async function testParameterDetection() {
     
     console.log('Testing memory_set with parameters:', testParams);
     
-    // Simulate what the MCP SDK might be passing
-    const mockMCPContext = {
-      signal: new AbortController().signal,
-      sessionId: 'test-session-123',
-      _meta: { transport: 'test', timestamp: Date.now() },
-      requestInfo: { id: 'test-request-456', method: 'tools/call' }
-    };
-    
-    // Test different parameter passing scenarios
-    console.log('\n=== Testing Scenario 1: Parameters first, context second ===');
+    console.log('\n=== Testing direct typed handler invocation ===');
     try {
-      const result1 = await memoryTools.handleToolCall('memory_set', testParams, mockMCPContext);
+      const result1 = await memorySetTool.handler(testParams);
       console.log('Scenario 1 Result:', result1);
     } catch (error) {
       console.error('Scenario 1 Error:', error.message);
-    }
-    
-    console.log('\n=== Testing Scenario 2: Context first, parameters second ===');
-    try {
-      const result2 = await memoryTools.handleToolCall('memory_set', mockMCPContext, testParams);
-      console.log('Scenario 2 Result:', result2);
-    } catch (error) {
-      console.error('Scenario 2 Error:', error.message);
-    }
-    
-    console.log('\n=== Testing Scenario 3: Parameters wrapped in arguments property ===');
-    try {
-      const wrappedParams = { arguments: testParams };
-      const result3 = await memoryTools.handleToolCall('memory_set', wrappedParams, mockMCPContext);
-      console.log('Scenario 3 Result:', result3);
-    } catch (error) {
-      console.error('Scenario 3 Error:', error.message);
-    }
-    
-    console.log('\n=== Testing Scenario 4: Only context object (no parameters) ===');
-    try {
-      const result4 = await memoryTools.handleToolCall('memory_set', mockMCPContext);
-      console.log('Scenario 4 Result:', result4);
-    } catch (error) {
-      console.error('Scenario 4 Error:', error.message);
-    }
-    
-    console.log('\n=== Testing Scenario 5: Parameters nested in context ===');
-    try {
-      const contextWithParams = {
-        ...mockMCPContext,
-        params: { arguments: testParams }
-      };
-      const result5 = await memoryTools.handleToolCall('memory_set', contextWithParams);
-      console.log('Scenario 5 Result:', result5);
-    } catch (error) {
-      console.error('Scenario 5 Error:', error.message);
     }
     
   } catch (error) {

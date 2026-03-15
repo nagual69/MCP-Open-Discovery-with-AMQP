@@ -72,10 +72,14 @@ RUN set -eux; \
     npm_config_build_from_source=true npm install --no-fund --no-audit; \
     apk del .build-deps || true
 
-# Copy application files
-COPY mcp_open_discovery_server.js ./
-COPY tools/ ./tools/
+# Copy TypeScript source and plugin packages
+COPY tsconfig*.json ./
+COPY src/ ./src/
+COPY plugins/ ./plugins/
 COPY scripts/ ./scripts/
+
+# Build the typed runtime before switching to the non-root user
+RUN npm run build:ts
 
 ## Ensure runtime writable dirs exist so named volumes inherit ownership
 RUN mkdir -p /home/mcpuser/app/data /home/mcpuser/app/logs /home/mcpuser/plugins 
@@ -99,5 +103,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Use the non-root user
 USER mcpuser
 
-# Start the server
-CMD ["node","--use-system-ca", "mcp_open_discovery_server.js"]
+# Start the typed runtime
+CMD ["node","--use-system-ca", "dist-ts/src/main.js"]

@@ -1,0 +1,1 @@
+module.exports = require('./prompts_sdk.js.deprecated');

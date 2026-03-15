@@ -7,13 +7,11 @@ exports.getPluginManager = getPluginManager;
 exports.getPluginDb = getPluginDb;
 const node_fs_1 = __importDefault(require("node:fs"));
 const node_path_1 = __importDefault(require("node:path"));
-function loadModule(candidates) {
-    for (const candidate of candidates) {
-        if (node_fs_1.default.existsSync(candidate)) {
-            return require(candidate);
-        }
+function loadTypedModule(modulePath) {
+    if (!node_fs_1.default.existsSync(modulePath)) {
+        throw new Error(`Unable to locate typed host module at ${modulePath}. Build the typed host before loading this plugin.`);
     }
-    throw new Error(`Unable to locate host module. Tried: ${candidates.join(', ')}`);
+    return require(modulePath);
 }
 function normalizeBoolean(value) {
     return value === true || value === 1 || value === '1';
@@ -23,8 +21,7 @@ function toUnknownRecord(value) {
 }
 function getPluginManager() {
     const typedPath = node_path_1.default.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'plugin-manager.js');
-    const legacyPath = node_path_1.default.join(process.cwd(), 'tools', 'plugins', 'plugin-manager.js');
-    const module = loadModule([typedPath, legacyPath]);
+    const module = loadTypedModule(typedPath);
     return {
         list(filter) {
             return module.list(filter).map((plugin) => ({
@@ -54,7 +51,6 @@ function getPluginManager() {
 }
 function getPluginDb() {
     const typedPath = node_path_1.default.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'db', 'plugin-db.js');
-    const legacyPath = node_path_1.default.join(process.cwd(), 'tools', 'plugins', 'db', 'plugin-db.js');
-    return loadModule([typedPath, legacyPath]);
+    return loadTypedModule(typedPath);
 }
 //# sourceMappingURL=host-adapter.js.map

@@ -1,8 +1,9 @@
-// Smoke-test the tool schema for tool_store_install accepts checksum/signature fields
-const { tools } = require('../tools/marketplace_tools_sdk');
+// Smoke-test the typed marketplace plugin schema for store_install.
+const { captureTypedPlugin } = require('./helpers/typed_plugin_harness');
 
 (async () => {
-  const installTool = tools.find(t => t.name === 'tool_store_install');
+  const { tools } = await captureTypedPlugin('marketplace');
+  const installTool = tools.find(t => t.name === 'mcp_od_store_install');
   if (!installTool) { console.error('FAIL: install tool missing'); process.exit(1); }
   const schema = installTool.inputSchema;
   try {

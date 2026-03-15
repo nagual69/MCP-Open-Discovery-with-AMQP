@@ -11,26 +11,14 @@
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
+const { captureTypedPlugin } = require('./helpers/typed_plugin_harness');
 
-// Tool modules to audit (modules export { tools, handleToolCall })
-const networkToolsModule = require('../tools/network_tools_sdk.js');
-const memoryToolsModule = require('../tools/memory_tools_sdk.js');
-const nmapToolsModule = require('../tools/nmap_tools_sdk.js');
-const proxmoxToolsModule = require('../tools/proxmox_tools_sdk.js');
-const snmpToolsModule = require('../tools/snmp_tools_sdk.js');
-
-function registerModuleTools(module, mockServer) {
-  if (!module || !module.tools || !Array.isArray(module.tools)) return 0;
-  module.tools.forEach(tool => {
-    // Each tool handler will call the module.handleToolCall with the tool name
-    mockServer.tool(tool.name, tool.description, tool.inputSchema, async (params) => {
-      if (typeof module.handleToolCall === 'function') {
-        return await module.handleToolCall(tool.name, params || {});
-      }
-      throw new Error(`Module for ${tool.name} missing handleToolCall`);
-    });
+async function registerPluginTools(pluginName, mockServer) {
+  const plugin = await captureTypedPlugin(pluginName);
+  plugin.tools.forEach((tool) => {
+    mockServer.tool(tool.name, tool.description, tool.inputSchema, async (params) => tool.handler(params || {}));
   });
-  return module.tools.length;
+  return plugin.tools.length;
 }
 
 /**
@@ -126,11 +114,11 @@ async function auditAllTools() {
   
   // Register all tools
   console.log('📝 Registering tools...');
-  registerModuleTools(networkToolsModule, mockServer);
-  registerModuleTools(memoryToolsModule, mockServer);
-  registerModuleTools(nmapToolsModule, mockServer);
-  registerModuleTools(proxmoxToolsModule, mockServer);
-  registerModuleTools(snmpToolsModule, mockServer);
+  await registerPluginTools('net-utils', mockServer);
+  await registerPluginTools('memory-cmdb', mockServer);
+  await registerPluginTools('nmap', mockServer);
+  await registerPluginTools('proxmox', mockServer);
+  await registerPluginTools('snmp', mockServer);
   
   console.log(`✅ Registered ${tools.size} tools\n`);
   

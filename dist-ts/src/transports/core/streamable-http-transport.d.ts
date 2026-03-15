@@ -14,6 +14,8 @@ export interface StartHttpTransportOptions {
         requiredScope: string;
         skipPaths: string[];
     }) => express.RequestHandler) | null;
+    protectedResourceMetadataHandler?: express.RequestHandler | null;
+    authorizationServer?: string | null;
 }
 export declare function startStreamableHttpTransport(server: McpServer, config: HttpTransportConfig, options?: StartHttpTransportOptions): Promise<{
     result: TransportStartResult;

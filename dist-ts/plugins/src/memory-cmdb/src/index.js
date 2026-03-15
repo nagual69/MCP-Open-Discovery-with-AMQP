@@ -127,7 +127,7 @@ const toolDefinitions = [
     },
     {
         name: 'mcp_od_memory_migrate_from_filesystem',
-        description: 'Migrate legacy filesystem memory data to SQLite.',
+        description: 'Import filesystem memory data into SQLite.',
         inputSchema: types_1.MigrateFilesystemInputShape,
         annotations: types_1.WriteAnnotations,
         handler: async ({ oldDataPath }) => {

@@ -19,14 +19,12 @@ type TypedPluginDb = {
   insertTrustedKey(keyData: UnknownRecord): void;
 };
 
-function loadModule<T>(candidates: string[]): T {
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      return require(candidate) as T;
-    }
+function loadTypedModule<T>(modulePath: string): T {
+  if (!fs.existsSync(modulePath)) {
+    throw new Error(`Unable to locate typed host module at ${modulePath}. Build the typed host before loading this plugin.`);
   }
 
-  throw new Error(`Unable to locate host module. Tried: ${candidates.join(', ')}`);
+  return require(modulePath) as T;
 }
 
 function normalizeBoolean(value: unknown): boolean {
@@ -39,8 +37,7 @@ function toUnknownRecord(value: unknown): UnknownRecord {
 
 export function getPluginManager(): TypedPluginManager {
   const typedPath = path.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'plugin-manager.js');
-  const legacyPath = path.join(process.cwd(), 'tools', 'plugins', 'plugin-manager.js');
-  const module = loadModule<TypedPluginManager>([typedPath, legacyPath]);
+  const module = loadTypedModule<TypedPluginManager>(typedPath);
 
   return {
     list(filter?: { state?: string }): PluginSummaryRecord[] {
@@ -72,6 +69,5 @@ export function getPluginManager(): TypedPluginManager {
 
 export function getPluginDb(): TypedPluginDb {
   const typedPath = path.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'db', 'plugin-db.js');
-  const legacyPath = path.join(process.cwd(), 'tools', 'plugins', 'db', 'plugin-db.js');
-  return loadModule<TypedPluginDb>([typedPath, legacyPath]);
+  return loadTypedModule<TypedPluginDb>(typedPath);
 }
