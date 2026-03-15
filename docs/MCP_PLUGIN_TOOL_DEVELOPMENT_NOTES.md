@@ -1,28 +1,71 @@
-# MCP Plugin Tool Development Notes
+# MCP Plugin Tool Development Best Practices
 
-Verified findings to use later for a best-practices guide and Marketplace build skill.
+Draft guide for Marketplace-facing plugin authors and for the AI workflow that generates MCP plugins.
 
-## Artifact Contract
+## Scope
 
-- Plugin packaging and server verification must use the same dist hash contract. In this repo that is currently `relativePath + '\n' + fileBytes` over all sorted `dist/` files.
-- A plugin package should be buildable as a standalone unit. Avoid imports from the server's root `src/` tree inside `plugins/src/<plugin>/src/*`.
-- Validation needs to happen against the compiled plugin entry and the packaged zip, not just editor diagnostics.
+This guide targets plugins that are authored under `plugins/src/<plugin>/`, compiled into `dist/`, described by `mcp-plugin.json` v2, then packaged and installed through the same lifecycle used by the server plugin manager.
 
-## Runtime And Lifecycle
+## Required Artifact Contract
 
-- Install order matters in the plugin manager: insert the plugin row before saving extraction records or SQLite foreign keys will fail.
-- Compiled runtime paths need non-code assets resolved explicitly. `schema.sql` must be reachable from compiled DB code, not only source paths.
-- Validation scripts should set temp environment variables before importing DB or plugin-manager modules, otherwise module-level env reads will point at the real workspace DB.
-- SQLite-backed validation needs explicit DB teardown before deleting temp directories on Windows.
+- Treat `mcp-plugin.json` as a runtime contract, not just packaging metadata. Declared tool names must match the tools registered by `createPlugin(server)`.
+- Package each plugin as a standalone unit. Do not import implementation code from the server root `src/` tree inside `plugins/src/<plugin>/src/*`.
+- Keep the entrypoint thin. `src/index.ts` should only translate MCP registrations into package-local handlers.
+- Preserve a stable `dist.hash` contract. In this repo the hash is computed over every sorted `dist/` file as `relativePath + '\n' + fileBytes`.
 
-## Packaging Risks
+## Recommended Package Layout
 
-- Current blessed plugin zips are not fully self-contained for external dependency resolution. The rebuilt `net-utils` zip still required workspace-local `node_modules` access for `zod` during activation.
-- That means the current blessed-plugin path is good for typed lifecycle validation inside the workspace, but it does not yet satisfy the stronger marketplace requirement that frontend-built plugins ship with needed dependencies.
+- `package.json`: local build and typecheck scripts for the plugin only.
+- `tsconfig.json` and `tsconfig.strict.json`: plugin-local compiler settings.
+- `mcp-plugin.json`: manifest v2 declaration with permissions, capabilities, and `dist` metadata.
+- `src/index.ts`: MCP SDK adapter boundary.
+- `src/shared.ts`: response helpers and shared output formatting.
+- `src/types.ts`: schemas, tool annotations, and typed result contracts.
+- `src/<feature>.ts`: isolated operational logic such as network calls, persistence, or filesystem access.
 
-## Authoring Pattern
+## Tool Authoring Rules
 
-- Keep a thin MCP SDK adapter boundary in `src/index.ts`; keep tool logic and response helpers in package-local modules.
-- Prefer package-local shared helpers such as `shared.ts`, `types.ts`, and feature-specific tool/store modules.
-- Treat `mcp-plugin.json` capability declarations as part of the runtime contract. Build outputs should be checked against them during activation and packaging.
-- The first two verified standalone typed-package migrations are `net-utils` and `credentials`. That gives two reusable reference shapes: command/network-heavy tools and file/encryption-backed stateful tools.
+- Register the final Marketplace/server-visible tool names directly in the typed package.
+- Keep read tools and write tools explicit through annotation hints.
+- Return structured content for every tool, even when the primary text output is markdown.
+- Support `response_format` for read/query/statistics tools so clients can choose markdown or JSON.
+- Keep response helpers package-local so the plugin remains portable.
+- If prompt or resource plugins still use older SDK registration forms, keep the loader compatibility layer at the boundary instead of leaking that complexity into package-local business logic.
+
+## Runtime And Lifecycle Requirements
+
+- Validate the compiled plugin through install, activate, deactivate, and uninstall. Editor diagnostics are not enough.
+- Insert the plugin row before extraction records in SQLite-backed lifecycle flows; otherwise foreign keys fail.
+- Resolve non-code runtime assets from compiled output, not only from source paths.
+- Set temporary environment variables before importing DB or plugin-manager modules in validation scripts, or module-level environment reads will point at the real workspace state.
+- Close SQLite handles before deleting temporary directories on Windows.
+
+## Packaging And Dependency Rules
+
+- Compile the plugin before packaging and verify the packaged zip, not only the source tree.
+- Capabilities declared in the manifest should be compared to captured registrations during activation.
+- Packaged artifacts should vendor runtime dependencies under `dist/node_modules` so the extracted plugin can resolve them without workspace-level `node_modules` fallback.
+- Keep source manifests and packaged manifests conceptually separate when necessary. In this repo, source manifests continue to reflect the source `dist/` tree, while the ZIP manifest is emitted from a staged, dependency-vendored `dist/` tree.
+- Validate packaged plugins from an extraction root outside the workspace so module resolution cannot silently fall back to the repo root.
+
+## Current Reference Implementations
+
+- `net-utils`: command and network-heavy tools with structured read responses.
+- `credentials`: file-backed and encryption-backed stateful tools.
+- `memory-cmdb`: SQLite-backed stateful tools and CMDB query patterns.
+- `prompts`: prompt-only plugin shape with no tools and capability-aware lifecycle validation.
+- `nmap`: external-command execution plugin shape with packaging-safe runtime dependencies.
+
+## Validation Checklist
+
+- Build the plugin package locally.
+- Rebuild blessed plugin zips so `dist.hash` and zip contents stay aligned.
+- Run lifecycle validation against the packaged zip.
+- Confirm the captured tool count matches `mcp-plugin.json` capabilities.
+- Verify any persistent state is created only inside the intended temp or data directory.
+
+## Known Gaps
+
+- The current builder vendors whole dependency trees, which is correct but not yet size-efficient.
+- Source-root development and direct directory installs still assume workspace dependencies are available unless a packaged artifact is used.
+- A Marketplace publishing pipeline should eventually produce a more explicit bundled dependency manifest instead of relying only on import scanning and recursive package copying.

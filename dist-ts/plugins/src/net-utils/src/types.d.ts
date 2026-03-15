@@ -125,16 +125,16 @@ export declare const NetstatInputSchema: z.ZodObject<{
     response_format: z.ZodDefault<z.ZodEnum<["json", "markdown"]>>;
 }, "strip", z.ZodTypeAny, {
     response_format?: "json" | "markdown";
+    protocol?: "all" | "tcp" | "udp";
     listening?: boolean;
     numeric?: boolean;
     programs?: boolean;
-    protocol?: "all" | "tcp" | "udp";
 }, {
     response_format?: "json" | "markdown";
+    protocol?: "all" | "tcp" | "udp";
     listening?: boolean;
     numeric?: boolean;
     programs?: boolean;
-    protocol?: "all" | "tcp" | "udp";
 }>;
 export declare const TcpConnectInputSchema: z.ZodObject<{
     host: z.ZodString;

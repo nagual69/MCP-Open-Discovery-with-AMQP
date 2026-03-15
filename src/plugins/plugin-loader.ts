@@ -16,15 +16,36 @@ export interface PluginLoadResult {
   captured: CapturedRegistrations;
 }
 
-interface ExtendedMcpServer extends McpServer {
+type ExtendedMcpServer = McpServer & {
+  tool?: (name: string, config: unknown, handler: unknown) => unknown;
+  resource?: (name: string, uriOrTemplate: unknown, reader: unknown) => unknown;
+  prompt?: (name: string, descriptionOrConfig: unknown, schemaOrHandler: unknown, handler?: unknown) => unknown;
   registerResource?: (name: string, uriOrTemplate: unknown, metadata: unknown, reader: unknown) => unknown;
   registerPrompt?: (name: string, config: unknown, handler: unknown) => unknown;
+};
+
+function normalizePromptConfig(descriptionOrConfig: unknown, schemaOrHandler: unknown): unknown {
+  if (typeof descriptionOrConfig === 'string') {
+    return {
+      description: descriptionOrConfig,
+      argsSchema: schemaOrHandler,
+    };
+  }
+
+  return descriptionOrConfig;
 }
 
 function createCaptureProxy(server: McpServer, captured: CapturedRegistrations): McpServer {
   return new Proxy(server, {
     get(target, property, receiver) {
       if (property === 'registerTool') {
+        return (name: string, config: unknown, handler: unknown) => {
+          captured.tools.push({ name, config, handler });
+          return true;
+        };
+      }
+
+      if (property === 'tool') {
         return (name: string, config: unknown, handler: unknown) => {
           captured.tools.push({ name, config, handler });
           return true;
@@ -38,9 +59,27 @@ function createCaptureProxy(server: McpServer, captured: CapturedRegistrations):
         };
       }
 
+      if (property === 'resource') {
+        return (name: string, uriOrTemplate: unknown, reader: unknown) => {
+          captured.resources.push({ name, uriOrTemplate, metadata: { uri: uriOrTemplate }, reader });
+          return true;
+        };
+      }
+
       if (property === 'registerPrompt') {
         return (name: string, config: unknown, handler: unknown) => {
           captured.prompts.push({ name, config, handler });
+          return true;
+        };
+      }
+
+      if (property === 'prompt') {
+        return (name: string, descriptionOrConfig: unknown, schemaOrHandler: unknown, handler?: unknown) => {
+          const promptHandler = handler ?? schemaOrHandler;
+          const promptConfig = handler
+            ? normalizePromptConfig(descriptionOrConfig, schemaOrHandler)
+            : descriptionOrConfig;
+          captured.prompts.push({ name, config: promptConfig, handler: promptHandler });
           return true;
         };
       }
@@ -100,18 +139,29 @@ async function forwardCapturedRegistrations(server: McpServer, captured: Capture
   for (const tool of captured.tools) {
     if (typeof server.registerTool === 'function') {
       server.registerTool(tool.name, tool.config as never, tool.handler as never);
+    } else if (typeof extendedServer.tool === 'function') {
+      extendedServer.tool(tool.name, tool.config, tool.handler);
     }
   }
 
   for (const resource of captured.resources) {
     if (typeof extendedServer.registerResource === 'function') {
       extendedServer.registerResource(resource.name, resource.uriOrTemplate, resource.metadata, resource.reader);
+    } else if (typeof extendedServer.resource === 'function') {
+      extendedServer.resource(resource.name, resource.uriOrTemplate, resource.reader);
     }
   }
 
   for (const prompt of captured.prompts) {
     if (typeof extendedServer.registerPrompt === 'function') {
       extendedServer.registerPrompt(prompt.name, prompt.config, prompt.handler);
+    } else if (typeof extendedServer.prompt === 'function') {
+      const promptConfig = prompt.config as { description?: unknown; argsSchema?: unknown } | undefined;
+      if (promptConfig && typeof promptConfig === 'object' && ('description' in promptConfig || 'argsSchema' in promptConfig)) {
+        extendedServer.prompt(prompt.name, promptConfig.description, promptConfig.argsSchema, prompt.handler);
+      } else {
+        extendedServer.prompt(prompt.name, prompt.config, prompt.handler);
+      }
     }
   }
 }

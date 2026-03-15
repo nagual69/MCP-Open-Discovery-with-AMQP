@@ -7,10 +7,25 @@ exports.loadAndRegisterPlugin = loadAndRegisterPlugin;
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const hash_utils_1 = require("./integrity/hash-utils");
+function normalizePromptConfig(descriptionOrConfig, schemaOrHandler) {
+    if (typeof descriptionOrConfig === 'string') {
+        return {
+            description: descriptionOrConfig,
+            argsSchema: schemaOrHandler,
+        };
+    }
+    return descriptionOrConfig;
+}
 function createCaptureProxy(server, captured) {
     return new Proxy(server, {
         get(target, property, receiver) {
             if (property === 'registerTool') {
+                return (name, config, handler) => {
+                    captured.tools.push({ name, config, handler });
+                    return true;
+                };
+            }
+            if (property === 'tool') {
                 return (name, config, handler) => {
                     captured.tools.push({ name, config, handler });
                     return true;
@@ -22,9 +37,25 @@ function createCaptureProxy(server, captured) {
                     return true;
                 };
             }
+            if (property === 'resource') {
+                return (name, uriOrTemplate, reader) => {
+                    captured.resources.push({ name, uriOrTemplate, metadata: { uri: uriOrTemplate }, reader });
+                    return true;
+                };
+            }
             if (property === 'registerPrompt') {
                 return (name, config, handler) => {
                     captured.prompts.push({ name, config, handler });
+                    return true;
+                };
+            }
+            if (property === 'prompt') {
+                return (name, descriptionOrConfig, schemaOrHandler, handler) => {
+                    const promptHandler = handler ?? schemaOrHandler;
+                    const promptConfig = handler
+                        ? normalizePromptConfig(descriptionOrConfig, schemaOrHandler)
+                        : descriptionOrConfig;
+                    captured.prompts.push({ name, config: promptConfig, handler: promptHandler });
                     return true;
                 };
             }
@@ -73,15 +104,30 @@ async function forwardCapturedRegistrations(server, captured) {
         if (typeof server.registerTool === 'function') {
             server.registerTool(tool.name, tool.config, tool.handler);
         }
+        else if (typeof extendedServer.tool === 'function') {
+            extendedServer.tool(tool.name, tool.config, tool.handler);
+        }
     }
     for (const resource of captured.resources) {
         if (typeof extendedServer.registerResource === 'function') {
             extendedServer.registerResource(resource.name, resource.uriOrTemplate, resource.metadata, resource.reader);
         }
+        else if (typeof extendedServer.resource === 'function') {
+            extendedServer.resource(resource.name, resource.uriOrTemplate, resource.reader);
+        }
     }
     for (const prompt of captured.prompts) {
         if (typeof extendedServer.registerPrompt === 'function') {
             extendedServer.registerPrompt(prompt.name, prompt.config, prompt.handler);
+        }
+        else if (typeof extendedServer.prompt === 'function') {
+            const promptConfig = prompt.config;
+            if (promptConfig && typeof promptConfig === 'object' && ('description' in promptConfig || 'argsSchema' in promptConfig)) {
+                extendedServer.prompt(prompt.name, promptConfig.description, promptConfig.argsSchema, prompt.handler);
+            }
+            else {
+                extendedServer.prompt(prompt.name, prompt.config, prompt.handler);
+            }
         }
     }
 }

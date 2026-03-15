@@ -8,9 +8,9 @@
   "entry": "dist/index.js",
   "dependenciesPolicy": "bundled-only",
   "dist": {
-    "hash": "sha256:02279688190b5cad4b0f74769e1f7445f1c7ee404df77a9af58965f4b7d9b09c",
-    "fileCount": 1,
-    "totalBytes": 8983
+    "hash": "sha256:c832106afeb24197e216977739341b732e5442668a562f582a5d5947173ea011",
+    "fileCount": 9,
+    "totalBytes": 16427
   },
   "capabilities": {
     "prompts": [

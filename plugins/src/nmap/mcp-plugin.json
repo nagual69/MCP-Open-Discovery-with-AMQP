@@ -6,9 +6,9 @@
   "description": "Nmap network scanner — ping sweep, TCP SYN/connect/UDP port scans and service version detection.",
   "entry": "dist/index.js",
   "dist": {
-    "hash": "sha256:eba675e45dd0040201abad9093f9c329d74b6372643b32178fb975ccc3329bcf",
-    "fileCount": 1,
-    "totalBytes": 10807
+    "hash": "sha256:e3a1a5855cf5243c5694fc35ed09e6334c0fa296adbc0063df935a292ea13962",
+    "fileCount": 12,
+    "totalBytes": 27470
   },
   "dependenciesPolicy": "bundled-only",
   "permissions": {

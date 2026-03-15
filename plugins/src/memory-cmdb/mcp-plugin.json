@@ -6,9 +6,9 @@
   "description": "CMDB / Configuration Item memory with SQLite persistence and AES-256 encryption. Stores infrastructure CI objects keyed by ci:type:identifier.",
   "entry": "dist/index.js",
   "dist": {
-    "hash": "sha256:c052f761cfed20a3fbb04c49abd1e58e6c5193298fce7c6e80a19a97f5c1bdf4",
-    "fileCount": 1,
-    "totalBytes": 15501
+    "hash": "sha256:a0142332e45fd21af0c9ae3f63e52cc72a1dde318eb4d2a28cb24f1999a15898",
+    "fileCount": 12,
+    "totalBytes": 38083
   },
   "dependenciesPolicy": "bundled-only",
   "permissions": {
