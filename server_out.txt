@@ -1,0 +1,135 @@
+[2026-03-15T04:48:42.910Z] [DEBUG] OAuth middleware not available {
+  "error": "Cannot find module './tools/transports/core/oauth-middleware'\nRequire stack:\n- D:\\github-development\\mcp-open-discovery\\mcp_open_discovery_server.js"
+}
+[2026-03-15T04:48:42.915Z] [DEBUG] AMQP status module not available {
+  "error": "Cannot find module './tools/transports/status/amqp-status'\nRequire stack:\n- D:\\github-development\\mcp-open-discovery\\mcp_open_discovery_server.js"
+}
+[2026-03-15T04:48:42.917Z] [INFO] MCP Open Discovery Server v2.0 starting... 
+[2026-03-15T04:48:42.919Z] [INFO] Environment detected {
+  "isContainer": false,
+  "transportMode": "http"
+}
+[2026-03-15T04:48:42.921Z] [INFO] Starting server with transport modes: http {
+  "originalValue": "http",
+  "envValue": "http",
+  "parsedModes": [
+    "http"
+  ],
+  "environment": {
+    "isContainer": false,
+    "isService": true,
+    "nodeEnv": "development",
+    "platform": "win32",
+    "hasStdin": true,
+    "hasStdout": true,
+    "transportMode": "http",
+    "httpPort": "6270",
+    "amqpEnabled": true,
+    "oauthEnabled": false
+  },
+  "architecture": "transport-manager-v2.0"
+}
+[2026-03-15T04:48:42.921Z] [INFO] [SINGLETON] Creating MCP server instance 
+[2026-03-15T04:48:42.922Z] [INFO] [SINGLETON] Initializing plugin registry against MCP server 
+[PluginRegistry] Initialized — 0 active, 0 failed
+[2026-03-15T04:48:42.946Z] [INFO] [SINGLETON] ✅ Plugin registry initialized 
+[2026-03-15T04:48:42.946Z] [INFO] [SINGLETON] Bootstrapping built-in plugins 
+[PluginRegistry] Bootstrapping 10 built-in plugins...
+[PluginRegistry] Installing built-in plugin: credentials@1.0.0
+[PluginRegistry] ✅ Bootstrapped: credentials@1.0.0
+[PluginRegistry] Installing built-in plugin: marketplace@1.0.0
+[PluginRegistry] ✅ Bootstrapped: marketplace@1.0.0
+[PluginRegistry] Installing built-in plugin: memory-cmdb@1.0.0
+[PluginRegistry] ✅ Bootstrapped: memory-cmdb@1.0.0
+[PluginRegistry] Installing built-in plugin: net-utils@1.0.0
+[PluginRegistry] ✅ Bootstrapped: net-utils@1.0.0
+[PluginRegistry] Installing built-in plugin: nmap@1.0.0
+[PluginRegistry] ✅ Bootstrapped: nmap@1.0.0
+[PluginRegistry] Installing built-in plugin: prompts@1.0.0
+[PluginRegistry] ✅ Bootstrapped: prompts@1.0.0
+[PluginRegistry] Installing built-in plugin: proxmox@1.0.0
+[PluginRegistry] ✅ Bootstrapped: proxmox@1.0.0
+[PluginRegistry] Installing built-in plugin: registry-tools@1.0.0
+[PluginRegistry] ✅ Bootstrapped: registry-tools@1.0.0
+[PluginRegistry] Installing built-in plugin: snmp@1.0.0
+[PluginRegistry] ✅ Bootstrapped: snmp@1.0.0
+[PluginRegistry] Installing built-in plugin: zabbix@1.0.0
+[PluginRegistry] ✅ Bootstrapped: zabbix@1.0.0
+[2026-03-15T04:48:43.100Z] [INFO] [SINGLETON] ✅ Built-in plugins bootstrapped 
+[2026-03-15T04:48:43.101Z] [INFO] [SINGLETON] ✅ MCP server instance ready for all transports 
+[2026-03-15T04:48:43.101Z] [INFO] Singleton MCP server created and ready for all transports 
+[2026-03-15T04:48:43.102Z] [INFO] [TRANSPORT_MANAGER] Starting transport manager... 
+[2026-03-15T04:48:43.102Z] [INFO] [TRANSPORT_MANAGER] Using explicit TRANSPORT_MODE configuration {
+  "transportMode": "http",
+  "parsed": [
+    "http"
+  ]
+}
+[2026-03-15T04:48:43.102Z] [INFO] [TRANSPORT_MANAGER] Starting http transport... 
+[2026-03-15T04:48:43.103Z] [INFO] [HTTP] Initializing HTTP transport... 
+[2026-03-15T04:48:43.106Z] [INFO] [HTTP] OAuth 2.1 authentication disabled 
+[2026-03-15T04:48:43.110Z] [INFO] [TRANSPORT_MANAGER] http transport started successfully 
+[2026-03-15T04:48:43.110Z] [INFO] [TRANSPORT_MANAGER] Transport manager startup complete {
+  "environment": {
+    "isContainer": false,
+    "transportMode": "http"
+  },
+  "enabled": [
+    "http"
+  ],
+  "successful": 1,
+  "failed": 0,
+  "errors": [],
+  "summary": "1/1 transports started successfully"
+}
+[2026-03-15T04:48:43.110Z] [INFO] MCP Server started successfully {
+  "failedTransports": "none",
+  "mode": "http",
+  "degradedOperation": false
+}
+[2026-03-15T04:48:43.111Z] [INFO] [HTTP] HTTP server listening on port 6270 
+[2026-03-15T04:48:43.111Z] [INFO] [HTTP] Health endpoint: http://localhost:6270/health 
+[2026-03-15T04:48:43.112Z] [INFO] [HTTP] MCP endpoint: http://localhost:6270/mcp 
+[2026-03-15T04:49:16.417Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "initialize",
+  "ip": "::ffff:127.0.0.1"
+}
+[2026-03-15T04:49:16.456Z] [INFO] [HTTP] Creating new HTTP transport session 
+[2026-03-15T04:49:16.460Z] [INFO] [HTTP] HTTP session initialized {
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.467Z] [DEBUG] [HTTP] Establishing new SSE stream {
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.477Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "logging/setLevel",
+  "ip": "::ffff:127.0.0.1",
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.478Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.479Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "notifications/initialized",
+  "ip": "::ffff:127.0.0.1",
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.480Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.481Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "prompts/list",
+  "ip": "::ffff:127.0.0.1",
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.481Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.483Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/list",
+  "ip": "::ffff:127.0.0.1",
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}
+[2026-03-15T04:49:16.483Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+}

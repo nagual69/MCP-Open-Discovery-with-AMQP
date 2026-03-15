@@ -1,0 +1,6 @@
+unknown format "uri" ignored in schema at path "#/properties/homepage"
+unknown format "uri" ignored in schema at path "#/properties/homepage"
+unknown format "uri" ignored in schema at path "#/properties/externalDependencies/items/properties/registry"
+unknown format "uri" ignored in schema at path "#/properties/externalDependencies/items/properties/registry"
+unknown format "date-time" ignored in schema at path "#/$defs/signature/properties/ts"
+unknown format "date-time" ignored in schema at path "#/$defs/signature/properties/ts"

@@ -11,7 +11,30 @@
  * Scalability: Modular resource provider system
  */
 
-const { getCredentialResources } = require('../credentials_tools_sdk');
+// Inlined from credentials_tools_sdk (now deprecated) — credential audit log resource
+function getCredentialResources() {
+  const fs   = require('fs');
+  const path = require('path');
+  const AUDIT_LOG_PATH = path.join(process.cwd(), 'data', 'mcp_creds_audit.log');
+  return [{
+    uri: 'credentials://audit/log',
+    name: 'Credential Audit Log',
+    description: 'Audit log of all credential operations',
+    mimeType: 'application/json',
+    getContent: async (uri) => {
+      try {
+        let logData = [];
+        if (fs.existsSync(AUDIT_LOG_PATH)) {
+          const lines = fs.readFileSync(AUDIT_LOG_PATH, 'utf8').trim().split('\n').filter(l => l.trim());
+          logData = lines.map(line => { try { return JSON.parse(line); } catch { return { raw: line }; } });
+        }
+        return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(logData, null, 2) }] };
+      } catch (error) {
+        return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify({ error: error.message }, null, 2) }] };
+      }
+    }
+  }];
+}
 
 /**
  * Register all available resources with the MCP server

@@ -2,7 +2,20 @@
 // Unified secrets provider for MCP Open Discovery
 // Supports AWS Secrets Manager, Azure Key Vault, and local encrypted fallback
 
-const credentialsManager = require('./credentials_manager');
+// Load the credentials manager lazily — supports both active and .deprecated filenames
+let _credentialsManager = null;
+function getCredentialsManager() {
+  if (_credentialsManager) return _credentialsManager;
+  const path = require('path');
+  const root = path.resolve(__dirname);
+  for (const name of ['credentials_manager', 'credentials_manager.js.deprecated']) {
+    try {
+      _credentialsManager = require(path.join(root, name));
+      return _credentialsManager;
+    } catch {}
+  }
+  throw new Error('No credentials manager found');
+}
 
 // AWS SDK v3
 let AWS;
@@ -35,7 +48,7 @@ async function getSecret({ id, type }) {
   }
   // 3. Fallback to local encrypted store
   try {
-    return credentialsManager.getCredential(id);
+    return getCredentialsManager().getCredential(id);
   } catch (e) {
     throw new Error('Secret not found in any provider');
   }
@@ -63,7 +76,7 @@ async function setSecret({ id, type, data }) {
     } catch (e) { /* fallback */ }
   }
   // 3. Fallback to local encrypted store
-  credentialsManager.addCredential(id, type, data);
+  getCredentialsManager().addCredential(id, type, data);
 }
 
 module.exports = {

@@ -1,0 +1,31 @@
+{
+  "manifestVersion": "2",
+  "name": "marketplace",
+  "id": "com.vibeforge.mcp-od.marketplace",
+  "version": "1.0.0",
+  "type": "tool-module",
+  "description": "Plugin store interface — search, verify, install, inspect, and audit installed plugins. Provides 9 tools for plugin lifecycle management.",
+  "entry": "dist/index.js",
+  "dependenciesPolicy": "bundled-only",
+  "permissions": {
+    "fsRead": true
+  },
+  "dist": {
+    "hash": "sha256:9e046e881280c0ccf9c640caecb3d4333d36aaf57af347070a1c7457e93d0fa7",
+    "fileCount": 1,
+    "totalBytes": 20087
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_store_list",
+      "mcp_od_store_list_policies",
+      "mcp_od_store_search",
+      "mcp_od_store_verify",
+      "mcp_od_store_install",
+      "mcp_od_store_remove",
+      "mcp_od_store_show",
+      "mcp_od_store_rescan",
+      "mcp_od_store_security_report"
+    ]
+  }
+}
