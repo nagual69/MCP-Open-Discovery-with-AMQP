@@ -17,7 +17,19 @@ type TypedPluginDb = {
 };
 
 type TypedPluginManager = {
-  install(source: string, options?: { actor?: string; autoActivate?: boolean }): Promise<PluginInstallResult>;
+  install(
+    source: string,
+    options?: {
+      actor?: string;
+      autoActivate?: boolean;
+      pluginId?: string;
+      checksum?: string;
+      checksumAlgorithm?: string;
+      signature?: string;
+      publicKey?: string;
+      signatureAlgorithm?: 'Ed25519' | 'RSA-SHA256';
+    },
+  ): Promise<PluginInstallResult>;
   uninstall(pluginId: string, options?: { actor?: string }): Promise<{ uninstalled: boolean; pluginId: string }>;
 };
 
@@ -104,7 +116,19 @@ export function getPluginDb(): {
 }
 
 export function getPluginManager(): {
-  install(source: string, options?: { actor?: string; autoActivate?: boolean }): Promise<PluginInstallResult>;
+  install(
+    source: string,
+    options?: {
+      actor?: string;
+      autoActivate?: boolean;
+      pluginId?: string;
+      checksum?: string;
+      checksumAlgorithm?: string;
+      signature?: string;
+      publicKey?: string;
+      signatureAlgorithm?: 'Ed25519' | 'RSA-SHA256';
+    },
+  ): Promise<PluginInstallResult>;
   uninstall(pluginId: string, options?: { actor?: string }): Promise<{ uninstalled: boolean; pluginId: string }>;
 } {
   const typedPath = path.join(process.cwd(), 'dist-ts', 'src', 'plugins', 'plugin-manager.js');
@@ -112,7 +136,19 @@ export function getPluginManager(): {
   const module = loadModule<TypedPluginManager | LegacyPluginManager>([typedPath, legacyPath]);
 
   return {
-    async install(source: string, options?: { actor?: string; autoActivate?: boolean }): Promise<PluginInstallResult> {
+    async install(
+      source: string,
+      options?: {
+        actor?: string;
+        autoActivate?: boolean;
+        pluginId?: string;
+        checksum?: string;
+        checksumAlgorithm?: string;
+        signature?: string;
+        publicKey?: string;
+        signatureAlgorithm?: 'Ed25519' | 'RSA-SHA256';
+      },
+    ): Promise<PluginInstallResult> {
       return module.install(source, options);
     },
     async uninstall(pluginId: string, options?: { actor?: string }): Promise<{ uninstalled: boolean; pluginId: string }> {

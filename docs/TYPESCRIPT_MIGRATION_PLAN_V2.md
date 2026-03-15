@@ -8,6 +8,12 @@
 **Node Requirement:** ≥ 23 (already met)  
 **Migration Strategy:** Plugin infrastructure first, then tool plugins, then marketplace alignment
 
+## Current Status
+
+The built-in typed plugin conversion wave is effectively complete in this repository. The authoritative implementation path for built-in plugins is now `plugins/src/<plugin>/`, with packaged validation exercised against the typed host manager and blessed ZIP outputs in `plugins/builtin/`.
+
+The legacy JavaScript plugin host and package path remains in the tree as a compatibility fallback while the broader server and transport migration finishes, but it is no longer the preferred target for new plugin work. New capability work should land in the typed packages and typed host manager first.
+
 mcp-open-discovery = https://github.com/nagual69/MCP-Open-Discovery-with-AMQP.git
 mcp-od-marketplace = https://github.com/nagual69/mcp-od-marketplace.git
 
@@ -39,7 +45,7 @@ mcp-open-discovery/          ← MCP server (this plan's primary focus)
     types/                   ← shared plugin contract types
     plugins/                 ← plugin manager, db, lifecycle
     transports/              ← streamable HTTP, AMQP, stdio
-    tools/                   ← legacy (removed after plugin migration)
+    tools/                   ← legacy compatibility layer during migration
   plugins/
     src/<group>/             ← typed plugin packages
     builtin/                 ← pre-built plugin zips
@@ -1391,17 +1397,19 @@ curl -s -X POST http://localhost:6270/mcp -H "Content-Type: application/json" \
 - [ ] Docker build uses `dist/index.js`
 
 ### Phase 4 — Typed Plugin Packages
-- [ ] `plugins/src/net-utils/` — 8 tools, typed
-- [ ] `plugins/src/credentials/` — 5 tools, typed
-- [ ] `plugins/src/registry-tools/` — 8 tools, typed
-- [ ] `plugins/src/memory-cmdb/` — 9 tools, typed
-- [ ] `plugins/src/zabbix/` — 7 tools, typed
-- [ ] `plugins/src/proxmox/` — 10 tools, typed
-- [ ] `plugins/src/nmap/` — 5 tools, typed
-- [ ] `plugins/src/snmp/` — 12 tools, typed (net-snmp.d.ts created)
-- [ ] `src/types/net-snmp.d.ts` created
-- [ ] All 8 plugin packages compile to `dist/`
-- [ ] Build script generates valid zips in `plugins/builtin/`
+- [x] `plugins/src/net-utils/` — typed and packaged validation complete
+- [x] `plugins/src/credentials/` — typed and packaged validation complete
+- [x] `plugins/src/registry-tools/` — typed and packaged validation complete
+- [x] `plugins/src/memory-cmdb/` — typed and packaged validation complete
+- [x] `plugins/src/zabbix/` — typed and packaged validation complete
+- [x] `plugins/src/proxmox/` — typed and packaged validation complete
+- [x] `plugins/src/nmap/` — typed and packaged validation complete
+- [x] `plugins/src/snmp/` — typed and packaged validation complete (`net-snmp.d.ts` in place)
+- [x] `plugins/src/prompts/` — typed and packaged validation complete
+- [x] `plugins/src/marketplace/` — typed and packaged validation complete
+- [x] `src/types/net-snmp.d.ts` created
+- [x] Built-in typed plugin packages compile to `dist/`
+- [x] Build script generates valid zips in `plugins/builtin/`
 - [ ] Full test suite passes: `npm test`
 
 ### Phase 5 — Marketplace Alignment
@@ -1426,7 +1434,7 @@ curl -s -X POST http://localhost:6270/mcp -H "Content-Type: application/json" \
 - [ ] `npm run typecheck:strict` — zero errors
 
 ### Phase 8 — Finalization
-- [ ] Legacy `tools/` JS files archived
+- [ ] Legacy `tools/` JS files archived or reduced below compatibility-fallback scope
 - [ ] `Dockerfile` updated
 - [ ] `rebuild_deploy.ps1` includes typecheck gate
 - [ ] Full smoke test (deactivate/reactivate, hot swap, audit log)

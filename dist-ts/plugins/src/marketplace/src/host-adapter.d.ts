@@ -10,6 +10,12 @@ export declare function getPluginManager(): {
     install(source: string, options?: {
         actor?: string;
         autoActivate?: boolean;
+        pluginId?: string;
+        checksum?: string;
+        checksumAlgorithm?: string;
+        signature?: string;
+        publicKey?: string;
+        signatureAlgorithm?: 'Ed25519' | 'RSA-SHA256';
     }): Promise<PluginInstallResult>;
     uninstall(pluginId: string, options?: {
         actor?: string;

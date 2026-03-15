@@ -122,4 +122,6 @@ export interface PluginInstallResult {
   pluginId: string;
   manifest?: PluginManifest;
   signatureVerified?: boolean;
+  payloadChecksumVerified?: boolean;
+  payloadSignatureVerified?: boolean;
 }

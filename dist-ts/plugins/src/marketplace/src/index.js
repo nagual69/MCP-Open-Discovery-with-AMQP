@@ -42,15 +42,6 @@ function getExtractionPath(pluginId, pluginName, pluginVersion) {
     }
     return node_path_1.default.join(process.cwd(), 'data', 'plugin_extractions', `${pluginName}_at_${pluginVersion}`);
 }
-function hasUnsupportedInstallOverrides(args) {
-    const unsupported = [];
-    for (const field of ['pluginId', 'checksum', 'checksumAlgorithm', 'signature', 'publicKey', 'signatureAlgorithm']) {
-        if (typeof args[field] !== 'undefined') {
-            unsupported.push(field);
-        }
-    }
-    return unsupported;
-}
 function toMarkdownTable(headers, rows) {
     const header = `| ${headers.join(' | ')} |`;
     const divider = `|${headers.map(() => '---').join('|')}|`;
@@ -254,13 +245,17 @@ const toolDefinitions = [
                 if (!source) {
                     return (0, shared_1.buildErrorResponse)('Either url or filePath is required');
                 }
-                const unsupported = hasUnsupportedInstallOverrides(args);
-                if (unsupported.length) {
-                    return (0, shared_1.buildErrorResponse)(`Typed host plugin manager does not yet support install overrides: ${unsupported.join(', ')}`);
-                }
                 const result = await (0, host_adapter_1.getPluginManager)().install(source, {
                     actor: 'agent',
                     autoActivate: args.autoLoad === true,
+                    pluginId: typeof args.pluginId === 'string' ? args.pluginId : undefined,
+                    checksum: typeof args.checksum === 'string' ? args.checksum : undefined,
+                    checksumAlgorithm: typeof args.checksumAlgorithm === 'string' ? args.checksumAlgorithm : undefined,
+                    signature: typeof args.signature === 'string' ? args.signature : undefined,
+                    publicKey: typeof args.publicKey === 'string' ? args.publicKey : undefined,
+                    signatureAlgorithm: args.signatureAlgorithm === 'Ed25519' || args.signatureAlgorithm === 'RSA-SHA256'
+                        ? args.signatureAlgorithm
+                        : undefined,
                 });
                 return (0, shared_1.buildJsonResponse)(result);
             }

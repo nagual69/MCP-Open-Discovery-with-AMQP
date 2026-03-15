@@ -53,6 +53,12 @@ export interface PluginInstallOptions {
   actor?: string;
   isBuiltin?: boolean;
   autoActivate?: boolean;
+  pluginId?: string;
+  checksum?: string;
+  checksumAlgorithm?: string;
+  signature?: string;
+  publicKey?: string;
+  signatureAlgorithm?: SigningAlgorithm;
 }
 
 export interface PluginActivateOptions {
@@ -63,6 +69,8 @@ export interface PluginInstallResult {
   pluginId: string;
   manifest: PluginManifestV2;
   signatureVerified: boolean;
+  payloadChecksumVerified?: boolean;
+  payloadSignatureVerified?: boolean;
 }
 
 export interface PluginActivateResult {

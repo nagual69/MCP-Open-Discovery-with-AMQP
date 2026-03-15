@@ -1,5 +1,6 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import axios from 'axios';
+import crypto from 'crypto';
 import fsSync from 'fs';
 import fs from 'fs/promises';
 import os from 'os';
@@ -44,6 +45,8 @@ interface InstalledArtifact {
   manifest: PluginManifestV2;
   bundle: Buffer;
   extractedPath: string;
+  payloadChecksumVerified: boolean;
+  payloadSignatureVerified: boolean;
   sourceUrl: string | null;
   sourceType: 'marketplace' | 'local';
 }
@@ -134,26 +137,115 @@ async function unregisterCaptured(pluginIdValue: string): Promise<void> {
   activeRegistrations.delete(pluginIdValue);
 }
 
-async function loadInstallArtifact(source: string): Promise<InstalledArtifact> {
+function verifyPayloadChecksum(bundle: Buffer, checksum: string, algorithm?: string): boolean {
+  const resolvedAlgorithm = algorithm ?? checksum.split(':', 1)[0] ?? 'sha256';
+  const expectedChecksum = checksum.includes(':') ? checksum.split(':').slice(1).join(':') : checksum;
+  const computedChecksum = crypto.createHash(resolvedAlgorithm).update(bundle).digest('hex');
+  if (computedChecksum.toLowerCase() !== expectedChecksum.toLowerCase()) {
+    throw new Error(
+      `Payload checksum verification failed: expected ${resolvedAlgorithm}:${expectedChecksum}, got ${resolvedAlgorithm}:${computedChecksum}`,
+    );
+  }
+  return true;
+}
+
+function verifyPayloadSignature(
+  bundle: Buffer,
+  signature: string,
+  publicKeyPem: string,
+  algorithm: NonNullable<PluginInstallOptions['signatureAlgorithm']> = 'RSA-SHA256',
+): boolean {
+  const signatureBuffer = Buffer.from(signature, 'base64');
+  if (algorithm === 'Ed25519') {
+    if (!crypto.verify(null, bundle, publicKeyPem, signatureBuffer)) {
+      throw new Error('Payload signature verification failed');
+    }
+    return true;
+  }
+
+  const verifier = crypto.createVerify('RSA-SHA256');
+  verifier.update(bundle);
+  verifier.end();
+  if (!verifier.verify(publicKeyPem, signatureBuffer)) {
+    throw new Error('Payload signature verification failed');
+  }
+  return true;
+}
+
+function validateInstallOverrideShape(options: PluginInstallOptions): void {
+  if (options.signature && !options.publicKey) {
+    throw new Error('publicKey is required when signature is provided');
+  }
+  if (options.publicKey && !options.signature) {
+    throw new Error('signature is required when publicKey is provided');
+  }
+  if (options.signatureAlgorithm && !options.signature) {
+    throw new Error('signature is required when signatureAlgorithm is provided');
+  }
+  if (options.checksumAlgorithm && !options.checksum) {
+    throw new Error('checksum is required when checksumAlgorithm is provided');
+  }
+}
+
+async function loadInstallArtifact(source: string, options: PluginInstallOptions = {}): Promise<InstalledArtifact> {
+  validateInstallOverrideShape(options);
+
   if (/^https?:\/\//i.test(source)) {
     const response = await axios.get<ArrayBuffer>(source, { responseType: 'arraybuffer' });
+    const bundle = Buffer.from(response.data);
+    const payloadChecksumVerified = options.checksum
+      ? verifyPayloadChecksum(bundle, options.checksum, options.checksumAlgorithm)
+      : false;
+    const payloadSignatureVerified = options.signature && options.publicKey
+      ? verifyPayloadSignature(bundle, options.signature, options.publicKey, options.signatureAlgorithm ?? 'RSA-SHA256')
+      : false;
     const tempFile = path.join(await fs.mkdtemp(path.join(os.tmpdir(), 'mcpod-remote-')), 'plugin.zip');
-    await fs.writeFile(tempFile, Buffer.from(response.data));
+    await fs.writeFile(tempFile, bundle);
     const imported = await importPluginFromFile(tempFile);
     return {
       manifest: imported.manifest,
       bundle: imported.archiveData,
       extractedPath: imported.extractedPath,
+      payloadChecksumVerified,
+      payloadSignatureVerified,
       sourceUrl: source,
       sourceType: 'marketplace',
     };
   }
 
-  const imported = await importPluginFromFile(source);
+  const sourcePath = path.resolve(source);
+  const stats = await fs.stat(sourcePath);
+  if (stats.isDirectory()) {
+    if (options.checksum || options.checksumAlgorithm || options.signature || options.publicKey || options.signatureAlgorithm) {
+      throw new Error('Checksum and signature install overrides are supported for plugin archives, not directory installs');
+    }
+
+    const imported = await importPluginFromFile(sourcePath);
+    return {
+      manifest: imported.manifest,
+      bundle: imported.archiveData,
+      extractedPath: imported.extractedPath,
+      payloadChecksumVerified: false,
+      payloadSignatureVerified: false,
+      sourceUrl: null,
+      sourceType: 'local',
+    };
+  }
+
+  const bundle = await fs.readFile(sourcePath);
+  const payloadChecksumVerified = options.checksum
+    ? verifyPayloadChecksum(bundle, options.checksum, options.checksumAlgorithm)
+    : false;
+  const payloadSignatureVerified = options.signature && options.publicKey
+    ? verifyPayloadSignature(bundle, options.signature, options.publicKey, options.signatureAlgorithm ?? 'RSA-SHA256')
+    : false;
+  const imported = await importPluginFromFile(sourcePath);
   return {
     manifest: imported.manifest,
     bundle: imported.archiveData,
     extractedPath: imported.extractedPath,
+    payloadChecksumVerified,
+    payloadSignatureVerified,
     sourceUrl: null,
     sourceType: 'local',
   };
@@ -164,9 +256,12 @@ export function setMcpServer(server: McpServer): void {
 }
 
 export async function install(source: string, options: PluginInstallOptions = {}): Promise<PluginInstallResult> {
-  const artifact = await loadInstallArtifact(source);
+  const artifact = await loadInstallArtifact(source, options);
   const manifest = artifact.manifest;
   const id = pluginId(manifest);
+  if (options.pluginId && options.pluginId !== id) {
+    throw new Error(`Installed plugin ID mismatch: expected ${options.pluginId}, got ${id}`);
+  }
   if (getPlugin(id)) {
     throw new Error(`Plugin already installed: ${id}`);
   }
@@ -210,6 +305,8 @@ export async function install(source: string, options: PluginInstallOptions = {}
     pluginId: id,
     manifest,
     signatureVerified: signatureStatus.verified,
+    payloadChecksumVerified: artifact.payloadChecksumVerified,
+    payloadSignatureVerified: artifact.payloadSignatureVerified,
   };
 }
 
