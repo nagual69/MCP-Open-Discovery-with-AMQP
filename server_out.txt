@@ -1,15 +1,15 @@
-[2026-03-15T04:48:42.910Z] [DEBUG] OAuth middleware not available {
+[2026-03-15T14:40:25.737Z] [DEBUG] OAuth middleware not available {
   "error": "Cannot find module './tools/transports/core/oauth-middleware'\nRequire stack:\n- D:\\github-development\\mcp-open-discovery\\mcp_open_discovery_server.js"
 }
-[2026-03-15T04:48:42.915Z] [DEBUG] AMQP status module not available {
+[2026-03-15T14:40:25.742Z] [DEBUG] AMQP status module not available {
   "error": "Cannot find module './tools/transports/status/amqp-status'\nRequire stack:\n- D:\\github-development\\mcp-open-discovery\\mcp_open_discovery_server.js"
 }
-[2026-03-15T04:48:42.917Z] [INFO] MCP Open Discovery Server v2.0 starting... 
-[2026-03-15T04:48:42.919Z] [INFO] Environment detected {
+[2026-03-15T14:40:25.742Z] [INFO] MCP Open Discovery Server v2.0 starting... 
+[2026-03-15T14:40:25.744Z] [INFO] Environment detected {
   "isContainer": false,
   "transportMode": "http"
 }
-[2026-03-15T04:48:42.921Z] [INFO] Starting server with transport modes: http {
+[2026-03-15T14:40:25.745Z] [INFO] Starting server with transport modes: http {
   "originalValue": "http",
   "envValue": "http",
   "parsedModes": [
@@ -29,11 +29,11 @@
   },
   "architecture": "transport-manager-v2.0"
 }
-[2026-03-15T04:48:42.921Z] [INFO] [SINGLETON] Creating MCP server instance 
-[2026-03-15T04:48:42.922Z] [INFO] [SINGLETON] Initializing plugin registry against MCP server 
+[2026-03-15T14:40:25.745Z] [INFO] [SINGLETON] Creating MCP server instance 
+[2026-03-15T14:40:25.746Z] [INFO] [SINGLETON] Initializing plugin registry against MCP server 
 [PluginRegistry] Initialized — 0 active, 0 failed
-[2026-03-15T04:48:42.946Z] [INFO] [SINGLETON] ✅ Plugin registry initialized 
-[2026-03-15T04:48:42.946Z] [INFO] [SINGLETON] Bootstrapping built-in plugins 
+[2026-03-15T14:40:25.765Z] [INFO] [SINGLETON] ✅ Plugin registry initialized 
+[2026-03-15T14:40:25.766Z] [INFO] [SINGLETON] Bootstrapping built-in plugins 
 [PluginRegistry] Bootstrapping 10 built-in plugins...
 [PluginRegistry] Installing built-in plugin: credentials@1.0.0
 [PluginRegistry] ✅ Bootstrapped: credentials@1.0.0
@@ -55,21 +55,21 @@
 [PluginRegistry] ✅ Bootstrapped: snmp@1.0.0
 [PluginRegistry] Installing built-in plugin: zabbix@1.0.0
 [PluginRegistry] ✅ Bootstrapped: zabbix@1.0.0
-[2026-03-15T04:48:43.100Z] [INFO] [SINGLETON] ✅ Built-in plugins bootstrapped 
-[2026-03-15T04:48:43.101Z] [INFO] [SINGLETON] ✅ MCP server instance ready for all transports 
-[2026-03-15T04:48:43.101Z] [INFO] Singleton MCP server created and ready for all transports 
-[2026-03-15T04:48:43.102Z] [INFO] [TRANSPORT_MANAGER] Starting transport manager... 
-[2026-03-15T04:48:43.102Z] [INFO] [TRANSPORT_MANAGER] Using explicit TRANSPORT_MODE configuration {
+[2026-03-15T14:40:25.934Z] [INFO] [SINGLETON] ✅ Built-in plugins bootstrapped 
+[2026-03-15T14:40:25.935Z] [INFO] [SINGLETON] ✅ MCP server instance ready for all transports 
+[2026-03-15T14:40:25.935Z] [INFO] Singleton MCP server created and ready for all transports 
+[2026-03-15T14:40:25.935Z] [INFO] [TRANSPORT_MANAGER] Starting transport manager... 
+[2026-03-15T14:40:25.936Z] [INFO] [TRANSPORT_MANAGER] Using explicit TRANSPORT_MODE configuration {
   "transportMode": "http",
   "parsed": [
     "http"
   ]
 }
-[2026-03-15T04:48:43.102Z] [INFO] [TRANSPORT_MANAGER] Starting http transport... 
-[2026-03-15T04:48:43.103Z] [INFO] [HTTP] Initializing HTTP transport... 
-[2026-03-15T04:48:43.106Z] [INFO] [HTTP] OAuth 2.1 authentication disabled 
-[2026-03-15T04:48:43.110Z] [INFO] [TRANSPORT_MANAGER] http transport started successfully 
-[2026-03-15T04:48:43.110Z] [INFO] [TRANSPORT_MANAGER] Transport manager startup complete {
+[2026-03-15T14:40:25.936Z] [INFO] [TRANSPORT_MANAGER] Starting http transport... 
+[2026-03-15T14:40:25.936Z] [INFO] [HTTP] Initializing HTTP transport... 
+[2026-03-15T14:40:25.940Z] [INFO] [HTTP] OAuth 2.1 authentication disabled 
+[2026-03-15T14:40:25.943Z] [INFO] [TRANSPORT_MANAGER] http transport started successfully 
+[2026-03-15T14:40:25.944Z] [INFO] [TRANSPORT_MANAGER] Transport manager startup complete {
   "environment": {
     "isContainer": false,
     "transportMode": "http"
@@ -82,54 +82,153 @@
   "errors": [],
   "summary": "1/1 transports started successfully"
 }
-[2026-03-15T04:48:43.110Z] [INFO] MCP Server started successfully {
+[2026-03-15T14:40:25.944Z] [INFO] MCP Server started successfully {
   "failedTransports": "none",
   "mode": "http",
   "degradedOperation": false
 }
-[2026-03-15T04:48:43.111Z] [INFO] [HTTP] HTTP server listening on port 6270 
-[2026-03-15T04:48:43.111Z] [INFO] [HTTP] Health endpoint: http://localhost:6270/health 
-[2026-03-15T04:48:43.112Z] [INFO] [HTTP] MCP endpoint: http://localhost:6270/mcp 
-[2026-03-15T04:49:16.417Z] [DEBUG] [HTTP] Received MCP request {
+[2026-03-15T14:40:25.945Z] [INFO] [HTTP] HTTP server listening on port 6270 
+[2026-03-15T14:40:25.945Z] [INFO] [HTTP] Health endpoint: http://localhost:6270/health 
+[2026-03-15T14:40:25.945Z] [INFO] [HTTP] MCP endpoint: http://localhost:6270/mcp 
+[2026-03-15T14:40:44.982Z] [DEBUG] [HTTP] Received MCP request {
   "method": "initialize",
-  "ip": "::ffff:127.0.0.1"
+  "ip": "::1"
 }
-[2026-03-15T04:49:16.456Z] [INFO] [HTTP] Creating new HTTP transport session 
-[2026-03-15T04:49:16.460Z] [INFO] [HTTP] HTTP session initialized {
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.467Z] [DEBUG] [HTTP] Establishing new SSE stream {
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.477Z] [DEBUG] [HTTP] Received MCP request {
-  "method": "logging/setLevel",
-  "ip": "::ffff:127.0.0.1",
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.478Z] [DEBUG] [HTTP] Reusing existing transport {
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.479Z] [DEBUG] [HTTP] Received MCP request {
-  "method": "notifications/initialized",
-  "ip": "::ffff:127.0.0.1",
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.480Z] [DEBUG] [HTTP] Reusing existing transport {
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.481Z] [DEBUG] [HTTP] Received MCP request {
-  "method": "prompts/list",
-  "ip": "::ffff:127.0.0.1",
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.481Z] [DEBUG] [HTTP] Reusing existing transport {
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
-}
-[2026-03-15T04:49:16.483Z] [DEBUG] [HTTP] Received MCP request {
+[2026-03-15T14:40:45.020Z] [INFO] [HTTP] Creating new HTTP transport session 
+[2026-03-15T14:40:45.241Z] [DEBUG] [HTTP] Received MCP request {
   "method": "tools/list",
-  "ip": "::ffff:127.0.0.1",
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+  "ip": "::1"
 }
-[2026-03-15T04:49:16.483Z] [DEBUG] [HTTP] Reusing existing transport {
-  "sessionId": "f2f9cedf-c366-4bc9-b2ed-579e85101cf5"
+[2026-03-15T14:40:45.244Z] [INFO] [HTTP] Handling stateless MCP request {
+  "method": "tools/list"
+}
+[2026-03-15T14:40:45.244Z] [DEBUG] [HTTP] Auto-initializing for stateless request 
+[2026-03-15T14:40:45.247Z] [DEBUG] [HTTP] Stateless session initialized {
+  "sessionId": "975c7bdf-6124-4f13-8132-82574a87b7f4"
+}
+[2026-03-15T14:40:45.248Z] [DEBUG] [HTTP] Auto-initialization complete 
+[2026-03-15T14:40:51.314Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "initialize",
+  "ip": "::1"
+}
+[2026-03-15T14:40:51.352Z] [INFO] [HTTP] Creating new HTTP transport session 
+[2026-03-15T14:40:55.986Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "initialize",
+  "ip": "::1"
+}
+[2026-03-15T14:40:56.025Z] [INFO] [HTTP] Creating new HTTP transport session 
+[2026-03-15T14:40:56.026Z] [INFO] [HTTP] HTTP session initialized {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:02.332Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/list",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:02.370Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:11.855Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/list",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:11.893Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:21.202Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/list",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:21.241Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:31.827Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:31.865Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:44.515Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:44.518Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:44.657Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:44.658Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:44.830Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:44.831Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:49.761Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:49.764Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:54.275Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:54.278Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:59.226Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:41:59.228Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:42:55.735Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:42:55.736Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:42:55.879Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:42:55.880Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:43:01.147Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/call",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:43:01.148Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:43:09.984Z] [DEBUG] [HTTP] Received MCP request {
+  "method": "tools/list",
+  "ip": "::1",
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
+}
+[2026-03-15T14:43:10.023Z] [DEBUG] [HTTP] Reusing existing transport {
+  "sessionId": "ca240d17-f7f1-4f75-bb16-f0c44576bd4c"
 }

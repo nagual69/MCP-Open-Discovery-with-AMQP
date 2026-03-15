@@ -21,16 +21,19 @@ usage() {
 	echo -e "Usage:";
 	echo -e "  ./rebuild_redeploy.sh            # Rebuild only the MCP server container (default)";
 	echo -e "  ./rebuild_redeploy.sh -a|--all   # Rebuild all containers (MCP server, RabbitMQ, SNMP agents, Zabbix stack)";
+	echo -e "  ./rebuild_redeploy.sh --ssh user@host # Run against remote Docker host over SSH";
 	echo -e "  ./rebuild_redeploy.sh -h|--help  # Show this help message";
 	echo -e "  ./rebuild_redeploy.sh -n|--no-logs # Do not tail logs after start";
 	echo;
 	echo -e "Examples:";
 	echo -e "  ./rebuild_redeploy.sh            # Fast rebuild for code changes";
 	echo -e "  ./rebuild_redeploy.sh --all      # Full rebuild for infrastructure changes";
+	echo -e "  ./rebuild_redeploy.sh --ssh ubuntu@192.168.200.95";
 }
 
 BUILD_ALL=false
 NO_LOGS=false
+SSH_TARGET=""
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -38,6 +41,15 @@ while [[ $# -gt 0 ]]; do
 			BUILD_ALL=true; shift ;;
 		-n|--no-logs)
 			NO_LOGS=true; shift ;;
+		--ssh)
+			if [[ $# -lt 2 ]]; then
+				echo -e "${RED}--ssh requires a value like user@host${NC}" >&2
+				usage
+				exit 1
+			fi
+			SSH_TARGET="$2"; shift 2 ;;
+		--ssh=*)
+			SSH_TARGET="${1#*=}"; shift ;;
 		-h|--help)
 			usage; exit 0 ;;
 		*)
@@ -50,6 +62,11 @@ COMPOSE_FILE="docker/docker-compose.yml"
 if [[ ! -f "$COMPOSE_FILE" ]]; then
 	echo -e "${RED}$COMPOSE_FILE not found in $SCRIPT_DIR. Run from repo root.${NC}" >&2
 	exit 1
+fi
+
+if [[ -n "$SSH_TARGET" ]]; then
+	export DOCKER_HOST="ssh://$SSH_TARGET"
+	echo -e "${CYAN}Remote Docker host enabled via DOCKER_HOST=${DOCKER_HOST}${NC}"
 fi
 
 compose() {
@@ -78,6 +95,9 @@ else
 	echo -e "${YELLOW}Stopping MCP server container only...${NC}"
 	compose stop mcp-server || true
 	compose rm -f mcp-server || true
+
+	echo -e "${YELLOW}Removing conflicting network if present...${NC}"
+	docker network rm docker_mcp-network >/dev/null 2>&1 || true
 fi
 
 # Build the image(s)

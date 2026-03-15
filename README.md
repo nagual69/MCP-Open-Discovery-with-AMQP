@@ -352,18 +352,24 @@ For a lean, production-only deployment of the MCP server:
 
 - Windows (full stack or server-only):
   - Full/dev stack: `./rebuild_deploy.ps1` (uses `docker/docker-compose.yml`)
+    - Remote Docker over SSH: `-Ssh user@host` (example: `-Ssh ubuntu@192.168.200.95`)
   - Minimal production server: `./rebuild_deploy_prod.ps1`
     - Transports (choose any): `-Http`, `-Amqp`, `-Stdio` (default `-Http` if none specified)
     - RabbitMQ container: `-WithRabbitMq` (optional; use with `-Amqp` if you want an in-stack broker)
+    - OAuth/Keycloak profile: `-WithOAuth`
     - Note: the prod script will include HTTP alongside AMQP when `-WithRabbitMq` is used so the container's HTTP healthcheck stays green. If invoking Compose manually with the RabbitMQ profile, set `TRANSPORT_MODE=http,amqp`.
     - Project scoping: `-ProjectName <name>` (overrides `COMPOSE_PROJECT_NAME`; auto-lowercased for Docker)
+    - Remote Docker over SSH: `-Ssh user@host`
     - Deprecated: `-WithAmqp` (alias of `-Amqp -WithRabbitMq`)
 - Linux/macOS:
   - Full/dev stack: `./rebuild_redeploy.sh` (uses `docker/docker-compose.yml`)
+    - Remote Docker over SSH: `--ssh user@host` (example: `--ssh ubuntu@192.168.200.95`)
   - Minimal production server: `./rebuild_redeploy_prod.sh`
     - Transports: `--http`, `--amqp`, `--stdio` (default `--http` if none specified)
     - RabbitMQ container: `--with-rabbitmq` (optional)
+    - OAuth/Keycloak profile: `--with-oauth`
     - Project scoping: `--project-name <name>` or `COMPOSE_PROJECT_NAME` (will be normalized to lowercase)
+    - Remote Docker over SSH: `--ssh user@host`
     - Deprecated: `--with-amqp` (alias of `--amqp --with-rabbitmq`)
 
 ## Security notes

@@ -4,6 +4,8 @@
  * 
  * Extracted from main server file to improve modularity and maintainability.
  * This module handles stdio transport initialization and management.
+ * MIGRATE: the typed transport path is under src/transports/ and collapses most of
+ * this boilerplate into the shared transport manager/runtime contract.
  */
 
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
@@ -87,6 +89,7 @@ function getStdioStatus() {
 /**
  * Cleanup stdio transport
  * Currently a no-op as stdio transport handles its own cleanup
+ * DEAD: retained only to match the legacy transport-manager cleanup interface.
  */
 async function cleanupStdioTransport() {
   logStdio('info', 'Stdio transport cleanup completed');

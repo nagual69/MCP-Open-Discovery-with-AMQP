@@ -10,6 +10,9 @@
  * - Plugin configuration management
  * 
  * This enables third-party extensions and custom tool modules
+ * MIGRATE: this file currently mixes discovery, install, signature verification,
+ * extraction, activation, unload, and lifecycle policy. The TypeScript split lives
+ * under src/plugins/ and should replace this monolith incrementally.
  */
 
 const fs = require('fs');
@@ -56,7 +59,8 @@ class PluginManager extends EventEmitter {
       resources: path.join(this.pluginsRoot, 'resources'),
       prompts: path.join(this.pluginsRoot, 'prompts'),
     };
-    // Discovery search order: categorized + legacy fallbacks
+    // DEPRECATED: discovery still includes legacy fallback paths during migration.
+    // MIGRATE: the new src registry/bootstrap path should converge on one plugin root.
     this.pluginDirs = options.pluginDirs || [
       this.categorizedDirs.tools,
       this.categorizedDirs.resources,

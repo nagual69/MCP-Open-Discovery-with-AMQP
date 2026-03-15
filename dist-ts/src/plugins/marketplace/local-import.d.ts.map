@@ -1,0 +1,1 @@
+{"version":3,"file":"local-import.d.ts","sourceRoot":"","sources":["../../../../src/plugins/marketplace/local-import.ts"],"names":[],"mappings":"AAMA,OAAO,KAAK,EAAE,gBAAgB,EAAE,MAAM,aAAa,CAAC;AAGpD,MAAM,WAAW,iBAAiB;IAChC,QAAQ,EAAE,gBAAgB,CAAC;IAC3B,WAAW,EAAE,MAAM,CAAC;IACpB,aAAa,EAAE,MAAM,CAAC;CACvB;AA+BD,wBAAsB,oBAAoB,CAAC,QAAQ,EAAE,MAAM,GAAG,OAAO,CAAC,iBAAiB,CAAC,CAgCvF"}

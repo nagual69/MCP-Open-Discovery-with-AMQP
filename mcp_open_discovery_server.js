@@ -4,6 +4,9 @@
  * 
  * Singleton MCP server with modular transport management.
  * Supports stdio, HTTP, AMQP, and gRPC transports via transport-manager.js
+ * MIGRATE: the typed bootstrap path now lives under src/server.ts and should become
+ * the primary entry once build/runtime wiring is moved over.
+ * DEPRECATED: keep this file as the legacy startup wrapper during the transition.
  */
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');

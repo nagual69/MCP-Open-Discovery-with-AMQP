@@ -9,7 +9,9 @@ CYAN='\033[0;36m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'; RED='\033[0;31m'; NC
 # Flags (defaults)
 STDIO=false; HTTP=false; AMQP=false
 WITH_RABBITMQ=false; WITH_AMQP_ALIAS=false
+WITH_OAUTH=false
 NO_LOGS=false
+SSH_TARGET=""
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 cd "$SCRIPT_DIR"
@@ -23,9 +25,11 @@ usage(){
   echo "Usage:";
   echo "  ./rebuild_redeploy_prod.sh --http                    # HTTP-only (default if no flags/env)";
   echo "  ./rebuild_redeploy_prod.sh --amqp --with-rabbitmq    # AMQP transport + RabbitMQ container";
+  echo "  ./rebuild_redeploy_prod.sh --with-oauth              # Enable OAuth 2.1 + Keycloak container";
   echo "  ./rebuild_redeploy_prod.sh --amqp                    # AMQP transport only (external broker)";
   echo "  ./rebuild_redeploy_prod.sh --stdio --http           # StdIO + HTTP transports";
   echo "  ./rebuild_redeploy_prod.sh --project-name <name>     # Set docker compose project name (lowercase)";
+  echo "  ./rebuild_redeploy_prod.sh --ssh user@host           # Run against remote Docker host over SSH";
   echo "  ./rebuild_redeploy_prod.sh --no-logs                 # Do not tail logs";
   echo "  Deprecated: --with-amqp (equivalent to --amqp --with-rabbitmq)";
   echo "  Note: Compose project is scoped as '${PROJECT_NAME}' (override with --project-name or COMPOSE_PROJECT_NAME)";
@@ -37,7 +41,13 @@ while [[ $# -gt 0 ]]; do
     --http) HTTP=true; shift ;;
     --amqp) AMQP=true; shift ;;
     --with-rabbitmq) WITH_RABBITMQ=true; shift ;;
+    --with-oauth) WITH_OAUTH=true; shift ;;
     --with-amqp) WITH_AMQP_ALIAS=true; shift ;;
+    --ssh)
+      if [[ $# -lt 2 ]]; then echo -e "${RED}--ssh requires a value like user@host${NC}"; usage; exit 1; fi
+      SSH_TARGET="$2"; shift 2 ;;
+    --ssh=*)
+      SSH_TARGET="${1#*=}"; shift ;;
     --project-name)
       if [[ $# -lt 2 ]]; then echo -e "${RED}--project-name requires a value${NC}"; usage; exit 1; fi
       PROJECT_NAME="$2"; shift 2 ;;
@@ -51,6 +61,11 @@ done
 
 if [[ ! -f "$COMPOSE_FILE" ]]; then
   echo -e "${RED}$COMPOSE_FILE not found in $SCRIPT_DIR${NC}" >&2; exit 1
+fi
+
+if [[ -n "$SSH_TARGET" ]]; then
+  export DOCKER_HOST="ssh://$SSH_TARGET"
+  echo -e "${CYAN}Remote Docker host enabled via DOCKER_HOST=${DOCKER_HOST}${NC}"
 fi
 
 # Normalize project name to lowercase for Docker Compose compatibility
@@ -85,6 +100,20 @@ $STDIO && selected_transports+=("stdio")
 $HTTP && selected_transports+=("http")
 $AMQP && selected_transports+=("amqp")
 
+# Ensure HTTP is present when using RabbitMQ profile so healthcheck works
+if $WITH_RABBITMQ && (( ${#selected_transports[@]} > 0 )); then
+  has_http=false
+  for t in "${selected_transports[@]}"; do
+    if [[ "$t" == "http" ]]; then
+      has_http=true
+      break
+    fi
+  done
+  if ! $has_http; then
+    selected_transports=("http" "${selected_transports[@]}")
+  fi
+fi
+
 if (( ${#selected_transports[@]} > 0 )); then
   export TRANSPORT_MODE="$(IFS=,; echo "${selected_transports[*]}")"
 elif [[ -z "${TRANSPORT_MODE:-}" ]]; then
@@ -96,6 +125,14 @@ echo -e "${CYAN}TRANSPORT_MODE = ${TRANSPORT_MODE}${NC}"
 # Compose profile args
 PROFILE_ARGS=()
 $WITH_RABBITMQ && PROFILE_ARGS=(--profile with-amqp)
+if $WITH_OAUTH; then
+  PROFILE_ARGS+=(--profile with-oauth)
+  export OAUTH_ENABLED=true
+fi
+
+if $WITH_RABBITMQ && ! $AMQP; then
+  echo -e "${YELLOW}Warning: --with-rabbitmq specified without --amqp. Deploying RabbitMQ container but AMQP transport not enabled.${NC}"
+fi
 
 # Helper: remove a container by exact name if present
 remove_container_if_exists(){
@@ -122,6 +159,7 @@ compose "${PROFILE_ARGS[@]}" down --remove-orphans || true
 # Proactively resolve name conflicts from other projects
 remove_container_if_exists mcp-open-discovery
 $WITH_RABBITMQ && remove_container_if_exists mcp-rabbitmq
+$WITH_OAUTH && remove_container_if_exists mcp-keycloak
 
 echo -e "${YELLOW}Building images...${NC}"
 compose "${PROFILE_ARGS[@]}" build --no-cache

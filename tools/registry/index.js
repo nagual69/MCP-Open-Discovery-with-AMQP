@@ -7,6 +7,8 @@
  * - Integrates ToolValidationManager (strict or warn mode)
  * - Wires HotReloadManager reloads → handler re-registration
  * - Exposes dynamic load/unload/re-register helpers
+ * MIGRATE: this file is still a high-coupling integration hub. The typed split under
+ * src/plugins/, src/server.ts, and src/transports/ should absorb these responsibilities.
  */
 
 const { adaptToolToMCPTypes, createParameterValidator, jsonSchemaToZodShape, getZodRawShape, isZodSchema, isJsonSchema } = require('./mcp_types_adapter');
@@ -641,6 +643,8 @@ function getServerInstance() {
 /** Get or create plugin manager */
 function getPluginManager() {
   if (!pluginManager) {
+    // DEPRECATED: this legacy plugin manager bridge remains only while the src/plugin
+    // registry path is being brought online incrementally.
     pluginManager = new PluginManager(getRegistry(), { validationManager: getValidationManager() });
     // Wire plugin events for capability bookkeeping
     try {
@@ -706,6 +710,8 @@ function diffPluginCapabilities(pluginId, newCaps) {
  * @param {{tools:{added:string[],removed:string[]},resources:{added:string[],removed:string[]},prompts:{added:string[],removed:string[]}}} diff
  */
 async function applyPluginCapabilityDiff(pluginId, diff) {
+  // MIGRATE: capability diffing and unregister behavior should live beside the typed
+  // plugin loader/registry state, not in the legacy registry singleton.
   const srv = getServerInstance();
   const reg = getRegistry();
   const results = { pluginId, removed: { tools:[], resources:[], prompts:[] }, errors: [] };

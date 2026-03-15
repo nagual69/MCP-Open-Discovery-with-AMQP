@@ -8,6 +8,9 @@
 **Node Requirement:** ≥ 23 (already met)  
 **Migration Strategy:** Plugin infrastructure first, then tool plugins, then marketplace alignment
 
+mcp-open-discovery = https://github.com/nagual69/MCP-Open-Discovery-with-AMQP.git
+mcp-od-marketplace = https://github.com/nagual69/mcp-od-marketplace.git
+
 ---
 
 ## How This Plan Differs from V1

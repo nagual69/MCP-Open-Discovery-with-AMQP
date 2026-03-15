@@ -18,6 +18,7 @@ param(
 
     # General
     [string]$ProjectName,
+    [string]$Ssh,
     [switch]$NoLogs,
     [switch]$Help
 )
@@ -78,10 +79,16 @@ if ($Help) {
     Write-Host "  .\rebuild_deploy_prod.ps1 -Amqp                 # AMQP transport only (external broker)" 
     Write-Host "  .\rebuild_deploy_prod.ps1 -Stdio -Http          # StdIO + HTTP transports" 
     Write-Host "  .\rebuild_deploy_prod.ps1 -NoLogs               # Don't tail logs"
+    Write-Host "  .\rebuild_deploy_prod.ps1 -Ssh user@host        # Run against remote Docker host over SSH"
     Write-Host "  Deprecated: -WithAmqp (equivalent to -Amqp -WithRabbitMq)" -ForegroundColor DarkYellow
     Write-Host "  Options: -ProjectName <name>  # Overrides COMPOSE_PROJECT_NAME for this run"
     Write-Host "  Note: Compose project is scoped as '$ProjectName' (override with -ProjectName or COMPOSE_PROJECT_NAME)"
     exit 0
+}
+
+if (-not [string]::IsNullOrWhiteSpace($Ssh)) {
+    $env:DOCKER_HOST = "ssh://$Ssh"
+    Write-Host ("Remote Docker host enabled via DOCKER_HOST={0}" -f $env:DOCKER_HOST) -ForegroundColor Cyan
 }
 
 # Handle deprecated alias

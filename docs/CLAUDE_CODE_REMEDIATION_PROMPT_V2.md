@@ -1,6 +1,29 @@
 # MCP Open Discovery v2.0 — Architectural Remediation Prompt V2
 ## Instructions for Claude Code
 
+> **COMPLETION STATUS — Updated 2026-03-15**
+>
+> | Phase | Status | Notes |
+> |-------|--------|-------|
+> | Phase 0: SQLite Plugin Store Schema | ✅ **COMPLETE** | `tools/plugins/db/schema.sql` + `plugin-db.js` implemented and operational |
+> | Phase 1: Plugin Manager Lifecycle | ✅ **COMPLETE** | `tools/plugins/plugin-manager.js` — install, activate, deactivate, update, uninstall, list all working |
+> | Phase 2: Plugin Registry | ✅ **COMPLETE** | `tools/plugins/plugin-registry.js` — initialize, bootstrapBuiltinPlugins, getStats, getPromptCounts, reset |
+> | Phase 3: Convert Built-in Tool Groups to Plugins | ✅ **COMPLETE** | **10 plugins** built and operational: `credentials`, `marketplace`, `memory-cmdb`, `net-utils`, `nmap`, `prompts`, `proxmox`, `registry-tools`, `snmp`, `zabbix`. All in `plugins/builtin/` as signed-hash zips. All legacy `tools/*_tools_sdk.js` files renamed `.deprecated`. |
+> | Phase 4: Transport Migration to Streamable HTTP | ✅ **COMPLETE** | `tools/transports/core/http-transport.js` uses `StreamableHTTPServerTransport` from `@modelcontextprotocol/sdk/server/streamableHttp.js` |
+> | Phase 5: Registry Lifecycle Management Tools | ✅ **COMPLETE** | `registry-tools` plugin exposes `mcp_od_registry_list_plugins`, `mcp_od_registry_list_available`, `mcp_od_registry_install`, `mcp_od_registry_activate`, `mcp_od_registry_deactivate`, `mcp_od_registry_update`, `mcp_od_registry_audit_log`, `mcp_od_registry_add_signing_key`. Marketplace plugin exposes `mcp_od_store_*` (9 tools). |
+> | Phase 6: Remove `setRequestHandler` Deprecation | ✅ **COMPLETE** | No active `setRequestHandler` calls in non-deprecated files |
+> | Phase 7: Server Entry Point Wiring | ✅ **COMPLETE** | `mcp_open_discovery_server.js` calls `pluginRegistry.initialize()` + `pluginRegistry.bootstrapBuiltinPlugins()`; old `registerAllTools/registerAllResources/registerAllPrompts` removed |
+> | Phase 8: Integration Verification | ✅ **COMPLETE** | Server healthy at `http://localhost:6270/health`: **10 plugins, 74 tools, 5 prompts** active |
+>
+> **Current server state:** `totalPlugins: 10`, `activePlugins: 10`, `activeTools: 74`, `activePrompts: 5`
+>
+> **Active plugins:** credentials, marketplace, memory-cmdb, net-utils, nmap, prompts, proxmox, registry-tools, snmp, zabbix
+>
+> **Non-plugin tool files remaining** (intentional — utilities/middleware, no migration needed):
+> - `tools/oauth_middleware_sdk.js` — HTTP transport OAuth middleware
+> - `tools/sandbox.js` — stub utility
+> - `tools/secrets_provider.js` — cloud secrets wrapper (AWS/Azure/local; lazy-loads credentials_manager)
+
 You are performing a **foundational architectural transformation** of the MCP Open Discovery server (`mcp-open-discovery`). This is not an incremental patch — it is a ground-up restructuring of how tools, resources, and prompts are managed, distributed, and executed.
 
 **Read this entire document before touching any file.**
@@ -27,22 +50,22 @@ The `docs/align_tooling_api.txt` file explicitly states these were never aligned
 
 ## Work Order
 
-Complete phases in strict order. Each phase has a gate — do not proceed until the gate passes.
+All phases are **complete as of 2026-03-15**. The sequence below is preserved for historical reference and for use if re-running this remediation from scratch.
 
 ```
-Phase 0: SQLite Plugin Store Schema
-Phase 1: Plugin Manager (Lifecycle State Machine)
-Phase 2: Plugin Registry (Replaces Current Registry Core)
-Phase 3: Convert Built-in Tool Groups to Blessed Plugins
-Phase 4: Transport Migration to Streamable HTTP
-Phase 5: Apply Remaining Findings Within Plugin Context
-Phase 6: Server Entry Point Wiring
-Phase 7: Integration Verification
+✅ Phase 0: SQLite Plugin Store Schema
+✅ Phase 1: Plugin Manager (Lifecycle State Machine)
+✅ Phase 2: Plugin Registry (Replaces Current Registry Core)
+✅ Phase 3: Convert Built-in Tool Groups to Blessed Plugins
+✅ Phase 4: Transport Migration to Streamable HTTP
+✅ Phase 5: Apply Remaining Findings Within Plugin Context
+✅ Phase 6: Server Entry Point Wiring
+✅ Phase 7: Integration Verification
 ```
 
 ---
 
-## Phase 0: SQLite Plugin Store Schema
+## Phase 0: SQLite Plugin Store Schema ✅ COMPLETE
 
 ### Objective
 
@@ -487,7 +510,7 @@ module.exports = {
 
 ---
 
-## Phase 1: Plugin Manager (Lifecycle State Machine)
+## Phase 1: Plugin Manager (Lifecycle State Machine) ✅ COMPLETE
 
 ### Objective
 
@@ -978,7 +1001,7 @@ module.exports = {
 
 ---
 
-## Phase 2: Plugin Registry (Replaces Current Registry Core)
+## Phase 2: Plugin Registry (Replaces Current Registry Core) ✅ COMPLETE
 
 ### Objective
 
@@ -1080,7 +1103,7 @@ module.exports = { initialize, bootstrapBuiltinPlugins, getStats };
 
 ---
 
-## Phase 3: Convert Built-in Tool Groups to Blessed Plugins
+## Phase 3: Convert Built-in Tool Groups to Blessed Plugins ✅ COMPLETE
 
 ### Objective
 
@@ -1340,31 +1363,37 @@ function collectFiles(dir) {
 
 For each tool group (net, memory, credentials, proxmox, snmp, zabbix, nmap, registry-tools):
 
-- [ ] Create `plugins/src/<group>/mcp-plugin.json` with correct capabilities list
-- [ ] Create `plugins/src/<group>/src/index.js` with `createPlugin(server)` export
-- [ ] Move all tool registration logic from `tools/<old_module>_tools_sdk.js` into `createPlugin(server)`
-- [ ] Rename all tools to `mcp_od_<group>_<tool>` format within the new registration
-- [ ] Add `annotations` block to every tool (use matrix from V1 remediation prompt — same values apply)
-- [ ] Add `response_format` parameter to all data-returning tools
-- [ ] Add `limit` / `offset` pagination to all list/discovery tools using `paginateResults()`
-- [ ] Return `structuredContent` alongside `content` in every tool response
-- [ ] Build plugin: ensure `dist/` is populated
-- [ ] Run build script: `node plugins/scripts/build-blessed-plugins.js`
-- [ ] Verify zip created in `plugins/builtin/`
+- [x] Create `plugins/src/<group>/mcp-plugin.json` with correct capabilities list
+- [x] Create `plugins/src/<group>/src/index.js` with `createPlugin(server)` export
+- [x] Move all tool registration logic from `tools/<old_module>_tools_sdk.js` into `createPlugin(server)`
+- [x] Rename all tools to `mcp_od_<group>_<tool>` format within the new registration
+- [x] Add `annotations` block to every tool (use matrix from V1 remediation prompt — same values apply)
+- [x] Add `response_format` parameter to all data-returning tools
+- [x] Add `limit` / `offset` pagination to all list/discovery tools using `paginateResults()`
+- [x] Return `structuredContent` alongside `content` in every tool response
+- [x] Build plugin: ensure `dist/` is populated
+- [x] Run build script: `node plugins/scripts/build-blessed-plugins.js`
+- [x] Verify zip created in `plugins/builtin/`
 
-**Priority conversion order** (do in this sequence):
-1. `net-utils` — simplest, establishes the pattern
-2. `credentials` — well-bounded, no external deps
-3. `registry-tools` — needed for the lifecycle management tools (see Phase 5)
-4. `memory-cmdb`
-5. `zabbix`
-6. `proxmox`
-7. `nmap`
-8. `snmp` — most complex, do last
+**All 10 plugins built and active** (8 original groups + `marketplace` + `prompts`):
+
+| Plugin | Tools | Zip |
+|--------|-------|-----|
+| credentials | 5 | `credentials@1.0.0.zip` |
+| marketplace | 9 | `marketplace@1.0.0.zip` |
+| memory-cmdb | 9 | `memory-cmdb@1.0.0.zip` |
+| net-utils | 9 | `net-utils@1.0.0.zip` |
+| nmap | 5 | `nmap@1.0.0.zip` |
+| prompts | — / 5 prompts | `prompts@1.0.0.zip` |
+| proxmox | 10 | `proxmox@1.0.0.zip` |
+| registry-tools | 8 | `registry-tools@1.0.0.zip` |
+| snmp | 12 | `snmp@1.0.0.zip` |
+| zabbix | 7 | `zabbix@1.0.0.zip` |
+| **Total** | **74 tools + 5 prompts** | |
 
 ---
 
-## Phase 4: Transport Migration to Streamable HTTP
+## Phase 4: Transport Migration to Streamable HTTP ✅ COMPLETE
 
 This phase is **unchanged from the V1 prompt** (Finding 7). Execute it exactly as specified in `CLAUDE_CODE_REMEDIATION_PROMPT.md` Phase 4 / Finding 7.
 
@@ -1374,7 +1403,7 @@ The streamable HTTP transport is not affected by the plugin architecture change.
 
 ---
 
-## Phase 5: Registry Lifecycle Management Tools
+## Phase 5: Registry Lifecycle Management Tools ✅ COMPLETE
 
 ### Objective
 
@@ -1565,13 +1594,13 @@ server.registerTool(
 
 ---
 
-## Phase 6: Remove `setRequestHandler` Deprecation
+## Phase 6: Remove `setRequestHandler` Deprecation ✅ COMPLETE
 
 **Unchanged from V1 remediation prompt (Finding 5).** Execute as specified. The `logging/setLevel` handler is the only instance. Verify with `grep -rn "setRequestHandler" . --include="*.js" --exclude-dir=node_modules`.
 
 ---
 
-## Phase 7: Server Entry Point Wiring
+## Phase 7: Server Entry Point Wiring ✅ COMPLETE
 
 Update `mcp_open_discovery_server.js` to use the new plugin registry:
 
@@ -1601,7 +1630,7 @@ npm install better-sqlite3
 
 ---
 
-## Phase 8: Integration Verification
+## Phase 8: Integration Verification ✅ COMPLETE
 
 ```bash
 # 1. Schema created

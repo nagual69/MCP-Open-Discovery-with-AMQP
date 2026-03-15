@@ -12,6 +12,8 @@
  * - AMQP auto-recovery functionality
  * - Container detection and smart defaults
  * - All existing environment variables and configuration
+ * MIGRATE: the typed replacement is under src/transports/ and intentionally drops
+ * placeholder gRPC handling and repeated logger/status boilerplate.
  */
 
 const { startStdioTransport, getStdioStatus } = require('./stdio-transport');
@@ -31,7 +33,7 @@ const {
  * full backward compatibility with all environment variables.
  */
 const TRANSPORT_CONFIG = {
-  // Supported transport types (matches main server CONFIG)
+  // DEAD: grpc remains listed here for legacy compatibility even though no runtime exists.
   SUPPORTED_TRANSPORTS: ['stdio', 'http', 'amqp', 'grpc'],
   
   // Container detection (matches existing isRunningInContainer() logic)
@@ -297,6 +299,7 @@ async function startAllTransports(mcpServer, config = {}) {
             break;
             
           case 'grpc':
+            // DEAD: placeholder branch only. Do not expand here; move real transport work into src/transports.
             // gRPC transport ready for future implementation
             logTransport('info', 'gRPC transport requested but not yet implemented');
             
@@ -499,6 +502,7 @@ async function cleanupAllTransports(transportResults = {}) {
           break;
           
         case 'grpc':
+          // DEAD: cleanup placeholder for a transport that is not implemented.
           // TODO: Implement gRPC cleanup when transport is ready
           cleanupResult = { success: true, message: 'gRPC cleanup not yet implemented' };
           break;

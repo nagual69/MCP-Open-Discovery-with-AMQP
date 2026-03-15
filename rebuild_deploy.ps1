@@ -4,6 +4,7 @@
 
 param(
     [switch]$BuildAll,
+    [string]$Ssh,
     [switch]$Help,
     [switch]$NoLogs
 )
@@ -48,13 +49,20 @@ if ($Help) {
     Write-Host "Usage:" -ForegroundColor Yellow
     Write-Host "  .\rebuild_deploy.ps1           # Rebuild only the MCP server container (default)"
     Write-Host "  .\rebuild_deploy.ps1 -BuildAll # Rebuild all containers (MCP server, RabbitMQ, SNMP agents, Zabbix stack)"
+    Write-Host "  .\rebuild_deploy.ps1 -Ssh user@host # Run against remote Docker host over SSH"
     Write-Host "  .\rebuild_deploy.ps1 -Help     # Show this help message" 
     Write-Host "  .\rebuild_deploy.ps1 -NoLogs   # Do not tail logs after start"
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor Green
     Write-Host "  .\rebuild_deploy.ps1           # Fast rebuild for code changes"
     Write-Host "  .\rebuild_deploy.ps1 -BuildAll # Full rebuild for infrastructure changes"
+    Write-Host "  .\rebuild_deploy.ps1 -Ssh ubuntu@192.168.200.95"
     exit 0
+}
+
+if (-not [string]::IsNullOrWhiteSpace($Ssh)) {
+    $env:DOCKER_HOST = "ssh://$Ssh"
+    Write-Host ("Remote Docker host enabled via DOCKER_HOST={0}" -f $env:DOCKER_HOST) -ForegroundColor Cyan
 }
 
 if ($BuildAll) {

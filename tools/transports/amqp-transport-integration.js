@@ -12,6 +12,9 @@
  * - Tool category-based message routing
  * - Enterprise-grade error handling and monitoring
  * - Production-ready scaling and performance
+ * MIGRATE: this file currently combines config, startup orchestration, health,
+ * auto-recovery, and transport lifecycle. The typed replacement narrows this to
+ * an adapter seam under src/transports/amqp.
  */
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
@@ -520,6 +523,8 @@ async function testAmqpConnection() {
  * Get AMQP connection status including auto-recovery information
  */
 function getAmqpStatus() {
+  // DEPRECATED: process-global AMQP status plumbing is a legacy compatibility path.
+  // MIGRATE: move to an explicit runtime-owned state object in the typed transport layer.
   const status = {
     connected: !!process.amqpTransport,
     transport: !!process.amqpTransport,
@@ -560,6 +565,8 @@ function getAmqpStatus() {
 }
 /**
  * Health check enhancement with AMQP status and auto-recovery information
+ * MIGRATE: fold this into the typed health response path instead of mutating
+ * transport-specific payloads in-place inside the AMQP integration.
  */
 function enhanceHealthCheck(originalHealthResponse) {
   const amqpStatus = getAmqpStatus();
