@@ -6,9 +6,9 @@
   "description": "Proxmox VE hypervisor integration — nodes, VMs, containers, storage, networks and cluster resources.",
   "entry": "dist/index.js",
   "dist": {
-    "hash": "sha256:b76a2e6648fcc6fa1b98160951364d96bf069e39fa6fc8e2b08c47089c8bb4d9",
-    "fileCount": 1,
-    "totalBytes": 16441
+    "hash": "sha256:ff138cd07fadac20a2fd84efed02ce24ec6dc246c5454b0a7ba653a103f08976",
+    "fileCount": 12,
+    "totalBytes": 40709
   },
   "dependenciesPolicy": "bundled-only",
   "permissions": {

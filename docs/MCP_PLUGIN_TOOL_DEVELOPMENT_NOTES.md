@@ -31,6 +31,7 @@ This guide targets plugins that are authored under `plugins/src/<plugin>/`, comp
 - Support `response_format` for read/query/statistics tools so clients can choose markdown or JSON.
 - Keep response helpers package-local so the plugin remains portable.
 - If prompt or resource plugins still use older SDK registration forms, keep the loader compatibility layer at the boundary instead of leaking that complexity into package-local business logic.
+- If a plugin is intentionally host-coupled, isolate that dependency in a single adapter module instead of importing plugin-manager or DB code throughout the package.
 
 ## Runtime And Lifecycle Requirements
 
@@ -39,6 +40,7 @@ This guide targets plugins that are authored under `plugins/src/<plugin>/`, comp
 - Resolve non-code runtime assets from compiled output, not only from source paths.
 - Set temporary environment variables before importing DB or plugin-manager modules in validation scripts, or module-level environment reads will point at the real workspace state.
 - Close SQLite handles before deleting temporary directories on Windows.
+- Any background timers created by a plugin module must be `unref()`'d or explicitly disposed during teardown, or isolated validation can print success and still hang at process exit.
 
 ## Packaging And Dependency Rules
 
@@ -55,13 +57,17 @@ This guide targets plugins that are authored under `plugins/src/<plugin>/`, comp
 - `memory-cmdb`: SQLite-backed stateful tools and CMDB query patterns.
 - `prompts`: prompt-only plugin shape with no tools and capability-aware lifecycle validation.
 - `nmap`: external-command execution plugin shape with packaging-safe runtime dependencies.
+- `proxmox`: credential-backed HTTPS API plugin shape with package-local credential decryption and read-only cluster discovery tools.
+- `zabbix`: env-backed JSON-RPC API plugin shape with package-local client/session reuse.
+- `marketplace`: host-coupled administrative plugin shape with a package-local adapter for plugin-manager and plugin-db access.
+- `registry-tools`: host-coupled lifecycle-control plugin shape with package-local adapters for activation, update, audit, and trusted-key operations.
 
 ## Validation Checklist
 
 - Build the plugin package locally.
 - Rebuild blessed plugin zips so `dist.hash` and zip contents stay aligned.
 - Run lifecycle validation against the packaged zip.
-- Confirm the captured tool count matches `mcp-plugin.json` capabilities.
+- Confirm the captured tools, resources, and prompts match `mcp-plugin.json` capabilities.
 - Verify any persistent state is created only inside the intended temp or data directory.
 
 ## Known Gaps
@@ -69,3 +75,5 @@ This guide targets plugins that are authored under `plugins/src/<plugin>/`, comp
 - The current builder vendors whole dependency trees, which is correct but not yet size-efficient.
 - Source-root development and direct directory installs still assume workspace dependencies are available unless a packaged artifact is used.
 - A Marketplace publishing pipeline should eventually produce a more explicit bundled dependency manifest instead of relying only on import scanning and recursive package copying.
+- Credential-backed API plugins still need a cleaner reusable package-local auth/client pattern so future conversions do not keep re-implementing secure store adapters.
+- The typed host plugin manager still does not expose install-time checksum or signature override inputs that the legacy marketplace surface advertised.

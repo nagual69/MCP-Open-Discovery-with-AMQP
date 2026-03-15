@@ -6,9 +6,9 @@
   "description": "Zabbix monitoring platform integration — host discovery, metrics, alerts, problems, events and triggers.",
   "entry": "dist/index.js",
   "dist": {
-    "hash": "sha256:a87c1558b7f655ff05274341e3d9b52c7ff3609146af2a50cface692b3d25b66",
-    "fileCount": 1,
-    "totalBytes": 25537
+    "hash": "sha256:4fade5e730882c73c6473ac9bf244e9c3f6a9a446672f077a76e71b5cf0742e4",
+    "fileCount": 12,
+    "totalBytes": 65945
   },
   "dependenciesPolicy": "bundled-only",
   "permissions": {

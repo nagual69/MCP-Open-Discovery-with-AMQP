@@ -28,8 +28,8 @@
   "dependencies": [],
   "dependenciesPolicy": "bundled-only",
   "dist": {
-    "hash": "sha256:d360d8142ddf97058517fe64d404f654b67398d197fab52bc69032caf7835040",
-    "fileCount": 1,
-    "totalBytes": 10911
+    "hash": "sha256:9c579635b2ecb20e7864335be592f21e1adeaae843165dafc03d219d38b66ae7",
+    "fileCount": 12,
+    "totalBytes": 30364
   }
 }
