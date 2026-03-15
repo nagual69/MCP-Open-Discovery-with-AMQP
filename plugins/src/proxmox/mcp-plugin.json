@@ -1,0 +1,33 @@
+{
+  "manifestVersion": "2",
+  "name": "proxmox",
+  "id": "com.vibeforge.mcp-od.proxmox",
+  "version": "1.0.0",
+  "description": "Proxmox VE hypervisor integration — nodes, VMs, containers, storage, networks and cluster resources.",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:b76a2e6648fcc6fa1b98160951364d96bf069e39fa6fc8e2b08c47089c8bb4d9",
+    "fileCount": 1,
+    "totalBytes": 16441
+  },
+  "dependenciesPolicy": "bundled-only",
+  "permissions": {
+    "network": true,
+    "fsRead": true,
+    "fsWrite": true
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_proxmox_list_nodes",
+      "mcp_od_proxmox_get_node_details",
+      "mcp_od_proxmox_list_vms",
+      "mcp_od_proxmox_get_vm_details",
+      "mcp_od_proxmox_list_containers",
+      "mcp_od_proxmox_get_container_details",
+      "mcp_od_proxmox_list_storage",
+      "mcp_od_proxmox_list_networks",
+      "mcp_od_proxmox_cluster_resources",
+      "mcp_od_proxmox_get_metrics"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "manifestVersion": "2",
+  "name": "nmap",
+  "id": "com.vibeforge.mcp-od.nmap",
+  "version": "1.0.0",
+  "description": "Nmap network scanner — ping sweep, TCP SYN/connect/UDP port scans and service version detection.",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:eba675e45dd0040201abad9093f9c329d74b6372643b32178fb975ccc3329bcf",
+    "fileCount": 1,
+    "totalBytes": 10807
+  },
+  "dependenciesPolicy": "bundled-only",
+  "permissions": {
+    "network": true,
+    "exec": true
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_nmap_ping_scan",
+      "mcp_od_nmap_tcp_syn_scan",
+      "mcp_od_nmap_tcp_connect_scan",
+      "mcp_od_nmap_udp_scan",
+      "mcp_od_nmap_version_scan"
+    ]
+  }
+}

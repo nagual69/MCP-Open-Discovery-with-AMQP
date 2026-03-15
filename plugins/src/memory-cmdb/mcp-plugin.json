@@ -1,0 +1,31 @@
+{
+  "manifestVersion": "2",
+  "name": "memory-cmdb",
+  "id": "com.vibeforge.mcp-od.memory-cmdb",
+  "version": "1.0.0",
+  "description": "CMDB / Configuration Item memory with SQLite persistence and AES-256 encryption. Stores infrastructure CI objects keyed by ci:type:identifier.",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:7426b33d74e8ac510e54793aaa3137157acbedd6d1578066e31c7d582e4dcf16",
+    "fileCount": 1,
+    "totalBytes": 14092
+  },
+  "dependenciesPolicy": "bundled-only",
+  "permissions": {
+    "fsRead": true,
+    "fsWrite": true
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_memory_get",
+      "mcp_od_memory_set",
+      "mcp_od_memory_merge",
+      "mcp_od_memory_query",
+      "mcp_od_memory_clear",
+      "mcp_od_memory_stats",
+      "mcp_od_memory_rotate_key",
+      "mcp_od_memory_save",
+      "mcp_od_memory_migrate_from_filesystem"
+    ]
+  }
+}

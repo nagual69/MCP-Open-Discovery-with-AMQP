@@ -7,10 +7,10 @@
  */
 
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
+const { SetLevelRequestSchema } = require('@modelcontextprotocol/sdk/types.js');
 const { setDefaultLevel, setSessionLevel, logAndNotify } = require('./tools/mcp/logging_adapter');
 const { broadcast, buildNotification } = require('./tools/mcp/notification_hub');
-const { registerAllTools, registerAllResources, getServerInstance } = require('./tools/registry/index');
-const { registerAllPrompts } = require('./tools/prompts_sdk');
+const pluginRegistry = require('./tools/plugins/plugin-registry');
 
 // Transport Manager v2.0 - Modular Architecture
 const { 
@@ -21,9 +21,8 @@ const {
   parseTransportMode
 } = require('./tools/transports/core/transport-manager');
 
-// Import OAuth and registry utilities  
+// Legacy registry utilities — kept for non-tool resource/prompt counts during transition
 const { 
-  getRegistry, 
   getResourceCounts, 
   getPromptCounts, 
   cleanup 
@@ -126,7 +125,8 @@ async function createMcpServer() {
       capabilities: {
         tools: { listChanged: true },
         resources: { listChanged: true },
-        prompts: { listChanged: true }
+        prompts: { listChanged: true },
+        logging: {}
       }
     }
   );
@@ -140,49 +140,28 @@ async function createMcpServer() {
   } catch {}
 
   try {
-  // Register all components
-    log('info', '[SINGLETON] Starting tool registration');
-    await registerAllTools(globalMcpServer);
-    // Validate that registry captured the server instance for dynamic ops
-    try {
-      const srv = getServerInstance && getServerInstance();
-      if (!srv) {
-        log('warn', '[SINGLETON] Registry did not capture server instance; dynamic ops may fail');
-      }
-    } catch {}
-    log('info', '[SINGLETON] Tool registration complete');
-
-    log('info', '[SINGLETON] Starting resource registration');
-    await registerAllResources(globalMcpServer);
-    log('info', '[SINGLETON] Resource registration complete');
-
-    log('info', '[SINGLETON] Starting prompt registration');
-    const promiseResult = registerAllPrompts(globalMcpServer);
-    if (promiseResult && typeof promiseResult.then === 'function') {
-      await promiseResult;
-    }
-    log('info', '[SINGLETON] Prompt registration complete');
+    // ── Phase 7: Plugin-centric startup ─────────────────────────────────────
+    // initialize() must come first — it calls setMcpServer() which activate() requires
+    log('info', '[SINGLETON] Initializing plugin registry against MCP server');
+    await pluginRegistry.initialize(globalMcpServer);
+    log('info', '[SINGLETON] ✅ Plugin registry initialized');
+    log('info', '[SINGLETON] Bootstrapping built-in plugins');
+    await pluginRegistry.bootstrapBuiltinPlugins();
+    log('info', '[SINGLETON] ✅ Built-in plugins bootstrapped');
 
     serverInitialized = true;
     log('info', '[SINGLETON] ✅ MCP server instance ready for all transports');
 
-    // Register request handler for logging/setLevel (per MCP spec)
+    // ── Phase 6: logging/setLevel via low-level Server API (no deprecated path) ──
     try {
-      if (typeof globalMcpServer.setRequestHandler === 'function') {
-        globalMcpServer.setRequestHandler('logging/setLevel', async (params, context) => {
-          const level = params?.level;
-          const sessionId = context?.sessionId || globalMcpServer?.server?._transport?.sessionId;
-          if (!level) {
-            return { ok: false, error: 'level is required' };
-          }
-          setDefaultLevel(level);
-          if (sessionId) {
-            setSessionLevel(sessionId, level);
-          }
-          // Acknowledge
-          return { ok: true, level, sessionId };
-        });
-      }
+      globalMcpServer.server.setRequestHandler(SetLevelRequestSchema, async (request) => {
+        const level = request.params?.level;
+        const sessionId = request.params?._meta?.sessionId;
+        if (!level) return {};
+        setDefaultLevel(level);
+        if (sessionId) setSessionLevel(sessionId, level);
+        return {};
+      });
     } catch (e) {
       log('warn', 'Failed to register logging/setLevel handler', { error: e.message });
     }
@@ -202,8 +181,7 @@ async function createMcpServer() {
  * Health data provider for transport manager
  */
 function getHealthData() {
-  const registry = getRegistry();
-  const stats = registry ? registry.getStats() : { tools: 0, modules: 0, categories: 0 };
+  const stats = pluginRegistry.getStats();
   
   // Get AMQP status if available
   let amqpStatus = null;
@@ -284,7 +262,9 @@ async function startServer() {
     });
 
     // Start all transports using the transport manager
-    const transportResults = await startAllTransports(mcpServer, transportModes, transportConfig);
+    // transportModes is already encoded in TRANSPORT_MODE env var which detectEnvironment() picks up;
+    // pass transportConfig directly so getHealthData (and all other overrides) reach the transports.
+    const transportResults = await startAllTransports(mcpServer, transportConfig);
 
     // Report startup status
     if (transportResults.successful > 0) {
