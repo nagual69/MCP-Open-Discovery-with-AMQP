@@ -25,10 +25,12 @@ What is complete now:
 - Typed runtime parity is now implemented in `src/` for `logging/setLevel`, session-aware log notifications, OAuth middleware and protected-resource metadata endpoints, stateless HTTP MCP requests, graceful shutdown/error handling, and lifecycle-driven list-changed notifications.
 - Package startup scripts, Docker container startup, and `rebuild_deploy.ps1` now default to the typed runtime path and the deploy script runs the typed typecheck gate first.
 - Runtime-facing smoke tests now target the typed runtime path, including `test_health_func`, `test_transport_manager`, `test_transport_integration`, `test_sdk_server`, and the stdio startup paths used by the master suites.
+- `testing/master_test_suite.js` now passes end to end against the typed stdio runtime with typed tool IDs and schema-compatible arguments, and `npm test` reports 60/60 tool passes.
+- Typed policy enforcement coverage now lives in `testing/test_typed_policy_enforcements.js` and is exposed via `npm run test:policy`; the older legacy policy script remains available only as explicit compatibility coverage for the JS host path.
 
 What is not complete yet:
-- The typed plugin manager/loader still needs final hardening for full lifecycle-policy parity before `src/` can replace the legacy runtime cleanly.
-- The broader test suite still has many imports against `tools/...` and legacy startup surfaces.
+- The typed plugin manager/loader lifecycle-policy hardening is complete enough for primary runtime use, including typed coverage for strict capabilities, sandbox gating, runtime dependency gating, native addon blocking, and required signatures.
+- Some legacy audit and policy-enforcement flows still execute against `tools/...` surfaces and produce expected/non-blocking failures outside the typed master suite path.
 - README and the final end-to-end verification flows still need to be updated to describe and validate the typed runtime as the primary path.
 
 Operational interpretation:
@@ -1486,7 +1488,7 @@ The remaining work should be executed in this order so `src/` becomes the only r
 The next implementation pass should stay tightly scoped to hardening and cleanup around the typed runtime rather than expanding plugin surface area:
 
 1. Tighten plugin-manager and loader lifecycle-policy behavior now that the typed runtime path is the default startup path.
-2. Continue migrating the remaining legacy-heavy tests and audit flows off `tools/...` and other old runtime surfaces.
+2. Migrate or retire the remaining legacy audit and policy-enforcement flows that still depend on `tools/...` runtime behavior.
 3. Update README and run the final end-to-end cutover verification suite against the typed runtime defaults.
 
 ---

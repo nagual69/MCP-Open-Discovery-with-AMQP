@@ -58,7 +58,7 @@ function serverLog(level: 'debug' | 'info' | 'warn' | 'error', message: string, 
 }
 
 export function createAppConfig(): AppConfig {
-  const port = Number.parseInt(process.env.HTTP_PORT || process.env.PORT || '3000', 10);
+  const port = Number.parseInt(process.env.HTTP_PORT || process.env.PORT || '6270', 10);
 
   return {
     nodeEnv: process.env.NODE_ENV || 'development',

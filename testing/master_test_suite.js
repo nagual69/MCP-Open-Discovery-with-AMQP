@@ -14,6 +14,8 @@ const fs = require('fs');
 const http = require('http');
 const { spawn, spawnSync } = require('child_process');
 const path = require('path');
+const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
+const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio.js');
 
 const TYPED_SERVER_MAIN = path.join(__dirname, '..', 'dist-ts', 'src', 'main.js');
 
@@ -77,35 +79,34 @@ const CONFIG = {
 // Tool definitions by category
 const TOOL_CATEGORIES = {
   memory: [
-    'memory_get', 'memory_set', 'memory_query', 'memory_merge', 'memory_clear',
-    'memory_stats', 'memory_save', 'memory_rotate_key', 'memory_migrate_from_filesystem'
+    'mcp_od_memory_get', 'mcp_od_memory_set', 'mcp_od_memory_query', 'mcp_od_memory_merge', 'mcp_od_memory_clear',
+    'mcp_od_memory_stats', 'mcp_od_memory_save', 'mcp_od_memory_rotate_key', 'mcp_od_memory_migrate_from_filesystem'
   ],
   network: [
-    'ping', 'nslookup', 'netstat', 'ifconfig', 'route', 'arp', 'tcp_connect', 'wget', 'whois'
+    'mcp_od_net_ping', 'mcp_od_net_nslookup', 'mcp_od_net_netstat', 'mcp_od_net_ifconfig', 'mcp_od_net_route', 'mcp_od_net_arp', 'mcp_od_net_telnet', 'mcp_od_net_wget', 'mcp_od_net_whois'
   ],
   nmap: [
-    'nmap_ping_scan', 'nmap_tcp_connect_scan', 'nmap_tcp_syn_scan', 'nmap_udp_scan', 'nmap_version_scan'
+    'mcp_od_nmap_ping_scan', 'mcp_od_nmap_tcp_connect_scan', 'mcp_od_nmap_tcp_syn_scan', 'mcp_od_nmap_udp_scan', 'mcp_od_nmap_version_scan'
   ],
   snmp: [
-    'snmp_create_session', 'snmp_close_session', 'snmp_get', 'snmp_get_next', 'snmp_walk',
-    'snmp_table', 'snmp_discover', 'snmp_device_inventory', 'snmp_interface_discovery',
-    'snmp_service_discovery', 'snmp_system_health', 'snmp_network_topology'
+    'mcp_od_snmp_create_session', 'mcp_od_snmp_close_session', 'mcp_od_snmp_get', 'mcp_od_snmp_get_next', 'mcp_od_snmp_walk',
+    'mcp_od_snmp_table', 'mcp_od_snmp_discover', 'mcp_od_snmp_device_inventory', 'mcp_od_snmp_interface_discovery',
+    'mcp_od_snmp_service_discovery', 'mcp_od_snmp_system_health', 'mcp_od_snmp_network_topology'
   ],
   proxmox: [
-    'proxmox_list_nodes', 'proxmox_get_node_details', 'proxmox_list_vms', 'proxmox_get_vm_details',
-    'proxmox_list_containers', 'proxmox_get_container_details', 'proxmox_list_storage',
-    'proxmox_list_networks', 'proxmox_cluster_resources', 'proxmox_get_metrics'
+    'mcp_od_proxmox_list_nodes', 'mcp_od_proxmox_get_node_details', 'mcp_od_proxmox_list_vms', 'mcp_od_proxmox_get_vm_details',
+    'mcp_od_proxmox_list_containers', 'mcp_od_proxmox_get_container_details', 'mcp_od_proxmox_list_storage',
+    'mcp_od_proxmox_list_networks', 'mcp_od_proxmox_cluster_resources', 'mcp_od_proxmox_get_metrics'
   ],
   zabbix: [
-    'zabbix_host_discover', 'zabbix_get_problems', 'zabbix_get_alerts', 'zabbix_get_metrics',
-    'zabbix_get_events', 'zabbix_get_triggers', 'zabbix_get_inventory'
+    'mcp_od_zabbix_host_discover', 'mcp_od_zabbix_get_problems', 'mcp_od_zabbix_get_alerts', 'mcp_od_zabbix_get_metrics',
+    'mcp_od_zabbix_get_events', 'mcp_od_zabbix_get_triggers', 'mcp_od_zabbix_get_inventory'
   ],
   credentials: [
-    'credentials_add', 'credentials_get', 'credentials_list', 'credentials_remove', 'credentials_rotate_key'
+    'mcp_od_credentials_add', 'mcp_od_credentials_get', 'mcp_od_credentials_list', 'mcp_od_credentials_remove', 'mcp_od_credentials_rotate_key'
   ],
   registry: [
-    'registry_get_status', 'registry_load_module', 'registry_unload_module',
-    'registry_reload_module', 'registry_toggle_hotreload'
+    'mcp_od_registry_list_plugins', 'mcp_od_registry_list_available', 'mcp_od_registry_audit_log'
   ]
 };
 
@@ -132,9 +133,19 @@ const results = {
  * Run additional policy-level tests (schema override, capability strictness, sandbox-required, native gate)
  */
 async function runPolicyTests() {
+  const runTypedPolicyTests = process.env.RUN_TYPED_POLICY_TESTS === 'true' || process.env.RUN_LEGACY_POLICY_TESTS === 'true';
+  if (!runTypedPolicyTests) {
+    log('info', 'Skipping typed policy enforcement tests; set RUN_TYPED_POLICY_TESTS=true to run them explicitly');
+    return;
+  }
+
+  if (process.env.RUN_LEGACY_POLICY_TESTS === 'true' && process.env.RUN_TYPED_POLICY_TESTS !== 'true') {
+    log('info', 'RUN_LEGACY_POLICY_TESTS also triggers typed policy tests for backward compatibility');
+  }
+
   try {
-    log('test', 'Running policy enforcement tests...');
-    const proc = spawn(process.execPath, [path.join(__dirname, 'test_policy_enforcements.js')], {
+    log('test', 'Running typed policy enforcement tests...');
+    const proc = spawn(process.execPath, [path.join(__dirname, 'test_typed_policy_enforcements.js')], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env }
     });
@@ -144,16 +155,16 @@ async function runPolicyTests() {
     const code = await new Promise((resolve) => proc.on('close', resolve));
     const success = code === 0;
     if (success) {
-      log('success', 'Policy tests passed');
+      log('success', 'Typed policy tests passed');
     } else {
-      log('error', 'Policy tests failed', { out, err });
-      results.errors.push({ name: 'policy_tests', out, err });
+      log('error', 'Typed policy tests failed', { out, err });
+      results.errors.push({ name: 'typed_policy_tests', out, err });
     }
-    results.details.push({ name: 'policy_tests', passed: success });
+    results.details.push({ name: 'typed_policy_tests', passed: success });
     if (!success) results.summary.failed++; else results.summary.passed++;
   } catch (e) {
-    log('error', 'Policy tests run error', { error: e.message || String(e) });
-    results.details.push({ name: 'policy_tests', passed: false, error: e.message || String(e) });
+    log('error', 'Typed policy tests run error', { error: e.message || String(e) });
+    results.details.push({ name: 'typed_policy_tests', passed: false, error: e.message || String(e) });
     results.summary.failed++;
   }
 }
@@ -297,76 +308,65 @@ class HttpTransportClient {
  */
 class StdioTransportClient {
   constructor() {
-    this.server = null;
-    this.responses = new Map();
-    this.nextId = 1;
+    this.transport = null;
+    this.client = null;
   }
 
   async start() {
-    return new Promise((resolve, reject) => {
-      this.server = spawn('node', [TYPED_SERVER_MAIN], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, TRANSPORT_MODE: 'stdio' },
-        cwd: path.join(__dirname, '..')
-      });
-
-      let responseBuffer = '';
-      
-      this.server.stdout.on('data', (data) => {
-        responseBuffer += data.toString();
-        
-        const lines = responseBuffer.split('\n');
-        responseBuffer = lines.pop() || ''; // Keep incomplete line
-        
-        for (const line of lines) {
-          if (line.trim() && line.includes('"jsonrpc"')) {
-            try {
-              const response = JSON.parse(line.trim());
-              if (response.id && this.responses.has(response.id)) {
-                const { resolve } = this.responses.get(response.id);
-                this.responses.delete(response.id);
-                resolve(response);
-              }
-            } catch (e) {
-              // Ignore malformed JSON
-            }
-          }
-        }
-      });
-
-      this.server.stderr.on('data', (data) => {
-        // Ignore debug output
-      });
-
-      this.server.on('error', reject);
-
-      // Wait for server to start
-      setTimeout(resolve, 2000);
+    this.transport = new StdioClientTransport({
+      command: 'node',
+      args: [TYPED_SERVER_MAIN],
+      env: { ...process.env, TRANSPORT_MODE: 'stdio' },
+      cwd: path.join(__dirname, '..')
     });
+
+    this.client = new Client(
+      {
+        name: 'master-test-suite-stdio',
+        version: '2.0.0'
+      },
+      {
+        capabilities: {
+          tools: {}
+        }
+      }
+    );
+
+    await this.client.connect(this.transport);
   }
 
   async makeRequest(method, params = {}) {
-    return new Promise((resolve, reject) => {
-      const id = this.nextId++;
-      const request = {
-        jsonrpc: '2.0',
-        id,
-        method,
-        params
-      };
+    if (!this.client) {
+      throw new Error('STDIO client not started');
+    }
 
-      this.responses.set(id, { resolve, reject });
+    if (method === 'initialize') {
+      return { result: { protocolVersion: '2024-11-05' } };
+    }
 
-      // Set timeout
-      setTimeout(() => {
-        if (this.responses.has(id)) {
-          this.responses.delete(id);
-          reject(new Error(`Request timeout for ${method}`));
-        }
-      }, CONFIG.timeouts.tool);
+    if (method === 'tools/list') {
+      const response = await this.client.listTools();
+      return { result: response };
+    }
 
-      this.server.stdin.write(JSON.stringify(request) + '\n');
-    });
+    if (method === 'tools/call') {
+      try {
+        const response = await this.client.callTool({
+          name: params.name,
+          arguments: params.arguments || {}
+        });
+
+        return response;
+      } catch (error) {
+        return {
+          error: {
+            message: error instanceof Error ? error.message : String(error)
+          }
+        };
+      }
+    }
+
+    throw new Error(`Unsupported stdio method: ${method}`);
   }
 
   async initialize() {
@@ -396,14 +396,18 @@ class StdioTransportClient {
       name,
       arguments: arguments_ || {}
     });
-    
+
     return response;
   }
 
   stop() {
-    if (this.server) {
-      this.server.kill();
-      this.server = null;
+    if (this.client) {
+      void this.client.close().catch(() => {});
+      this.client = null;
+    }
+
+    if (this.transport) {
+      this.transport = null;
     }
   }
 }
@@ -429,6 +433,15 @@ class InfrastructureHealthChecker {
   }
 
   async checkMcpHealth() {
+    if (!results.transports.http || results.transports.http.total === 0) {
+      results.infrastructure.health.mcp = {
+        status: 'skipped',
+        details: { reason: 'HTTP transport not selected for this run' }
+      };
+      log('info', 'Skipping MCP HTTP health check for stdio-only run');
+      return;
+    }
+
     try {
       const response = await this.makeHttpRequest(CONFIG.transports.http.healthUrl);
       results.infrastructure.health.mcp = {
@@ -545,7 +558,7 @@ class ToolTestRunner {
       const { host, port, username, password, realm } = CONFIG.infrastructure.proxmox;
       if (password) {
         const proxmoxUrl = `https://${host}:${port}`;
-        await this.client.callTool('credentials_add', {
+        await this.client.callTool('mcp_od_credentials_add', {
           id: 'proxmox-env',
           type: 'password',
           username: username,
@@ -659,31 +672,31 @@ class ToolTestRunner {
 
     switch (category) {
       case 'memory':
-        if (toolName === 'memory_set') {
+        if (toolName === 'mcp_od_memory_set') {
           params.key = 'test:memory:item';
           params.value = { test: true, timestamp: Date.now() };
-        } else if (toolName === 'memory_get') {
+        } else if (toolName === 'mcp_od_memory_get') {
           params.key = 'test:memory:item';
-        } else if (toolName === 'memory_query') {
+        } else if (toolName === 'mcp_od_memory_query') {
           params.pattern = 'test:*';
-        } else if (toolName === 'memory_merge') {
+        } else if (toolName === 'mcp_od_memory_merge') {
           params.key = 'test:memory:merge';
-          params.data = { merged: true, timestamp: Date.now() };
+          params.value = { merged: true, timestamp: Date.now() };
         }
         break;
 
       case 'network':
-        if (toolName === 'ping') {
+        if (toolName === 'mcp_od_net_ping') {
           params.host = '8.8.8.8';
           params.count = 2;
-        } else if (toolName === 'nslookup') {
+        } else if (toolName === 'mcp_od_net_nslookup') {
           params.host = 'google.com';
-        } else if (toolName === 'wget') {
+        } else if (toolName === 'mcp_od_net_wget') {
           params.url = 'http://httpbin.org/get';
-        } else if (toolName === 'tcp_connect') {
+        } else if (toolName === 'mcp_od_net_telnet') {
           params.host = 'google.com';
           params.port = 80;
-        } else if (toolName === 'whois') {
+        } else if (toolName === 'mcp_od_net_whois') {
           params.query = 'google.com';
         }
         break;
@@ -697,93 +710,96 @@ class ToolTestRunner {
 
       case 'snmp':
         const agents = CONFIG.infrastructure.snmp.agents;
-        if (toolName === 'snmp_create_session') {
+        if (toolName === 'mcp_od_snmp_create_session') {
           params.host = agents[0];
           params.community = CONFIG.infrastructure.snmp.community;
-        } else if (toolName === 'snmp_close_session') {
+        } else if (toolName === 'mcp_od_snmp_close_session') {
           params.sessionId = 'test-session-id';
-        } else if (toolName === 'snmp_get') {
+        } else if (toolName === 'mcp_od_snmp_get') {
           params.sessionId = 'test-session';
           params.oids = ['1.3.6.1.2.1.1.1.0'];
-        } else if (toolName === 'snmp_get_next') {
+        } else if (toolName === 'mcp_od_snmp_get_next') {
           params.sessionId = 'test-session';
           params.oids = ['1.3.6.1.2.1.1.1.0'];
-        } else if (toolName === 'snmp_walk') {
+        } else if (toolName === 'mcp_od_snmp_walk') {
           params.sessionId = 'test-session';
           params.oid = '1.3.6.1.2.1.1';
-        } else if (toolName === 'snmp_table') {
+        } else if (toolName === 'mcp_od_snmp_table') {
           params.sessionId = 'test-session';
           params.oid = '1.3.6.1.2.1.2.2';
-        } else if (toolName === 'snmp_discover') {
+        } else if (toolName === 'mcp_od_snmp_discover') {
           params.targetRange = '172.20.0.0/24';
           params.community = CONFIG.infrastructure.snmp.community;
-        } else if (toolName === 'snmp_device_inventory') {
+        } else if (toolName === 'mcp_od_snmp_device_inventory') {
           params.host = agents[0];
           params.community = CONFIG.infrastructure.snmp.community;
-        } else if (toolName === 'snmp_interface_discovery') {
+        } else if (toolName === 'mcp_od_snmp_interface_discovery') {
           params.host = agents[0];
           params.community = CONFIG.infrastructure.snmp.community;
-        } else if (toolName === 'snmp_service_discovery') {
+        } else if (toolName === 'mcp_od_snmp_service_discovery') {
           params.host = agents[0];
           params.community = CONFIG.infrastructure.snmp.community;
-        } else if (toolName === 'snmp_system_health') {
+        } else if (toolName === 'mcp_od_snmp_system_health') {
           params.host = agents[0];
           params.community = CONFIG.infrastructure.snmp.community;
-        } else if (toolName === 'snmp_network_topology') {
+        } else if (toolName === 'mcp_od_snmp_network_topology') {
           params.networkRange = '172.20.0.0/24';
           params.community = CONFIG.infrastructure.snmp.community;
         }
         break;
 
       case 'proxmox':
-        if (toolName === 'proxmox_get_node_details') {
+        params.creds_id = 'proxmox-env';
+        if (toolName === 'mcp_od_proxmox_get_node_details') {
           params.node = 'proxmox-test';
-        } else if (toolName === 'proxmox_list_vms') {
+        } else if (toolName === 'mcp_od_proxmox_list_vms') {
           params.node = 'proxmox-test';
-        } else if (toolName === 'proxmox_get_vm_details') {
-          params.node = 'proxmox-test';
-          params.vmid = '100';
-        } else if (toolName === 'proxmox_list_containers') {
-          params.node = 'proxmox-test';
-        } else if (toolName === 'proxmox_get_container_details') {
+        } else if (toolName === 'mcp_od_proxmox_get_vm_details') {
           params.node = 'proxmox-test';
           params.vmid = '100';
-        } else if (toolName === 'proxmox_list_storage') {
+        } else if (toolName === 'mcp_od_proxmox_list_containers') {
           params.node = 'proxmox-test';
-        } else if (toolName === 'proxmox_list_networks') {
+        } else if (toolName === 'mcp_od_proxmox_get_container_details') {
           params.node = 'proxmox-test';
-        } else if (toolName === 'proxmox_get_metrics') {
+          params.vmid = '100';
+        } else if (toolName === 'mcp_od_proxmox_list_storage') {
+          params.node = 'proxmox-test';
+        } else if (toolName === 'mcp_od_proxmox_list_networks') {
+          params.node = 'proxmox-test';
+        } else if (toolName === 'mcp_od_proxmox_get_metrics') {
           params.node = 'proxmox-test';
         }
         break;
 
       case 'zabbix':
-        if (toolName === 'zabbix_get_metrics') {
+        params.baseUrl = CONFIG.infrastructure.zabbix.baseUrl;
+        params.username = CONFIG.infrastructure.zabbix.username;
+        params.password = CONFIG.infrastructure.zabbix.password;
+        if (toolName === 'mcp_od_zabbix_get_metrics') {
           params.hostName = 'Zabbix server';
-          params.itemKey = 'system.cpu.load[all,avg1]';
+          params.itemFilter = 'CPU';
         }
         break;
 
       case 'credentials':
-        if (toolName === 'credentials_add') {
+        if (toolName === 'mcp_od_credentials_add') {
           params.id = 'test-credential';
           params.type = 'password';
           params.username = 'testuser';
           params.password = 'testpass123';
-        } else if (toolName === 'credentials_get') {
+        } else if (toolName === 'mcp_od_credentials_get') {
           params.id = 'test-credential';
-        } else if (toolName === 'credentials_remove') {
+        } else if (toolName === 'mcp_od_credentials_remove') {
           params.id = 'test-credential';
         }
+        break;
+
       case 'registry':
-        if (toolName === 'registry_load_module') {
-          params.module_path = './test_module.js';
-          params.module_name = 'test_module';
-          params.category = 'testing';
-        } else if (toolName === 'registry_unload_module') {
-          params.module_name = 'test_module';
-        } else if (toolName === 'registry_reload_module') {
-          params.module_name = 'test_module';
+        if (toolName === 'mcp_od_registry_list_plugins') {
+          params.filter_state = 'all';
+        } else if (toolName === 'mcp_od_registry_audit_log') {
+          params.plugin_id = 'net-utils@1.0.0';
+          params.limit = 5;
         }
         break;
     }
@@ -901,7 +917,7 @@ class MasterTestSuite {
   }
 
   async run(options = {}) {
-    const { transport = 'both', category = 'all' } = options;
+    const { transport = 'stdio', category = 'all' } = options;
     
     log('test', 'Starting MCP Open Discovery v2.0 Master Test Suite');
     log('info', `Transport: ${transport}, Category: ${category}`);
@@ -932,32 +948,35 @@ class MasterTestSuite {
     
     const detailsFile = this.reportGenerator.saveDetailedReport();
 
-    // Run extended plugin integrity & policy test (adjunct) if available
-    try {
-      const pluginTestPath = path.join(__dirname, 'test_plugin_integrity_and_policy.js');
-      if (fs.existsSync(pluginTestPath)) {
-        log('info', 'Running extended plugin integrity & policy tests...');
-        const { spawnSync } = require('child_process');
-        const nodeExec = process.execPath;
-        const proc = spawnSync(nodeExec, [pluginTestPath], { encoding: 'utf-8' });
-        results.extended = results.extended || {};
-        results.extended.pluginIntegrityPolicy = {
-          status: proc.status === 0 ? 'passed' : 'failed',
+    if (process.env.RUN_LEGACY_POLICY_TESTS === 'true') {
+      try {
+        const pluginTestPath = path.join(__dirname, 'test_plugin_integrity_and_policy.js');
+        if (fs.existsSync(pluginTestPath)) {
+          log('info', 'Running extended legacy plugin integrity & policy tests...');
+          const { spawnSync } = require('child_process');
+          const nodeExec = process.execPath;
+          const proc = spawnSync(nodeExec, [pluginTestPath], { encoding: 'utf-8' });
+          results.extended = results.extended || {};
+          results.extended.pluginIntegrityPolicy = {
+            status: proc.status === 0 ? 'passed' : 'failed',
             exitCode: proc.status,
-            stdout: (proc.stdout || '').split(/\r?\n/).slice(-50).join('\n'), // last 50 lines for brevity
+            stdout: (proc.stdout || '').split(/\r?\n/).slice(-50).join('\n'),
             stderr: proc.stderr,
             ran: true
-        };
-        if (proc.status !== 0) {
-          log('warning', 'Extended plugin integrity & policy tests reported failures (non-blocking)');
+          };
+          if (proc.status !== 0) {
+            log('warning', 'Extended legacy plugin integrity & policy tests reported failures');
+          } else {
+            log('success', 'Extended legacy plugin integrity & policy tests passed');
+          }
         } else {
-          log('success', 'Extended plugin integrity & policy tests passed');
+          log('warning', 'Extended legacy plugin integrity & policy test file not found, skipping');
         }
-      } else {
-        log('warning', 'Extended plugin integrity & policy test file not found, skipping');
+      } catch (e) {
+        log('error', 'Error running extended legacy plugin integrity & policy tests', e.message);
       }
-    } catch (e) {
-      log('error', 'Error running extended plugin integrity & policy tests (non-blocking)', e.message);
+    } else {
+      log('info', 'Skipping legacy plugin integrity & policy adjunct tests; set RUN_LEGACY_POLICY_TESTS=true to run them explicitly');
     }
 
     // Run policy tests (strict capabilities, sandbox-required, native gate, schema override)

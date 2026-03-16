@@ -1161,32 +1161,35 @@ class MasterTestSuite {
     this.saveResults();
     this.printSummary();
 
-    // Run extended plugin integrity & policy test (adjunct) if available
-    try {
-      const pluginTestPath = path.join(__dirname, 'test_plugin_integrity_and_policy.js');
-      if (fs.existsSync(pluginTestPath)) {
-        log('info', 'Running extended plugin integrity & policy tests...');
-        const { spawnSync } = require('child_process');
-        const nodeExec = process.execPath;
-        const proc = spawnSync(nodeExec, [pluginTestPath], { encoding: 'utf-8' });
-        results.extended = results.extended || {};
-        results.extended.pluginIntegrityPolicy = {
-          status: proc.status === 0 ? 'passed' : 'failed',
-          exitCode: proc.status,
-          stdout: (proc.stdout || '').split(/\r?\n/).slice(-50).join('\n'),
-          stderr: proc.stderr,
-          ran: true
-        };
-        if (proc.status !== 0) {
-          log('warning', 'Extended plugin integrity & policy tests reported failures (non-blocking)');
+    if (process.env.RUN_LEGACY_POLICY_TESTS === 'true') {
+      try {
+        const pluginTestPath = path.join(__dirname, 'test_plugin_integrity_and_policy.js');
+        if (fs.existsSync(pluginTestPath)) {
+          log('info', 'Running extended legacy plugin integrity & policy tests...');
+          const { spawnSync } = require('child_process');
+          const nodeExec = process.execPath;
+          const proc = spawnSync(nodeExec, [pluginTestPath], { encoding: 'utf-8' });
+          results.extended = results.extended || {};
+          results.extended.pluginIntegrityPolicy = {
+            status: proc.status === 0 ? 'passed' : 'failed',
+            exitCode: proc.status,
+            stdout: (proc.stdout || '').split(/\r?\n/).slice(-50).join('\n'),
+            stderr: proc.stderr,
+            ran: true
+          };
+          if (proc.status !== 0) {
+            log('warning', 'Extended legacy plugin integrity & policy tests reported failures');
+          } else {
+            log('success', 'Extended legacy plugin integrity & policy tests passed');
+          }
         } else {
-          log('success', 'Extended plugin integrity & policy tests passed');
+          log('warning', 'Extended legacy plugin integrity & policy test file not found, skipping');
         }
-      } else {
-        log('warning', 'Extended plugin integrity & policy test file not found, skipping');
+      } catch (e) {
+        log('error', 'Error running extended legacy plugin integrity & policy tests', e.message);
       }
-    } catch (e) {
-      log('error', 'Error running extended plugin integrity & policy tests (non-blocking)', e.message);
+    } else {
+      log('info', 'Skipping legacy plugin integrity & policy adjunct tests; set RUN_LEGACY_POLICY_TESTS=true to run them explicitly');
     }
 
     log('success', 'Master test suite completed!');

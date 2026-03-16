@@ -1,0 +1,1519 @@
+{
+  "summary": {
+    "totalTools": 60,
+    "passed": 57,
+    "failed": 3,
+    "skipped": 0,
+    "successRate": 95
+  },
+  "categories": {
+    "memory": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "network": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nmap": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "snmp": {
+      "total": 12,
+      "passed": 11,
+      "failed": 1,
+      "skipped": 0
+    },
+    "proxmox": {
+      "total": 10,
+      "passed": 8,
+      "failed": 2,
+      "skipped": 0
+    },
+    "zabbix": {
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "credentials": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "registry": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "transports": {
+    "stdio": {
+      "total": 60,
+      "passed": 57,
+      "failed": 3,
+      "categories": {
+        "memory": {
+          "total": 9,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_memory_get": {
+              "status": "passed",
+              "duration": 7,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "No CI found for key: test:memory:item"
+                  }
+                ],
+                "structuredContent": {
+                  "key": "test:memory:item",
+                  "value": null
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_set": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"key\": \"test:memory:item\",\n  \"savedCount\": 1,\n  \"value\": {\n    \"test\": true,\n    \"timestamp\": 1773625570388\n  }\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "key": "test:memory:item",
+                  "savedCount": 1,
+                  "value": {
+                    "test": true,
+                    "timestamp": 1773625570388
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_query": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Matching CIs (1)\n\n```json\n{\n  \"test:memory:item\": {\n    \"test\": true,\n    \"timestamp\": 1773625570388\n  }\n}\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "count": 1,
+                  "pattern": "test:*",
+                  "matches": {
+                    "test:memory:item": {
+                      "test": true,
+                      "timestamp": 1773625570388
+                    }
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_merge": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"key\": \"test:memory:merge\",\n  \"savedCount\": 2,\n  \"value\": {\n    \"merged\": true,\n    \"timestamp\": 1773625570392\n  }\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "key": "test:memory:merge",
+                  "savedCount": 2,
+                  "value": {
+                    "merged": true,
+                    "timestamp": 1773625570392
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_clear": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"clearedMemoryCount\": 2,\n  \"clearedPersistentCount\": 2\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "clearedMemoryCount": 2,
+                  "clearedPersistentCount": 2
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_stats": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Memory Statistics\n\n| Metric | Value |\n|---|---|\n| In-Memory CIs | 0 |\n| SQLite CIs | 0 |\n| Total Size | 0 bytes |\n| Audit Entries | 153 |\n| Oldest CI | N/A |\n| Newest CI | N/A |\n| Auto-Save | true (30000ms) |"
+                  }
+                ],
+                "structuredContent": {
+                  "inMemoryCIs": 0,
+                  "sqliteCIs": 0,
+                  "totalSizeBytes": 0,
+                  "auditEntries": 153,
+                  "oldestCI": null,
+                  "newestCI": null,
+                  "autoSave": {
+                    "enabled": true,
+                    "intervalMs": 30000
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_save": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"count\": 0\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "count": 0
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_rotate_key": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"message\": \"Memory encryption key rotated successfully.\",\n  \"keyLength\": 64\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Memory encryption key rotated successfully.",
+                  "keyLength": 64
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_migrate_from_filesystem": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "File not found: D:\\github-development\\mcp-open-discovery\\data\\memory_data.json"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "File not found: D:\\github-development\\mcp-open-discovery\\data\\memory_data.json"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "network": {
+          "total": 9,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_net_ping": {
+              "status": "passed",
+              "duration": 1067,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Ping: 8.8.8.8\n\n```text\nPinging 8.8.8.8 with 32 bytes of data:\r\nReply from 8.8.8.8: bytes=32 time=16ms TTL=115\r\nReply from 8.8.8.8: bytes=32 time=15ms TTL=115\r\n\r\nPing statistics for 8.8.8.8:\r\n    Packets: Sent = 2, Received = 2, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 15ms, Maximum = 16ms, Average = 15ms\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "host": "8.8.8.8",
+                  "raw_output": "Pinging 8.8.8.8 with 32 bytes of data:\r\nReply from 8.8.8.8: bytes=32 time=16ms TTL=115\r\nReply from 8.8.8.8: bytes=32 time=15ms TTL=115\r\n\r\nPing statistics for 8.8.8.8:\r\n    Packets: Sent = 2, Received = 2, Lost = 0 (0% loss),\r\nApproximate round trip times in milli-seconds:\r\n    Minimum = 15ms, Maximum = 16ms, Average = 15ms"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_nslookup": {
+              "status": "passed",
+              "duration": 20,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## DNS Lookup: google.com (A)\n- 172.217.15.206"
+                  }
+                ],
+                "structuredContent": {
+                  "host": "google.com",
+                  "type": "A",
+                  "answers": [
+                    "172.217.15.206"
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_netstat": {
+              "status": "passed",
+              "duration": 52,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Network Connections\n\n```text\nActive Connections\r\n\r\n  Proto  Local Address          Foreign Address        State\r\n  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:2179           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5040           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5357           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5900           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:6270           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:11434          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:27036          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:41380          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:47546          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49664          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49665          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49666          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49667          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49668          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49689          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:50128          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:59869          0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:22           0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:2311         0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        127.0.0.1:17684        ESTABLISHED\r\n  TCP    127.0.0.1:17674        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17674        127.0.0.1:17683        ESTABLISHED\r\n  TCP    127.0.0.1:17683        127.0.0.1:17674        ESTABLISHED\r\n  TCP    127.0.0.1:17684        127.0.0.1:17673        ESTABLISHED\r\n  TCP    127.0.0.1:21245        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:27060        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:30257        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:31856        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:32000        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:34616        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:40122        127.0.0.1:40123        ESTABLISHED\r\n  TCP    127.0.0.1:40123        127.0.0.1:40122        ESTABLISHED\r\n  TCP    127.0.0.1:40124        127.0.0.1:40125        ESTABLISHED\r\n  TCP    127.0.0.1:40125        127.0.0.1:40124        ESTABLISHED\r\n  TCP    127.0.0.1:62329        127.0.0.1:62330        ESTABLISHED\r\n  TCP    127.0.0.1:62330        127.0.0.1:62329        ESTABLISHED\r\n  TCP    127.0.0.1:62331        0.0.0.0:0              LISTENING\r\n  TCP    172.28.208.1:139       0.0.0.0:0              LISTENING\r\n  TCP    172.31.192.1:139       0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:139    0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:1393   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:2067   142.251.107.188:5228   ESTABLISHED\r\n  TCP    192.168.200.226:3278   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:3963   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:4683   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:6879   160.79.104.10:443      ESTABLISHED\r\n  TCP    192.168.200.226:7061   135.234.174.40:443     ESTABLISHED\r\n  TCP    192.168.200.226:7796   75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:13777  192.178.50.37:443      ESTABLISHED\r\n  TCP    192.168.200.226:15002  48.214.187.216:443     ESTABLISHED\r\n  TCP    192.168.200.226:15503  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17029  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17448  51.132.193.105:443     ESTABLISHED\r\n  TCP    192.168.200.226:17452  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:17687  162.254.199.184:27018  ESTABLISHED\r\n  TCP    192.168.200.226:17690  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17691  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17692  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20289  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20956  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:21481  48.214.189.177:443     ESTABLISHED\r\n  TCP    192.168.200.226:21841  160.79.104.10:443      ESTABLISHED\r\n  TCP    192.168.200.226:32337  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:32347  52.179.73.57:443       ESTABLISHED\r\n  TCP    192.168.200.226:32348  140.82.112.25:443      ESTABLISHED\r\n  TCP    192.168.200.226:33642  172.183.7.192:443      ESTABLISHED\r\n  TCP    192.168.200.226:36168  192.168.200.250:445    ESTABLISHED\r\n  TCP    192.168.200.226:39712  140.82.114.25:443      ESTABLISHED\r\n  TCP    192.168.200.226:45455  108.177.122.84:443     TIME_WAIT\r\n  TCP    192.168.200.226:47325  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:47864  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:48942  20.42.65.90:443        ESTABLISHED\r\n  TCP    192.168.200.226:49999  72.153.5.76:443        ESTABLISHED\r\n  TCP    192.168.200.226:51260  172.183.7.194:443      ESTABLISHED\r\n  TCP    192.168.200.226:51871  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:52778  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:56912  20.42.73.25:443        ESTABLISHED\r\n  TCP    192.168.200.226:56952  34.107.243.93:443      ESTABLISHED\r\n  TCP    192.168.200.226:59659  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:59663  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:59890  18.97.36.74:443        ESTABLISHED\r\n  TCP    192.168.200.226:59893  140.82.113.22:443      ESTABLISHED\r\n  TCP    192.168.200.226:61886  52.179.73.34:443       ESTABLISHED\r\n  TCP    192.168.200.226:62163  150.171.109.114:443    ESTABLISHED\r\n  TCP    192.168.200.226:62164  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62166  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62167  160.79.104.10:443      ESTABLISHED\r\n  TCP    192.168.200.226:62169  172.217.15.219:443     ESTABLISHED\r\n  TCP    192.168.200.226:62187  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62188  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62193  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62201  151.101.73.91:443      ESTABLISHED\r\n  TCP    192.168.200.226:62202  34.149.66.137:443      ESTABLISHED\r\n  TCP    192.168.200.226:62203  192.168.200.10:8006    ESTABLISHED\r\n  TCP    192.168.200.226:63434  75.75.77.136:443       ESTABLISHED\r\n  TCP    [::]:135               [::]:0                 LISTENING\r\n  TCP    [::]:445               [::]:0                 LISTENING\r\n  TCP    [::]:2179              [::]:0                 LISTENING\r\n  TCP    [::]:5357              [::]:0                 LISTENING\r\n  TCP    [::]:11434             [::]:0                 LISTENING\r\n  TCP    [::]:41380             [::]:0                 LISTENING\r\n  TCP    [::]:47546             [::]:0                 LISTENING\r\n  TCP    [::]:49664             [::]:0                 LISTENING\r\n  TCP    [::]:49665             [::]:0                 LISTENING\r\n  TCP    [::]:49666             [::]:0                 LISTENING\r\n  TCP    [::]:49667             [::]:0                 LISTENING\r\n  TCP    [::]:49668             [::]:0                 LISTENING\r\n  TCP    [::]:49689             [::]:0                 LISTENING\r\n  TCP    [::]:50128             [::]:0                 LISTENING\r\n  TCP    [::1]:22               [::]:0                 LISTENING\r\n  TCP    [::1]:34616            [::]:0                 LISTENING\r\n  TCP    [::1]:49669            [::]:0                 LISTENING\r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:123            *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:5050           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5355           *:*                    \r\n  UDP    0.0.0.0:27036          *:*                    \r\n  UDP    0.0.0.0:49881          *:*                    \r\n  UDP    0.0.0.0:49882          *:*                    \r\n  UDP    0.0.0.0:50062          *:*                    \r\n  UDP    0.0.0.0:53532          *:*                    \r\n  UDP    0.0.0.0:56707          *:*                    \r\n  UDP    0.0.0.0:58354          *:*                    \r\n  UDP    0.0.0.0:59870          *:*                    \r\n  UDP    0.0.0.0:59871          *:*                    \r\n  UDP    0.0.0.0:60874          *:*                    \r\n  UDP    0.0.0.0:61056          *:*                    \r\n  UDP    0.0.0.0:62657          *:*                    \r\n  UDP    127.0.0.1:1900         *:*                    \r\n  UDP    127.0.0.1:57998        *:*                    \r\n  UDP    127.0.0.1:60868        *:*                    \r\n  UDP    127.0.0.1:64382        127.0.0.1:64382        \r\n  UDP    172.28.208.1:67        *:*                    \r\n  UDP    172.28.208.1:68        *:*                    \r\n  UDP    172.28.208.1:137       *:*                    \r\n  UDP    172.28.208.1:138       *:*                    \r\n  UDP    172.28.208.1:1900      *:*                    \r\n  UDP    172.28.208.1:27036     *:*                    \r\n  UDP    172.28.208.1:57999     *:*                    \r\n  UDP    172.31.192.1:137       *:*                    \r\n  UDP    172.31.192.1:138       *:*                    \r\n  UDP    172.31.192.1:1900      *:*                    \r\n  UDP    172.31.192.1:27036     *:*                    \r\n  UDP    172.31.192.1:58000     *:*                    \r\n  UDP    192.168.200.226:137    *:*                    \r\n  UDP    192.168.200.226:138    *:*                    \r\n  UDP    192.168.200.226:1900   *:*                    \r\n  UDP    192.168.200.226:27036  *:*                    \r\n  UDP    192.168.200.226:57997  *:*                    \r\n  UDP    [::]:123               *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5355              *:*                    \r\n  UDP    [::]:49883             *:*                    \r\n  UDP    [::]:50063             *:*                    \r\n  UDP    [::]:53533             *:*                    \r\n  UDP    [::]:56707             *:*                    \r\n  UDP    [::]:58354             *:*                    \r\n  UDP    [::]:60875             *:*                    \r\n  UDP    [::]:61056             *:*                    \r\n  UDP    [::1]:1900             *:*                    \r\n  UDP    [::1]:57994            *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:1900  *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:57995  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:1900  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:57996  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:1900  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:57993  *:*\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "protocol": "all",
+                  "raw_output": "Active Connections\r\n\r\n  Proto  Local Address          Foreign Address        State\r\n  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:2179           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5040           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5357           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5900           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:6270           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:11434          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:27036          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:41380          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:47546          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49664          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49665          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49666          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49667          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49668          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49689          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:50128          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:59869          0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:22           0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:2311         0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        127.0.0.1:17684        ESTABLISHED\r\n  TCP    127.0.0.1:17674        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17674        127.0.0.1:17683        ESTABLISHED\r\n  TCP    127.0.0.1:17683        127.0.0.1:17674        ESTABLISHED\r\n  TCP    127.0.0.1:17684        127.0.0.1:17673        ESTABLISHED\r\n  TCP    127.0.0.1:21245        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:27060        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:30257        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:31856        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:32000        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:34616        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:40122        127.0.0.1:40123        ESTABLISHED\r\n  TCP    127.0.0.1:40123        127.0.0.1:40122        ESTABLISHED\r\n  TCP    127.0.0.1:40124        127.0.0.1:40125        ESTABLISHED\r\n  TCP    127.0.0.1:40125        127.0.0.1:40124        ESTABLISHED\r\n  TCP    127.0.0.1:62329        127.0.0.1:62330        ESTABLISHED\r\n  TCP    127.0.0.1:62330        127.0.0.1:62329        ESTABLISHED\r\n  TCP    127.0.0.1:62331        0.0.0.0:0              LISTENING\r\n  TCP    172.28.208.1:139       0.0.0.0:0              LISTENING\r\n  TCP    172.31.192.1:139       0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:139    0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:1393   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:2067   142.251.107.188:5228   ESTABLISHED\r\n  TCP    192.168.200.226:3278   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:3963   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:4683   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:6879   160.79.104.10:443      ESTABLISHED\r\n  TCP    192.168.200.226:7061   135.234.174.40:443     ESTABLISHED\r\n  TCP    192.168.200.226:7796   75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:13777  192.178.50.37:443      ESTABLISHED\r\n  TCP    192.168.200.226:15002  48.214.187.216:443     ESTABLISHED\r\n  TCP    192.168.200.226:15503  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17029  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17448  51.132.193.105:443     ESTABLISHED\r\n  TCP    192.168.200.226:17452  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:17687  162.254.199.184:27018  ESTABLISHED\r\n  TCP    192.168.200.226:17690  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17691  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17692  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20289  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20956  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:21481  48.214.189.177:443     ESTABLISHED\r\n  TCP    192.168.200.226:21841  160.79.104.10:443      ESTABLISHED\r\n  TCP    192.168.200.226:32337  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:32347  52.179.73.57:443       ESTABLISHED\r\n  TCP    192.168.200.226:32348  140.82.112.25:443      ESTABLISHED\r\n  TCP    192.168.200.226:33642  172.183.7.192:443      ESTABLISHED\r\n  TCP    192.168.200.226:36168  192.168.200.250:445    ESTABLISHED\r\n  TCP    192.168.200.226:39712  140.82.114.25:443      ESTABLISHED\r\n  TCP    192.168.200.226:45455  108.177.122.84:443     TIME_WAIT\r\n  TCP    192.168.200.226:47325  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:47864  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:48942  20.42.65.90:443        ESTABLISHED\r\n  TCP    192.168.200.226:49999  72.153.5.76:443        ESTABLISHED\r\n  TCP    192.168.200.226:51260  172.183.7.194:443      ESTABLISHED\r\n  TCP    192.168.200.226:51871  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:52778  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:56912  20.42.73.25:443        ESTABLISHED\r\n  TCP    192.168.200.226:56952  34.107.243.93:443      ESTABLISHED\r\n  TCP    192.168.200.226:59659  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:59663  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:59890  18.97.36.74:443        ESTABLISHED\r\n  TCP    192.168.200.226:59893  140.82.113.22:443      ESTABLISHED\r\n  TCP    192.168.200.226:61886  52.179.73.34:443       ESTABLISHED\r\n  TCP    192.168.200.226:62163  150.171.109.114:443    ESTABLISHED\r\n  TCP    192.168.200.226:62164  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62166  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62167  160.79.104.10:443      ESTABLISHED\r\n  TCP    192.168.200.226:62169  172.217.15.219:443     ESTABLISHED\r\n  TCP    192.168.200.226:62187  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62188  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62193  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:62201  151.101.73.91:443      ESTABLISHED\r\n  TCP    192.168.200.226:62202  34.149.66.137:443      ESTABLISHED\r\n  TCP    192.168.200.226:62203  192.168.200.10:8006    ESTABLISHED\r\n  TCP    192.168.200.226:63434  75.75.77.136:443       ESTABLISHED\r\n  TCP    [::]:135               [::]:0                 LISTENING\r\n  TCP    [::]:445               [::]:0                 LISTENING\r\n  TCP    [::]:2179              [::]:0                 LISTENING\r\n  TCP    [::]:5357              [::]:0                 LISTENING\r\n  TCP    [::]:11434             [::]:0                 LISTENING\r\n  TCP    [::]:41380             [::]:0                 LISTENING\r\n  TCP    [::]:47546             [::]:0                 LISTENING\r\n  TCP    [::]:49664             [::]:0                 LISTENING\r\n  TCP    [::]:49665             [::]:0                 LISTENING\r\n  TCP    [::]:49666             [::]:0                 LISTENING\r\n  TCP    [::]:49667             [::]:0                 LISTENING\r\n  TCP    [::]:49668             [::]:0                 LISTENING\r\n  TCP    [::]:49689             [::]:0                 LISTENING\r\n  TCP    [::]:50128             [::]:0                 LISTENING\r\n  TCP    [::1]:22               [::]:0                 LISTENING\r\n  TCP    [::1]:34616            [::]:0                 LISTENING\r\n  TCP    [::1]:49669            [::]:0                 LISTENING\r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:123            *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:5050           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5355           *:*                    \r\n  UDP    0.0.0.0:27036          *:*                    \r\n  UDP    0.0.0.0:49881          *:*                    \r\n  UDP    0.0.0.0:49882          *:*                    \r\n  UDP    0.0.0.0:50062          *:*                    \r\n  UDP    0.0.0.0:53532          *:*                    \r\n  UDP    0.0.0.0:56707          *:*                    \r\n  UDP    0.0.0.0:58354          *:*                    \r\n  UDP    0.0.0.0:59870          *:*                    \r\n  UDP    0.0.0.0:59871          *:*                    \r\n  UDP    0.0.0.0:60874          *:*                    \r\n  UDP    0.0.0.0:61056          *:*                    \r\n  UDP    0.0.0.0:62657          *:*                    \r\n  UDP    127.0.0.1:1900         *:*                    \r\n  UDP    127.0.0.1:57998        *:*                    \r\n  UDP    127.0.0.1:60868        *:*                    \r\n  UDP    127.0.0.1:64382        127.0.0.1:64382        \r\n  UDP    172.28.208.1:67        *:*                    \r\n  UDP    172.28.208.1:68        *:*                    \r\n  UDP    172.28.208.1:137       *:*                    \r\n  UDP    172.28.208.1:138       *:*                    \r\n  UDP    172.28.208.1:1900      *:*                    \r\n  UDP    172.28.208.1:27036     *:*                    \r\n  UDP    172.28.208.1:57999     *:*                    \r\n  UDP    172.31.192.1:137       *:*                    \r\n  UDP    172.31.192.1:138       *:*                    \r\n  UDP    172.31.192.1:1900      *:*                    \r\n  UDP    172.31.192.1:27036     *:*                    \r\n  UDP    172.31.192.1:58000     *:*                    \r\n  UDP    192.168.200.226:137    *:*                    \r\n  UDP    192.168.200.226:138    *:*                    \r\n  UDP    192.168.200.226:1900   *:*                    \r\n  UDP    192.168.200.226:27036  *:*                    \r\n  UDP    192.168.200.226:57997  *:*                    \r\n  UDP    [::]:123               *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5355              *:*                    \r\n  UDP    [::]:49883             *:*                    \r\n  UDP    [::]:50063             *:*                    \r\n  UDP    [::]:53533             *:*                    \r\n  UDP    [::]:56707             *:*                    \r\n  UDP    [::]:58354             *:*                    \r\n  UDP    [::]:60875             *:*                    \r\n  UDP    [::]:61056             *:*                    \r\n  UDP    [::1]:1900             *:*                    \r\n  UDP    [::1]:57994            *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:1900  *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:57995  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:1900  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:57996  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:1900  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:57993  *:*"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_ifconfig": {
+              "status": "passed",
+              "duration": 71,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Network Interfaces\n\n```text\nWindows IP Configuration\r\n\r\n   Host Name . . . . . . . . . . . . : CCC-DEV-BOX\r\n   Primary Dns Suffix  . . . . . . . : \r\n   Node Type . . . . . . . . . . . . : Hybrid\r\n   IP Routing Enabled. . . . . . . . : No\r\n   WINS Proxy Enabled. . . . . . . . : No\r\n   DNS Suffix Search List. . . . . . : lan\r\n\r\nEthernet adapter Ethernet:\r\n\r\n   Connection-specific DNS Suffix  . : lan\r\n   Description . . . . . . . . . . . : Intel(R) Ethernet Connection (3) I219-LM\r\n   Physical Address. . . . . . . . . : F4-93-9F-F4-A5-11\r\n   DHCP Enabled. . . . . . . . . . . : Yes\r\n   Autoconfiguration Enabled . . . . : Yes\r\n   Link-local IPv6 Address . . . . . : fe80::b181:be98:1f8b:8bd%8(Preferred) \r\n   IPv4 Address. . . . . . . . . . . : 192.168.200.226(Preferred) \r\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\r\n   Lease Obtained. . . . . . . . . . : Sunday, March 15, 2026 10:09:21 AM\r\n   Lease Expires . . . . . . . . . . : Sunday, March 15, 2026 11:11:10 PM\r\n   Default Gateway . . . . . . . . . : 192.168.200.1\r\n   DHCP Server . . . . . . . . . . . : 192.168.200.1\r\n   DHCPv6 IAID . . . . . . . . . . . : 519345055\r\n   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-8C-78-E5-F4-93-9F-F4-A5-11\r\n   DNS Servers . . . . . . . . . . . : 75.75.75.75\r\n                                       75.75.76.76\r\n   NetBIOS over Tcpip. . . . . . . . : Enabled\r\n\r\nUnknown adapter Local Area Connection:\r\n\r\n   Media State . . . . . . . . . . . : Media disconnected\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : OpenVPN Data Channel Offload\r\n   Physical Address. . . . . . . . . : \r\n   DHCP Enabled. . . . . . . . . . . : Yes\r\n   Autoconfiguration Enabled . . . . : Yes\r\n\r\nUnknown adapter OpenVPN Data Channel Offload for Surfshark:\r\n\r\n   Media State . . . . . . . . . . . : Media disconnected\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : OpenVPN Data Channel Offload #2\r\n   Physical Address. . . . . . . . . : \r\n   DHCP Enabled. . . . . . . . . . . : Yes\r\n   Autoconfiguration Enabled . . . . : Yes\r\n\r\nEthernet adapter vEthernet (Default Switch):\r\n\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : Hyper-V Virtual Ethernet Adapter\r\n   Physical Address. . . . . . . . . : 00-15-5D-03-D5-8B\r\n   DHCP Enabled. . . . . . . . . . . : No\r\n   Autoconfiguration Enabled . . . . : Yes\r\n   Link-local IPv6 Address . . . . . : fe80::d2e:6e70:300b:412%28(Preferred) \r\n   IPv4 Address. . . . . . . . . . . : 172.28.208.1(Preferred) \r\n   Subnet Mask . . . . . . . . . . . : 255.255.240.0\r\n   Default Gateway . . . . . . . . . : \r\n   DHCPv6 IAID . . . . . . . . . . . : 469767517\r\n   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-8C-78-E5-F4-93-9F-F4-A5-11\r\n   NetBIOS over Tcpip. . . . . . . . : Enabled\r\n\r\nEthernet adapter vEthernet (WSL (Hyper-V firewall)):\r\n\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : Hyper-V Virtual Ethernet Adapter #2\r\n   Physical Address. . . . . . . . . : 00-15-5D-6F-A8-6D\r\n   DHCP Enabled. . . . . . . . . . . : No\r\n   Autoconfiguration Enabled . . . . : Yes\r\n   Link-local IPv6 Address . . . . . : fe80::5851:6c90:540c:fdb1%45(Preferred) \r\n   IPv4 Address. . . . . . . . . . . : 172.31.192.1(Preferred) \r\n   Subnet Mask . . . . . . . . . . . : 255.255.240.0\r\n   Default Gateway . . . . . . . . . : \r\n   DHCPv6 IAID . . . . . . . . . . . : 754980189\r\n   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-8C-78-E5-F4-93-9F-F4-A5-11\r\n   NetBIOS over Tcpip. . . . . . . . : Enabled\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "raw_output": "Windows IP Configuration\r\n\r\n   Host Name . . . . . . . . . . . . : CCC-DEV-BOX\r\n   Primary Dns Suffix  . . . . . . . : \r\n   Node Type . . . . . . . . . . . . : Hybrid\r\n   IP Routing Enabled. . . . . . . . : No\r\n   WINS Proxy Enabled. . . . . . . . : No\r\n   DNS Suffix Search List. . . . . . : lan\r\n\r\nEthernet adapter Ethernet:\r\n\r\n   Connection-specific DNS Suffix  . : lan\r\n   Description . . . . . . . . . . . : Intel(R) Ethernet Connection (3) I219-LM\r\n   Physical Address. . . . . . . . . : F4-93-9F-F4-A5-11\r\n   DHCP Enabled. . . . . . . . . . . : Yes\r\n   Autoconfiguration Enabled . . . . : Yes\r\n   Link-local IPv6 Address . . . . . : fe80::b181:be98:1f8b:8bd%8(Preferred) \r\n   IPv4 Address. . . . . . . . . . . : 192.168.200.226(Preferred) \r\n   Subnet Mask . . . . . . . . . . . : 255.255.255.0\r\n   Lease Obtained. . . . . . . . . . : Sunday, March 15, 2026 10:09:21 AM\r\n   Lease Expires . . . . . . . . . . : Sunday, March 15, 2026 11:11:10 PM\r\n   Default Gateway . . . . . . . . . : 192.168.200.1\r\n   DHCP Server . . . . . . . . . . . : 192.168.200.1\r\n   DHCPv6 IAID . . . . . . . . . . . : 519345055\r\n   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-8C-78-E5-F4-93-9F-F4-A5-11\r\n   DNS Servers . . . . . . . . . . . : 75.75.75.75\r\n                                       75.75.76.76\r\n   NetBIOS over Tcpip. . . . . . . . : Enabled\r\n\r\nUnknown adapter Local Area Connection:\r\n\r\n   Media State . . . . . . . . . . . : Media disconnected\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : OpenVPN Data Channel Offload\r\n   Physical Address. . . . . . . . . : \r\n   DHCP Enabled. . . . . . . . . . . : Yes\r\n   Autoconfiguration Enabled . . . . : Yes\r\n\r\nUnknown adapter OpenVPN Data Channel Offload for Surfshark:\r\n\r\n   Media State . . . . . . . . . . . : Media disconnected\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : OpenVPN Data Channel Offload #2\r\n   Physical Address. . . . . . . . . : \r\n   DHCP Enabled. . . . . . . . . . . : Yes\r\n   Autoconfiguration Enabled . . . . : Yes\r\n\r\nEthernet adapter vEthernet (Default Switch):\r\n\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : Hyper-V Virtual Ethernet Adapter\r\n   Physical Address. . . . . . . . . : 00-15-5D-03-D5-8B\r\n   DHCP Enabled. . . . . . . . . . . : No\r\n   Autoconfiguration Enabled . . . . : Yes\r\n   Link-local IPv6 Address . . . . . : fe80::d2e:6e70:300b:412%28(Preferred) \r\n   IPv4 Address. . . . . . . . . . . : 172.28.208.1(Preferred) \r\n   Subnet Mask . . . . . . . . . . . : 255.255.240.0\r\n   Default Gateway . . . . . . . . . : \r\n   DHCPv6 IAID . . . . . . . . . . . : 469767517\r\n   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-8C-78-E5-F4-93-9F-F4-A5-11\r\n   NetBIOS over Tcpip. . . . . . . . : Enabled\r\n\r\nEthernet adapter vEthernet (WSL (Hyper-V firewall)):\r\n\r\n   Connection-specific DNS Suffix  . : \r\n   Description . . . . . . . . . . . : Hyper-V Virtual Ethernet Adapter #2\r\n   Physical Address. . . . . . . . . : 00-15-5D-6F-A8-6D\r\n   DHCP Enabled. . . . . . . . . . . : No\r\n   Autoconfiguration Enabled . . . . : Yes\r\n   Link-local IPv6 Address . . . . . : fe80::5851:6c90:540c:fdb1%45(Preferred) \r\n   IPv4 Address. . . . . . . . . . . : 172.31.192.1(Preferred) \r\n   Subnet Mask . . . . . . . . . . . : 255.255.240.0\r\n   Default Gateway . . . . . . . . . : \r\n   DHCPv6 IAID . . . . . . . . . . . : 754980189\r\n   DHCPv6 Client DUID. . . . . . . . : 00-01-00-01-2F-8C-78-E5-F4-93-9F-F4-A5-11\r\n   NetBIOS over Tcpip. . . . . . . . : Enabled"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_route": {
+              "status": "passed",
+              "duration": 195,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Routing Table\n\n```text\n===========================================================================\r\nInterface List\r\n  8...f4 93 9f f4 a5 11 ......Intel(R) Ethernet Connection (3) I219-LM\r\n 13...........................OpenVPN Data Channel Offload\r\n 15...........................OpenVPN Data Channel Offload #2\r\n  1...........................Software Loopback Interface 1\r\n 28...00 15 5d 03 d5 8b ......Hyper-V Virtual Ethernet Adapter\r\n 45...00 15 5d 6f a8 6d ......Hyper-V Virtual Ethernet Adapter #2\r\n===========================================================================\r\n\r\nIPv4 Route Table\r\n===========================================================================\r\nActive Routes:\r\nNetwork Destination        Netmask          Gateway       Interface  Metric\r\n          0.0.0.0          0.0.0.0    192.168.200.1  192.168.200.226     25\r\n        127.0.0.0        255.0.0.0         On-link         127.0.0.1    331\r\n        127.0.0.1  255.255.255.255         On-link         127.0.0.1    331\r\n  127.255.255.255  255.255.255.255         On-link         127.0.0.1    331\r\n     172.28.208.0    255.255.240.0         On-link      172.28.208.1   5256\r\n     172.28.208.1  255.255.255.255         On-link      172.28.208.1   5256\r\n   172.28.223.255  255.255.255.255         On-link      172.28.208.1   5256\r\n     172.31.192.0    255.255.240.0         On-link      172.31.192.1   5256\r\n     172.31.192.1  255.255.255.255         On-link      172.31.192.1   5256\r\n   172.31.207.255  255.255.255.255         On-link      172.31.192.1   5256\r\n    192.168.200.0    255.255.255.0         On-link   192.168.200.226    281\r\n  192.168.200.226  255.255.255.255         On-link   192.168.200.226    281\r\n  192.168.200.255  255.255.255.255         On-link   192.168.200.226    281\r\n        224.0.0.0        240.0.0.0         On-link         127.0.0.1    331\r\n        224.0.0.0        240.0.0.0         On-link   192.168.200.226    281\r\n        224.0.0.0        240.0.0.0         On-link      172.28.208.1   5256\r\n        224.0.0.0        240.0.0.0         On-link      172.31.192.1   5256\r\n  255.255.255.255  255.255.255.255         On-link         127.0.0.1    331\r\n  255.255.255.255  255.255.255.255         On-link   192.168.200.226    281\r\n  255.255.255.255  255.255.255.255         On-link      172.28.208.1   5256\r\n  255.255.255.255  255.255.255.255         On-link      172.31.192.1   5256\r\n===========================================================================\r\nPersistent Routes:\r\n  None\r\n\r\nIPv6 Route Table\r\n===========================================================================\r\nActive Routes:\r\n If Metric Network Destination      Gateway\r\n  1    331 ::1/128                  On-link\r\n  8    281 fe80::/64                On-link\r\n 28   5256 fe80::/64                On-link\r\n 45   5256 fe80::/64                On-link\r\n 28   5256 fe80::d2e:6e70:300b:412/128\r\n                                    On-link\r\n 45   5256 fe80::5851:6c90:540c:fdb1/128\r\n                                    On-link\r\n  8    281 fe80::b181:be98:1f8b:8bd/128\r\n                                    On-link\r\n  1    331 ff00::/8                 On-link\r\n  8    281 ff00::/8                 On-link\r\n 28   5256 ff00::/8                 On-link\r\n 45   5256 ff00::/8                 On-link\r\n===========================================================================\r\nPersistent Routes:\r\n  None\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "raw_output": "===========================================================================\r\nInterface List\r\n  8...f4 93 9f f4 a5 11 ......Intel(R) Ethernet Connection (3) I219-LM\r\n 13...........................OpenVPN Data Channel Offload\r\n 15...........................OpenVPN Data Channel Offload #2\r\n  1...........................Software Loopback Interface 1\r\n 28...00 15 5d 03 d5 8b ......Hyper-V Virtual Ethernet Adapter\r\n 45...00 15 5d 6f a8 6d ......Hyper-V Virtual Ethernet Adapter #2\r\n===========================================================================\r\n\r\nIPv4 Route Table\r\n===========================================================================\r\nActive Routes:\r\nNetwork Destination        Netmask          Gateway       Interface  Metric\r\n          0.0.0.0          0.0.0.0    192.168.200.1  192.168.200.226     25\r\n        127.0.0.0        255.0.0.0         On-link         127.0.0.1    331\r\n        127.0.0.1  255.255.255.255         On-link         127.0.0.1    331\r\n  127.255.255.255  255.255.255.255         On-link         127.0.0.1    331\r\n     172.28.208.0    255.255.240.0         On-link      172.28.208.1   5256\r\n     172.28.208.1  255.255.255.255         On-link      172.28.208.1   5256\r\n   172.28.223.255  255.255.255.255         On-link      172.28.208.1   5256\r\n     172.31.192.0    255.255.240.0         On-link      172.31.192.1   5256\r\n     172.31.192.1  255.255.255.255         On-link      172.31.192.1   5256\r\n   172.31.207.255  255.255.255.255         On-link      172.31.192.1   5256\r\n    192.168.200.0    255.255.255.0         On-link   192.168.200.226    281\r\n  192.168.200.226  255.255.255.255         On-link   192.168.200.226    281\r\n  192.168.200.255  255.255.255.255         On-link   192.168.200.226    281\r\n        224.0.0.0        240.0.0.0         On-link         127.0.0.1    331\r\n        224.0.0.0        240.0.0.0         On-link   192.168.200.226    281\r\n        224.0.0.0        240.0.0.0         On-link      172.28.208.1   5256\r\n        224.0.0.0        240.0.0.0         On-link      172.31.192.1   5256\r\n  255.255.255.255  255.255.255.255         On-link         127.0.0.1    331\r\n  255.255.255.255  255.255.255.255         On-link   192.168.200.226    281\r\n  255.255.255.255  255.255.255.255         On-link      172.28.208.1   5256\r\n  255.255.255.255  255.255.255.255         On-link      172.31.192.1   5256\r\n===========================================================================\r\nPersistent Routes:\r\n  None\r\n\r\nIPv6 Route Table\r\n===========================================================================\r\nActive Routes:\r\n If Metric Network Destination      Gateway\r\n  1    331 ::1/128                  On-link\r\n  8    281 fe80::/64                On-link\r\n 28   5256 fe80::/64                On-link\r\n 45   5256 fe80::/64                On-link\r\n 28   5256 fe80::d2e:6e70:300b:412/128\r\n                                    On-link\r\n 45   5256 fe80::5851:6c90:540c:fdb1/128\r\n                                    On-link\r\n  8    281 fe80::b181:be98:1f8b:8bd/128\r\n                                    On-link\r\n  1    331 ff00::/8                 On-link\r\n  8    281 ff00::/8                 On-link\r\n 28   5256 ff00::/8                 On-link\r\n 45   5256 ff00::/8                 On-link\r\n===========================================================================\r\nPersistent Routes:\r\n  None"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_arp": {
+              "status": "passed",
+              "duration": 63,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## ARP Table\n\n```text\nInterface: 192.168.200.226 --- 0x8\r\n  Internet Address      Physical Address      Type\r\n  192.168.200.1         c0-c9-e3-cb-e7-8b     dynamic   \r\n  192.168.200.8         5c-e9-31-a3-fd-18     dynamic   \r\n  192.168.200.10        6c-4b-90-07-30-4d     dynamic   \r\n  192.168.200.95        bc-24-11-31-20-c2     dynamic   \r\n  192.168.200.202       e0-4f-43-5f-d4-ed     dynamic   \r\n  192.168.200.203       38-e7-c0-61-f7-ff     dynamic   \r\n  192.168.200.205       00-12-33-a5-30-de     dynamic   \r\n  192.168.200.207       24-2f-d0-02-06-28     dynamic   \r\n  192.168.200.210       10-5a-17-4f-c7-04     dynamic   \r\n  192.168.200.215       c4-ac-59-a6-df-a2     dynamic   \r\n  192.168.200.217       18-ee-69-1f-4b-10     dynamic   \r\n  192.168.200.218       8c-bf-ea-c6-7f-48     dynamic   \r\n  192.168.200.220       88-66-5a-0c-1f-3a     dynamic   \r\n  192.168.200.223       1c-7b-23-ed-c8-ce     dynamic   \r\n  192.168.200.224       7a-1c-24-d5-bc-f9     dynamic   \r\n  192.168.200.227       74-97-79-04-56-a9     dynamic   \r\n  192.168.200.232       24-4c-e3-2c-5b-1b     dynamic   \r\n  192.168.200.250       bc-24-11-50-bb-bd     dynamic   \r\n  192.168.200.255       ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  224.0.0.252           01-00-5e-00-00-fc     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.28.208.1 --- 0x1c\r\n  Internet Address      Physical Address      Type\r\n  172.28.223.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.31.192.1 --- 0x2d\r\n  Internet Address      Physical Address      Type\r\n  172.31.199.193        00-15-5d-a4-43-8c     dynamic   \r\n  172.31.207.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "raw_output": "Interface: 192.168.200.226 --- 0x8\r\n  Internet Address      Physical Address      Type\r\n  192.168.200.1         c0-c9-e3-cb-e7-8b     dynamic   \r\n  192.168.200.8         5c-e9-31-a3-fd-18     dynamic   \r\n  192.168.200.10        6c-4b-90-07-30-4d     dynamic   \r\n  192.168.200.95        bc-24-11-31-20-c2     dynamic   \r\n  192.168.200.202       e0-4f-43-5f-d4-ed     dynamic   \r\n  192.168.200.203       38-e7-c0-61-f7-ff     dynamic   \r\n  192.168.200.205       00-12-33-a5-30-de     dynamic   \r\n  192.168.200.207       24-2f-d0-02-06-28     dynamic   \r\n  192.168.200.210       10-5a-17-4f-c7-04     dynamic   \r\n  192.168.200.215       c4-ac-59-a6-df-a2     dynamic   \r\n  192.168.200.217       18-ee-69-1f-4b-10     dynamic   \r\n  192.168.200.218       8c-bf-ea-c6-7f-48     dynamic   \r\n  192.168.200.220       88-66-5a-0c-1f-3a     dynamic   \r\n  192.168.200.223       1c-7b-23-ed-c8-ce     dynamic   \r\n  192.168.200.224       7a-1c-24-d5-bc-f9     dynamic   \r\n  192.168.200.227       74-97-79-04-56-a9     dynamic   \r\n  192.168.200.232       24-4c-e3-2c-5b-1b     dynamic   \r\n  192.168.200.250       bc-24-11-50-bb-bd     dynamic   \r\n  192.168.200.255       ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  224.0.0.252           01-00-5e-00-00-fc     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.28.208.1 --- 0x1c\r\n  Internet Address      Physical Address      Type\r\n  172.28.223.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.31.192.1 --- 0x2d\r\n  Internet Address      Physical Address      Type\r\n  172.31.199.193        00-15-5d-a4-43-8c     dynamic   \r\n  172.31.207.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_telnet": {
+              "status": "passed",
+              "duration": 48,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## TCP Test: google.com:80\n- Reachable: true\n- Message: Connection established"
+                  }
+                ],
+                "structuredContent": {
+                  "host": "google.com",
+                  "port": 80,
+                  "timeout": 10,
+                  "reachable": true,
+                  "message": "Connection established"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_wget": {
+              "status": "passed",
+              "duration": 205,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## HTTP Fetch: http://httpbin.org/get\n\n```text\n{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\": \"gzip, deflate\", \n    \"Accept-Language\": \"*\", \n    \"Host\": \"httpbin.org\", \n    \"Sec-Fetch-Mode\": \"cors\", \n    \"User-Agent\": \"node\", \n    \"X-Amzn-Trace-Id\": \"Root=1-69b760e4-091d448d09a8248b578ea6f4\"\n  }, \n  \"origin\": \"73.55.3.125\", \n  \"url\": \"http://httpbin.org/get\"\n}\n\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "url": "http://httpbin.org/get",
+                  "status": 200,
+                  "ok": true,
+                  "headers": {
+                    "access-control-allow-credentials": "true",
+                    "access-control-allow-origin": "*",
+                    "connection": "keep-alive",
+                    "content-length": "346",
+                    "content-type": "application/json",
+                    "date": "Mon, 16 Mar 2026 01:46:12 GMT",
+                    "server": "gunicorn/19.9.0"
+                  },
+                  "body": "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\": \"gzip, deflate\", \n    \"Accept-Language\": \"*\", \n    \"Host\": \"httpbin.org\", \n    \"Sec-Fetch-Mode\": \"cors\", \n    \"User-Agent\": \"node\", \n    \"X-Amzn-Trace-Id\": \"Root=1-69b760e4-091d448d09a8248b578ea6f4\"\n  }, \n  \"origin\": \"73.55.3.125\", \n  \"url\": \"http://httpbin.org/get\"\n}\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_whois": {
+              "status": "passed",
+              "duration": 288,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## WHOIS: google.com\n\n```text\n{\"objectClassName\":\"domain\",\"handle\":\"2138514_DOMAIN_COM-VRSN\",\"ldhName\":\"GOOGLE.COM\",\"links\":[{\"value\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/GOOGLE.COM\",\"rel\":\"self\",\"href\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/GOOGLE.COM\",\"type\":\"application\\/rdap+json\"},{\"value\":\"https:\\/\\/rdap.markmonitor.com\\/rdap\\/domain\\/GOOGLE.COM\",\"rel\":\"related\",\"href\":\"https:\\/\\/rdap.markmonitor.com\\/rdap\\/domain\\/GOOGLE.COM\",\"type\":\"application\\/rdap+json\"}],\"status\":[\"client delete prohibited\",\"client transfer prohibited\",\"client update prohibited\",\"server delete prohibited\",\"server transfer prohibited\",\"server update prohibited\"],\"entities\":[{\"objectClassName\":\"entity\",\"handle\":\"292\",\"roles\":[\"registrar\"],\"links\":[{\"href\":\"http:\\/\\/www.markmonitor.com\",\"type\":\"text\\/html\",\"value\":\"https:\\/\\/rdap.markmonitor.com\\/rdap\\/\",\"rel\":\"about\"}],\"publicIds\":[{\"type\":\"IANA Registrar ID\",\"identifier\":\"292\"}],\"vcardArray\":[\"vcard\",[[\"version\",{},\"text\",\"4.0\"],[\"fn\",{},\"text\",\"MarkMonitor Inc.\"]]],\"entities\":[{\"objectClassName\":\"entity\",\"roles\":[\"abuse\"],\"vcardArray\":[\"vcard\",[[\"version\",{},\"text\",\"4.0\"],[\"fn\",{},\"text\",\"\"],[\"tel\",{\"type\":\"voice\"},\"uri\",\"tel:+1.2086851750\"],[\"email\",{},\"text\",\"abusecomplaints@markmonitor.com\"]]]}]}],\"events\":[{\"eventAction\":\"registration\",\"eventDate\":\"1997-09-15T04:00:00Z\"},{\"eventAction\":\"expiration\",\"eventDate\":\"2028-09-14T04:00:00Z\"},{\"eventAction\":\"last changed\",\"eventDate\":\"2019-09-09T15:39:04Z\"},{\"eventAction\":\"last update of RDAP database\",\"eventDate\":\"2026-03-16T01:45:55Z\"}],\"secureDNS\":{\"delegationSigned\":false},\"nameservers\":[{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS1.GOOGLE.COM\"},{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS2.GOOGLE.COM\"},{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS3.GOOGLE.COM\"},{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS4.GOOGLE.COM\"}],\"rdapConformance\":[\"rdap_level_0\",\"icann_rdap_technical_implementation_guide_1\",\"icann_rdap_response_profile_1\"],\"notices\":[{\"title\":\"Terms of Service\",\"description\":[\"Service subject to Terms of Use.\"],\"links\":[{\"href\":\"https:\\/\\/www.verisign.com\\/domain-names\\/registration-data-access-protocol\\/terms-service\\/index.xhtml\",\"type\":\"text\\/html\",\"value\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/google.com\",\"rel\":\"terms-of-service\"}]},{\"title\":\"Status Codes\",\"description\":[\"For more information on domain status codes, please visit https:\\/\\/icann.org\\/epp\"],\"links\":[{\"href\":\"https:\\/\\/icann.org\\/epp\",\"type\":\"text\\/html\"}]},{\"title\":\"RDDS Inaccuracy Complaint Form\",\"description\":[\"URL of the ICANN RDDS Inaccuracy Complaint Form: https:\\/\\/icann.org\\/wicf\"],\"links\":[{\"href\":\"https:\\/\\/icann.org\\/wicf\",\"type\":\"text\\/html\",\"value\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/google.com\",\"rel\":\"help\"}]}]}\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "query": "google.com",
+                  "raw_output": "{\"objectClassName\":\"domain\",\"handle\":\"2138514_DOMAIN_COM-VRSN\",\"ldhName\":\"GOOGLE.COM\",\"links\":[{\"value\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/GOOGLE.COM\",\"rel\":\"self\",\"href\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/GOOGLE.COM\",\"type\":\"application\\/rdap+json\"},{\"value\":\"https:\\/\\/rdap.markmonitor.com\\/rdap\\/domain\\/GOOGLE.COM\",\"rel\":\"related\",\"href\":\"https:\\/\\/rdap.markmonitor.com\\/rdap\\/domain\\/GOOGLE.COM\",\"type\":\"application\\/rdap+json\"}],\"status\":[\"client delete prohibited\",\"client transfer prohibited\",\"client update prohibited\",\"server delete prohibited\",\"server transfer prohibited\",\"server update prohibited\"],\"entities\":[{\"objectClassName\":\"entity\",\"handle\":\"292\",\"roles\":[\"registrar\"],\"links\":[{\"href\":\"http:\\/\\/www.markmonitor.com\",\"type\":\"text\\/html\",\"value\":\"https:\\/\\/rdap.markmonitor.com\\/rdap\\/\",\"rel\":\"about\"}],\"publicIds\":[{\"type\":\"IANA Registrar ID\",\"identifier\":\"292\"}],\"vcardArray\":[\"vcard\",[[\"version\",{},\"text\",\"4.0\"],[\"fn\",{},\"text\",\"MarkMonitor Inc.\"]]],\"entities\":[{\"objectClassName\":\"entity\",\"roles\":[\"abuse\"],\"vcardArray\":[\"vcard\",[[\"version\",{},\"text\",\"4.0\"],[\"fn\",{},\"text\",\"\"],[\"tel\",{\"type\":\"voice\"},\"uri\",\"tel:+1.2086851750\"],[\"email\",{},\"text\",\"abusecomplaints@markmonitor.com\"]]]}]}],\"events\":[{\"eventAction\":\"registration\",\"eventDate\":\"1997-09-15T04:00:00Z\"},{\"eventAction\":\"expiration\",\"eventDate\":\"2028-09-14T04:00:00Z\"},{\"eventAction\":\"last changed\",\"eventDate\":\"2019-09-09T15:39:04Z\"},{\"eventAction\":\"last update of RDAP database\",\"eventDate\":\"2026-03-16T01:45:55Z\"}],\"secureDNS\":{\"delegationSigned\":false},\"nameservers\":[{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS1.GOOGLE.COM\"},{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS2.GOOGLE.COM\"},{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS3.GOOGLE.COM\"},{\"objectClassName\":\"nameserver\",\"ldhName\":\"NS4.GOOGLE.COM\"}],\"rdapConformance\":[\"rdap_level_0\",\"icann_rdap_technical_implementation_guide_1\",\"icann_rdap_response_profile_1\"],\"notices\":[{\"title\":\"Terms of Service\",\"description\":[\"Service subject to Terms of Use.\"],\"links\":[{\"href\":\"https:\\/\\/www.verisign.com\\/domain-names\\/registration-data-access-protocol\\/terms-service\\/index.xhtml\",\"type\":\"text\\/html\",\"value\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/google.com\",\"rel\":\"terms-of-service\"}]},{\"title\":\"Status Codes\",\"description\":[\"For more information on domain status codes, please visit https:\\/\\/icann.org\\/epp\"],\"links\":[{\"href\":\"https:\\/\\/icann.org\\/epp\",\"type\":\"text\\/html\"}]},{\"title\":\"RDDS Inaccuracy Complaint Form\",\"description\":[\"URL of the ICANN RDDS Inaccuracy Complaint Form: https:\\/\\/icann.org\\/wicf\"],\"links\":[{\"href\":\"https:\\/\\/icann.org\\/wicf\",\"type\":\"text\\/html\",\"value\":\"https:\\/\\/rdap.verisign.com\\/com\\/v1\\/domain\\/google.com\",\"rel\":\"help\"}]}]}"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "nmap": {
+          "total": 5,
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_nmap_ping_scan": {
+              "status": "passed",
+              "duration": 7,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "Nmap error: spawn nmap ENOENT"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_tcp_connect_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "Nmap error: spawn nmap ENOENT"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_tcp_syn_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "Nmap error: spawn nmap ENOENT"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_udp_scan": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "Nmap error: spawn nmap ENOENT"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_version_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "Nmap error: spawn nmap ENOENT"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "snmp": {
+          "total": 12,
+          "passed": 11,
+          "failed": 1,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_snmp_create_session": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"sessionId\": \"803c1a49-1289-44ff-841a-46d9d898fdf8\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "sessionId": "803c1a49-1289-44ff-841a-46d9d898fdf8"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_close_session": {
+              "status": "passed",
+              "duration": 0,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": false\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": false
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_get": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "SNMP session test-session not found"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_get_next": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "SNMP session test-session not found"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_walk": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "SNMP session test-session not found"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_table": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "SNMP session test-session not found"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_discover": {
+              "status": "failed",
+              "duration": 4972,
+              "response": {
+                "error": {
+                  "message": "[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+            },
+            "mcp_od_snmp_device_inventory": {
+              "status": "passed",
+              "duration": 125,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Device inventory for 172.20.0.10\n\n{\n  \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_interface_discovery": {
+              "status": "passed",
+              "duration": 117,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Interface discovery for 172.20.0.10\n\n{\n  \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_service_discovery": {
+              "status": "passed",
+              "duration": 130,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Service discovery for 172.20.0.10\n\n{\n  \"ip\": \"172.20.0.10\",\n  \"services\": [],\n  \"tcpPorts\": [],\n  \"udpPorts\": [],\n  \"processError\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "ip": "172.20.0.10",
+                  "services": [],
+                  "tcpPorts": [],
+                  "udpPorts": [],
+                  "processError": "Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_system_health": {
+              "status": "passed",
+              "duration": 235,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "System health for 172.20.0.10\n\n{\n  \"ip\": \"172.20.0.10\",\n  \"system\": {\n    \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n  },\n  \"interfaces\": {\n    \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n  }\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "ip": "172.20.0.10",
+                  "system": {
+                    "error": "Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\n"
+                  },
+                  "interfaces": {
+                    "error": "Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\n"
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_network_topology": {
+              "status": "passed",
+              "duration": 4772,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Network topology for 172.20.0.0/24\n\n{\n  \"error\": \"No SNMP-enabled devices found in network range\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "No SNMP-enabled devices found in network range"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "proxmox": {
+          "total": 10,
+          "passed": 8,
+          "failed": 2,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_proxmox_list_nodes": {
+              "status": "failed",
+              "duration": 64,
+              "response": {
+                "error": {
+                  "message": "[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+            },
+            "mcp_od_proxmox_get_node_details": {
+              "status": "passed",
+              "duration": 128,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Node Details for proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "data": null,
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_vms": {
+              "status": "passed",
+              "duration": 161,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "VMs on node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n",
+                  "data": null
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_get_vm_details": {
+              "status": "passed",
+              "duration": 231,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "VM 100 details on node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n",
+                  "data": null
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_containers": {
+              "status": "passed",
+              "duration": 88,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "LXC containers on node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n",
+                  "data": null
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_get_container_details": {
+              "status": "passed",
+              "duration": 161,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Container 100 details on node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n",
+                  "data": null
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_storage": {
+              "status": "passed",
+              "duration": 93,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Storage on node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n",
+                  "data": null
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_networks": {
+              "status": "passed",
+              "duration": 159,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Network config for node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "data": null,
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_cluster_resources": {
+              "status": "failed",
+              "duration": 55,
+              "response": {
+                "error": {
+                  "message": "[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+                }
+              },
+              "validation": {
+                "valid": false,
+                "errors": [
+                  "JSON-RPC error: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+                ]
+              },
+              "error": "JSON-RPC error: [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"object\",\n    \"received\": \"array\",\n    \"path\": [\n      \"structuredContent\"\n    ],\n    \"message\": \"Expected object, received array\"\n  }\n]"
+            },
+            "mcp_od_proxmox_get_metrics": {
+              "status": "passed",
+              "duration": 233,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Metrics for node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "data": null,
+                  "message": "hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "zabbix": {
+          "total": 7,
+          "passed": 7,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_zabbix_host_discover": {
+              "status": "passed",
+              "duration": 10702,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Zabbix Error: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "fetch failed"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_problems": {
+              "status": "passed",
+              "duration": 10687,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Zabbix Error: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "fetch failed"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_alerts": {
+              "status": "passed",
+              "duration": 10714,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Zabbix Error: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "fetch failed"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_metrics": {
+              "status": "passed",
+              "duration": 10677,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Zabbix Error: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "fetch failed"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_events": {
+              "status": "passed",
+              "duration": 10695,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Zabbix Error: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "fetch failed"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_triggers": {
+              "status": "passed",
+              "duration": 10670,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Zabbix Error: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "fetch failed"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_inventory": {
+              "status": "passed",
+              "duration": 10663,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Zabbix Error: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "error": "fetch failed"
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "credentials": {
+          "total": 5,
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_credentials_add": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"message\": \"Credential 'test-credential' added successfully.\",\n  \"id\": \"test-credential\",\n  \"type\": \"password\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Credential 'test-credential' added successfully.",
+                  "id": "test-credential",
+                  "type": "password"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_get": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Credential: test-credential\n- Type: password\n- Username: testuser\n- URL: N/A\n- Created: 2026-03-16T01:47:38.996Z\n\nSecrets are included in the response."
+                  }
+                ],
+                "structuredContent": {
+                  "id": "test-credential",
+                  "type": "password",
+                  "username": "testuser",
+                  "createdAt": "2026-03-16T01:47:38.996Z",
+                  "password": "testpass123"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_list": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Stored Credentials (3)\n\n| ID | Type | Username | URL |\n|---|---|---|---|\n| undefined | password | mcpuser |  |\n| undefined | password | root | https://192.168.200.10:8006 |\n| test-credential | password | testuser |  |"
+                  }
+                ],
+                "structuredContent": {
+                  "credentials": [
+                    {
+                      "type": "password",
+                      "username": "mcpuser"
+                    },
+                    {
+                      "type": "password",
+                      "username": "root",
+                      "url": "https://192.168.200.10:8006"
+                    },
+                    {
+                      "id": "test-credential",
+                      "type": "password",
+                      "username": "testuser",
+                      "createdAt": "2026-03-16T01:47:38.996Z"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_remove": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"message\": \"Credential 'test-credential' removed.\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Credential 'test-credential' removed."
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_rotate_key": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"message\": \"Encryption key rotated. All credentials re-encrypted.\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Encryption key rotated. All credentials re-encrypted."
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "registry": {
+          "total": 3,
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_registry_list_plugins": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Installed Plugins (10)\n**credentials@1.0.0** [active] *(built-in)*\n**marketplace@1.0.0** [active] *(built-in)*\n**memory-cmdb@1.0.0** [active] *(built-in)*\n**net-utils@1.0.0** [active] *(built-in)*\n**nmap@1.0.0** [active] *(built-in)*\n**prompts@1.0.0** [active] *(built-in)*\n**proxmox@1.0.0** [active] *(built-in)*\n**registry-tools@1.0.0** [active] *(built-in)*\n**snmp@1.0.0** [active] *(built-in)*\n**zabbix@1.0.0** [active] *(built-in)*"
+                  }
+                ],
+                "structuredContent": {
+                  "total_count": 10,
+                  "count": 10,
+                  "offset": 0,
+                  "limit": 50,
+                  "has_more": false,
+                  "next_offset": null,
+                  "items": [
+                    {
+                      "id": "credentials@1.0.0",
+                      "name": "credentials",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "marketplace@1.0.0",
+                      "name": "marketplace",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "memory-cmdb@1.0.0",
+                      "name": "memory-cmdb",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "net-utils@1.0.0",
+                      "name": "net-utils",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "nmap@1.0.0",
+                      "name": "nmap",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "prompts@1.0.0",
+                      "name": "prompts",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "proxmox@1.0.0",
+                      "name": "proxmox",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "registry-tools@1.0.0",
+                      "name": "registry-tools",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "snmp@1.0.0",
+                      "name": "snmp",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    },
+                    {
+                      "id": "zabbix@1.0.0",
+                      "name": "zabbix",
+                      "version": "1.0.0",
+                      "lifecycle_state": "active",
+                      "is_builtin": true
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_registry_list_available": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Available from Marketplace (0)\n"
+                  }
+                ],
+                "structuredContent": {
+                  "count": 0,
+                  "plugins": []
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_registry_audit_log": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Audit Log: net-utils@1.0.0\n- **activated** by system at 2026-03-15T14:40:25.877Z\n- **installed** by system at 2026-03-15T14:40:25.868Z"
+                  }
+                ],
+                "structuredContent": {
+                  "plugin_id": "net-utils@1.0.0",
+                  "count": 2,
+                  "entries": [
+                    {
+                      "id": 8,
+                      "plugin_id": "net-utils@1.0.0",
+                      "plugin_name": "net-utils",
+                      "version": "1.0.0",
+                      "event": "activated",
+                      "actor": "system",
+                      "detail": null,
+                      "occurred_at": "2026-03-15T14:40:25.877Z"
+                    },
+                    {
+                      "id": 7,
+                      "plugin_id": "net-utils@1.0.0",
+                      "plugin_name": "net-utils",
+                      "version": "1.0.0",
+                      "event": "installed",
+                      "actor": "system",
+                      "detail": null,
+                      "occurred_at": "2026-03-15T14:40:25.868Z"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "details": [],
+  "errors": [],
+  "infrastructure": {
+    "health": {
+      "mcp": {
+        "status": "skipped",
+        "details": {
+          "reason": "HTTP transport not selected for this run"
+        }
+      },
+      "proxmox": {
+        "status": "reachable",
+        "endpoint": "192.168.200.10:8006"
+      },
+      "zabbix": {
+        "status": "unreachable",
+        "error": "Health check timeout",
+        "endpoint": "http://172.20.0.23:8080"
+      },
+      "snmp": {
+        "agents": {
+          "172.20.0.10": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.11": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.12": {
+            "status": "available",
+            "community": "public"
+          }
+        }
+      }
+    },
+    "connectivity": {}
+  }
+}

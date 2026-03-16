@@ -1,8 +1,8 @@
 // Helper to provide consistent HTTP base URLs for tests.
-// Resolves port precedence: process.env.HTTP_PORT > process.env.PORT > default 3000.
-// Allows convention override (example.env now recommends 6270) without touching test code.
+// Resolves port precedence: process.env.HTTP_PORT > process.env.PORT > default 6270.
+// Keeps the test harness aligned with the repo's HTTP MCP port convention.
 
-const port = process.env.HTTP_PORT || process.env.PORT || 3000;
+const port = process.env.HTTP_PORT || process.env.PORT || 6270;
 const base = `http://localhost:${port}`;
 
 module.exports = {

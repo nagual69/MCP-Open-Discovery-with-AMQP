@@ -59,7 +59,7 @@ function serverLog(level, message, context) {
     void (0, logging_1.logAndNotify)('info', message, context);
 }
 function createAppConfig() {
-    const port = Number.parseInt(process.env.HTTP_PORT || process.env.PORT || '3000', 10);
+    const port = Number.parseInt(process.env.HTTP_PORT || process.env.PORT || '6270', 10);
     return {
         nodeEnv: process.env.NODE_ENV || 'development',
         transportModes: detectDefaultTransportModes(),

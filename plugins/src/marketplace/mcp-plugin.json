@@ -11,9 +11,9 @@
     "fsRead": true
   },
   "dist": {
-    "hash": "sha256:7cde1061b5c32103b71795e65e3f6bba29946503210cb8c68721f179d9bc6721",
+    "hash": "sha256:52b681b2360763d9adb5692916ee0b984e75054b162520e7de48c6aff023fcf7",
     "fileCount": 15,
-    "totalBytes": 60698
+    "totalBytes": 61202
   },
   "capabilities": {
     "tools": [

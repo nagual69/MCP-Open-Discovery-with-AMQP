@@ -7,22 +7,30 @@ exports.buildErrorResponse = buildErrorResponse;
 exports.getErrorMessage = getErrorMessage;
 const zod_1 = require("zod");
 exports.ResponseFormatSchema = zod_1.z.enum(['json', 'markdown']).default('markdown');
+function normalizeStructuredContent(value) {
+    if (Array.isArray(value)) {
+        return { items: value };
+    }
+    return value;
+}
 function buildTextResponse(structuredContent, text, responseFormat) {
+    const normalizedContent = normalizeStructuredContent(structuredContent);
     if (responseFormat === 'json') {
         return {
             content: [{ type: 'text', text: JSON.stringify(structuredContent, null, 2) }],
-            structuredContent,
+            structuredContent: normalizedContent,
         };
     }
     return {
         content: [{ type: 'text', text }],
-        structuredContent,
+        structuredContent: normalizedContent,
     };
 }
 function buildJsonResponse(structuredContent) {
+    const normalizedContent = normalizeStructuredContent(structuredContent);
     return {
         content: [{ type: 'text', text: JSON.stringify(structuredContent, null, 2) }],
-        structuredContent,
+        structuredContent: normalizedContent,
     };
 }
 function buildErrorResponse(message) {

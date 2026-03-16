@@ -13,24 +13,36 @@ export interface ToolResponse {
   isError?: boolean;
 }
 
+function normalizeStructuredContent(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return { items: value };
+  }
+
+  return value;
+}
+
 export function buildTextResponse(structuredContent: unknown, text: string, responseFormat: ResponseFormat): ToolResponse {
+  const normalizedContent = normalizeStructuredContent(structuredContent);
+
   if (responseFormat === 'json') {
     return {
       content: [{ type: 'text', text: JSON.stringify(structuredContent, null, 2) }],
-      structuredContent,
+      structuredContent: normalizedContent,
     };
   }
 
   return {
     content: [{ type: 'text', text }],
-    structuredContent,
+    structuredContent: normalizedContent,
   };
 }
 
 export function buildJsonResponse(structuredContent: unknown): ToolResponse {
+  const normalizedContent = normalizeStructuredContent(structuredContent);
+
   return {
     content: [{ type: 'text', text: JSON.stringify(structuredContent, null, 2) }],
-    structuredContent,
+    structuredContent: normalizedContent,
   };
 }
 

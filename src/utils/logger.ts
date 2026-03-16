@@ -12,17 +12,7 @@ function writeLog(scope: string, level: LogLevel, message: string, context?: unk
   const serializedContext = context === undefined ? '' : ` ${JSON.stringify(context)}`;
   const line = `[${timestamp}] [${level.toUpperCase()}] [${scope}] ${message}${serializedContext}`;
 
-  if (level === 'error') {
-    console.error(line);
-    return;
-  }
-
-  if (level === 'warn') {
-    console.warn(line);
-    return;
-  }
-
-  console.log(line);
+  process.stderr.write(`${line}\n`);
 }
 
 export function createLogger(scope: string): Logger {

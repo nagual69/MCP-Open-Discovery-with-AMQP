@@ -69,7 +69,24 @@ function findBuiltinPluginRoot(pluginName) {
     const candidate = path_1.default.join(BUILTIN_SOURCE_ROOT, pluginName);
     return fs_1.default.existsSync(candidate) ? candidate : null;
 }
-function resolvePluginRoot(pluginIdValue, manifest) {
+function loadBuiltinManifest(pluginName) {
+    const builtinRoot = findBuiltinPluginRoot(pluginName);
+    if (!builtinRoot) {
+        return null;
+    }
+    const manifestPath = path_1.default.join(builtinRoot, 'mcp-plugin.json');
+    if (!fs_1.default.existsSync(manifestPath)) {
+        return null;
+    }
+    return JSON.parse(fs_1.default.readFileSync(manifestPath, 'utf8'));
+}
+function resolvePluginRoot(pluginIdValue, manifest, isBuiltin) {
+    if (isBuiltin) {
+        const builtinRoot = findBuiltinPluginRoot(manifest.name);
+        if (builtinRoot) {
+            return builtinRoot;
+        }
+    }
     const extraction = (0, plugin_db_1.getCurrentExtraction)(pluginIdValue);
     if (extraction?.extraction_path && fs_1.default.existsSync(extraction.extraction_path)) {
         return extraction.extraction_path;
@@ -227,6 +244,11 @@ async function install(source, options = {}) {
         throw new Error(`Plugin already installed: ${id}`);
     }
     const signatureStatus = (0, signature_verifier_1.verifySignatures)(manifest);
+    const requireSignatures = /^(1|true|yes|on)$/i.test(process.env.REQUIRE_SIGNATURES ?? '')
+        || /^(1|true|yes|on)$/i.test(process.env.PLUGIN_REQUIRE_SIGNED ?? '');
+    if (requireSignatures && !signatureStatus.verified) {
+        throw new Error(`Signature verification failed for plugin ${id}: ${signatureStatus.error ?? 'No valid signature found'}`);
+    }
     const installTarget = path_1.default.join(EXTRACT_ROOT, id);
     await ensureDirectory(EXTRACT_ROOT);
     (0, plugin_db_1.insertPlugin)({
@@ -271,8 +293,15 @@ async function activate(pluginIdValue, options = {}) {
     if (!plugin) {
         throw new Error(`Plugin not found: ${pluginIdValue}`);
     }
+    const manifest = Boolean(plugin.is_builtin)
+        ? loadBuiltinManifest(plugin.name) ?? JSON.parse(plugin.manifest_json)
+        : JSON.parse(plugin.manifest_json);
     if (plugin.lifecycle_state === 'active') {
-        const manifest = JSON.parse(plugin.manifest_json);
+        if (mcpServerRef && !activeRegistrations.has(pluginIdValue)) {
+            const rootDir = resolvePluginRoot(pluginIdValue, manifest, Boolean(plugin.is_builtin));
+            const loadResult = await (0, plugin_loader_1.loadAndRegisterPlugin)(mcpServerRef, rootDir, manifest);
+            activeRegistrations.set(pluginIdValue, loadResult.captured);
+        }
         return {
             activated: true,
             pluginId: pluginIdValue,
@@ -282,9 +311,8 @@ async function activate(pluginIdValue, options = {}) {
             alreadyActive: true,
         };
     }
-    const manifest = JSON.parse(plugin.manifest_json);
     if (mcpServerRef) {
-        const rootDir = resolvePluginRoot(pluginIdValue, manifest);
+        const rootDir = resolvePluginRoot(pluginIdValue, manifest, Boolean(plugin.is_builtin));
         const loadResult = await (0, plugin_loader_1.loadAndRegisterPlugin)(mcpServerRef, rootDir, manifest);
         activeRegistrations.set(pluginIdValue, loadResult.captured);
     }

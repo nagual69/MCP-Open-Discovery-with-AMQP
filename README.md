@@ -243,7 +243,7 @@ This README aims to describe current capabilities plainly and avoid over‑claim
 
 ## Current Transport Support
 
-- HTTP: supported and enabled by default (port 3000). Recommended convention for remote clients: port 6270 (set HTTP_PORT=6270).
+- HTTP: supported and enabled by default on port 6270. Override with `HTTP_PORT` or `PORT` when needed.
 - Stdio: supported for local/embedded scenarios
 - AMQP (RabbitMQ): available; evaluated in practice. Suitable for non-interactive integrations. For IDE integrations, confirm MCP transport compliance in your environment.
 - gRPC: not enabled; future consideration
@@ -391,7 +391,7 @@ Network ping:
 ```bash
 curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"ping","arguments":{"host":"127.0.0.1","count":2}}}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"mcp_od_net_ping","arguments":{"host":"127.0.0.1","count":2}}}'
 ```
 
 SNMP device inventory:
@@ -399,7 +399,7 @@ SNMP device inventory:
 ```bash
 curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"snmp_device_inventory","arguments":{"host":"192.168.1.10","version":"2c","community":"public"}}}'
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"mcp_od_snmp_device_inventory","arguments":{"host":"192.168.1.10","version":"2c","community":"public"}}}'
 ```
 
 Zabbix host discovery:
@@ -407,7 +407,7 @@ Zabbix host discovery:
 ```bash
 curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"zabbix_host_discover","arguments":{"baseUrl":"http://localhost:8080","username":"Admin","password":"zabbix"}}}'
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"mcp_od_zabbix_host_discover","arguments":{"baseUrl":"http://localhost:8080","username":"Admin","password":"zabbix"}}}'
 ```
 
 ## Roadmap (selected)
@@ -462,7 +462,7 @@ curl -X POST http://localhost:6270/mcp \
   -d '{
     "method": "tools/call",
     "params": {
-      "name": "credentials_add",
+      "name": "mcp_od_credentials_add",
       "arguments": {
         "id": "proxmox-main",
         "type": "password",
@@ -480,7 +480,7 @@ curl -X POST http://localhost:6270/mcp \
   -d '{
     "method": "tools/call",
     "params": {
-      "name": "credentials_add",
+      "name": "mcp_od_credentials_add",
       "arguments": {
         "id": "zabbix-main",
         "type": "password",
@@ -495,12 +495,12 @@ curl -X POST http://localhost:6270/mcp \
 # List all credentials (secure - only metadata shown)
 curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "credentials_list"}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_credentials_list"}}'
 
 # Use credentials with tools (auto-detected or specify creds_id)
 curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "zabbix_host_discover", "arguments": {"creds_id": "zabbix-main"}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_zabbix_host_discover", "arguments": {"creds_id": "zabbix-main"}}}'
 ````
 
 ---
@@ -509,28 +509,28 @@ curl -X POST http://localhost:6270/mcp \
 
 ### 🌐 **Network Discovery Tools** (8/8 ✅ 100%)
 
-- **`ping`** - ICMP echo requests with configurable count and timeout
-- **`wget`** - HTTP/HTTPS content retrieval with headers and retry logic
-- **`nslookup`** - DNS resolution with multiple record type support
-- **`netstat`** - Network connections and routing table analysis
-- **`telnet`** - TCP connectivity testing to specific ports
-- **`route`** - Display and manipulate IP routing table
-- **`ifconfig`** - Network interface configuration display
-- **`arp`** - ARP cache display for network troubleshooting
+- **`mcp_od_net_ping`** - ICMP echo requests with configurable count and timeout
+- **`mcp_od_net_wget`** - HTTP/HTTPS content retrieval with headers and retry logic
+- **`mcp_od_net_nslookup`** - DNS resolution with multiple record type support
+- **`mcp_od_net_netstat`** - Network connections and routing table analysis
+- **`mcp_od_net_telnet`** - TCP connectivity testing to specific ports
+- **`mcp_od_net_route`** - Display and manipulate IP routing table
+- **`mcp_od_net_ifconfig`** - Network interface configuration display
+- **`mcp_od_net_arp`** - ARP cache display for network troubleshooting
 
 ### 🧠 **Memory CMDB Tools** (9/9 ✅ 100%)
 
 **🗄️ Enterprise SQLite-Based Persistent Memory System**
 
-- **`memory_get`** - Retrieve CI objects by key with automatic decryption
-- **`memory_set`** - Store CI objects with hierarchical relationships
-- **`memory_merge`** - Merge new data into existing CIs with validation
-- **`memory_query`** - Pattern-based CI queries with wildcard support
-- **`memory_clear`** - Clear all memory data (in-memory and SQLite database)
-- **`memory_stats`** - Comprehensive memory usage and storage statistics
-- **`memory_save`** - Manual persistence triggers for batch operations
-- **`memory_rotate_key`** - Encryption key rotation with data re-encryption
-- **`memory_migrate_from_filesystem`** - Legacy JSON format migration
+- **`mcp_od_memory_get`** - Retrieve CI objects by key with automatic decryption
+- **`mcp_od_memory_set`** - Store CI objects with hierarchical relationships
+- **`mcp_od_memory_merge`** - Merge new data into existing CIs with validation
+- **`mcp_od_memory_query`** - Pattern-based CI queries with wildcard support
+- **`mcp_od_memory_clear`** - Clear all memory data (in-memory and SQLite database)
+- **`mcp_od_memory_stats`** - Comprehensive memory usage and storage statistics
+- **`mcp_od_memory_save`** - Manual persistence triggers for batch operations
+- **`mcp_od_memory_rotate_key`** - Encryption key rotation with data re-encryption
+- **`mcp_od_memory_migrate_from_filesystem`** - Legacy JSON format migration
 
 **🎯 Testing Achievements:**
 
@@ -542,90 +542,90 @@ curl -X POST http://localhost:6270/mcp \
 
 ### 🏗️ **Proxmox Cluster Management** (10/10 ✅ 100%)
 
-- **`proxmox_list_nodes`** - Returns all nodes in Proxmox cluster
-- **`proxmox_get_node_details`** - Detailed node information and metrics
-- **`proxmox_list_vms`** - All virtual machines for a node
-- **`proxmox_get_vm_details`** - VM configuration and status details
-- **`proxmox_list_containers`** - All LXC containers for a node
-- **`proxmox_get_container_details`** - Container configuration details
-- **`proxmox_list_storage`** - Storage resources and utilization
-- **`proxmox_list_networks`** - Network configuration and VLANs
-- **`proxmox_cluster_resources`** - Complete cluster resource summary
-- **`proxmox_get_metrics`** - Performance metrics for nodes/VMs
+- **`mcp_od_proxmox_list_nodes`** - Returns all nodes in Proxmox cluster
+- **`mcp_od_proxmox_get_node_details`** - Detailed node information and metrics
+- **`mcp_od_proxmox_list_vms`** - All virtual machines for a node
+- **`mcp_od_proxmox_get_vm_details`** - VM configuration and status details
+- **`mcp_od_proxmox_list_containers`** - All LXC containers for a node
+- **`mcp_od_proxmox_get_container_details`** - Container configuration details
+- **`mcp_od_proxmox_list_storage`** - Storage resources and utilization
+- **`mcp_od_proxmox_list_networks`** - Network configuration and VLANs
+- **`mcp_od_proxmox_cluster_resources`** - Complete cluster resource summary
+- **`mcp_od_proxmox_get_metrics`** - Performance metrics for nodes/VMs
 
 ### 📡 **SNMP Discovery Tools** (12/12 ✅ 100%)
 
-- **`snmp_create_session`** - Create SNMP session with target device
-- **`snmp_close_session`** - Close an active SNMP session
-- **`snmp_get`** - GET operation for specific OID values
-- **`snmp_get_next`** - GETNEXT operation for OID traversal
-- **`snmp_walk`** - WALK operation for OID subtrees
-- **`snmp_table`** - Retrieve complete SNMP tables
-- **`snmp_discover`** - Discover SNMP-enabled devices in network range
-- **`snmp_device_inventory`** - Comprehensive device inventory via SNMP
-- **`snmp_interface_discovery`** - Network interface discovery and analysis
-- **`snmp_system_health`** - System health and performance metrics
-- **`snmp_service_discovery`** - Running services and listening ports via SNMP
-- **`snmp_network_topology`** - Network topology mapping using CDP/LLDP
+- **`mcp_od_snmp_create_session`** - Create SNMP session with target device
+- **`mcp_od_snmp_close_session`** - Close an active SNMP session
+- **`mcp_od_snmp_get`** - GET operation for specific OID values
+- **`mcp_od_snmp_get_next`** - GETNEXT operation for OID traversal
+- **`mcp_od_snmp_walk`** - WALK operation for OID subtrees
+- **`mcp_od_snmp_table`** - Retrieve complete SNMP tables
+- **`mcp_od_snmp_discover`** - Discover SNMP-enabled devices in network range
+- **`mcp_od_snmp_device_inventory`** - Comprehensive device inventory via SNMP
+- **`mcp_od_snmp_interface_discovery`** - Network interface discovery and analysis
+- **`mcp_od_snmp_system_health`** - System health and performance metrics
+- **`mcp_od_snmp_service_discovery`** - Running services and listening ports via SNMP
+- **`mcp_od_snmp_network_topology`** - Network topology mapping using CDP/LLDP
 
 ### 🔐 **Enterprise Credential Management** (6/6 ✅ 100%)
 
-- **`credentials_add`** - Add encrypted credentials (multiple types supported)
-- **`credentials_get`** - Retrieve and decrypt stored credentials
-- **`credentials_list`** - List all credentials (metadata only, secure)
-- **`credentials_remove`** - Remove credentials from secure store
-- **`credentials_rotate_key`** - Rotate encryption keys with re-encryption
+- **`mcp_od_credentials_add`** - Add encrypted credentials (multiple types supported)
+- **`mcp_od_credentials_get`** - Retrieve and decrypt stored credentials
+- **`mcp_od_credentials_list`** - List all credentials (metadata only, secure)
+- **`mcp_od_credentials_remove`** - Remove credentials from secure store
+- **`mcp_od_credentials_rotate_key`** - Rotate encryption keys with re-encryption
 - **Credential Audit Log** - Comprehensive audit trail for all credential operations
 
 ### 🖥️ **Zabbix Monitoring Tools** (7/7 ✅ 100%)
 
-- **`zabbix_host_discover`** - List all monitored hosts
-- **`zabbix_get_metrics`** - Retrieve host performance metrics
-- **`zabbix_get_alerts`** - Retrieve active alerts and problems
-- **`zabbix_get_inventory`** - Get detailed host inventory
-- **`zabbix_get_problems`** - Retrieve current active problems
-- **`zabbix_get_events`** - Retrieve historical events for audit/analysis
-- **`zabbix_get_triggers`** - Retrieve and manage trigger configurations
+- **`mcp_od_zabbix_host_discover`** - List all monitored hosts
+- **`mcp_od_zabbix_get_metrics`** - Retrieve host performance metrics
+- **`mcp_od_zabbix_get_alerts`** - Retrieve active alerts and problems
+- **`mcp_od_zabbix_get_inventory`** - Get detailed host inventory
+- **`mcp_od_zabbix_get_problems`** - Retrieve current active problems
+- **`mcp_od_zabbix_get_events`** - Retrieve historical events for audit/analysis
+- **`mcp_od_zabbix_get_triggers`** - Retrieve and manage trigger configurations
 
 #### Example: Discover Zabbix Hosts
 
 ```bash
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "zabbix_host_discover", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix"}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_zabbix_host_discover", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix"}}}'
 ```
 
 #### Example: Get Zabbix Host Metrics
 
 ```bash
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "zabbix_get_metrics", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix", "hostName": "Zabbix server"}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_zabbix_get_metrics", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix", "hostName": "Zabbix server"}}}'
 ```
 
 #### Example: Get Zabbix Alerts
 
 ```bash
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "zabbix_get_alerts", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix"}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_zabbix_get_alerts", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix"}}}'
 ```
 
 #### Example: Get Zabbix Host Inventory
 
 ```bash
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "zabbix_get_inventory", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix"}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_zabbix_get_inventory", "arguments": {"baseUrl": "http://localhost:8080", "username": "Admin", "password": "zabbix"}}}'
 ```
 
 ### 🔍 **NMAP Scanning Tools** (5/5 ✅ 100%)
 
-- **`nmap_ping_scan`** - Host discovery without port scanning (-sn)
-- **`nmap_tcp_connect_scan`** - TCP Connect scan for open ports (-sT)
-- **`nmap_tcp_syn_scan`** - Stealth SYN scan with capability-based privileges (-sS)
-- **`nmap_udp_scan`** - UDP port scanning with privilege escalation (-sU)
-- **`nmap_version_scan`** - Service version detection with comprehensive probing (-sV)
+- **`mcp_od_nmap_ping_scan`** - Host discovery without port scanning (-sn)
+- **`mcp_od_nmap_tcp_connect_scan`** - TCP Connect scan for open ports (-sT)
+- **`mcp_od_nmap_tcp_syn_scan`** - Stealth SYN scan with capability-based privileges (-sS)
+- **`mcp_od_nmap_udp_scan`** - UDP port scanning with privilege escalation (-sU)
+- **`mcp_od_nmap_version_scan`** - Service version detection with comprehensive probing (-sV)
 
 #### 🛡️ **Advanced Security Implementation**
 
@@ -642,29 +642,29 @@ Our NMAP tools implement **capability-based security** for privileged network op
 
 ```bash
 # Host discovery (ping scan) - No privileges required
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "nmap_ping_scan", "arguments": {"target": "192.168.1.0/24"}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_nmap_ping_scan", "arguments": {"target": "192.168.1.0/24"}}}'
 
 # TCP Connect scan - Standard user privileges
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "nmap_tcp_connect_scan", "arguments": {"target": "scanme.nmap.org", "ports": "22,80,443"}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_nmap_tcp_connect_scan", "arguments": {"target": "scanme.nmap.org", "ports": "22,80,443"}}}'
 
 # Stealth SYN scan - Uses capability-based privileges
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "nmap_tcp_syn_scan", "arguments": {"target": "172.20.0.22", "ports": "22,80,443,8080", "timing_template": 4}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_nmap_tcp_syn_scan", "arguments": {"target": "172.20.0.22", "ports": "22,80,443,8080", "timing_template": 4}}}'
 
 # UDP scan - Privileged operation with capability escalation
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "nmap_udp_scan", "arguments": {"target": "172.20.0.22", "ports": "53,161,514", "top_ports": 100}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_nmap_udp_scan", "arguments": {"target": "172.20.0.22", "ports": "53,161,514", "top_ports": 100}}}'
 
 # Service version detection - Comprehensive probing
-curl -X POST http://localhost:3000/mcp \
+curl -X POST http://localhost:6270/mcp \
   -H "Content-Type: application/json" \
-  -d '{"method": "tools/call", "params": {"name": "nmap_version_scan", "arguments": {"target": "172.20.0.22", "ports": "8080", "intensity": 7}}}'
+  -d '{"method": "tools/call", "params": {"name": "mcp_od_nmap_version_scan", "arguments": {"target": "172.20.0.22", "ports": "8080", "intensity": 7}}}'
 ```
 
 #### 📊 **NMAP Scan Results**
@@ -690,39 +690,39 @@ Method: probe response analysis
 
 ### 🏗️ **Proxmox Cluster Management** (10/10 ✅ 100%)
 
-- **`proxmox_list_nodes`** - Returns all nodes in Proxmox cluster
-- **`proxmox_get_node_details`** - Detailed node information and metrics
-- **`proxmox_list_vms`** - All virtual machines for a node
-- **`proxmox_get_vm_details`** - VM configuration and status details
-- **`proxmox_list_containers`** - All LXC containers for a node
-- **`proxmox_get_container_details`** - Container configuration details
-- **`proxmox_list_storage`** - Storage resources and utilization
-- **`proxmox_list_networks`** - Network configuration and VLANs
-- **`proxmox_cluster_resources`** - Complete cluster resource summary
-- **`proxmox_get_metrics`** - Performance metrics for nodes/VMs
+- **`mcp_od_proxmox_list_nodes`** - Returns all nodes in Proxmox cluster
+- **`mcp_od_proxmox_get_node_details`** - Detailed node information and metrics
+- **`mcp_od_proxmox_list_vms`** - All virtual machines for a node
+- **`mcp_od_proxmox_get_vm_details`** - VM configuration and status details
+- **`mcp_od_proxmox_list_containers`** - All LXC containers for a node
+- **`mcp_od_proxmox_get_container_details`** - Container configuration details
+- **`mcp_od_proxmox_list_storage`** - Storage resources and utilization
+- **`mcp_od_proxmox_list_networks`** - Network configuration and VLANs
+- **`mcp_od_proxmox_cluster_resources`** - Complete cluster resource summary
+- **`mcp_od_proxmox_get_metrics`** - Performance metrics for nodes/VMs
 
 ### 📡 **SNMP Device Discovery** (12/12 ✅ 100%)
 
-- **`snmp_create_session`** - Create SNMP session with authentication
-- **`snmp_close_session`** - Close SNMP session and cleanup
-- **`snmp_get`** - Retrieve specific OID values
-- **`snmp_get_next`** - GETNEXT operation for OID traversal
-- **`snmp_walk`** - Walk OID subtrees for bulk data
-- **`snmp_table`** - Retrieve structured SNMP tables
-- **`snmp_discover`** - Network-wide SNMP device discovery
-- **`snmp_device_inventory`** - Complete device hardware/software inventory
-- **`snmp_interface_discovery`** - Network interface discovery and analysis
-- **`snmp_system_health`** - System health and performance metrics
-- **`snmp_service_discovery`** - Discover running services and listening ports
-- **`snmp_network_topology`** - Map network topology using CDP/LLDP protocols
+- **`mcp_od_snmp_create_session`** - Create SNMP session with authentication
+- **`mcp_od_snmp_close_session`** - Close SNMP session and cleanup
+- **`mcp_od_snmp_get`** - Retrieve specific OID values
+- **`mcp_od_snmp_get_next`** - GETNEXT operation for OID traversal
+- **`mcp_od_snmp_walk`** - Walk OID subtrees for bulk data
+- **`mcp_od_snmp_table`** - Retrieve structured SNMP tables
+- **`mcp_od_snmp_discover`** - Network-wide SNMP device discovery
+- **`mcp_od_snmp_device_inventory`** - Complete device hardware/software inventory
+- **`mcp_od_snmp_interface_discovery`** - Network interface discovery and analysis
+- **`mcp_od_snmp_system_health`** - System health and performance metrics
+- **`mcp_od_snmp_service_discovery`** - Discover running services and listening ports
+- **`mcp_od_snmp_network_topology`** - Map network topology using CDP/LLDP protocols
 
 ### 🔐 **Enterprise Credential Management** (5/5 ✅ 100%)
 
-- **`credentials_add`** - Add encrypted credentials (multiple types supported)
-- **`credentials_get`** - Retrieve and decrypt stored credentials
-- **`credentials_list`** - List all credentials (metadata only, secure)
-- **`credentials_remove`** - Remove credentials from secure store
-- **`credentials_rotate_key`** - Rotate encryption keys with re-encryption
+- **`mcp_od_credentials_add`** - Add encrypted credentials (multiple types supported)
+- **`mcp_od_credentials_get`** - Retrieve and decrypt stored credentials
+- **`mcp_od_credentials_list`** - List all credentials (metadata only, secure)
+- **`mcp_od_credentials_remove`** - Remove credentials from secure store
+- **`mcp_od_credentials_rotate_key`** - Rotate encryption keys with re-encryption
 
 ---
 
@@ -763,7 +763,7 @@ curl http://localhost:6270/health
 ```javascript
 // Environment variables for production
 MCP_TRANSPORT_MODE = http; // Transport: http, stdio, websocket
-MCP_SERVER_PORT = 3000; // HTTP server port
+MCP_SERVER_PORT = 6270; // HTTP server port
 MCP_LOG_LEVEL = info; // Logging: debug, info, warn, error
 MCP_MAX_CONNECTIONS = 100; // Connection limits
 MCP_REQUEST_TIMEOUT = 30000; // Request timeout (ms)
@@ -836,13 +836,13 @@ Our comprehensive testing against **real production infrastructure** achieved:
 # Discover complete Proxmox cluster
 curl -X POST localhost:6270/mcp -d '{
   "method": "tools/call",
-  "params": {"name": "proxmox_cluster_resources"}
+  "params": {"name": "mcp_od_proxmox_cluster_resources"}
 }'
 
 # SNMP device inventory across network
 curl -X POST localhost:6270/mcp -d '{
   "method": "tools/call",
-  "params": {"name": "snmp_discover", "arguments": {"targetRange": "192.168.1.0/24"}}
+  "params": {"name": "mcp_od_snmp_discover", "arguments": {"targetRange": "192.168.1.0/24"}}
 }'
 ```
 
@@ -858,7 +858,7 @@ curl -X POST localhost:6270/mcp -d '{
 }'
 
 # ITIL v4 compliant CI classification
-curl -X POST localhost:3000/mcp -d '{
+curl -X POST localhost:6270/mcp -d '{
   "method": "prompts/get",
   "params": {"name": "cmdb_ci_classification", "arguments": {
     "deviceType": "server", "discoveredData": "..."
@@ -870,9 +870,9 @@ curl -X POST localhost:3000/mcp -d '{
 
 ```bash
 # Store discovered infrastructure in CMDB
-curl -X POST localhost:3000/mcp -d '{
+curl -X POST localhost:6270/mcp -d '{
   "method": "tools/call",
-  "params": {"name": "memory_set", "arguments": {
+  "params": {"name": "mcp_od_memory_set", "arguments": {
     "key": "ci:server:web01",
     "value": {"type": "server", "role": "web", "status": "active"}
   }}

@@ -1,0 +1,1737 @@
+{
+  "summary": {
+    "totalTools": 60,
+    "passed": 60,
+    "failed": 0,
+    "skipped": 0,
+    "successRate": 100
+  },
+  "categories": {
+    "memory": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "network": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nmap": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "snmp": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "proxmox": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "zabbix": {
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0
+    },
+    "credentials": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0
+    },
+    "registry": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "transports": {
+    "stdio": {
+      "total": 60,
+      "passed": 60,
+      "failed": 0,
+      "categories": {
+        "memory": {
+          "total": 9,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_memory_get": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "No CI found for key: test:memory:item"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "No CI found for key: test:memory:item"
+                    }
+                  ],
+                  "structuredContent": {
+                    "key": "test:memory:item",
+                    "value": null
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_set": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Stored CI: test:memory:item\nPersisted 1 CIs\n{\n  \"test\": true,\n  \"timestamp\": 1773619597194\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Stored CI: test:memory:item\nPersisted 1 CIs\n{\n  \"test\": true,\n  \"timestamp\": 1773619597194\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_query": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Found 1 CIs for pattern: test:*\n\n```json\n{\n  \"test:memory:item\": {\n    \"test\": true,\n    \"timestamp\": 1773619597194\n  }\n}\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Found 1 CIs for pattern: test:*\n\n```json\n{\n  \"test:memory:item\": {\n    \"test\": true,\n    \"timestamp\": 1773619597194\n  }\n}\n```"
+                    }
+                  ],
+                  "structuredContent": {
+                    "count": 1,
+                    "pattern": "test:*",
+                    "matches": {
+                      "test:memory:item": {
+                        "test": true,
+                        "timestamp": 1773619597194
+                      }
+                    }
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_merge": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Merged into CI: test:memory:merge\nPersisted 2 CIs\n{\n  \"merged\": true,\n  \"timestamp\": 1773619597199\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Merged into CI: test:memory:merge\nPersisted 2 CIs\n{\n  \"merged\": true,\n  \"timestamp\": 1773619597199\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_clear": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Cleared 2 CIs from memory and 2 rows from SQLite."
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Cleared 2 CIs from memory and 2 rows from SQLite."
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_stats": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Memory Statistics\n\n| Metric | Value |\n|---|---|\n| In-Memory CIs | 0 |\n| SQLite CIs | 0 |\n| Total Size | 0 bytes |\n| Audit Entries | 149 |\n| Oldest CI | N/A |\n| Newest CI | N/A |\n| Auto-Save | true (30000ms) |"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "## Memory Statistics\n\n| Metric | Value |\n|---|---|\n| In-Memory CIs | 0 |\n| SQLite CIs | 0 |\n| Total Size | 0 bytes |\n| Audit Entries | 149 |\n| Oldest CI | N/A |\n| Newest CI | N/A |\n| Auto-Save | true (30000ms) |"
+                    }
+                  ],
+                  "structuredContent": {
+                    "inMemoryCIs": 0,
+                    "sqliteCIs": 0,
+                    "totalSizeBytes": 0,
+                    "auditEntries": 149,
+                    "oldestCI": null,
+                    "newestCI": null,
+                    "autoSave": {
+                      "enabled": true,
+                      "intervalMs": 30000
+                    }
+                  }
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_save": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Saved 0 CIs to SQLite persistent storage."
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Saved 0 CIs to SQLite persistent storage."
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_rotate_key": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Memory encryption key rotated successfully."
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Memory encryption key rotated successfully."
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_memory_migrate_from_filesystem": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error: File not found: D:\\github-development\\mcp-open-discovery\\data\\memory_data.json"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error: File not found: D:\\github-development\\mcp-open-discovery\\data\\memory_data.json"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "network": {
+          "total": 9,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_net_ping": {
+              "status": "passed",
+              "duration": 23,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command failed (exit 1)"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_nslookup": {
+              "status": "passed",
+              "duration": 131,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## DNS Lookup: google.com (A)\n```\nServer:  cdns01.comcast.net\r\nAddress:  75.75.75.75\r\n\r\nName:    google.com\r\nAddresses:  2607:f8b0:4008:80f::200e\r\n\t  192.178.50.78\r\n\r\n\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "host": "google.com",
+                  "type": "A",
+                  "raw_output": "Server:  cdns01.comcast.net\r\nAddress:  75.75.75.75\r\n\r\nName:    google.com\r\nAddresses:  2607:f8b0:4008:80f::200e\r\n\t  192.178.50.78\r\n\r\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_netstat": {
+              "status": "passed",
+              "duration": 35,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Network Connections\n```\n\r\nActive Connections\r\n\r\n  Proto  Local Address          Foreign Address        State\r\n  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:2179           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5040           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5357           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5900           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:11434          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:27036          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:41380          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:47546          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49664          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49665          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49666          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49667          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49668          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49689          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:50128          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:59869          0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:22           0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:2311         0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        127.0.0.1:17684        ESTABLISHED\r\n  TCP    127.0.0.1:17674        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17674        127.0.0.1:17683        ESTABLISHED\r\n  TCP    127.0.0.1:17683        127.0.0.1:17674        ESTABLISHED\r\n  TCP    127.0.0.1:17684        127.0.0.1:17673        ESTABLISHED\r\n  TCP    127.0.0.1:21245        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:27060        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:30257        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:31856        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:32000        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:34616        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:40122        127.0.0.1:40123        ESTABLISHED\r\n  TCP    127.0.0.1:40123        127.0.0.1:40122        ESTABLISHED\r\n  TCP    127.0.0.1:40124        127.0.0.1:40125        ESTABLISHED\r\n  TCP    127.0.0.1:40125        127.0.0.1:40124        ESTABLISHED\r\n  TCP    127.0.0.1:62329        127.0.0.1:62330        ESTABLISHED\r\n  TCP    127.0.0.1:62330        127.0.0.1:62329        ESTABLISHED\r\n  TCP    127.0.0.1:62331        0.0.0.0:0              LISTENING\r\n  TCP    172.28.208.1:139       0.0.0.0:0              LISTENING\r\n  TCP    172.31.192.1:139       0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:139    0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:1393   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:3963   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:4388   40.71.11.167:443       CLOSE_WAIT\r\n  TCP    192.168.200.226:4683   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:6572   72.153.5.76:443        ESTABLISHED\r\n  TCP    192.168.200.226:7061   135.234.174.40:443     ESTABLISHED\r\n  TCP    192.168.200.226:7796   75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:8841   140.82.112.26:443      ESTABLISHED\r\n  TCP    192.168.200.226:13014  140.82.114.22:443      ESTABLISHED\r\n  TCP    192.168.200.226:13045  142.251.211.229:443    TIME_WAIT\r\n  TCP    192.168.200.226:15002  48.214.187.216:443     ESTABLISHED\r\n  TCP    192.168.200.226:15503  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17029  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17687  162.254.199.184:27018  ESTABLISHED\r\n  TCP    192.168.200.226:17690  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17691  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17692  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20289  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20956  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:21481  48.214.189.177:443     ESTABLISHED\r\n  TCP    192.168.200.226:27368  34.107.243.93:443      ESTABLISHED\r\n  TCP    192.168.200.226:29020  20.42.73.25:443        ESTABLISHED\r\n  TCP    192.168.200.226:31338  150.171.109.118:443    ESTABLISHED\r\n  TCP    192.168.200.226:31357  146.75.93.91:443       ESTABLISHED\r\n  TCP    192.168.200.226:31360  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31361  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31363  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31366  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31368  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31370  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31377  192.168.200.10:8006    ESTABLISHED\r\n  TCP    192.168.200.226:33642  172.183.7.192:443      ESTABLISHED\r\n  TCP    192.168.200.226:36168  192.168.200.250:445    ESTABLISHED\r\n  TCP    192.168.200.226:43329  52.182.143.208:443     ESTABLISHED\r\n  TCP    192.168.200.226:43352  4.249.131.160:443      ESTABLISHED\r\n  TCP    192.168.200.226:47294  104.208.16.91:443      ESTABLISHED\r\n  TCP    192.168.200.226:47325  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:47864  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:48503  52.96.122.2:443        ESTABLISHED\r\n  TCP    192.168.200.226:51260  172.183.7.194:443      ESTABLISHED\r\n  TCP    192.168.200.226:51871  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:52778  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:53510  18.97.36.74:443        ESTABLISHED\r\n  TCP    192.168.200.226:54377  140.82.114.26:443      ESTABLISHED\r\n  TCP    192.168.200.226:59659  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:59663  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:61886  52.179.73.34:443       ESTABLISHED\r\n  TCP    [::]:135               [::]:0                 LISTENING\r\n  TCP    [::]:445               [::]:0                 LISTENING\r\n  TCP    [::]:2179              [::]:0                 LISTENING\r\n  TCP    [::]:5357              [::]:0                 LISTENING\r\n  TCP    [::]:11434             [::]:0                 LISTENING\r\n  TCP    [::]:41380             [::]:0                 LISTENING\r\n  TCP    [::]:47546             [::]:0                 LISTENING\r\n  TCP    [::]:49664             [::]:0                 LISTENING\r\n  TCP    [::]:49665             [::]:0                 LISTENING\r\n  TCP    [::]:49666             [::]:0                 LISTENING\r\n  TCP    [::]:49667             [::]:0                 LISTENING\r\n  TCP    [::]:49668             [::]:0                 LISTENING\r\n  TCP    [::]:49689             [::]:0                 LISTENING\r\n  TCP    [::]:50128             [::]:0                 LISTENING\r\n  TCP    [::1]:22               [::]:0                 LISTENING\r\n  TCP    [::1]:34616            [::]:0                 LISTENING\r\n  TCP    [::1]:49669            [::]:0                 LISTENING\r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:123            *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:5050           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5355           *:*                    \r\n  UDP    0.0.0.0:27036          *:*                    \r\n  UDP    0.0.0.0:49881          *:*                    \r\n  UDP    0.0.0.0:49882          *:*                    \r\n  UDP    0.0.0.0:50062          *:*                    \r\n  UDP    0.0.0.0:53326          *:*                    \r\n  UDP    0.0.0.0:53532          *:*                    \r\n  UDP    0.0.0.0:56707          *:*                    \r\n  UDP    0.0.0.0:57481          *:*                    \r\n  UDP    0.0.0.0:59743          *:*                    \r\n  UDP    0.0.0.0:59870          *:*                    \r\n  UDP    0.0.0.0:59871          *:*                    \r\n  UDP    0.0.0.0:60874          *:*                    \r\n  UDP    127.0.0.1:1900         *:*                    \r\n  UDP    127.0.0.1:57998        *:*                    \r\n  UDP    127.0.0.1:64382        127.0.0.1:64382        \r\n  UDP    172.28.208.1:67        *:*                    \r\n  UDP    172.28.208.1:68        *:*                    \r\n  UDP    172.28.208.1:137       *:*                    \r\n  UDP    172.28.208.1:138       *:*                    \r\n  UDP    172.28.208.1:1900      *:*                    \r\n  UDP    172.28.208.1:27036     *:*                    \r\n  UDP    172.28.208.1:57999     *:*                    \r\n  UDP    172.31.192.1:137       *:*                    \r\n  UDP    172.31.192.1:138       *:*                    \r\n  UDP    172.31.192.1:1900      *:*                    \r\n  UDP    172.31.192.1:27036     *:*                    \r\n  UDP    172.31.192.1:58000     *:*                    \r\n  UDP    192.168.200.226:137    *:*                    \r\n  UDP    192.168.200.226:138    *:*                    \r\n  UDP    192.168.200.226:1900   *:*                    \r\n  UDP    192.168.200.226:27036  *:*                    \r\n  UDP    192.168.200.226:57997  *:*                    \r\n  UDP    [::]:123               *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5355              *:*                    \r\n  UDP    [::]:49883             *:*                    \r\n  UDP    [::]:50063             *:*                    \r\n  UDP    [::]:53326             *:*                    \r\n  UDP    [::]:53533             *:*                    \r\n  UDP    [::]:56707             *:*                    \r\n  UDP    [::]:60875             *:*                    \r\n  UDP    [::1]:1900             *:*                    \r\n  UDP    [::1]:57994            *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:1900  *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:57995  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:1900  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:57996  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:1900  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:57993  *:*                    \r\n\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "protocol": "all",
+                  "raw_output": "\r\nActive Connections\r\n\r\n  Proto  Local Address          Foreign Address        State\r\n  TCP    0.0.0.0:135            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:445            0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:2179           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5040           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5357           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:5900           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:11434          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:27036          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:41380          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:47546          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49664          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49665          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49666          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49667          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49668          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:49689          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:50128          0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:59869          0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:22           0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:2311         0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17673        127.0.0.1:17684        ESTABLISHED\r\n  TCP    127.0.0.1:17674        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:17674        127.0.0.1:17683        ESTABLISHED\r\n  TCP    127.0.0.1:17683        127.0.0.1:17674        ESTABLISHED\r\n  TCP    127.0.0.1:17684        127.0.0.1:17673        ESTABLISHED\r\n  TCP    127.0.0.1:21245        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:27060        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:30257        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:31856        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:32000        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:34616        0.0.0.0:0              LISTENING\r\n  TCP    127.0.0.1:40122        127.0.0.1:40123        ESTABLISHED\r\n  TCP    127.0.0.1:40123        127.0.0.1:40122        ESTABLISHED\r\n  TCP    127.0.0.1:40124        127.0.0.1:40125        ESTABLISHED\r\n  TCP    127.0.0.1:40125        127.0.0.1:40124        ESTABLISHED\r\n  TCP    127.0.0.1:62329        127.0.0.1:62330        ESTABLISHED\r\n  TCP    127.0.0.1:62330        127.0.0.1:62329        ESTABLISHED\r\n  TCP    127.0.0.1:62331        0.0.0.0:0              LISTENING\r\n  TCP    172.28.208.1:139       0.0.0.0:0              LISTENING\r\n  TCP    172.31.192.1:139       0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:139    0.0.0.0:0              LISTENING\r\n  TCP    192.168.200.226:1393   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:3963   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:4388   40.71.11.167:443       CLOSE_WAIT\r\n  TCP    192.168.200.226:4683   75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:6572   72.153.5.76:443        ESTABLISHED\r\n  TCP    192.168.200.226:7061   135.234.174.40:443     ESTABLISHED\r\n  TCP    192.168.200.226:7796   75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:8841   140.82.112.26:443      ESTABLISHED\r\n  TCP    192.168.200.226:13014  140.82.114.22:443      ESTABLISHED\r\n  TCP    192.168.200.226:13045  142.251.211.229:443    TIME_WAIT\r\n  TCP    192.168.200.226:15002  48.214.187.216:443     ESTABLISHED\r\n  TCP    192.168.200.226:15503  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17029  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17687  162.254.199.184:27018  ESTABLISHED\r\n  TCP    192.168.200.226:17690  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:17691  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:17692  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20289  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:20956  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:21481  48.214.189.177:443     ESTABLISHED\r\n  TCP    192.168.200.226:27368  34.107.243.93:443      ESTABLISHED\r\n  TCP    192.168.200.226:29020  20.42.73.25:443        ESTABLISHED\r\n  TCP    192.168.200.226:31338  150.171.109.118:443    ESTABLISHED\r\n  TCP    192.168.200.226:31357  146.75.93.91:443       ESTABLISHED\r\n  TCP    192.168.200.226:31360  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31361  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31363  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31366  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31368  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31370  192.168.200.10:8006    TIME_WAIT\r\n  TCP    192.168.200.226:31377  192.168.200.10:8006    ESTABLISHED\r\n  TCP    192.168.200.226:33642  172.183.7.192:443      ESTABLISHED\r\n  TCP    192.168.200.226:36168  192.168.200.250:445    ESTABLISHED\r\n  TCP    192.168.200.226:43329  52.182.143.208:443     ESTABLISHED\r\n  TCP    192.168.200.226:43352  4.249.131.160:443      ESTABLISHED\r\n  TCP    192.168.200.226:47294  104.208.16.91:443      ESTABLISHED\r\n  TCP    192.168.200.226:47325  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:47864  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:48503  52.96.122.2:443        ESTABLISHED\r\n  TCP    192.168.200.226:51260  172.183.7.194:443      ESTABLISHED\r\n  TCP    192.168.200.226:51871  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:52778  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:53510  18.97.36.74:443        ESTABLISHED\r\n  TCP    192.168.200.226:54377  140.82.114.26:443      ESTABLISHED\r\n  TCP    192.168.200.226:59659  75.75.77.136:443       ESTABLISHED\r\n  TCP    192.168.200.226:59663  75.75.77.135:443       ESTABLISHED\r\n  TCP    192.168.200.226:61886  52.179.73.34:443       ESTABLISHED\r\n  TCP    [::]:135               [::]:0                 LISTENING\r\n  TCP    [::]:445               [::]:0                 LISTENING\r\n  TCP    [::]:2179              [::]:0                 LISTENING\r\n  TCP    [::]:5357              [::]:0                 LISTENING\r\n  TCP    [::]:11434             [::]:0                 LISTENING\r\n  TCP    [::]:41380             [::]:0                 LISTENING\r\n  TCP    [::]:47546             [::]:0                 LISTENING\r\n  TCP    [::]:49664             [::]:0                 LISTENING\r\n  TCP    [::]:49665             [::]:0                 LISTENING\r\n  TCP    [::]:49666             [::]:0                 LISTENING\r\n  TCP    [::]:49667             [::]:0                 LISTENING\r\n  TCP    [::]:49668             [::]:0                 LISTENING\r\n  TCP    [::]:49689             [::]:0                 LISTENING\r\n  TCP    [::]:50128             [::]:0                 LISTENING\r\n  TCP    [::1]:22               [::]:0                 LISTENING\r\n  TCP    [::1]:34616            [::]:0                 LISTENING\r\n  TCP    [::1]:49669            [::]:0                 LISTENING\r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:53             *:*                    \r\n  UDP    0.0.0.0:123            *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:3702           *:*                    \r\n  UDP    0.0.0.0:5050           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5353           *:*                    \r\n  UDP    0.0.0.0:5355           *:*                    \r\n  UDP    0.0.0.0:27036          *:*                    \r\n  UDP    0.0.0.0:49881          *:*                    \r\n  UDP    0.0.0.0:49882          *:*                    \r\n  UDP    0.0.0.0:50062          *:*                    \r\n  UDP    0.0.0.0:53326          *:*                    \r\n  UDP    0.0.0.0:53532          *:*                    \r\n  UDP    0.0.0.0:56707          *:*                    \r\n  UDP    0.0.0.0:57481          *:*                    \r\n  UDP    0.0.0.0:59743          *:*                    \r\n  UDP    0.0.0.0:59870          *:*                    \r\n  UDP    0.0.0.0:59871          *:*                    \r\n  UDP    0.0.0.0:60874          *:*                    \r\n  UDP    127.0.0.1:1900         *:*                    \r\n  UDP    127.0.0.1:57998        *:*                    \r\n  UDP    127.0.0.1:64382        127.0.0.1:64382        \r\n  UDP    172.28.208.1:67        *:*                    \r\n  UDP    172.28.208.1:68        *:*                    \r\n  UDP    172.28.208.1:137       *:*                    \r\n  UDP    172.28.208.1:138       *:*                    \r\n  UDP    172.28.208.1:1900      *:*                    \r\n  UDP    172.28.208.1:27036     *:*                    \r\n  UDP    172.28.208.1:57999     *:*                    \r\n  UDP    172.31.192.1:137       *:*                    \r\n  UDP    172.31.192.1:138       *:*                    \r\n  UDP    172.31.192.1:1900      *:*                    \r\n  UDP    172.31.192.1:27036     *:*                    \r\n  UDP    172.31.192.1:58000     *:*                    \r\n  UDP    192.168.200.226:137    *:*                    \r\n  UDP    192.168.200.226:138    *:*                    \r\n  UDP    192.168.200.226:1900   *:*                    \r\n  UDP    192.168.200.226:27036  *:*                    \r\n  UDP    192.168.200.226:57997  *:*                    \r\n  UDP    [::]:123               *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:3702              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5353              *:*                    \r\n  UDP    [::]:5355              *:*                    \r\n  UDP    [::]:49883             *:*                    \r\n  UDP    [::]:50063             *:*                    \r\n  UDP    [::]:53326             *:*                    \r\n  UDP    [::]:53533             *:*                    \r\n  UDP    [::]:56707             *:*                    \r\n  UDP    [::]:60875             *:*                    \r\n  UDP    [::1]:1900             *:*                    \r\n  UDP    [::1]:57994            *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:1900  *:*                    \r\n  UDP    [fe80::d2e:6e70:300b:412%28]:57995  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:1900  *:*                    \r\n  UDP    [fe80::5851:6c90:540c:fdb1%45]:57996  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:1900  *:*                    \r\n  UDP    [fe80::b181:be98:1f8b:8bd%8]:57993  *:*                    \r\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_ifconfig": {
+              "status": "passed",
+              "duration": 6,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command error: spawn ifconfig ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_route": {
+              "status": "passed",
+              "duration": 18,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command failed (exit 1): \r\nManipulates network routing tables.\r\n\r\nROUTE [-f] [-p] [-4|-6] command [destination]\r\n                  [MASK netmask]  [gateway] [METRIC metric]  [IF interface]\r\n\r\n  -f           Clears the routing tables of all gateway entries.  If this is\r\n               used in conjunction with one of the commands, the tables are\r\n               cleared prior to running the command.\r\n               \r\n  -p           When used with the ADD command, makes a route persistent across\r\n               boots of the system. By default, routes are not preserved\r\n               when the system is restarted. Ignored for all other commands, \r\n               which always affect the appropriate persistent routes.\r\n               \r\n  -4\t       Force using IPv4.\r\n\r\n  -6           Force using IPv6. \r\n  \r\n  command      One of these:\r\n                 PRINT     Prints  a route\r\n                 ADD       Adds    a route\r\n                 DELETE    Deletes a route\r\n                 CHANGE    Modifies an existing route\t\r\n  destination  Specifies the host.\r\n  MASK         Specifies that the next parameter is the 'netmask' value.\r\n  netmask      Specifies a subnet mask value for this route entry.\r\n               If not specified, it defaults to 255.255.255.255.\r\n  gateway      Specifies gateway.\r\n  interface    the interface number for the specified route.\r\n  METRIC       specifies the metric, ie. cost for the destination.\r\n\r\nAll symbolic names used for destination are looked up in the network database\r\nfile NETWORKS. The symbolic names for gateway are looked up in the host name\r\ndatabase file HOSTS.\r\n\r\nIf the command is PRINT or DELETE. Destination or gateway can be a wildcard,\r\n(wildcard is specified as a star '*'), or the gateway argument may be omitted.\r\n\r\nIf Dest contains a * or ?, it is treated as a shell pattern, and only\r\nmatching destination routes are printed. The '*' matches any string,\r\nand '?' matches any one char. Examples: 157.*.1, 157.*, 127.*, *224*.\r\n\r\nPattern match is only allowed in PRINT command.\r\nDiagnostic Notes:\r\n    Invalid MASK generates an error, that is when (DEST & MASK) != DEST.\r\n    Example> route ADD 157.0.0.0 MASK 155.0.0.0 157.55.80.1 IF 1\r\n             The route addition failed: The specified mask parameter is invalid. (Destination & Mask) != Destination.\r\n\r\nExamples:\r\n\r\n    > route PRINT\r\n    > route PRINT -4\r\n    > route PRINT -6\r\n    > route PRINT 157*          .... Only prints those matching 157*\r\n\t\r\n    > route ADD 157.0.0.0 MASK 255.0.0.0  157.55.80.1 METRIC 3 IF 2\r\n             destination^      ^mask      ^gateway     metric^    ^\r\n                                                         Interface^\r\n      If IF is not given, it tries to find the best interface for a given \r\n      gateway.\r\n    > route ADD 3ffe::/32 3ffe::1\r\n    \r\n    > route CHANGE 157.0.0.0 MASK 255.0.0.0 157.55.80.5 METRIC 2 IF 2\r\n    \r\n      CHANGE is used to modify gateway and/or metric only.\r\n    \r\n    > route DELETE 157.0.0.0\r\n    > route DELETE 3ffe::/32\r\n"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_arp": {
+              "status": "passed",
+              "duration": 37,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## ARP Table\n```\n\r\nInterface: 192.168.200.226 --- 0x8\r\n  Internet Address      Physical Address      Type\r\n  192.168.200.1         c0-c9-e3-cb-e7-8b     dynamic   \r\n  192.168.200.8         5c-e9-31-a3-fd-18     dynamic   \r\n  192.168.200.10        6c-4b-90-07-30-4d     dynamic   \r\n  192.168.200.95        bc-24-11-31-20-c2     dynamic   \r\n  192.168.200.202       e0-4f-43-5f-d4-ed     dynamic   \r\n  192.168.200.203       38-e7-c0-61-f7-ff     dynamic   \r\n  192.168.200.205       00-12-33-a5-30-de     dynamic   \r\n  192.168.200.207       24-2f-d0-02-06-28     dynamic   \r\n  192.168.200.210       10-5a-17-4f-c7-04     dynamic   \r\n  192.168.200.215       c4-ac-59-a6-df-a2     dynamic   \r\n  192.168.200.217       18-ee-69-1f-4b-10     dynamic   \r\n  192.168.200.218       8c-bf-ea-c6-7f-48     dynamic   \r\n  192.168.200.220       88-66-5a-0c-1f-3a     dynamic   \r\n  192.168.200.223       1c-7b-23-ed-c8-ce     dynamic   \r\n  192.168.200.224       7a-1c-24-d5-bc-f9     dynamic   \r\n  192.168.200.227       74-97-79-04-56-a9     dynamic   \r\n  192.168.200.232       24-4c-e3-2c-5b-1b     dynamic   \r\n  192.168.200.250       bc-24-11-50-bb-bd     dynamic   \r\n  192.168.200.255       ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  224.0.0.252           01-00-5e-00-00-fc     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.28.208.1 --- 0x1c\r\n  Internet Address      Physical Address      Type\r\n  172.28.223.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.31.192.1 --- 0x2d\r\n  Internet Address      Physical Address      Type\r\n  172.31.199.193        00-15-5d-a4-43-8c     dynamic   \r\n  172.31.207.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "raw_output": "\r\nInterface: 192.168.200.226 --- 0x8\r\n  Internet Address      Physical Address      Type\r\n  192.168.200.1         c0-c9-e3-cb-e7-8b     dynamic   \r\n  192.168.200.8         5c-e9-31-a3-fd-18     dynamic   \r\n  192.168.200.10        6c-4b-90-07-30-4d     dynamic   \r\n  192.168.200.95        bc-24-11-31-20-c2     dynamic   \r\n  192.168.200.202       e0-4f-43-5f-d4-ed     dynamic   \r\n  192.168.200.203       38-e7-c0-61-f7-ff     dynamic   \r\n  192.168.200.205       00-12-33-a5-30-de     dynamic   \r\n  192.168.200.207       24-2f-d0-02-06-28     dynamic   \r\n  192.168.200.210       10-5a-17-4f-c7-04     dynamic   \r\n  192.168.200.215       c4-ac-59-a6-df-a2     dynamic   \r\n  192.168.200.217       18-ee-69-1f-4b-10     dynamic   \r\n  192.168.200.218       8c-bf-ea-c6-7f-48     dynamic   \r\n  192.168.200.220       88-66-5a-0c-1f-3a     dynamic   \r\n  192.168.200.223       1c-7b-23-ed-c8-ce     dynamic   \r\n  192.168.200.224       7a-1c-24-d5-bc-f9     dynamic   \r\n  192.168.200.227       74-97-79-04-56-a9     dynamic   \r\n  192.168.200.232       24-4c-e3-2c-5b-1b     dynamic   \r\n  192.168.200.250       bc-24-11-50-bb-bd     dynamic   \r\n  192.168.200.255       ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  224.0.0.252           01-00-5e-00-00-fc     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.28.208.1 --- 0x1c\r\n  Internet Address      Physical Address      Type\r\n  172.28.223.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n\r\nInterface: 172.31.192.1 --- 0x2d\r\n  Internet Address      Physical Address      Type\r\n  172.31.199.193        00-15-5d-a4-43-8c     dynamic   \r\n  172.31.207.255        ff-ff-ff-ff-ff-ff     static    \r\n  224.0.0.22            01-00-5e-00-00-16     static    \r\n  224.0.0.251           01-00-5e-00-00-fb     static    \r\n  239.255.255.250       01-00-5e-7f-ff-fa     static    \r\n  255.255.255.255       ff-ff-ff-ff-ff-ff     static    \r\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_telnet": {
+              "status": "passed",
+              "duration": 6,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## TCP Test: google.com:80\n- Reachable: false\n```\nCommand error: spawn nc ENOENT\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "host": "google.com",
+                  "port": 80,
+                  "timeout": 10,
+                  "reachable": false,
+                  "raw_output": "Command error: spawn nc ENOENT"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_wget": {
+              "status": "passed",
+              "duration": 224,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## HTTP Fetch: http://httpbin.org/get\n```\n{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\": \"identity\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"Wget/1.21.4\", \n    \"X-Amzn-Trace-Id\": \"Root=1-69b7498d-5272c5997b8784c00f25f07e\"\n  }, \n  \"origin\": \"73.55.3.125\", \n  \"url\": \"http://httpbin.org/get\"\n}\n\n```"
+                  }
+                ],
+                "structuredContent": {
+                  "url": "http://httpbin.org/get",
+                  "raw_output": "{\n  \"args\": {}, \n  \"headers\": {\n    \"Accept\": \"*/*\", \n    \"Accept-Encoding\": \"identity\", \n    \"Host\": \"httpbin.org\", \n    \"User-Agent\": \"Wget/1.21.4\", \n    \"X-Amzn-Trace-Id\": \"Root=1-69b7498d-5272c5997b8784c00f25f07e\"\n  }, \n  \"origin\": \"73.55.3.125\", \n  \"url\": \"http://httpbin.org/get\"\n}\n"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_net_whois": {
+              "status": "passed",
+              "duration": 6,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Command error: spawn whois ENOENT"
+                  }
+                ],
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "nmap": {
+          "total": 5,
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_nmap_ping_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Nmap error: spawn nmap ENOENT"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_tcp_connect_scan": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Nmap error: spawn nmap ENOENT"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_tcp_syn_scan": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Nmap error: spawn nmap ENOENT"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_udp_scan": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Nmap error: spawn nmap ENOENT"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_nmap_version_scan": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Nmap error: spawn nmap ENOENT"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Nmap error: spawn nmap ENOENT"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "snmp": {
+          "total": 12,
+          "passed": 12,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_snmp_create_session": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP session created for 172.20.0.10\n\n{\n  \"sessionId\": \"1ce0bf1a-120e-47ac-b196-b7c78ea99f69\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "SNMP session created for 172.20.0.10\n\n{\n  \"sessionId\": \"1ce0bf1a-120e-47ac-b196-b7c78ea99f69\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_close_session": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP session test-session-id closed\n\n{\n  \"success\": true\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "SNMP session test-session-id closed\n\n{\n  \"success\": true\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_get": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "SNMP Error: SNMP session test-session not found"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_get_next": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "SNMP Error: SNMP session test-session not found"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_walk": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "SNMP Error: SNMP session test-session not found"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_table": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Error: SNMP session test-session not found"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "SNMP Error: SNMP session test-session not found"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_discover": {
+              "status": "passed",
+              "duration": 165,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SNMP Discovery results for 172.20.0.0/24\n\n[]"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "SNMP Discovery results for 172.20.0.0/24\n\n[]"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_device_inventory": {
+              "status": "passed",
+              "duration": 124,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Device inventory for 172.20.0.10\n\n{\n  \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Device inventory for 172.20.0.10\n\n{\n  \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_interface_discovery": {
+              "status": "passed",
+              "duration": 108,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Interface discovery for 172.20.0.10\n\n{\n  \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Interface discovery for 172.20.0.10\n\n{\n  \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_service_discovery": {
+              "status": "passed",
+              "duration": 115,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Service discovery for 172.20.0.10\n\n{\n  \"ip\": \"172.20.0.10\",\n  \"services\": [],\n  \"tcpPorts\": [],\n  \"udpPorts\": [],\n  \"processError\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Service discovery for 172.20.0.10\n\n{\n  \"ip\": \"172.20.0.10\",\n  \"services\": [],\n  \"tcpPorts\": [],\n  \"udpPorts\": [],\n  \"processError\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_system_health": {
+              "status": "passed",
+              "duration": 217,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "System health for 172.20.0.10\n\n{\n  \"ip\": \"172.20.0.10\",\n  \"system\": {\n    \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n  },\n  \"interfaces\": {\n    \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n  }\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "System health for 172.20.0.10\n\n{\n  \"ip\": \"172.20.0.10\",\n  \"system\": {\n    \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n  },\n  \"interfaces\": {\n    \"error\": \"Command failed with code 1: Error response from daemon: container 72f3c4080c4c5f44370b6189a7777b0dd5f87508cab49ad88371c8598b0c73cf is not running\\n\"\n  }\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_snmp_network_topology": {
+              "status": "passed",
+              "duration": 177,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Network topology for 172.20.0.0/24\n\n{\n  \"error\": \"No SNMP-enabled devices found in network range\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Network topology for 172.20.0.0/24\n\n{\n  \"error\": \"No SNMP-enabled devices found in network range\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "proxmox": {
+          "total": 10,
+          "passed": 10,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_proxmox_list_nodes": {
+              "status": "passed",
+              "duration": 80,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Proxmox Cluster Nodes:\n\n[\n  {\n    \"maxcpu\": 8,\n    \"disk\": 8219779072,\n    \"uptime\": 3709089,\n    \"maxmem\": 16657985536,\n    \"status\": \"online\",\n    \"mem\": 1911545856,\n    \"cpu\": 0.0088011417697431,\n    \"id\": \"node/ccctc16gb02\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb02\",\n    \"type\": \"node\",\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"E2:FB:95:17:2B:97:4B:D1:07:59:D8:B5:2C:D1:5D:AC:E1:42:83:97:04:B6:1E:70:2C:F2:F7:B3:2A:A5:50:2A\"\n  },\n  {\n    \"id\": \"node/ccctc32gb01\",\n    \"cpu\": 0.00999342537804076,\n    \"status\": \"online\",\n    \"mem\": 5000482816,\n    \"maxmem\": 33544376320,\n    \"uptime\": 3709006,\n    \"disk\": 8605933568,\n    \"maxcpu\": 8,\n    \"ssl_fingerprint\": \"2E:24:75:0C:94:E6:F2:A0:72:30:64:F1:DA:E8:85:37:D1:74:6E:88:C8:9A:1C:8C:22:F6:D4:59:9A:8E:99:38\",\n    \"level\": \"\",\n    \"type\": \"node\",\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 70608257024\n  },\n  {\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"10:6D:29:F2:DE:22:48:14:5C:31:2E:C5:77:62:FF:1A:2E:EA:EB:12:90:AC:37:73:1B:80:81:E4:70:67:ED:74\",\n    \"type\": \"node\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb03\",\n    \"mem\": 4363730944,\n    \"status\": \"online\",\n    \"id\": \"node/ccctc32gb03\",\n    \"cpu\": 0.0121691871455577,\n    \"uptime\": 3708707,\n    \"maxmem\": 33544245248,\n    \"maxcpu\": 8,\n    \"disk\": 8617697280\n  },\n  {\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"40:12:84:0A:29:45:B2:37:FC:B4:FE:9C:48:0F:71:F3:35:A1:D4:3B:A6:79:23:66:11:AA:3D:74:04:AD:D7:FB\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb04\",\n    \"type\": \"node\",\n    \"status\": \"online\",\n    \"mem\": 2343428096,\n    \"id\": \"node/ccctc32gb04\",\n    \"cpu\": 0.0107007699334464,\n    \"maxcpu\": 8,\n    \"disk\": 14198358016,\n    \"uptime\": 3708609,\n    \"maxmem\": 33544241152\n  },\n  {\n    \"type\": \"node\",\n    \"node\": \"ccctc16gb01\",\n    \"maxdisk\": 70608257024,\n    \"ssl_fingerprint\": \"09:7E:74:35:25:32:67:AC:3C:7A:2C:F6:27:1E:65:00:49:CC:D6:66:F1:56:95:B0:1B:46:C1:26:AE:59:51:D8\",\n    \"level\": \"\",\n    \"maxmem\": 16658124800,\n    \"uptime\": 3709106,\n    \"disk\": 8335114240,\n    \"maxcpu\": 8,\n    \"id\": \"node/ccctc16gb01\",\n    \"cpu\": 0.00808272910971116,\n    \"status\": \"online\",\n    \"mem\": 1924501504\n  },\n  {\n    \"uptime\": 3708711,\n    \"maxmem\": 33540460544,\n    \"maxcpu\": 8,\n    \"disk\": 8524259328,\n    \"mem\": 4058054656,\n    \"status\": \"online\",\n    \"cpu\": 0.00971383565240221,\n    \"id\": \"node/ccctc32gb02\",\n    \"type\": \"node\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb02\",\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"ED:06:05:79:88:30:82:68:A2:B7:B0:28:50:AE:98:D8:6B:A5:0C:13:C0:EA:50:43:8E:1C:23:7C:20:C7:BB:6A\"\n  }\n]"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Proxmox Cluster Nodes:\n\n[\n  {\n    \"maxcpu\": 8,\n    \"disk\": 8219779072,\n    \"uptime\": 3709089,\n    \"maxmem\": 16657985536,\n    \"status\": \"online\",\n    \"mem\": 1911545856,\n    \"cpu\": 0.0088011417697431,\n    \"id\": \"node/ccctc16gb02\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb02\",\n    \"type\": \"node\",\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"E2:FB:95:17:2B:97:4B:D1:07:59:D8:B5:2C:D1:5D:AC:E1:42:83:97:04:B6:1E:70:2C:F2:F7:B3:2A:A5:50:2A\"\n  },\n  {\n    \"id\": \"node/ccctc32gb01\",\n    \"cpu\": 0.00999342537804076,\n    \"status\": \"online\",\n    \"mem\": 5000482816,\n    \"maxmem\": 33544376320,\n    \"uptime\": 3709006,\n    \"disk\": 8605933568,\n    \"maxcpu\": 8,\n    \"ssl_fingerprint\": \"2E:24:75:0C:94:E6:F2:A0:72:30:64:F1:DA:E8:85:37:D1:74:6E:88:C8:9A:1C:8C:22:F6:D4:59:9A:8E:99:38\",\n    \"level\": \"\",\n    \"type\": \"node\",\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 70608257024\n  },\n  {\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"10:6D:29:F2:DE:22:48:14:5C:31:2E:C5:77:62:FF:1A:2E:EA:EB:12:90:AC:37:73:1B:80:81:E4:70:67:ED:74\",\n    \"type\": \"node\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb03\",\n    \"mem\": 4363730944,\n    \"status\": \"online\",\n    \"id\": \"node/ccctc32gb03\",\n    \"cpu\": 0.0121691871455577,\n    \"uptime\": 3708707,\n    \"maxmem\": 33544245248,\n    \"maxcpu\": 8,\n    \"disk\": 8617697280\n  },\n  {\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"40:12:84:0A:29:45:B2:37:FC:B4:FE:9C:48:0F:71:F3:35:A1:D4:3B:A6:79:23:66:11:AA:3D:74:04:AD:D7:FB\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb04\",\n    \"type\": \"node\",\n    \"status\": \"online\",\n    \"mem\": 2343428096,\n    \"id\": \"node/ccctc32gb04\",\n    \"cpu\": 0.0107007699334464,\n    \"maxcpu\": 8,\n    \"disk\": 14198358016,\n    \"uptime\": 3708609,\n    \"maxmem\": 33544241152\n  },\n  {\n    \"type\": \"node\",\n    \"node\": \"ccctc16gb01\",\n    \"maxdisk\": 70608257024,\n    \"ssl_fingerprint\": \"09:7E:74:35:25:32:67:AC:3C:7A:2C:F6:27:1E:65:00:49:CC:D6:66:F1:56:95:B0:1B:46:C1:26:AE:59:51:D8\",\n    \"level\": \"\",\n    \"maxmem\": 16658124800,\n    \"uptime\": 3709106,\n    \"disk\": 8335114240,\n    \"maxcpu\": 8,\n    \"id\": \"node/ccctc16gb01\",\n    \"cpu\": 0.00808272910971116,\n    \"status\": \"online\",\n    \"mem\": 1924501504\n  },\n  {\n    \"uptime\": 3708711,\n    \"maxmem\": 33540460544,\n    \"maxcpu\": 8,\n    \"disk\": 8524259328,\n    \"mem\": 4058054656,\n    \"status\": \"online\",\n    \"cpu\": 0.00971383565240221,\n    \"id\": \"node/ccctc32gb02\",\n    \"type\": \"node\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb02\",\n    \"level\": \"\",\n    \"ssl_fingerprint\": \"ED:06:05:79:88:30:82:68:A2:B7:B0:28:50:AE:98:D8:6B:A5:0C:13:C0:EA:50:43:8E:1C:23:7C:20:C7:BB:6A\"\n  }\n]"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_get_node_details": {
+              "status": "passed",
+              "duration": 90,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Node Details for proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Node Details for proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_vms": {
+              "status": "passed",
+              "duration": 164,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "VMs on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "VMs on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_get_vm_details": {
+              "status": "passed",
+              "duration": 97,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "VM 100 details on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "VM 100 details on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_containers": {
+              "status": "passed",
+              "duration": 103,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "LXC containers on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "LXC containers on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_get_container_details": {
+              "status": "passed",
+              "duration": 104,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Container 100 details on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Container 100 details on node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_storage": {
+              "status": "passed",
+              "duration": 104,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Storage on node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Storage on node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_list_networks": {
+              "status": "passed",
+              "duration": 193,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Network config for node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Network config for node proxmox-test:\n\n{\n  \"data\": null,\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\"\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_cluster_resources": {
+              "status": "passed",
+              "duration": 57,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Proxmox Cluster Resources:\n\n[\n  {\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 68719476736,\n    \"netout\": 0,\n    \"uptime\": 0,\n    \"maxmem\": 25769803776,\n    \"maxcpu\": 8,\n    \"vmid\": 100,\n    \"disk\": 0,\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"cpu\": 0,\n    \"template\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"id\": \"lxc/100\",\n    \"name\": \"mastercontol.k9content.com\"\n  },\n  {\n    \"cpu\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"template\": 0,\n    \"id\": \"qemu/101\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"name\": \"ccc-home-automation.k9content.com\",\n    \"maxmem\": 8589934592,\n    \"uptime\": 0,\n    \"vmid\": 101,\n    \"disk\": 0,\n    \"maxcpu\": 4,\n    \"netout\": 0,\n    \"type\": \"qemu\",\n    \"diskread\": 0,\n    \"maxdisk\": 68719476736,\n    \"node\": \"ccctc32gb04\"\n  },\n  {\n    \"uptime\": 3708501,\n    \"maxmem\": 2147483648,\n    \"maxcpu\": 2,\n    \"vmid\": 102,\n    \"disk\": 54394880,\n    \"status\": \"running\",\n    \"mem\": 16355328,\n    \"netin\": 2188917291,\n    \"diskwrite\": 0,\n    \"template\": 0,\n    \"id\": \"lxc/102\",\n    \"cpu\": 0,\n    \"name\": \"ccc-file-server.k9content.com\",\n    \"diskread\": 28372992,\n    \"type\": \"lxc\",\n    \"maxdisk\": 4294967296,\n    \"node\": \"ccctc32gb04\",\n    \"netout\": 26222719\n  },\n  {\n    \"netout\": 0,\n    \"maxdisk\": 137438953472,\n    \"node\": \"ccctc32gb04\",\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"name\": \"ai-cluster-template\",\n    \"cpu\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"template\": 1,\n    \"id\": \"lxc/103\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"vmid\": 103,\n    \"disk\": 0,\n    \"maxcpu\": 8,\n    \"maxmem\": 25769803776,\n    \"uptime\": 0\n  },\n  {\n    \"disk\": 29270781952,\n    \"vmid\": 104,\n    \"maxcpu\": 4,\n    \"maxmem\": 8589934592,\n    \"uptime\": 1817507,\n    \"name\": \"vibeforge-dev01\",\n    \"diskwrite\": 3769720832,\n    \"netin\": 1503326538,\n    \"template\": 0,\n    \"id\": \"lxc/104\",\n    \"cpu\": 0.00481446627540045,\n    \"status\": \"running\",\n    \"mem\": 464007168,\n    \"node\": \"ccctc32gb03\",\n    \"maxdisk\": 100861726720,\n    \"diskread\": 1421844480,\n    \"type\": \"lxc\",\n    \"netout\": 13177795\n  },\n  {\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/110\",\n    \"template\": 0,\n    \"cpu\": 0,\n    \"mem\": 0,\n    \"status\": \"stopped\",\n    \"name\": \"k3s-server-01\",\n    \"maxmem\": 25769803776,\n    \"uptime\": 0,\n    \"vmid\": 110,\n    \"disk\": 0,\n    \"maxcpu\": 8,\n    \"netout\": 0,\n    \"diskread\": 0,\n    \"type\": \"lxc\",\n    \"maxdisk\": 137438953472,\n    \"node\": \"ccctc32gb01\"\n  },\n  {\n    \"maxmem\": 25769803776,\n    \"uptime\": 0,\n    \"disk\": 0,\n    \"vmid\": 115,\n    \"maxcpu\": 8,\n    \"cpu\": 0,\n    \"template\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"id\": \"lxc/115\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"name\": \"k3s-agent-01\",\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"node\": \"ccctc16gb01\",\n    \"maxdisk\": 137438953472,\n    \"netout\": 0\n  },\n  {\n    \"node\": \"ccctc32gb02\",\n    \"maxdisk\": 137438953472,\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"netout\": 0,\n    \"vmid\": 120,\n    \"disk\": 0,\n    \"maxcpu\": 4,\n    \"maxmem\": 4294967296,\n    \"uptime\": 0,\n    \"name\": \"k3s-server-02\",\n    \"cpu\": 0,\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/120\",\n    \"template\": 0,\n    \"mem\": 0,\n    \"status\": \"stopped\"\n  },\n  {\n    \"maxcpu\": 4,\n    \"vmid\": 125,\n    \"disk\": 0,\n    \"uptime\": 0,\n    \"maxmem\": 8589934592,\n    \"name\": \"k3s-agent-02\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"cpu\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/125\",\n    \"netin\": 0,\n    \"template\": 0,\n    \"node\": \"ccctc16gb02\",\n    \"maxdisk\": 137438953472,\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"netout\": 0\n  },\n  {\n    \"mem\": 0,\n    \"status\": \"stopped\",\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"template\": 0,\n    \"id\": \"lxc/130\",\n    \"cpu\": 0,\n    \"name\": \"k3s-agent-03\",\n    \"uptime\": 0,\n    \"maxmem\": 8589934592,\n    \"maxcpu\": 4,\n    \"vmid\": 130,\n    \"disk\": 0,\n    \"netout\": 0,\n    \"diskread\": 0,\n    \"type\": \"lxc\",\n    \"node\": \"ccctc32gb03\",\n    \"maxdisk\": 137438953472\n  },\n  {\n    \"name\": \"k3s-server-03\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"diskwrite\": 0,\n    \"template\": 0,\n    \"netin\": 0,\n    \"id\": \"lxc/140\",\n    \"cpu\": 0,\n    \"maxcpu\": 4,\n    \"disk\": 0,\n    \"vmid\": 140,\n    \"uptime\": 0,\n    \"maxmem\": 4294967296,\n    \"netout\": 0,\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 137438953472,\n    \"diskread\": 0,\n    \"type\": \"lxc\"\n  },\n  {\n    \"diskread\": 0,\n    \"type\": \"lxc\",\n    \"maxdisk\": 8589934592,\n    \"node\": \"ccctc32gb04\",\n    \"netout\": 0,\n    \"maxmem\": 14999879680,\n    \"uptime\": 0,\n    \"disk\": 0,\n    \"vmid\": 600,\n    \"maxcpu\": 2,\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/600\",\n    \"template\": 0,\n    \"cpu\": 0,\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"name\": \"dist-llama01\"\n  },\n  {\n    \"level\": \"\",\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb02\",\n    \"id\": \"node/ccctc16gb02\",\n    \"cpu\": 0.0088011417697431,\n    \"mem\": 1911545856,\n    \"status\": \"online\",\n    \"maxmem\": 16657985536,\n    \"uptime\": 3709089,\n    \"disk\": 8219779072,\n    \"maxcpu\": 8\n  },\n  {\n    \"level\": \"\",\n    \"cgroup-mode\": 2,\n    \"type\": \"node\",\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 70608257024,\n    \"mem\": 5000482816,\n    \"status\": \"online\",\n    \"cpu\": 0.00999342537804076,\n    \"id\": \"node/ccctc32gb01\",\n    \"uptime\": 3709006,\n    \"maxmem\": 33544376320,\n    \"maxcpu\": 8,\n    \"disk\": 8605933568\n  },\n  {\n    \"level\": \"\",\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"node\": \"ccctc32gb03\",\n    \"maxdisk\": 70608257024,\n    \"cpu\": 0.0121691871455577,\n    \"id\": \"node/ccctc32gb03\",\n    \"status\": \"online\",\n    \"mem\": 4363730944,\n    \"maxmem\": 33544245248,\n    \"uptime\": 3708707,\n    \"disk\": 8617697280,\n    \"maxcpu\": 8\n  },\n  {\n    \"level\": \"\",\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 70608257024,\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"cpu\": 0.0107007699334464,\n    \"id\": \"node/ccctc32gb04\",\n    \"status\": \"online\",\n    \"mem\": 2343428096,\n    \"disk\": 14198358016,\n    \"maxcpu\": 8,\n    \"maxmem\": 33544241152,\n    \"uptime\": 3708609\n  },\n  {\n    \"mem\": 1924501504,\n    \"status\": \"online\",\n    \"cpu\": 0.00808272910971116,\n    \"id\": \"node/ccctc16gb01\",\n    \"maxcpu\": 8,\n    \"disk\": 8335114240,\n    \"uptime\": 3709106,\n    \"maxmem\": 16658124800,\n    \"level\": \"\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb01\",\n    \"cgroup-mode\": 2,\n    \"type\": \"node\"\n  },\n  {\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb02\",\n    \"level\": \"\",\n    \"maxmem\": 33540460544,\n    \"uptime\": 3708711,\n    \"disk\": 8524259328,\n    \"maxcpu\": 8,\n    \"cpu\": 0.00971383565240221,\n    \"id\": \"node/ccctc32gb02\",\n    \"status\": \"online\",\n    \"mem\": 4058054656\n  },\n  {\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"id\": \"storage/ccctc16gb02/usb_cephfs\",\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"disk\": 272629760,\n    \"maxdisk\": 258197159936,\n    \"node\": \"ccctc16gb02\",\n    \"type\": \"storage\",\n    \"plugintype\": \"cephfs\",\n    \"shared\": 1\n  },\n  {\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb01/usb_cephfs\",\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb01\",\n    \"shared\": 1,\n    \"type\": \"storage\",\n    \"plugintype\": \"cephfs\"\n  },\n  {\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb03/usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"shared\": 1,\n    \"plugintype\": \"cephfs\",\n    \"type\": \"storage\",\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb03\"\n  },\n  {\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"id\": \"storage/ccctc32gb04/usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"shared\": 1,\n    \"type\": \"storage\",\n    \"plugintype\": \"cephfs\",\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 258197159936\n  },\n  {\n    \"id\": \"storage/ccctc16gb01/usb_cephfs\",\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"plugintype\": \"cephfs\",\n    \"type\": \"storage\",\n    \"shared\": 1,\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc16gb01\"\n  },\n  {\n    \"shared\": 1,\n    \"plugintype\": \"cephfs\",\n    \"type\": \"storage\",\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb02\",\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb02/usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\"\n  },\n  {\n    \"content\": \"backup,vztmpl,iso\",\n    \"id\": \"storage/ccctc16gb02/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"node\": \"ccctc16gb02\",\n    \"disk\": 8219779072,\n    \"maxdisk\": 70608257024,\n    \"plugintype\": \"dir\",\n    \"type\": \"storage\",\n    \"shared\": 0\n  },\n  {\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"dir\",\n    \"disk\": 8605933568,\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 70608257024,\n    \"status\": \"available\",\n    \"storage\": \"local\",\n    \"id\": \"storage/ccctc32gb01/local\",\n    \"content\": \"backup,vztmpl,iso\"\n  },\n  {\n    \"id\": \"storage/ccctc32gb03/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"content\": \"backup,vztmpl,iso\",\n    \"type\": \"storage\",\n    \"plugintype\": \"dir\",\n    \"shared\": 0,\n    \"maxdisk\": 70608257024,\n    \"disk\": 8617697280,\n    \"node\": \"ccctc32gb03\"\n  },\n  {\n    \"node\": \"ccctc32gb04\",\n    \"disk\": 14198358016,\n    \"maxdisk\": 70608257024,\n    \"type\": \"storage\",\n    \"plugintype\": \"dir\",\n    \"shared\": 0,\n    \"content\": \"backup,vztmpl,iso\",\n    \"id\": \"storage/ccctc32gb04/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\"\n  },\n  {\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc16gb01/local\",\n    \"content\": \"backup,vztmpl,iso\",\n    \"shared\": 0,\n    \"plugintype\": \"dir\",\n    \"type\": \"storage\",\n    \"disk\": 8335114240,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb01\"\n  },\n  {\n    \"plugintype\": \"dir\",\n    \"type\": \"storage\",\n    \"shared\": 0,\n    \"maxdisk\": 70608257024,\n    \"disk\": 8524259328,\n    \"node\": \"ccctc32gb02\",\n    \"id\": \"storage/ccctc32gb02/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"content\": \"backup,vztmpl,iso\"\n  },\n  {\n    \"node\": \"ccctc16gb02\",\n    \"disk\": 0,\n    \"maxdisk\": 134691684352,\n    \"type\": \"storage\",\n    \"plugintype\": \"lvmthin\",\n    \"shared\": 0,\n    \"content\": \"rootdir,images\",\n    \"id\": \"storage/ccctc16gb02/local-lvm\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\"\n  },\n  {\n    \"node\": \"ccctc32gb01\",\n    \"disk\": 68423375650,\n    \"maxdisk\": 134691684352,\n    \"shared\": 0,\n    \"plugintype\": \"lvmthin\",\n    \"type\": \"storage\",\n    \"content\": \"rootdir,images\",\n    \"status\": \"available\",\n    \"storage\": \"local-lvm\",\n    \"id\": \"storage/ccctc32gb01/local-lvm\"\n  },\n  {\n    \"content\": \"rootdir,images\",\n    \"id\": \"storage/ccctc32gb03/local-lvm\",\n    \"status\": \"available\",\n    \"storage\": \"local-lvm\",\n    \"disk\": 0,\n    \"maxdisk\": 134691684352,\n    \"node\": \"ccctc32gb03\",\n    \"plugintype\": \"lvmthin\",\n    \"type\": \"storage\",\n    \"shared\": 0\n  },\n  {\n    \"disk\": 67426657186,\n    \"maxdisk\": 134691684352,\n    \"node\": \"ccctc32gb04\",\n    \"shared\": 0,\n    \"plugintype\": \"lvmthin\",\n    \"type\": \"storage\",\n    \"content\": \"rootdir,images\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb04/local-lvm\"\n  },\n  {\n    \"content\": \"rootdir,images\",\n    \"status\": \"available\",\n    \"storage\": \"local-lvm\",\n    \"id\": \"storage/ccctc16gb01/local-lvm\",\n    \"maxdisk\": 134691684352,\n    \"disk\": 0,\n    \"node\": \"ccctc16gb01\",\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"lvmthin\"\n  },\n  {\n    \"node\": \"ccctc32gb02\",\n    \"disk\": 0,\n    \"maxdisk\": 134691684352,\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"lvmthin\",\n    \"content\": \"rootdir,images\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb02/local-lvm\"\n  },\n  {\n    \"storage\": \"archive-pool-zfs-4tb\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb04/archive-pool-zfs-4tb\",\n    \"content\": \"rootdir,images\",\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"zfspool\",\n    \"disk\": 1241088,\n    \"maxdisk\": 3861712470016,\n    \"node\": \"ccctc32gb04\"\n  },\n  {\n    \"disk\": 82741836969,\n    \"maxdisk\": 340667890857,\n    \"node\": \"ccctc16gb02\",\n    \"shared\": 1,\n    \"plugintype\": \"rbd\",\n    \"type\": \"storage\",\n    \"content\": \"images,rootdir\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc16gb02/USB-DRIVE-POOL\"\n  },\n  {\n    \"content\": \"images,rootdir\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"id\": \"storage/ccctc32gb01/USB-DRIVE-POOL\",\n    \"node\": \"ccctc32gb01\",\n    \"disk\": 82741836969,\n    \"maxdisk\": 340667890857,\n    \"shared\": 1,\n    \"plugintype\": \"rbd\",\n    \"type\": \"storage\"\n  },\n  {\n    \"maxdisk\": 340667890857,\n    \"disk\": 82741836969,\n    \"node\": \"ccctc32gb03\",\n    \"shared\": 1,\n    \"type\": \"storage\",\n    \"plugintype\": \"rbd\",\n    \"content\": \"images,rootdir\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"id\": \"storage/ccctc32gb03/USB-DRIVE-POOL\"\n  },\n  {\n    \"node\": \"ccctc32gb04\",\n    \"disk\": 82741836969,\n    \"maxdisk\": 340667890857,\n    \"plugintype\": \"rbd\",\n    \"type\": \"storage\",\n    \"shared\": 1,\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc32gb04/USB-DRIVE-POOL\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"status\": \"available\"\n  },\n  {\n    \"maxdisk\": 340667890857,\n    \"disk\": 82741836969,\n    \"node\": \"ccctc16gb01\",\n    \"type\": \"storage\",\n    \"plugintype\": \"rbd\",\n    \"shared\": 1,\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc16gb01/USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\"\n  },\n  {\n    \"id\": \"storage/ccctc32gb02/USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"content\": \"images,rootdir\",\n    \"type\": \"storage\",\n    \"plugintype\": \"rbd\",\n    \"shared\": 1,\n    \"disk\": 82741836969,\n    \"node\": \"ccctc32gb02\",\n    \"maxdisk\": 340667890857\n  },\n  {\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc32gb04/data-pool-zfs\",\n    \"storage\": \"data-pool-zfs\",\n    \"status\": \"available\",\n    \"disk\": 397208547264,\n    \"maxdisk\": 5804111429632,\n    \"node\": \"ccctc32gb04\",\n    \"type\": \"storage\",\n    \"plugintype\": \"zfspool\",\n    \"shared\": 0\n  },\n  {\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc16gb02\",\n    \"status\": \"ok\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc16gb02/localnetwork\"\n  },\n  {\n    \"node\": \"ccctc32gb01\",\n    \"sdn\": \"localnetwork\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc32gb01/localnetwork\",\n    \"status\": \"ok\"\n  },\n  {\n    \"status\": \"ok\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc32gb03/localnetwork\",\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc32gb03\"\n  },\n  {\n    \"status\": \"ok\",\n    \"id\": \"sdn/ccctc32gb04/localnetwork\",\n    \"type\": \"sdn\",\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc32gb04\"\n  },\n  {\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc16gb01/localnetwork\",\n    \"status\": \"ok\",\n    \"node\": \"ccctc16gb01\",\n    \"sdn\": \"localnetwork\"\n  },\n  {\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc32gb02\",\n    \"status\": \"ok\",\n    \"id\": \"sdn/ccctc32gb02/localnetwork\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"status\": \"available\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc16gb01/k8svxlan\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc16gb01\"\n  },\n  {\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc16gb02\",\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc16gb02/k8svxlan\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc32gb01/k8svxlan\",\n    \"type\": \"sdn\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb01\"\n  },\n  {\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc32gb02/k8svxlan\",\n    \"type\": \"sdn\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb02\"\n  },\n  {\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb03\",\n    \"status\": \"available\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc32gb03/k8svxlan\"\n  },\n  {\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc32gb04/k8svxlan\",\n    \"type\": \"sdn\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb04\"\n  }\n]"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Proxmox Cluster Resources:\n\n[\n  {\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 68719476736,\n    \"netout\": 0,\n    \"uptime\": 0,\n    \"maxmem\": 25769803776,\n    \"maxcpu\": 8,\n    \"vmid\": 100,\n    \"disk\": 0,\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"cpu\": 0,\n    \"template\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"id\": \"lxc/100\",\n    \"name\": \"mastercontol.k9content.com\"\n  },\n  {\n    \"cpu\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"template\": 0,\n    \"id\": \"qemu/101\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"name\": \"ccc-home-automation.k9content.com\",\n    \"maxmem\": 8589934592,\n    \"uptime\": 0,\n    \"vmid\": 101,\n    \"disk\": 0,\n    \"maxcpu\": 4,\n    \"netout\": 0,\n    \"type\": \"qemu\",\n    \"diskread\": 0,\n    \"maxdisk\": 68719476736,\n    \"node\": \"ccctc32gb04\"\n  },\n  {\n    \"uptime\": 3708501,\n    \"maxmem\": 2147483648,\n    \"maxcpu\": 2,\n    \"vmid\": 102,\n    \"disk\": 54394880,\n    \"status\": \"running\",\n    \"mem\": 16355328,\n    \"netin\": 2188917291,\n    \"diskwrite\": 0,\n    \"template\": 0,\n    \"id\": \"lxc/102\",\n    \"cpu\": 0,\n    \"name\": \"ccc-file-server.k9content.com\",\n    \"diskread\": 28372992,\n    \"type\": \"lxc\",\n    \"maxdisk\": 4294967296,\n    \"node\": \"ccctc32gb04\",\n    \"netout\": 26222719\n  },\n  {\n    \"netout\": 0,\n    \"maxdisk\": 137438953472,\n    \"node\": \"ccctc32gb04\",\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"name\": \"ai-cluster-template\",\n    \"cpu\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"template\": 1,\n    \"id\": \"lxc/103\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"vmid\": 103,\n    \"disk\": 0,\n    \"maxcpu\": 8,\n    \"maxmem\": 25769803776,\n    \"uptime\": 0\n  },\n  {\n    \"disk\": 29270781952,\n    \"vmid\": 104,\n    \"maxcpu\": 4,\n    \"maxmem\": 8589934592,\n    \"uptime\": 1817507,\n    \"name\": \"vibeforge-dev01\",\n    \"diskwrite\": 3769720832,\n    \"netin\": 1503326538,\n    \"template\": 0,\n    \"id\": \"lxc/104\",\n    \"cpu\": 0.00481446627540045,\n    \"status\": \"running\",\n    \"mem\": 464007168,\n    \"node\": \"ccctc32gb03\",\n    \"maxdisk\": 100861726720,\n    \"diskread\": 1421844480,\n    \"type\": \"lxc\",\n    \"netout\": 13177795\n  },\n  {\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/110\",\n    \"template\": 0,\n    \"cpu\": 0,\n    \"mem\": 0,\n    \"status\": \"stopped\",\n    \"name\": \"k3s-server-01\",\n    \"maxmem\": 25769803776,\n    \"uptime\": 0,\n    \"vmid\": 110,\n    \"disk\": 0,\n    \"maxcpu\": 8,\n    \"netout\": 0,\n    \"diskread\": 0,\n    \"type\": \"lxc\",\n    \"maxdisk\": 137438953472,\n    \"node\": \"ccctc32gb01\"\n  },\n  {\n    \"maxmem\": 25769803776,\n    \"uptime\": 0,\n    \"disk\": 0,\n    \"vmid\": 115,\n    \"maxcpu\": 8,\n    \"cpu\": 0,\n    \"template\": 0,\n    \"diskwrite\": 0,\n    \"netin\": 0,\n    \"id\": \"lxc/115\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"name\": \"k3s-agent-01\",\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"node\": \"ccctc16gb01\",\n    \"maxdisk\": 137438953472,\n    \"netout\": 0\n  },\n  {\n    \"node\": \"ccctc32gb02\",\n    \"maxdisk\": 137438953472,\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"netout\": 0,\n    \"vmid\": 120,\n    \"disk\": 0,\n    \"maxcpu\": 4,\n    \"maxmem\": 4294967296,\n    \"uptime\": 0,\n    \"name\": \"k3s-server-02\",\n    \"cpu\": 0,\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/120\",\n    \"template\": 0,\n    \"mem\": 0,\n    \"status\": \"stopped\"\n  },\n  {\n    \"maxcpu\": 4,\n    \"vmid\": 125,\n    \"disk\": 0,\n    \"uptime\": 0,\n    \"maxmem\": 8589934592,\n    \"name\": \"k3s-agent-02\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"cpu\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/125\",\n    \"netin\": 0,\n    \"template\": 0,\n    \"node\": \"ccctc16gb02\",\n    \"maxdisk\": 137438953472,\n    \"type\": \"lxc\",\n    \"diskread\": 0,\n    \"netout\": 0\n  },\n  {\n    \"mem\": 0,\n    \"status\": \"stopped\",\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"template\": 0,\n    \"id\": \"lxc/130\",\n    \"cpu\": 0,\n    \"name\": \"k3s-agent-03\",\n    \"uptime\": 0,\n    \"maxmem\": 8589934592,\n    \"maxcpu\": 4,\n    \"vmid\": 130,\n    \"disk\": 0,\n    \"netout\": 0,\n    \"diskread\": 0,\n    \"type\": \"lxc\",\n    \"node\": \"ccctc32gb03\",\n    \"maxdisk\": 137438953472\n  },\n  {\n    \"name\": \"k3s-server-03\",\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"diskwrite\": 0,\n    \"template\": 0,\n    \"netin\": 0,\n    \"id\": \"lxc/140\",\n    \"cpu\": 0,\n    \"maxcpu\": 4,\n    \"disk\": 0,\n    \"vmid\": 140,\n    \"uptime\": 0,\n    \"maxmem\": 4294967296,\n    \"netout\": 0,\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 137438953472,\n    \"diskread\": 0,\n    \"type\": \"lxc\"\n  },\n  {\n    \"diskread\": 0,\n    \"type\": \"lxc\",\n    \"maxdisk\": 8589934592,\n    \"node\": \"ccctc32gb04\",\n    \"netout\": 0,\n    \"maxmem\": 14999879680,\n    \"uptime\": 0,\n    \"disk\": 0,\n    \"vmid\": 600,\n    \"maxcpu\": 2,\n    \"netin\": 0,\n    \"diskwrite\": 0,\n    \"id\": \"lxc/600\",\n    \"template\": 0,\n    \"cpu\": 0,\n    \"status\": \"stopped\",\n    \"mem\": 0,\n    \"name\": \"dist-llama01\"\n  },\n  {\n    \"level\": \"\",\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb02\",\n    \"id\": \"node/ccctc16gb02\",\n    \"cpu\": 0.0088011417697431,\n    \"mem\": 1911545856,\n    \"status\": \"online\",\n    \"maxmem\": 16657985536,\n    \"uptime\": 3709089,\n    \"disk\": 8219779072,\n    \"maxcpu\": 8\n  },\n  {\n    \"level\": \"\",\n    \"cgroup-mode\": 2,\n    \"type\": \"node\",\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 70608257024,\n    \"mem\": 5000482816,\n    \"status\": \"online\",\n    \"cpu\": 0.00999342537804076,\n    \"id\": \"node/ccctc32gb01\",\n    \"uptime\": 3709006,\n    \"maxmem\": 33544376320,\n    \"maxcpu\": 8,\n    \"disk\": 8605933568\n  },\n  {\n    \"level\": \"\",\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"node\": \"ccctc32gb03\",\n    \"maxdisk\": 70608257024,\n    \"cpu\": 0.0121691871455577,\n    \"id\": \"node/ccctc32gb03\",\n    \"status\": \"online\",\n    \"mem\": 4363730944,\n    \"maxmem\": 33544245248,\n    \"uptime\": 3708707,\n    \"disk\": 8617697280,\n    \"maxcpu\": 8\n  },\n  {\n    \"level\": \"\",\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 70608257024,\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"cpu\": 0.0107007699334464,\n    \"id\": \"node/ccctc32gb04\",\n    \"status\": \"online\",\n    \"mem\": 2343428096,\n    \"disk\": 14198358016,\n    \"maxcpu\": 8,\n    \"maxmem\": 33544241152,\n    \"uptime\": 3708609\n  },\n  {\n    \"mem\": 1924501504,\n    \"status\": \"online\",\n    \"cpu\": 0.00808272910971116,\n    \"id\": \"node/ccctc16gb01\",\n    \"maxcpu\": 8,\n    \"disk\": 8335114240,\n    \"uptime\": 3709106,\n    \"maxmem\": 16658124800,\n    \"level\": \"\",\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb01\",\n    \"cgroup-mode\": 2,\n    \"type\": \"node\"\n  },\n  {\n    \"type\": \"node\",\n    \"cgroup-mode\": 2,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc32gb02\",\n    \"level\": \"\",\n    \"maxmem\": 33540460544,\n    \"uptime\": 3708711,\n    \"disk\": 8524259328,\n    \"maxcpu\": 8,\n    \"cpu\": 0.00971383565240221,\n    \"id\": \"node/ccctc32gb02\",\n    \"status\": \"online\",\n    \"mem\": 4058054656\n  },\n  {\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"id\": \"storage/ccctc16gb02/usb_cephfs\",\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"disk\": 272629760,\n    \"maxdisk\": 258197159936,\n    \"node\": \"ccctc16gb02\",\n    \"type\": \"storage\",\n    \"plugintype\": \"cephfs\",\n    \"shared\": 1\n  },\n  {\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb01/usb_cephfs\",\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb01\",\n    \"shared\": 1,\n    \"type\": \"storage\",\n    \"plugintype\": \"cephfs\"\n  },\n  {\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb03/usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"shared\": 1,\n    \"plugintype\": \"cephfs\",\n    \"type\": \"storage\",\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb03\"\n  },\n  {\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"id\": \"storage/ccctc32gb04/usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"shared\": 1,\n    \"type\": \"storage\",\n    \"plugintype\": \"cephfs\",\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb04\",\n    \"maxdisk\": 258197159936\n  },\n  {\n    \"id\": \"storage/ccctc16gb01/usb_cephfs\",\n    \"status\": \"available\",\n    \"storage\": \"usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\",\n    \"plugintype\": \"cephfs\",\n    \"type\": \"storage\",\n    \"shared\": 1,\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc16gb01\"\n  },\n  {\n    \"shared\": 1,\n    \"plugintype\": \"cephfs\",\n    \"type\": \"storage\",\n    \"maxdisk\": 258197159936,\n    \"disk\": 272629760,\n    \"node\": \"ccctc32gb02\",\n    \"storage\": \"usb_cephfs\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb02/usb_cephfs\",\n    \"content\": \"iso,vztmpl,import,snippets\"\n  },\n  {\n    \"content\": \"backup,vztmpl,iso\",\n    \"id\": \"storage/ccctc16gb02/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"node\": \"ccctc16gb02\",\n    \"disk\": 8219779072,\n    \"maxdisk\": 70608257024,\n    \"plugintype\": \"dir\",\n    \"type\": \"storage\",\n    \"shared\": 0\n  },\n  {\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"dir\",\n    \"disk\": 8605933568,\n    \"node\": \"ccctc32gb01\",\n    \"maxdisk\": 70608257024,\n    \"status\": \"available\",\n    \"storage\": \"local\",\n    \"id\": \"storage/ccctc32gb01/local\",\n    \"content\": \"backup,vztmpl,iso\"\n  },\n  {\n    \"id\": \"storage/ccctc32gb03/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"content\": \"backup,vztmpl,iso\",\n    \"type\": \"storage\",\n    \"plugintype\": \"dir\",\n    \"shared\": 0,\n    \"maxdisk\": 70608257024,\n    \"disk\": 8617697280,\n    \"node\": \"ccctc32gb03\"\n  },\n  {\n    \"node\": \"ccctc32gb04\",\n    \"disk\": 14198358016,\n    \"maxdisk\": 70608257024,\n    \"type\": \"storage\",\n    \"plugintype\": \"dir\",\n    \"shared\": 0,\n    \"content\": \"backup,vztmpl,iso\",\n    \"id\": \"storage/ccctc32gb04/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\"\n  },\n  {\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc16gb01/local\",\n    \"content\": \"backup,vztmpl,iso\",\n    \"shared\": 0,\n    \"plugintype\": \"dir\",\n    \"type\": \"storage\",\n    \"disk\": 8335114240,\n    \"maxdisk\": 70608257024,\n    \"node\": \"ccctc16gb01\"\n  },\n  {\n    \"plugintype\": \"dir\",\n    \"type\": \"storage\",\n    \"shared\": 0,\n    \"maxdisk\": 70608257024,\n    \"disk\": 8524259328,\n    \"node\": \"ccctc32gb02\",\n    \"id\": \"storage/ccctc32gb02/local\",\n    \"storage\": \"local\",\n    \"status\": \"available\",\n    \"content\": \"backup,vztmpl,iso\"\n  },\n  {\n    \"node\": \"ccctc16gb02\",\n    \"disk\": 0,\n    \"maxdisk\": 134691684352,\n    \"type\": \"storage\",\n    \"plugintype\": \"lvmthin\",\n    \"shared\": 0,\n    \"content\": \"rootdir,images\",\n    \"id\": \"storage/ccctc16gb02/local-lvm\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\"\n  },\n  {\n    \"node\": \"ccctc32gb01\",\n    \"disk\": 68423375650,\n    \"maxdisk\": 134691684352,\n    \"shared\": 0,\n    \"plugintype\": \"lvmthin\",\n    \"type\": \"storage\",\n    \"content\": \"rootdir,images\",\n    \"status\": \"available\",\n    \"storage\": \"local-lvm\",\n    \"id\": \"storage/ccctc32gb01/local-lvm\"\n  },\n  {\n    \"content\": \"rootdir,images\",\n    \"id\": \"storage/ccctc32gb03/local-lvm\",\n    \"status\": \"available\",\n    \"storage\": \"local-lvm\",\n    \"disk\": 0,\n    \"maxdisk\": 134691684352,\n    \"node\": \"ccctc32gb03\",\n    \"plugintype\": \"lvmthin\",\n    \"type\": \"storage\",\n    \"shared\": 0\n  },\n  {\n    \"disk\": 67426657186,\n    \"maxdisk\": 134691684352,\n    \"node\": \"ccctc32gb04\",\n    \"shared\": 0,\n    \"plugintype\": \"lvmthin\",\n    \"type\": \"storage\",\n    \"content\": \"rootdir,images\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb04/local-lvm\"\n  },\n  {\n    \"content\": \"rootdir,images\",\n    \"status\": \"available\",\n    \"storage\": \"local-lvm\",\n    \"id\": \"storage/ccctc16gb01/local-lvm\",\n    \"maxdisk\": 134691684352,\n    \"disk\": 0,\n    \"node\": \"ccctc16gb01\",\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"lvmthin\"\n  },\n  {\n    \"node\": \"ccctc32gb02\",\n    \"disk\": 0,\n    \"maxdisk\": 134691684352,\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"lvmthin\",\n    \"content\": \"rootdir,images\",\n    \"storage\": \"local-lvm\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb02/local-lvm\"\n  },\n  {\n    \"storage\": \"archive-pool-zfs-4tb\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc32gb04/archive-pool-zfs-4tb\",\n    \"content\": \"rootdir,images\",\n    \"shared\": 0,\n    \"type\": \"storage\",\n    \"plugintype\": \"zfspool\",\n    \"disk\": 1241088,\n    \"maxdisk\": 3861712470016,\n    \"node\": \"ccctc32gb04\"\n  },\n  {\n    \"disk\": 82741836969,\n    \"maxdisk\": 340667890857,\n    \"node\": \"ccctc16gb02\",\n    \"shared\": 1,\n    \"plugintype\": \"rbd\",\n    \"type\": \"storage\",\n    \"content\": \"images,rootdir\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"id\": \"storage/ccctc16gb02/USB-DRIVE-POOL\"\n  },\n  {\n    \"content\": \"images,rootdir\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"id\": \"storage/ccctc32gb01/USB-DRIVE-POOL\",\n    \"node\": \"ccctc32gb01\",\n    \"disk\": 82741836969,\n    \"maxdisk\": 340667890857,\n    \"shared\": 1,\n    \"plugintype\": \"rbd\",\n    \"type\": \"storage\"\n  },\n  {\n    \"maxdisk\": 340667890857,\n    \"disk\": 82741836969,\n    \"node\": \"ccctc32gb03\",\n    \"shared\": 1,\n    \"type\": \"storage\",\n    \"plugintype\": \"rbd\",\n    \"content\": \"images,rootdir\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"id\": \"storage/ccctc32gb03/USB-DRIVE-POOL\"\n  },\n  {\n    \"node\": \"ccctc32gb04\",\n    \"disk\": 82741836969,\n    \"maxdisk\": 340667890857,\n    \"plugintype\": \"rbd\",\n    \"type\": \"storage\",\n    \"shared\": 1,\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc32gb04/USB-DRIVE-POOL\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"status\": \"available\"\n  },\n  {\n    \"maxdisk\": 340667890857,\n    \"disk\": 82741836969,\n    \"node\": \"ccctc16gb01\",\n    \"type\": \"storage\",\n    \"plugintype\": \"rbd\",\n    \"shared\": 1,\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc16gb01/USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\"\n  },\n  {\n    \"id\": \"storage/ccctc32gb02/USB-DRIVE-POOL\",\n    \"status\": \"available\",\n    \"storage\": \"USB-DRIVE-POOL\",\n    \"content\": \"images,rootdir\",\n    \"type\": \"storage\",\n    \"plugintype\": \"rbd\",\n    \"shared\": 1,\n    \"disk\": 82741836969,\n    \"node\": \"ccctc32gb02\",\n    \"maxdisk\": 340667890857\n  },\n  {\n    \"content\": \"images,rootdir\",\n    \"id\": \"storage/ccctc32gb04/data-pool-zfs\",\n    \"storage\": \"data-pool-zfs\",\n    \"status\": \"available\",\n    \"disk\": 397208547264,\n    \"maxdisk\": 5804111429632,\n    \"node\": \"ccctc32gb04\",\n    \"type\": \"storage\",\n    \"plugintype\": \"zfspool\",\n    \"shared\": 0\n  },\n  {\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc16gb02\",\n    \"status\": \"ok\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc16gb02/localnetwork\"\n  },\n  {\n    \"node\": \"ccctc32gb01\",\n    \"sdn\": \"localnetwork\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc32gb01/localnetwork\",\n    \"status\": \"ok\"\n  },\n  {\n    \"status\": \"ok\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc32gb03/localnetwork\",\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc32gb03\"\n  },\n  {\n    \"status\": \"ok\",\n    \"id\": \"sdn/ccctc32gb04/localnetwork\",\n    \"type\": \"sdn\",\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc32gb04\"\n  },\n  {\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc16gb01/localnetwork\",\n    \"status\": \"ok\",\n    \"node\": \"ccctc16gb01\",\n    \"sdn\": \"localnetwork\"\n  },\n  {\n    \"sdn\": \"localnetwork\",\n    \"node\": \"ccctc32gb02\",\n    \"status\": \"ok\",\n    \"id\": \"sdn/ccctc32gb02/localnetwork\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"status\": \"available\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc16gb01/k8svxlan\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc16gb01\"\n  },\n  {\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc16gb02\",\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc16gb02/k8svxlan\",\n    \"type\": \"sdn\"\n  },\n  {\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc32gb01/k8svxlan\",\n    \"type\": \"sdn\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb01\"\n  },\n  {\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc32gb02/k8svxlan\",\n    \"type\": \"sdn\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb02\"\n  },\n  {\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb03\",\n    \"status\": \"available\",\n    \"type\": \"sdn\",\n    \"id\": \"sdn/ccctc32gb03/k8svxlan\"\n  },\n  {\n    \"status\": \"available\",\n    \"id\": \"sdn/ccctc32gb04/k8svxlan\",\n    \"type\": \"sdn\",\n    \"sdn\": \"k8svxlan\",\n    \"node\": \"ccctc32gb04\"\n  }\n]"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_proxmox_get_metrics": {
+              "status": "passed",
+              "duration": 155,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Metrics for node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Metrics for node proxmox-test:\n\n{\n  \"message\": \"hostname lookup 'proxmox-test' failed - failed to get address info for: proxmox-test: Name or service not known\\n\",\n  \"data\": null\n}"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "zabbix": {
+          "total": 7,
+          "passed": 7,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_zabbix_host_discover": {
+              "status": "passed",
+              "duration": 10698,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error discovering Zabbix hosts: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error discovering Zabbix hosts: fetch failed"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_problems": {
+              "status": "passed",
+              "duration": 10636,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix problems: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error retrieving Zabbix problems: fetch failed"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_alerts": {
+              "status": "passed",
+              "duration": 10662,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix alerts: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error retrieving Zabbix alerts: fetch failed"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_metrics": {
+              "status": "passed",
+              "duration": 10672,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix metrics: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error retrieving Zabbix metrics: fetch failed"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_events": {
+              "status": "passed",
+              "duration": 10703,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix events: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error retrieving Zabbix events: fetch failed"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_triggers": {
+              "status": "passed",
+              "duration": 10694,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix triggers: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error retrieving Zabbix triggers: fetch failed"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_zabbix_get_inventory": {
+              "status": "passed",
+              "duration": 10687,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Error retrieving Zabbix inventory: fetch failed"
+                  }
+                ],
+                "structuredContent": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Error retrieving Zabbix inventory: fetch failed"
+                    }
+                  ],
+                  "isError": true
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "credentials": {
+          "total": 5,
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_credentials_add": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"message\": \"Credential 'test-credential' added successfully.\",\n  \"id\": \"test-credential\",\n  \"type\": \"password\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Credential 'test-credential' added successfully.",
+                  "id": "test-credential",
+                  "type": "password"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_get": {
+              "status": "passed",
+              "duration": 4,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Credential: test-credential\n- **Type:** password\n- **Username:** testuser\n- **URL:** N/A\n- **Created:** 2026-03-16T00:07:54.548Z\n\n> Secrets included in response."
+                  }
+                ],
+                "structuredContent": {
+                  "id": "test-credential",
+                  "type": "password",
+                  "username": "testuser",
+                  "createdAt": "2026-03-16T00:07:54.548Z",
+                  "password": "testpass123"
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_list": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Stored Credentials (3)\n\n| ID | Type | Username | URL |\n|---|---|---|---|\n| test_toby | password | mcpuser |  |\n| proxmox-env | password | root | https://192.168.200.10:8006 |\n| test-credential | password | testuser |  |"
+                  }
+                ],
+                "structuredContent": {
+                  "credentials": [
+                    {
+                      "id": "test_toby",
+                      "type": "password",
+                      "username": "mcpuser"
+                    },
+                    {
+                      "id": "proxmox-env",
+                      "type": "password",
+                      "username": "root",
+                      "url": "https://192.168.200.10:8006"
+                    },
+                    {
+                      "id": "test-credential",
+                      "type": "password",
+                      "username": "testuser",
+                      "createdAt": "2026-03-16T00:07:54.548Z"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_remove": {
+              "status": "passed",
+              "duration": 3,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"message\": \"Credential 'test-credential' removed.\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Credential 'test-credential' removed."
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_credentials_rotate_key": {
+              "status": "passed",
+              "duration": 2,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{\n  \"success\": true,\n  \"message\": \"Encryption key rotated. All credentials re-encrypted.\"\n}"
+                  }
+                ],
+                "structuredContent": {
+                  "success": true,
+                  "message": "Encryption key rotated. All credentials re-encrypted."
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        },
+        "registry": {
+          "total": 3,
+          "passed": 3,
+          "failed": 0,
+          "skipped": 0,
+          "tools": {
+            "mcp_od_registry_list_plugins": {
+              "status": "passed",
+              "duration": 5,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Installed Plugins (10)\n**credentials@1.0.0** [active] *(built-in)*\n**marketplace@1.0.0** [active] *(built-in)*\n**memory-cmdb@1.0.0** [active] *(built-in)*\n**net-utils@1.0.0** [active] *(built-in)*\n**nmap@1.0.0** [active] *(built-in)*\n**prompts@1.0.0** [active] *(built-in)*\n**proxmox@1.0.0** [active] *(built-in)*\n**registry-tools@1.0.0** [active] *(built-in)*\n**snmp@1.0.0** [active] *(built-in)*\n**zabbix@1.0.0** [active] *(built-in)*"
+                  }
+                ],
+                "structuredContent": {
+                  "total_count": 10,
+                  "count": 10,
+                  "offset": 0,
+                  "limit": 50,
+                  "has_more": false,
+                  "next_offset": null,
+                  "items": [
+                    {
+                      "id": "credentials@1.0.0",
+                      "name": "credentials",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"credentials\",\"version\":\"1.0.0\",\"entry\":\"dist/index.js\",\"description\":\"Secure credential storage and retrieval tools\",\"author\":\"VibeForge Systems\",\"license\":\"MPL-2.0\",\"permissions\":{\"fsRead\":true,\"fsWrite\":true},\"capabilities\":{\"tools\":[\"mcp_od_credentials_add\",\"mcp_od_credentials_get\",\"mcp_od_credentials_list\",\"mcp_od_credentials_remove\",\"mcp_od_credentials_rotate_key\"],\"resources\":[],\"prompts\":[]},\"dependencies\":[],\"dependenciesPolicy\":\"bundled-only\",\"dist\":{\"hash\":\"sha256:bfcf6d17f1437363ee464f8a4764332fe751a78ab106f201fc356179badf955c\",\"fileCount\":1,\"totalBytes\":11382}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.834Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 3584
+                    },
+                    {
+                      "id": "marketplace@1.0.0",
+                      "name": "marketplace",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"marketplace\",\"id\":\"com.vibeforge.mcp-od.marketplace\",\"version\":\"1.0.0\",\"type\":\"tool-module\",\"description\":\"Plugin store interface — search, verify, install, inspect, and audit installed plugins. Provides 9 tools for plugin lifecycle management.\",\"entry\":\"dist/index.js\",\"dependenciesPolicy\":\"bundled-only\",\"permissions\":{\"fsRead\":true},\"dist\":{\"hash\":\"sha256:5e7bea25bd57d5e239aed30b7884c64753179c4f6dfa13d9f4e7647fe47365e1\",\"fileCount\":1,\"totalBytes\":22532},\"capabilities\":{\"tools\":[\"mcp_od_store_list\",\"mcp_od_store_list_policies\",\"mcp_od_store_search\",\"mcp_od_store_verify\",\"mcp_od_store_install\",\"mcp_od_store_remove\",\"mcp_od_store_show\",\"mcp_od_store_rescan\",\"mcp_od_store_security_report\"]}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.848Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 5752
+                    },
+                    {
+                      "id": "memory-cmdb@1.0.0",
+                      "name": "memory-cmdb",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"memory-cmdb\",\"id\":\"com.vibeforge.mcp-od.memory-cmdb\",\"version\":\"1.0.0\",\"description\":\"CMDB / Configuration Item memory with SQLite persistence and AES-256 encryption. Stores infrastructure CI objects keyed by ci:type:identifier.\",\"entry\":\"dist/index.js\",\"dist\":{\"hash\":\"sha256:c052f761cfed20a3fbb04c49abd1e58e6c5193298fce7c6e80a19a97f5c1bdf4\",\"fileCount\":1,\"totalBytes\":15501},\"dependenciesPolicy\":\"bundled-only\",\"permissions\":{\"fsRead\":true,\"fsWrite\":true},\"capabilities\":{\"tools\":[\"mcp_od_memory_get\",\"mcp_od_memory_set\",\"mcp_od_memory_merge\",\"mcp_od_memory_query\",\"mcp_od_memory_clear\",\"mcp_od_memory_stats\",\"mcp_od_memory_rotate_key\",\"mcp_od_memory_save\",\"mcp_od_memory_migrate_from_filesystem\"]}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.857Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 4741
+                    },
+                    {
+                      "id": "net-utils@1.0.0",
+                      "name": "net-utils",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"net-utils\",\"version\":\"1.0.0\",\"entry\":\"dist/index.js\",\"description\":\"Core network discovery and diagnostic tools\",\"author\":\"VibeForge Systems\",\"license\":\"MPL-2.0\",\"permissions\":{\"network\":true,\"exec\":true},\"capabilities\":{\"tools\":[\"mcp_od_net_ping\",\"mcp_od_net_wget\",\"mcp_od_net_nslookup\",\"mcp_od_net_netstat\",\"mcp_od_net_telnet\",\"mcp_od_net_route\",\"mcp_od_net_ifconfig\",\"mcp_od_net_arp\",\"mcp_od_net_whois\"],\"resources\":[],\"prompts\":[]},\"dependencies\":[],\"dependenciesPolicy\":\"bundled-only\",\"dist\":{\"hash\":\"sha256:ca0c1a21632eba621f6b7c63ab71a51a3b264add734aacf7706783d2a2c56590\",\"fileCount\":1,\"totalBytes\":15901}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.867Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 4085
+                    },
+                    {
+                      "id": "nmap@1.0.0",
+                      "name": "nmap",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"nmap\",\"id\":\"com.vibeforge.mcp-od.nmap\",\"version\":\"1.0.0\",\"description\":\"Nmap network scanner — ping sweep, TCP SYN/connect/UDP port scans and service version detection.\",\"entry\":\"dist/index.js\",\"dist\":{\"hash\":\"sha256:eba675e45dd0040201abad9093f9c329d74b6372643b32178fb975ccc3329bcf\",\"fileCount\":1,\"totalBytes\":10807},\"dependenciesPolicy\":\"bundled-only\",\"permissions\":{\"network\":true,\"exec\":true},\"capabilities\":{\"tools\":[\"mcp_od_nmap_ping_scan\",\"mcp_od_nmap_tcp_syn_scan\",\"mcp_od_nmap_tcp_connect_scan\",\"mcp_od_nmap_udp_scan\",\"mcp_od_nmap_version_scan\"]}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.879Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 3124
+                    },
+                    {
+                      "id": "prompts@1.0.0",
+                      "name": "prompts",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"prompts\",\"id\":\"com.vibeforge.mcp-od.prompts\",\"version\":\"1.0.0\",\"type\":\"prompts\",\"description\":\"Infrastructure discovery MCP prompts — CMDB CI classification, network topology analysis, security assessment, capacity planning, and incident response.\",\"entry\":\"dist/index.js\",\"dependenciesPolicy\":\"bundled-only\",\"dist\":{\"hash\":\"sha256:02279688190b5cad4b0f74769e1f7445f1c7ee404df77a9af58965f4b7d9b09c\",\"fileCount\":1,\"totalBytes\":8983},\"capabilities\":{\"prompts\":[\"cmdb_ci_classification\",\"network_topology_analysis\",\"security_assessment\",\"capacity_planning\",\"incident_response\"]}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.893Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 3459
+                    },
+                    {
+                      "id": "proxmox@1.0.0",
+                      "name": "proxmox",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"proxmox\",\"id\":\"com.vibeforge.mcp-od.proxmox\",\"version\":\"1.0.0\",\"description\":\"Proxmox VE hypervisor integration — nodes, VMs, containers, storage, networks and cluster resources.\",\"entry\":\"dist/index.js\",\"dist\":{\"hash\":\"sha256:b76a2e6648fcc6fa1b98160951364d96bf069e39fa6fc8e2b08c47089c8bb4d9\",\"fileCount\":1,\"totalBytes\":16441},\"dependenciesPolicy\":\"bundled-only\",\"permissions\":{\"network\":true,\"fsRead\":true,\"fsWrite\":true},\"capabilities\":{\"tools\":[\"mcp_od_proxmox_list_nodes\",\"mcp_od_proxmox_get_node_details\",\"mcp_od_proxmox_list_vms\",\"mcp_od_proxmox_get_vm_details\",\"mcp_od_proxmox_list_containers\",\"mcp_od_proxmox_get_container_details\",\"mcp_od_proxmox_list_storage\",\"mcp_od_proxmox_list_networks\",\"mcp_od_proxmox_cluster_resources\",\"mcp_od_proxmox_get_metrics\"]}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.901Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 4630
+                    },
+                    {
+                      "id": "registry-tools@1.0.0",
+                      "name": "registry-tools",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"registry-tools\",\"version\":\"1.0.0\",\"entry\":\"dist/index.js\",\"description\":\"Plugin lifecycle management tools — install, activate, deactivate, update, audit\",\"author\":\"VibeForge Systems\",\"license\":\"MPL-2.0\",\"permissions\":{\"fsRead\":true,\"fsWrite\":true,\"network\":true},\"capabilities\":{\"tools\":[\"mcp_od_registry_list_plugins\",\"mcp_od_registry_list_available\",\"mcp_od_registry_install\",\"mcp_od_registry_activate\",\"mcp_od_registry_deactivate\",\"mcp_od_registry_update\",\"mcp_od_registry_audit_log\",\"mcp_od_registry_add_signing_key\"],\"resources\":[],\"prompts\":[]},\"dependencies\":[],\"dependenciesPolicy\":\"bundled-only\",\"dist\":{\"hash\":\"sha256:d360d8142ddf97058517fe64d404f654b67398d197fab52bc69032caf7835040\",\"fileCount\":1,\"totalBytes\":10911}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.910Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 3354
+                    },
+                    {
+                      "id": "snmp@1.0.0",
+                      "name": "snmp",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"snmp\",\"id\":\"com.vibeforge.mcp-od.snmp\",\"version\":\"1.0.0\",\"description\":\"SNMP v1/v2c/v3 agent discovery and polling — sessions, GET/WALK/TABLE, device inventory, interface discovery, topology mapping.\",\"entry\":\"dist/index.js\",\"dist\":{\"hash\":\"sha256:a04192595aee5d3fdd74ae4b64eb4bdfeb9d87e5a642111b93e5ee54be8ca40c\",\"fileCount\":1,\"totalBytes\":27419},\"dependenciesPolicy\":\"bundled-only\",\"permissions\":{\"network\":true,\"exec\":true,\"fsRead\":true},\"capabilities\":{\"tools\":[\"mcp_od_snmp_create_session\",\"mcp_od_snmp_close_session\",\"mcp_od_snmp_get\",\"mcp_od_snmp_get_next\",\"mcp_od_snmp_walk\",\"mcp_od_snmp_table\",\"mcp_od_snmp_discover\",\"mcp_od_snmp_device_inventory\",\"mcp_od_snmp_interface_discovery\",\"mcp_od_snmp_system_health\",\"mcp_od_snmp_service_discovery\",\"mcp_od_snmp_network_topology\"]}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.918Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 6552
+                    },
+                    {
+                      "id": "zabbix@1.0.0",
+                      "name": "zabbix",
+                      "version": "1.0.0",
+                      "manifest_json": "{\"manifestVersion\":\"2\",\"name\":\"zabbix\",\"id\":\"com.vibeforge.mcp-od.zabbix\",\"version\":\"1.0.0\",\"description\":\"Zabbix monitoring platform integration — host discovery, metrics, alerts, problems, events and triggers.\",\"entry\":\"dist/index.js\",\"dist\":{\"hash\":\"sha256:a87c1558b7f655ff05274341e3d9b52c7ff3609146af2a50cface692b3d25b66\",\"fileCount\":1,\"totalBytes\":25537},\"dependenciesPolicy\":\"bundled-only\",\"permissions\":{\"network\":true},\"capabilities\":{\"tools\":[\"mcp_od_zabbix_host_discover\",\"mcp_od_zabbix_get_metrics\",\"mcp_od_zabbix_get_alerts\",\"mcp_od_zabbix_get_inventory\",\"mcp_od_zabbix_get_problems\",\"mcp_od_zabbix_get_events\",\"mcp_od_zabbix_get_triggers\"]}}",
+                      "lifecycle_state": "active",
+                      "is_builtin": 1,
+                      "installed_at": "2026-03-15T14:40:25.927Z",
+                      "source_type": "local",
+                      "bundle_size_bytes": 5846
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_registry_list_available": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Marketplace error: No Marketplace access token configured. Grant access at the Marketplace website first."
+                  }
+                ],
+                "structuredContent": {
+                  "error": "No Marketplace access token configured. Grant access at the Marketplace website first."
+                },
+                "isError": true
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            },
+            "mcp_od_registry_audit_log": {
+              "status": "passed",
+              "duration": 1,
+              "response": {
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "## Audit Log: net-utils@1.0.0\n- **activated** by system at 2026-03-15T14:40:25.877Z\n- **installed** by system at 2026-03-15T14:40:25.868Z"
+                  }
+                ],
+                "structuredContent": {
+                  "plugin_id": "net-utils@1.0.0",
+                  "count": 2,
+                  "entries": [
+                    {
+                      "id": 8,
+                      "plugin_id": "net-utils@1.0.0",
+                      "plugin_name": "net-utils",
+                      "version": "1.0.0",
+                      "event": "activated",
+                      "actor": "system",
+                      "detail": null,
+                      "occurred_at": "2026-03-15T14:40:25.877Z"
+                    },
+                    {
+                      "id": 7,
+                      "plugin_id": "net-utils@1.0.0",
+                      "plugin_name": "net-utils",
+                      "version": "1.0.0",
+                      "event": "installed",
+                      "actor": "system",
+                      "detail": null,
+                      "occurred_at": "2026-03-15T14:40:25.868Z"
+                    }
+                  ]
+                }
+              },
+              "validation": {
+                "valid": true,
+                "errors": []
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "details": [],
+  "errors": [],
+  "infrastructure": {
+    "health": {
+      "mcp": {
+        "status": "skipped",
+        "details": {
+          "reason": "HTTP transport not selected for this run"
+        }
+      },
+      "proxmox": {
+        "status": "unreachable",
+        "error": "Health check timeout",
+        "endpoint": "192.168.100.10:8006"
+      },
+      "zabbix": {
+        "status": "unreachable",
+        "error": "Health check timeout",
+        "endpoint": "http://172.20.0.23:8080"
+      },
+      "snmp": {
+        "agents": {
+          "172.20.0.10": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.11": {
+            "status": "available",
+            "community": "public"
+          },
+          "172.20.0.12": {
+            "status": "available",
+            "community": "public"
+          }
+        }
+      }
+    },
+    "connectivity": {}
+  }
+}

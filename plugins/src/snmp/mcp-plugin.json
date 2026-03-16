@@ -6,9 +6,9 @@
   "description": "SNMP v1/v2c/v3 agent discovery and polling — sessions, GET/WALK/TABLE, device inventory, interface discovery, topology mapping.",
   "entry": "dist/index.js",
   "dist": {
-    "hash": "sha256:111edef936e85a253c4ff28f246a34f5dee3e074a552f2fb822f93660798a25a",
+    "hash": "sha256:9219bd106b616bbf3a3b9788f1d185c405297c0aa05e3361fd554f45c341b608",
     "fileCount": 12,
-    "totalBytes": 70751
+    "totalBytes": 71399
   },
   "dependenciesPolicy": "bundled-only",
   "permissions": {
