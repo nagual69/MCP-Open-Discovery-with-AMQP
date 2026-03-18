@@ -1,0 +1,35 @@
+{
+  "manifestVersion": "2",
+  "name": "registry-tools",
+  "version": "1.0.0",
+  "entry": "dist/index.js",
+  "description": "Plugin lifecycle management tools — install, activate, deactivate, update, audit",
+  "author": "VibeForge Systems",
+  "license": "MPL-2.0",
+  "permissions": {
+    "fsRead": true,
+    "fsWrite": true,
+    "network": true
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_registry_list_plugins",
+      "mcp_od_registry_list_available",
+      "mcp_od_registry_install",
+      "mcp_od_registry_activate",
+      "mcp_od_registry_deactivate",
+      "mcp_od_registry_update",
+      "mcp_od_registry_audit_log",
+      "mcp_od_registry_add_signing_key"
+    ],
+    "resources": [],
+    "prompts": []
+  },
+  "dependencies": [],
+  "dependenciesPolicy": "bundled-only",
+  "dist": {
+    "hash": "sha256:9c579635b2ecb20e7864335be592f21e1adeaae843165dafc03d219d38b66ae7",
+    "fileCount": 12,
+    "totalBytes": 30364
+  }
+}

@@ -1,0 +1,20 @@
+MCP Open Discovery — NOTICE
+
+This project is licensed under the Mozilla Public License 2.0 (MPL-2.0).
+See the LICENSE file for full terms.
+
+Third-party notices and attributions:
+
+- Font Awesome Free
+  - Icons: CC BY 4.0
+  - Fonts: SIL Open Font License 1.1
+  - Code: MIT License
+  - https://fontawesome.com/license/free
+  - Referenced in docs/mcp_server_architecture.svg for iconography.
+
+- Open-source dependencies
+  - This project uses open-source npm packages with their respective licenses.
+  - Dependency license metadata can be reviewed in package-lock.json.
+  - For a full inventory, use `npm ls --all` and consult each package’s LICENSE file/repo.
+
+Trademarks and brand names are the property of their respective owners. No endorsement implied.

@@ -1,0 +1,25 @@
+{
+  "manifestVersion": "2",
+  "name": "prompts",
+  "id": "com.vibeforge.mcp-od.prompts",
+  "version": "1.0.0",
+  "type": "prompts",
+  "description": "Infrastructure discovery MCP prompts — CMDB CI classification, network topology analysis, security assessment, capacity planning, incident response, and Proxmox cluster validation.",
+  "entry": "dist/index.js",
+  "dependenciesPolicy": "bundled-only",
+  "dist": {
+    "hash": "sha256:29bfc4c9ced66fc9130b4d2e8d9bcd1bbb3a8bb185d1d5b908ea48f814b81b14",
+    "fileCount": 9,
+    "totalBytes": 23760
+  },
+  "capabilities": {
+    "prompts": [
+      "cmdb_ci_classification",
+      "network_topology_analysis",
+      "security_assessment",
+      "capacity_planning",
+      "incident_response",
+      "proxmox_cluster_validation"
+    ]
+  }
+}

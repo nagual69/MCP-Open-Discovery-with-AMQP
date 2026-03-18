@@ -1,0 +1,347 @@
+services:
+  mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: mcp-open-discovery-3:typed
+    ports:
+      - "6270:6270"
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DOCKER_CONTAINER: "true"
+      TRANSPORT_MODE: ${TRANSPORT_MODE:-http}
+      HTTP_PORT: ${HTTP_PORT:-6270}
+      HTTP_HOST: 0.0.0.0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATA_DIR: /home/mcpuser/app/data
+      PLUGINS_ROOT: /home/mcpuser/plugins
+      AMQP_ENABLED: ${AMQP_ENABLED:-true}
+      AMQP_URL: ${AMQP_URL:-amqp://mcp:discovery@rabbitmq:5672}
+      AMQP_EXCHANGE: ${AMQP_EXCHANGE:-mcp-open-discovery-3.notifications}
+      AMQP_QUEUE_PREFIX: ${AMQP_QUEUE_PREFIX:-mcp-open-discovery-3.discovery}
+      AMQP_PREFETCH_COUNT: ${AMQP_PREFETCH_COUNT:-1}
+      AMQP_RECONNECT_DELAY: ${AMQP_RECONNECT_DELAY:-10000}
+      AMQP_MAX_RETRY_ATTEMPTS: ${AMQP_MAX_RETRY_ATTEMPTS:-50}
+      AMQP_MESSAGE_TTL: ${AMQP_MESSAGE_TTL:-3600000}
+      AMQP_QUEUE_TTL: ${AMQP_QUEUE_TTL:-7200000}
+      OAUTH_ENABLED: ${OAUTH_ENABLED:-false}
+      OAUTH_REALM: ${OAUTH_REALM:-mcp-open-discovery-3}
+      OAUTH_INTROSPECTION_ENDPOINT: ${OAUTH_INTROSPECTION_ENDPOINT:-http://keycloak:8080/realms/mcp-open-discovery-3/protocol/openid-connect/token/introspect}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-mcp-open-discovery-3}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-change_me}
+      ZABBIX_BASE_URL: ${ZABBIX_BASE_URL:-http://zabbix-web:8080}
+      ZABBIX_USERNAME: ${ZABBIX_USERNAME:-Admin}
+      ZABBIX_PASSWORD: ${ZABBIX_PASSWORD:-zabbix}
+    volumes:
+      - ../data:/home/mcpuser/app/data
+      - ../logs:/home/mcpuser/app/logs
+      - mcp_plugins:/home/mcpuser/plugins
+    restart: unless-stopped
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+      - NET_BIND_SERVICE
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:6270/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      mcp-network:
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    profiles: ["amqp"]
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-mcp}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-discovery}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
+      RABBITMQ_MANAGEMENT_PATH_PREFIX: /rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.30
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    profiles: ["oauth"]
+    command: start-dev --import-realm
+    ports:
+      - "8081:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+      KC_PROXY: reencrypt
+      KC_PROXY_HEADERS: xforwarded
+    volumes:
+      - ./keycloak-master-realm.json:/opt/keycloak/data/import/master-realm.json:ro
+      - ./keycloak-realm.json:/opt/keycloak/data/import/mcp-open-discovery-realm.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080; echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3; cat <&3 | grep -q '200 OK'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.40
+
+  snmp-agent-1:
+    image: alpine:latest
+    profiles: ["snmp"]
+    ports:
+      - "1161:161/udp"
+    command: >
+      sh -c "apk add --no-cache net-snmp &&
+      mkdir -p /etc/snmp &&
+      echo 'rocommunity public default' > /etc/snmp/snmpd.conf &&
+      echo 'syslocation Docker Test Lab' >> /etc/snmp/snmpd.conf &&
+      echo 'syscontact Admin <admin@test.local>' >> /etc/snmp/snmpd.conf &&
+      echo 'sysname snmp-test-1' >> /etc/snmp/snmpd.conf &&
+      /usr/sbin/snmpd -f -Lo -c /etc/snmp/snmpd.conf"
+    restart: unless-stopped
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.10
+
+  snmp-agent-2:
+    image: alpine:latest
+    profiles: ["snmp"]
+    ports:
+      - "2161:161/udp"
+    command: >
+      sh -c "apk add --no-cache net-snmp &&
+      mkdir -p /etc/snmp &&
+      echo 'rocommunity public default' > /etc/snmp/snmpd.conf &&
+      echo 'syslocation Docker Test Lab 2' >> /etc/snmp/snmpd.conf &&
+      echo 'syscontact Admin <admin@test.local>' >> /etc/snmp/snmpd.conf &&
+      echo 'sysname snmp-test-2' >> /etc/snmp/snmpd.conf &&
+      /usr/sbin/snmpd -f -Lo -c /etc/snmp/snmpd.conf"
+    restart: unless-stopped
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.11
+
+  snmp-agent-3:
+    image: alpine:latest
+    profiles: ["snmp"]
+    ports:
+      - "3161:161/udp"
+    command: >
+      sh -c "apk add --no-cache net-snmp &&
+      mkdir -p /etc/snmp &&
+      echo 'rocommunity public default' > /etc/snmp/snmpd.conf &&
+      echo 'rocommunity testcommunity default' >> /etc/snmp/snmpd.conf &&
+      echo 'syslocation Docker Test Lab 3' >> /etc/snmp/snmpd.conf &&
+      echo 'syscontact Admin <admin@test.local>' >> /etc/snmp/snmpd.conf &&
+      echo 'sysname snmp-test-3' >> /etc/snmp/snmpd.conf &&
+      /usr/sbin/snmpd -f -Lo -c /etc/snmp/snmpd.conf"
+    restart: unless-stopped
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.12
+
+  postgres-zabbix:
+    image: postgres:15-alpine
+    profiles: ["zabbix"]
+    environment:
+      POSTGRES_DB: zabbix
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_password
+      POSTGRES_INITDB_ARGS: --encoding=UTF8 --locale=C
+    volumes:
+      - zabbix_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zabbix -d zabbix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.20
+
+  zabbix-server:
+    image: zabbix/zabbix-server-pgsql:alpine-6.4-latest
+    profiles: ["zabbix"]
+    depends_on:
+      postgres-zabbix:
+        condition: service_healthy
+    environment:
+      DB_SERVER_HOST: postgres-zabbix
+      POSTGRES_DB: zabbix
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_password
+      ZBX_HISTORYSTORAGETYPES: log,text
+      ZBX_DEBUGLEVEL: 1
+      ZBX_HOUSEKEEPINGFREQUENCY: 1
+      ZBX_MAXHOUSEKEEPERDELETE: 5000
+      ZBX_PROXYCONFIGFREQUENCY: 3600
+    volumes:
+      - zabbix_server_data:/var/lib/zabbix
+      - zabbix_server_enc:/var/lib/zabbix/enc
+      - zabbix_server_ssh:/var/lib/zabbix/ssh_keys
+      - zabbix_server_ssl:/var/lib/zabbix/ssl
+    ports:
+      - "10051:10051"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "zabbix_get -s 127.0.0.1 -k agent.ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.21
+
+  zabbix-web:
+    image: zabbix/zabbix-web-nginx-pgsql:alpine-6.4-latest
+    profiles: ["zabbix"]
+    depends_on:
+      - postgres-zabbix
+      - zabbix-server
+    environment:
+      ZBX_SERVER_HOST: zabbix-server
+      DB_SERVER_HOST: postgres-zabbix
+      POSTGRES_DB: zabbix
+      POSTGRES_USER: zabbix
+      POSTGRES_PASSWORD: zabbix_password
+      PHP_TZ: America/New_York
+    volumes:
+      - zabbix_web_ssl:/etc/ssl/nginx
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.22
+
+  zabbix-bootstrap:
+    image: node:24-alpine
+    profiles: ["zabbix"]
+    depends_on:
+      zabbix-web:
+        condition: service_healthy
+      zabbix-agent:
+        condition: service_started
+      zabbix-agent-2:
+        condition: service_started
+    environment:
+      ZABBIX_BOOTSTRAP_BASE_URL: http://zabbix-web:8080
+      ZABBIX_BOOTSTRAP_USERNAME: ${ZABBIX_USERNAME:-Admin}
+      ZABBIX_BOOTSTRAP_PASSWORD: ${ZABBIX_PASSWORD:-zabbix}
+      ZABBIX_BOOTSTRAP_GROUP: MCP Open Discovery Lab
+      ZABBIX_BOOTSTRAP_AGENT_HOST: Zabbix Test Agent
+      ZABBIX_BOOTSTRAP_AGENT_DNS: zabbix-agent
+      ZABBIX_BOOTSTRAP_AGENT2_HOST: Test Web Server
+      ZABBIX_BOOTSTRAP_AGENT2_DNS: zabbix-agent-2
+      ZABBIX_BOOTSTRAP_STALE_HOST: Zabbix server
+    command: ["node", "/bootstrap/bootstrap_zabbix_lab.mjs"]
+    volumes:
+      - ../scripts/zabbix/bootstrap_zabbix_lab.mjs:/bootstrap/bootstrap_zabbix_lab.mjs:ro
+    restart: "no"
+    networks:
+      mcp-network:
+
+  zabbix-agent:
+    image: zabbix/zabbix-agent:alpine-6.4-latest
+    profiles: ["zabbix"]
+    depends_on:
+      - zabbix-server
+    environment:
+      ZBX_HOSTNAME: Zabbix Test Agent
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: 10051
+      ZBX_PASSIVE_ALLOW: "true"
+      ZBX_ACTIVE_ALLOW: "true"
+      ZBX_DEBUGLEVEL: 3
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /dev:/host/dev:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    privileged: true
+    pid: host
+    restart: unless-stopped
+    ports:
+      - "10050:10050"
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.23
+
+  zabbix-agent-2:
+    image: zabbix/zabbix-agent:alpine-6.4-latest
+    profiles: ["zabbix"]
+    depends_on:
+      - zabbix-server
+    environment:
+      ZBX_HOSTNAME: Test Web Server
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: 10051
+      ZBX_PASSIVE_ALLOW: "true"
+      ZBX_ACTIVE_ALLOW: "true"
+      ZBX_DEBUGLEVEL: 3
+    restart: unless-stopped
+    ports:
+      - "10052:10050"
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.24
+
+  nginx-test:
+    image: nginx:alpine
+    profiles: ["zabbix"]
+    volumes:
+      - ../testing/test-data/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../testing/test-data/html:/usr/share/nginx/html:ro
+    ports:
+      - "8888:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      mcp-network:
+        ipv4_address: 10.253.0.25
+
+networks:
+  mcp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.253.0.0/24
+          gateway: 10.253.0.1
+
+volumes:
+  mcp_plugins:
+  rabbitmq_data:
+  zabbix_postgres_data:
+  zabbix_server_data:
+  zabbix_server_enc:
+  zabbix_server_ssh:
+  zabbix_server_ssl:
+  zabbix_web_ssl:

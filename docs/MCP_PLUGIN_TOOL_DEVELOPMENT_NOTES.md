@@ -30,6 +30,8 @@ This guide targets plugins that are authored under `plugins/src/<plugin>/`, comp
 - Return structured content for every tool, even when the primary text output is markdown.
 - Support `response_format` for read/query/statistics tools so clients can choose markdown or JSON.
 - Keep response helpers package-local so the plugin remains portable.
+- When integrating with external APIs, map user-visible health and status fields from the authoritative object in the response model rather than a convenient top-level shortcut. For example, Zabbix host discovery should derive availability from the primary agent interface when that is what the API actually updates.
+- Preserve external identifier types exactly as declared in the tool schema and backing API contract. If an API uses numeric-looking string identifiers, keep them as strings end to end. For example, Proxmox `vmid` is intentionally a string in the schema, and callers should not coerce it to a number before detail or metrics calls.
 - If prompt or resource plugins still use older SDK registration forms, keep the loader compatibility layer at the boundary instead of leaking that complexity into package-local business logic.
 - If a plugin is intentionally host-coupled, isolate that dependency in a single adapter module instead of importing plugin-manager or DB code throughout the package.
 
@@ -69,6 +71,8 @@ This guide targets plugins that are authored under `plugins/src/<plugin>/`, comp
 - Run lifecycle validation against the packaged zip.
 - Confirm the captured tools, resources, and prompts match `mcp-plugin.json` capabilities.
 - Verify any persistent state is created only inside the intended temp or data directory.
+- Validate representative live data shapes from the backing API, not just happy-path field names. Interface-level or nested status fields can differ from host-level summaries and silently skew MCP output.
+- Validate argument types with live calls, especially when identifiers look numeric. A schema can correctly require `string` while ad hoc tests accidentally send a number and misdiagnose the plugin.
 
 ## Known Gaps
 

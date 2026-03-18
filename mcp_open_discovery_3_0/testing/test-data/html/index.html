@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zabbix Test Web Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d40000;
+            text-align: center;
+        }
+        .status {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .metric h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+    </style>
+    <script>
+        function updateMetrics() {
+            // Simulate some dynamic metrics
+            document.getElementById('uptime').textContent = Math.floor(Date.now() / 1000);
+            document.getElementById('requests').textContent = Math.floor(Math.random() * 1000000);
+            document.getElementById('cpu').textContent = (Math.random() * 100).toFixed(1) + '%';
+            document.getElementById('memory').textContent = (Math.random() * 100).toFixed(1) + '%';
+        }
+        
+        setInterval(updateMetrics, 5000);
+        window.onload = updateMetrics;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>🖥️ Zabbix Test Web Server</h1>
+        
+        <div class="status">
+            <strong>✅ Status:</strong> Online and ready for monitoring
+        </div>
+        
+        <h2>📊 Live Metrics</h2>
+        <div class="metrics">
+            <div class="metric">
+                <h3>⏱️ Uptime</h3>
+                <div class="metric-value" id="uptime">-</div>
+                <small>seconds</small>
+            </div>
+            <div class="metric">
+                <h3>📊 Requests</h3>
+                <div class="metric-value" id="requests">-</div>
+                <small>total</small>
+            </div>
+            <div class="metric">
+                <h3>💻 CPU Usage</h3>
+                <div class="metric-value" id="cpu">-</div>
+            </div>
+            <div class="metric">
+                <h3>🧠 Memory Usage</h3>
+                <div class="metric-value" id="memory">-</div>
+            </div>
+        </div>
+        
+        <h2>🔧 Monitoring Endpoints</h2>
+        <ul>
+            <li><a href="/nginx_status">/nginx_status</a> - Nginx status page for Zabbix</li>
+            <li><a href="/">/ (this page)</a> - Web service availability check</li>
+        </ul>
+        
+        <h2>📋 Test Scenarios</h2>
+        <ul>
+            <li>HTTP response time monitoring</li>
+            <li>Web service availability checks</li>
+            <li>Nginx status metrics collection</li>
+            <li>Network connectivity testing</li>
+            <li>Resource utilization monitoring</li>
+        </ul>
+        
+        <div class="footer">
+            <p>This is a test web server for Zabbix integration testing with MCP Open Discovery.</p>
+            <p>Access Zabbix at <a href="http://localhost:8080">http://localhost:8080</a> (Admin/zabbix)</p>
+        </div>
+    </div>
+</body>
+</html>

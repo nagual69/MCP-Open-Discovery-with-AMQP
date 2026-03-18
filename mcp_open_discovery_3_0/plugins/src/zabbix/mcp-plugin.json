@@ -1,0 +1,28 @@
+{
+  "manifestVersion": "2",
+  "name": "zabbix",
+  "id": "com.vibeforge.mcp-od.zabbix",
+  "version": "1.0.0",
+  "description": "Zabbix monitoring platform integration — host discovery, metrics, alerts, problems, events and triggers.",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:931650805bec76ed6b943d7d30cc8f6fccba0ec089c59d1dd66e1f0664048c98",
+    "fileCount": 12,
+    "totalBytes": 66630
+  },
+  "dependenciesPolicy": "bundled-only",
+  "permissions": {
+    "network": true
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_zabbix_host_discover",
+      "mcp_od_zabbix_get_metrics",
+      "mcp_od_zabbix_get_alerts",
+      "mcp_od_zabbix_get_inventory",
+      "mcp_od_zabbix_get_problems",
+      "mcp_od_zabbix_get_events",
+      "mcp_od_zabbix_get_triggers"
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+# Dependency directories
+node_modules/
+npm-debug.log
+
+# Environment configuration
+.env
+.env.local
+env.local
+
+# Sensitive runtime data (never commit)
+data/
+!data/.gitkeep
+
+# Secrets and keys (defense-in-depth)
+*.key
+*.pem
+*.p12
+*.pfx
+*.der
+*.crt
+*.cer
+*.sig
+*.asc
+
+# Local overrides
+docker-compose.override.yml
+
+# Build output
+dist/
+build/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Docker-related
+.docker/
+*.swp
+
+# Reference material (not needed in repo)
+reference/
+
+proxmox_credentials.json
+archive/
+
+package-lock.json
+vscode-mcp-config.json
+
+backup_current/*
+reference/*
+
+ 

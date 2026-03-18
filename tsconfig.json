@@ -16,15 +16,15 @@
     "resolveJsonModule": true,
     "strict": false
   },
-  "include": ["src/**/*.ts", "plugins/src/**/src/**/*.ts"],
+  "include": ["mcp_open_discovery_3_0/src/**/*.ts", "plugins/src/**/src/**/*.ts"],
   "exclude": [
     "node_modules",
     "dist",
     "dist-ts",
     "plugins/builtin",
     "plugins/src/**/dist/**",
-    "src/**/*.js",
-    "src/**/*.d.ts",
-    "src/**/*.js.map"
+    "mcp_open_discovery_3_0/src/**/*.js",
+    "mcp_open_discovery_3_0/src/**/*.d.ts",
+    "mcp_open_discovery_3_0/src/**/*.js.map"
   ]
 }

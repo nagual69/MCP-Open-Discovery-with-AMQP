@@ -323,7 +323,7 @@ Windows (PowerShell):
 Linux/Mac (alternative):
 
 ```bash
-docker compose -f docker/docker-compose.yml up -d
+docker compose -f src/docker/compose.yml up -d
 ```
 
 Verify:
@@ -343,40 +343,35 @@ curl http://localhost:6270/health
 For a lean, production-only deployment of the MCP server:
 
 - HTTP only:
-  docker compose -f docker/docker-file-mcpod-server.yml up -d
+  docker compose -f src/docker/compose.yml up -d
 - With AMQP broker (RabbitMQ):
-  docker compose -f docker/docker-file-mcpod-server.yml --profile with-amqp up -d
-  The prod scripts below auto-set TRANSPORT_MODE; if running manually, set TRANSPORT_MODE=http,amqp.
+  docker compose -f src/docker/compose.yml --profile amqp up -d
+  The unified deploy scripts auto-set `TRANSPORT_MODE`; if invoking Compose manually with AMQP, set `TRANSPORT_MODE=http,amqp`.
 
 ### Deployment scripts
 
-- Windows (full stack or server-only):
-  - Full/dev stack: `./rebuild_deploy.ps1` (uses `docker/docker-compose.yml`)
-    - Remote Docker over SSH: `-Ssh user@host` (example: `-Ssh ubuntu@192.168.200.95`)
-  - Minimal production server: `./rebuild_deploy_prod.ps1`
-    - Transports (choose any): `-Http`, `-Amqp`, `-Stdio` (default `-Http` if none specified)
-    - RabbitMQ container: `-WithRabbitMq` (optional; use with `-Amqp` if you want an in-stack broker)
-    - OAuth/Keycloak profile: `-WithOAuth`
-    - Note: the prod script will include HTTP alongside AMQP when `-WithRabbitMq` is used so the container's HTTP healthcheck stays green. If invoking Compose manually with the RabbitMQ profile, set `TRANSPORT_MODE=http,amqp`.
-    - Project scoping: `-ProjectName <name>` (overrides `COMPOSE_PROJECT_NAME`; auto-lowercased for Docker)
-    - Remote Docker over SSH: `-Ssh user@host`
-    - Deprecated: `-WithAmqp` (alias of `-Amqp -WithRabbitMq`)
+- Windows:
+  - Unified typed-runtime deploy: `./rebuild_deploy.ps1` (uses `src/docker/compose.yml`)
+  - Profiles: `-WithAmqp`, `-WithOAuth`, `-WithSnmp`, `-WithZabbix`
+  - Full lab stack: `-BuildAll`
+  - Transport override: `-TransportMode stdio,http` or `-Stdio -Http -Amqp`
+  - Remote Docker over SSH: `-Ssh user@host`
+  - Project scoping: `-ProjectName <name>`
+  - Compatibility wrapper: `./rebuild_deploy_prod.ps1`
 - Linux/macOS:
-  - Full/dev stack: `./rebuild_redeploy.sh` (uses `docker/docker-compose.yml`)
-    - Remote Docker over SSH: `--ssh user@host` (example: `--ssh ubuntu@192.168.200.95`)
-  - Minimal production server: `./rebuild_redeploy_prod.sh`
-    - Transports: `--http`, `--amqp`, `--stdio` (default `--http` if none specified)
-    - RabbitMQ container: `--with-rabbitmq` (optional)
-    - OAuth/Keycloak profile: `--with-oauth`
-    - Project scoping: `--project-name <name>` or `COMPOSE_PROJECT_NAME` (will be normalized to lowercase)
-    - Remote Docker over SSH: `--ssh user@host`
-    - Deprecated: `--with-amqp` (alias of `--amqp --with-rabbitmq`)
+  - Unified typed-runtime deploy: `./rebuild_redeploy.sh` (uses `src/docker/compose.yml`)
+  - Profiles: `--with-amqp`, `--with-oauth`, `--with-snmp`, `--with-zabbix`
+  - Full lab stack: `--all`
+  - Transport override: `--transport-mode stdio,http` or `--stdio --http --amqp`
+  - Remote Docker over SSH: `--ssh user@host`
+  - Project scoping: `--project-name <name>` or `COMPOSE_PROJECT_NAME`
+  - Compatibility wrapper: `./rebuild_redeploy_prod.sh`
 
 ## Security notes
 
 - Credentials are stored encrypted with audit logging; integrate with your secrets management process for production.
 - CI persistence uses SQLite; apply host or volume encryption per policy if required.
-- Network scanning tools (e.g., nmap) may require extra container capabilities; review `docker/docker-compose.yml` before enabling.
+- Network scanning tools (e.g., nmap) may require extra container capabilities; review `src/docker/compose.yml` before enabling.
 
 ## Operational notes
 

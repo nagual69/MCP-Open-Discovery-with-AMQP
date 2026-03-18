@@ -1,0 +1,35 @@
+{
+  "manifestVersion": "2",
+  "name": "net-utils",
+  "version": "1.0.0",
+  "entry": "dist/index.js",
+  "description": "Core network discovery and diagnostic tools",
+  "author": "VibeForge Systems",
+  "license": "MPL-2.0",
+  "permissions": {
+    "network": true,
+    "exec": true
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_net_ping",
+      "mcp_od_net_wget",
+      "mcp_od_net_nslookup",
+      "mcp_od_net_netstat",
+      "mcp_od_net_telnet",
+      "mcp_od_net_route",
+      "mcp_od_net_ifconfig",
+      "mcp_od_net_arp",
+      "mcp_od_net_whois"
+    ],
+    "resources": [],
+    "prompts": []
+  },
+  "dependencies": [],
+  "dependenciesPolicy": "bundled-only",
+  "dist": {
+    "hash": "sha256:782005401503789c034a671719f801778882254ed08a8558375212f6b86f87d4",
+    "fileCount": 12,
+    "totalBytes": 48676
+  }
+}

@@ -1,0 +1,1 @@
+{"version":3,"file":"transport-state.js","sourceRoot":"","sources":["../../../src/runtime/transport-state.ts"],"names":[],"mappings":";;AAIA,oDAEC;AAED,oDAEC;AAED,wDAEC;AAZD,IAAI,iBAAiB,GAA6B,IAAI,CAAC;AAEvD,SAAgB,oBAAoB,CAAC,UAAoC;IACvE,iBAAiB,GAAG,UAAU,CAAC;AACjC,CAAC;AAED,SAAgB,oBAAoB;IAClC,OAAO,iBAAiB,CAAC;AAC3B,CAAC;AAED,SAAgB,sBAAsB;IACpC,iBAAiB,GAAG,IAAI,CAAC;AAC3B,CAAC"}

@@ -23,12 +23,14 @@ Generate a manifest-v2 MCP plugin that can be built, packaged, installed, activa
 4. If the plugin is intentionally host-coupled, isolate plugin-manager, DB, or registry access behind a single package-local adapter module.
 5. Generate Zod schemas and annotation hints for every tool.
 6. Implement structured responses for every tool and `response_format` support for read/query/stat tools.
-7. Build the plugin into `dist/`.
-8. Vendor runtime dependencies into the packaged artifact under `dist/node_modules`, excluding host-provided packages.
-9. Compute `dist.hash` using the server-compatible hash contract over the packaged `dist/` tree.
-10. Package the plugin into a zip that includes `mcp-plugin.json` and `dist/`.
-11. Validate install, activate, deactivate, and uninstall against the packaged zip from an extraction root outside the workspace.
-12. Report any missing dependency bundling or lifecycle validation failures as blocking issues.
+7. Validate any derived health, status, or availability fields against representative live API payloads so the plugin uses the authoritative field, including nested interface-level data when required.
+8. Preserve identifier types exactly as required by the schema and upstream API. If an identifier is defined as a string, keep it a string through generated examples, tests, and prompt workflows even when it appears numeric.
+9. Build the plugin into `dist/`.
+10. Vendor runtime dependencies into the packaged artifact under `dist/node_modules`, excluding host-provided packages.
+11. Compute `dist.hash` using the server-compatible hash contract over the packaged `dist/` tree.
+12. Package the plugin into a zip that includes `mcp-plugin.json` and `dist/`.
+13. Validate install, activate, deactivate, and uninstall against the packaged zip from an extraction root outside the workspace.
+14. Report any missing dependency bundling or lifecycle validation failures as blocking issues.
 
 ## Output Contract
 
@@ -47,6 +49,8 @@ Generate a manifest-v2 MCP plugin that can be built, packaged, installed, activa
 - Do not skip lifecycle validation after a successful typecheck.
 - Do not write persistent data outside configured plugin data paths.
 - Do not compute the packaged manifest hash from the unbundled source `dist/` tree.
+- Do not assume a top-level status field is authoritative when the API exposes per-interface or nested state that actually drives the product UI and alerts.
+- Do not silently coerce numeric-looking identifiers away from the declared schema type; generated examples and tests must match the real input contract.
 
 ## Failure Conditions
 

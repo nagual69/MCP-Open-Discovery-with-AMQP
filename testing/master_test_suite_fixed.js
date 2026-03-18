@@ -36,6 +36,38 @@ if (fs.existsSync(envPath)) {
 
 const { mcpUrl, healthUrl } = require('./test_http_port');
 
+function parseIntegerEnv(name, fallback) {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+function getSnmpAgent(index, fallbackHost, fallbackPort) {
+  return {
+    host: process.env[`SNMP_AGENT_${index}`] || fallbackHost,
+    port: parseIntegerEnv(`SNMP_AGENT_PORT_${index}`, fallbackPort)
+  };
+}
+
+const DEFAULT_SNMP_AGENTS = [
+  getSnmpAgent(1, '127.0.0.1', 1161),
+  getSnmpAgent(2, '127.0.0.1', 2161),
+  getSnmpAgent(3, '127.0.0.1', 3161)
+];
+
+const DEFAULT_SNMP_DISCOVERY_RANGE = process.env.SNMP_DISCOVERY_RANGE || process.env.MCP_LAB_SUBNET || '10.253.0.0/24';
+const DEFAULT_NMAP_PING_TARGET = process.env.NMAP_PING_TARGET || '127.0.0.1';
+const DEFAULT_NMAP_TCP_TARGET = process.env.NMAP_TCP_TARGET || '127.0.0.1';
+const DEFAULT_NMAP_TCP_PORTS = process.env.NMAP_TCP_PORTS || '6270,8080,8888,10051';
+const DEFAULT_NMAP_UDP_TARGET = process.env.NMAP_UDP_TARGET || DEFAULT_SNMP_AGENTS[0].host;
+const DEFAULT_NMAP_UDP_PORTS = process.env.NMAP_UDP_PORTS || String(DEFAULT_SNMP_AGENTS[0].port);
+const DEFAULT_NMAP_VERSION_TARGET = process.env.NMAP_VERSION_TARGET || '127.0.0.1';
+const DEFAULT_NMAP_VERSION_PORTS = process.env.NMAP_VERSION_PORTS || '6270,8080';
+
 // Configuration
 const CONFIG = {
   // Transport settings
@@ -61,16 +93,13 @@ const CONFIG = {
       realm: process.env.PROXMOX_REALM || 'pam'
     },
     zabbix: {
-      baseUrl: process.env.ZABBIX_BASE_URL || 'http://172.20.0.23:8080',
+      baseUrl: process.env.ZABBIX_BASE_URL || 'http://localhost:8080',
       username: process.env.ZABBIX_USERNAME || 'Admin',
-  password: process.env.ZABBIX_PASSWORD || 'zabbix'
+      password: process.env.ZABBIX_PASSWORD || 'zabbix'
     },
     snmp: {
-      agents: [
-        process.env.SNMP_AGENT_1 || '172.20.0.10',
-        process.env.SNMP_AGENT_2 || '172.20.0.11',
-        process.env.SNMP_AGENT_3 || '172.20.0.12'
-      ],
+      agents: DEFAULT_SNMP_AGENTS,
+      discoveryRange: DEFAULT_SNMP_DISCOVERY_RANGE,
       community: process.env.SNMP_COMMUNITY || 'public'
     }
   }
@@ -474,51 +503,65 @@ class EnhancedParameterGenerator {
 
   getSnmpParameters(toolName) {
     const targetAgent = CONFIG.infrastructure.snmp.agents[0];
+    const baseParams = {
+      host: targetAgent.host,
+      target: targetAgent.host,
+      port: targetAgent.port,
+      community: CONFIG.infrastructure.snmp.community
+    };
     
     switch (toolName) {
       case 'snmp_create_session':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community };
+        return baseParams;
       case 'snmp_close_session':
-        return { target: targetAgent };
+        return { ...baseParams, target: targetAgent.host };
       case 'snmp_get':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community, oid: '1.3.6.1.2.1.1.1.0' };
+        return { ...baseParams, oid: '1.3.6.1.2.1.1.1.0' };
       case 'snmp_get_next':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community, oid: '1.3.6.1.2.1.1.1.0' };
+        return { ...baseParams, oid: '1.3.6.1.2.1.1.1.0' };
       case 'snmp_walk':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community, oid: '1.3.6.1.2.1.1' };
+        return { ...baseParams, oid: '1.3.6.1.2.1.1' };
       case 'snmp_table':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community, oid: '1.3.6.1.2.1.2.2' };
+        return { ...baseParams, oid: '1.3.6.1.2.1.2.2' };
       case 'snmp_discover':
-        return { networkRange: '172.20.0.0/24', community: CONFIG.infrastructure.snmp.community };
+        return {
+          ...baseParams,
+          networkRange: CONFIG.infrastructure.snmp.discoveryRange,
+          targetRange: CONFIG.infrastructure.snmp.discoveryRange
+        };
       case 'snmp_device_inventory':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community };
+        return baseParams;
       case 'snmp_interface_discovery':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community };
+        return baseParams;
       case 'snmp_service_discovery':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community };
+        return baseParams;
       case 'snmp_system_health':
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community };
+        return baseParams;
       case 'snmp_network_topology':
-        return { networkRange: '172.20.0.0/24', community: CONFIG.infrastructure.snmp.community };
+        return {
+          ...baseParams,
+          networkRange: CONFIG.infrastructure.snmp.discoveryRange,
+          targetRange: CONFIG.infrastructure.snmp.discoveryRange
+        };
       default:
-        return { target: targetAgent, community: CONFIG.infrastructure.snmp.community };
+        return baseParams;
     }
   }
 
   getNmapParameters(toolName) {
     switch (toolName) {
       case 'nmap_ping_scan':
-        return { target: '172.20.0.0/28' };
+        return { target: DEFAULT_NMAP_PING_TARGET };
       case 'nmap_tcp_connect_scan':
-        return { target: '172.20.0.10', ports: '22,80,443' };
+        return { target: DEFAULT_NMAP_TCP_TARGET, ports: DEFAULT_NMAP_TCP_PORTS };
       case 'nmap_tcp_syn_scan':
-        return { target: '172.20.0.10', ports: '22,80,443' };
+        return { target: DEFAULT_NMAP_TCP_TARGET, ports: DEFAULT_NMAP_TCP_PORTS };
       case 'nmap_udp_scan':
-        return { target: '172.20.0.10', ports: '53,161' };
+        return { target: DEFAULT_NMAP_UDP_TARGET, ports: DEFAULT_NMAP_UDP_PORTS };
       case 'nmap_version_scan':
-        return { target: '172.20.0.10', ports: '22,80' };
+        return { target: DEFAULT_NMAP_VERSION_TARGET, ports: DEFAULT_NMAP_VERSION_PORTS };
       default:
-        return { target: '172.20.0.10' };
+        return { target: DEFAULT_NMAP_TCP_TARGET };
     }
   }
 

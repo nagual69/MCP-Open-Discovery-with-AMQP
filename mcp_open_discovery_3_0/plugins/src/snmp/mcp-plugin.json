@@ -1,0 +1,35 @@
+{
+  "manifestVersion": "2",
+  "name": "snmp",
+  "id": "com.vibeforge.mcp-od.snmp",
+  "version": "1.0.0",
+  "description": "SNMP v1/v2c/v3 agent discovery and polling — sessions, GET/WALK/TABLE, device inventory, interface discovery, topology mapping.",
+  "entry": "dist/index.js",
+  "dist": {
+    "hash": "sha256:9219bd106b616bbf3a3b9788f1d185c405297c0aa05e3361fd554f45c341b608",
+    "fileCount": 12,
+    "totalBytes": 71399
+  },
+  "dependenciesPolicy": "bundled-only",
+  "permissions": {
+    "network": true,
+    "exec": true,
+    "fsRead": true
+  },
+  "capabilities": {
+    "tools": [
+      "mcp_od_snmp_create_session",
+      "mcp_od_snmp_close_session",
+      "mcp_od_snmp_get",
+      "mcp_od_snmp_get_next",
+      "mcp_od_snmp_walk",
+      "mcp_od_snmp_table",
+      "mcp_od_snmp_discover",
+      "mcp_od_snmp_device_inventory",
+      "mcp_od_snmp_interface_discovery",
+      "mcp_od_snmp_system_health",
+      "mcp_od_snmp_service_discovery",
+      "mcp_od_snmp_network_topology"
+    ]
+  }
+}
