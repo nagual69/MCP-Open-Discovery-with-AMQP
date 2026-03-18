@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+dist
+dist-ts
+data
+logs
+reference
+archive
+backup_current
+server_out.txt
+server_err.txt
+*.log
+.env
+.env.local
+npm-debug.log*

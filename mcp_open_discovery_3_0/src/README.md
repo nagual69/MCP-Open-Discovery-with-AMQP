@@ -1,11 +1,11 @@
 # TypeScript Migration Workspace
 
-This tree is the portable TypeScript refactor workspace for MCP Open Discovery.
+This tree is the portable TypeScript runtime workspace for MCP Open Discovery 3.0.
 
 Scope for this phase:
-- keep new work isolated under `src/`
-- align contracts with the current server runtime and plugin schema
-- preserve portability so the tree can be moved into a new repository later
+- keep runtime source-of-truth code under `src/`
+- align contracts with the typed server runtime and plugin schema
+- preserve portability inside the standalone 3.0 repository root
 
 Alignment notes from the marketplace review:
 - `nagual69/mcp-od-marketplace` already uses TypeScript on the frontend and defines a v2 plugin manifest type in `src/types/mcp-plugin.ts`
@@ -21,7 +21,7 @@ Initial deliverable in this phase:
 - `src/types/` contains the foundational contracts for manifests, lifecycle, signing, marketplace integration, transports, health, and tool responses
 - `src/config.ts` and `src/index.ts` establish a portable entry surface for subsequent migration work
 
-Typed deployment assets now live under `src/docker/`:
-- `src/docker/Dockerfile` is the typed runtime container image
-- `src/docker/compose.yml` is the single profile-driven Compose source of truth for server-only, AMQP, OAuth, SNMP, and Zabbix lab variants
-- Root deploy scripts call into this stack so the old split between dev/prod compose files is no longer required for typed runtime deployments
+Typed deployment assets now live at the repository root under `docker/`:
+- `docker/Dockerfile` is the typed runtime container image
+- `docker/compose.yml` is the single profile-driven Compose source of truth for server-only, AMQP, OAuth, SNMP, and Zabbix lab variants
+- Root deploy scripts under `scripts/` call into this stack so the old split between dev/prod compose files is no longer required for typed runtime deployments

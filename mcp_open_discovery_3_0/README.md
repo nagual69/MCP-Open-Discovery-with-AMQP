@@ -2,13 +2,13 @@
 
 MCP Open Discovery 3.0 is the clean TypeScript-first extraction of the MCP Open Discovery server, plugin runtime, and typed transport stack.
 
-This repository is intended to become the new top-level home for the typed runtime currently being developed under the legacy repository's `src/` migration tree. The goal is to keep only the assets required to build, run, test, and package the typed platform, while leaving behind legacy JavaScript runtime paths, historical deployment sprawl, generated artifacts, and repository-specific clutter.
+This folder is intended to run as its own repository root. npm scripts, Docker assets, typed plugins, schema files, and deploy helpers are all expected to work directly from `mcp_open_discovery_3_0` without depending on the legacy repository layout.
 
 ## Current Status
 
-This repository is in extraction/bootstrap mode.
+This repository is runnable as a standalone typed-runtime workspace.
 
-Already scaffolded:
+Already in place:
 
 - `src/` for the typed runtime, plugin manager, transport layer, and shared types
 - `docker/` for the consolidated typed container image and Compose stack
@@ -16,13 +16,11 @@ Already scaffolded:
 - `scripts/` for repo-local build and deploy helpers
 - `testing/` for typed validation and lab fixtures
 
-Still to be migrated:
+Remaining cleanup is mostly curation rather than extraction:
 
-- package metadata and TypeScript config
-- typed built-in plugin source packages
-- plugin packaging helpers and policy allowlists
-- schema and lab support assets used by Docker and plugin validation
-- a curated subset of tests and operational documentation
+- remove or rewrite stale migration-only docs
+- trim generated artifacts that should not be checked in long term
+- continue reducing compatibility shims where typed-only paths are already authoritative
 
 ## Extraction Rules
 
@@ -65,6 +63,22 @@ Keep in this repository:
 - clean repo metadata and operational docs
 
 ## Testing
+
+## Standalone Quick Start
+
+From the `mcp_open_discovery_3_0` folder:
+
+- `npm install`
+- `npm run typecheck`
+- `npm start` for the typed runtime on the host
+- `npm run docker:up` for the repo-local Docker stack
+- `npm run deploy:ps` for the full Windows rebuild/redeploy flow
+
+Notes:
+
+- Docker commands operate against `docker/compose.yml` inside this folder and build from this folder's own root.
+- The SNMP plugin can execute either against local Net-SNMP binaries or against the local `mcp-server` container discovered from Docker Compose metadata. Set `MCP_OD_SNMP_DOCKER_CONTAINER` if you need to override container discovery.
+- Committing `package-lock.json` is recommended for repeatable standalone npm installs.
 
 The default 3.0 test surface is intentionally narrow during extraction.
 

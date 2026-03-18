@@ -120,24 +120,28 @@ Likely candidates:
 
 ## 3. Rewrite During Extraction
 
-These files already exist in the new repository, but they still point back to the old repository structure and should be updated as part of the extraction.
+These checks were the original extraction blockers. The current 3.0 folder should continue to satisfy them as the standalone root.
 
 ### `docker/Dockerfile`
 
-Current assumptions to fix:
+Current standalone expectations:
 
-- expects root-level `package.json`
-- expects root-level `tsconfig*.json`
-- expects `plugins/`, `docs/`, and `tools/plugins/` to exist at the new repo root
+- builds from the 3.0 repository root
+- reads repo-local `package.json`, `tsconfig*.json`, `plugins/`, `docs/`, and `tools/plugins/`
+- does not reach outside the 3.0 folder during `docker build`
 
 ### `docker/compose.yml`
 
-Current assumptions to fix:
+Current standalone expectations:
 
-- build path still assumes an old nested layout via `context: ../..`
-- still points to `src/docker/Dockerfile` instead of the new repo-local `docker/Dockerfile`
-- mounts Keycloak realm files from the old repository's `docker/` path pattern
-- mounts Zabbix test fixtures from the old repository's `testing/test-data/` path pattern
+- uses the 3.0 repository root as its build context via `context: ..`
+- points at the repo-local `docker/Dockerfile`
+- mounts repo-local `data/` and `logs/` paths
+- mounts repo-local Keycloak realm files from `docker/`
+
+Standalone runtime note:
+
+- the SNMP plugin should not depend on a hard-coded legacy container name; host execution must resolve the local `mcp-server` container dynamically or use `MCP_OD_SNMP_DOCKER_CONTAINER`
 
 ### `src/plugins/plugin-registry.ts`
 
@@ -192,7 +196,7 @@ Use this order.
 5. Copy the schema JSON into `docs/mcp-od-marketplace/specs/schemas/`.
 6. Copy Keycloak realm JSON into `docker/`.
 7. Copy `testing/test-data/` fixtures needed by Compose.
-8. Rewrite `docker/Dockerfile` and `docker/compose.yml` to use the new repo root directly.
+8. Keep `docker/Dockerfile` and `docker/compose.yml` anchored to the 3.0 repo root directly.
 9. Rewrite package metadata and scripts for the new repository identity.
 10. Add only the typed tests you intend to keep.
 11. Run typecheck, build, plugin validation, and Docker smoke tests from the new repo root.
@@ -224,8 +228,8 @@ Drop by default:
 The 3.0 repository is cleanly extracted when all of the following are true:
 
 - the repo builds from its own root with no path dependency on the legacy repository
-- Docker builds from `docker/Dockerfile` without reaching outside the new repo root
-- Compose runs from `docker/compose.yml` without referencing old-root relative paths
+- Docker builds from `docker/Dockerfile` without reaching outside the 3.0 repo root
+- Compose runs from `docker/compose.yml` without referencing paths outside the 3.0 repo root
 - built-in typed plugins are discovered from `plugins/src/`
 - plugin schema validation works from the new repo-local docs path
 - typed tests pass without importing the legacy JS runtime as a default path

@@ -1,10 +1,13 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 
 import type { CommandExecutionResult, InterfaceDetails, SnmpResponseItem, SnmpSessionOptions, SnmpSessionRecord } from './types';
 
 const snmpSessions = new Map<string, SnmpSessionRecord>();
+
+const SNMP_DOCKER_CONTAINER_ENV_KEYS = ['MCP_OD_SNMP_DOCKER_CONTAINER', 'SNMP_DOCKER_CONTAINER'] as const;
+const SNMP_DOCKER_SERVICE = process.env.MCP_OD_SNMP_DOCKER_SERVICE?.trim() || 'mcp-server';
 
 function isRunningInContainer(): boolean {
   try {
@@ -15,6 +18,61 @@ function isRunningInContainer(): boolean {
 }
 
 const IN_CONTAINER = isRunningInContainer();
+
+function resolveComposeProjectName(): string {
+  const explicit = process.env.COMPOSE_PROJECT_NAME?.trim();
+  if (explicit) {
+    return explicit.toLowerCase();
+  }
+
+  const cwdParts = process.cwd().split(/[\\/]+/).filter(Boolean);
+  const cwdName = cwdParts.at(-1) ?? 'mcp_open_discovery_3_0';
+  return cwdName.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+}
+
+function commandExists(command: string): boolean {
+  const locator = process.platform === 'win32' ? 'where' : 'which';
+  const result = spawnSync(locator, [command], {
+    stdio: 'ignore',
+  });
+
+  return result.status === 0;
+}
+
+function resolveDockerContainerName(): string | null {
+  for (const envKey of SNMP_DOCKER_CONTAINER_ENV_KEYS) {
+    const explicit = process.env[envKey]?.trim();
+    if (explicit) {
+      return explicit;
+    }
+  }
+
+  const result = spawnSync(
+    'docker',
+    [
+      'ps',
+      '--filter',
+      `label=com.docker.compose.project=${resolveComposeProjectName()}`,
+      '--filter',
+      `label=com.docker.compose.service=${SNMP_DOCKER_SERVICE}`,
+      '--format',
+      '{{.Names}}',
+    ],
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    },
+  );
+
+  if (result.status !== 0 || !result.stdout) {
+    return null;
+  }
+
+  return result.stdout
+    .split(/\r?\n/)
+    .map((value) => value.trim())
+    .find(Boolean) ?? null;
+}
 
 function intToIp(value: number): string {
   return [
@@ -56,8 +114,18 @@ function toSessionOptions(options: Partial<SnmpSessionOptions>): SnmpSessionOpti
 
 async function executeSnmpCommand(command: string, args: string[], timeout = 5000): Promise<CommandExecutionResult> {
   return new Promise((resolve, reject) => {
-    const processCommand = IN_CONTAINER ? command : 'docker';
-    const processArgs = IN_CONTAINER ? args : ['exec', 'mcp-open-discovery', command, ...args];
+    const containerName = IN_CONTAINER ? null : resolveDockerContainerName();
+    const canUseHostCommand = !IN_CONTAINER && commandExists(command);
+    const processCommand = IN_CONTAINER || canUseHostCommand && !containerName ? command : 'docker';
+    const processArgs = IN_CONTAINER || canUseHostCommand && !containerName ? args : ['exec', containerName ?? '', command, ...args];
+
+    if (!IN_CONTAINER && !containerName && !canUseHostCommand) {
+      reject(new Error(
+        `Unable to execute ${command}. Install Net-SNMP host binaries or start the Docker mcp-server container for project ${resolveComposeProjectName()}, or set MCP_OD_SNMP_DOCKER_CONTAINER explicitly.`,
+      ));
+      return;
+    }
+
     const child = spawn(processCommand, processArgs, {
       stdio: 'pipe',
       timeout,
