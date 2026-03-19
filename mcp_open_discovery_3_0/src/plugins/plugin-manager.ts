@@ -27,6 +27,7 @@ import {
   getPluginByName,
   insertPlugin,
   saveExtractionRecord,
+  setPluginCapabilityActiveState,
   setPluginLifecycleState,
 } from './db/plugin-db';
 import { loadAndRegisterPlugin, type CapturedRegistrations } from './plugin-loader';
@@ -379,6 +380,8 @@ export async function activate(pluginIdValue: string, options: PluginActivateOpt
       const loadResult = await loadAndRegisterPlugin(mcpServerRef, rootDir, manifest);
       activeRegistrations.set(pluginIdValue, loadResult.captured);
     }
+
+    setPluginCapabilityActiveState(pluginIdValue, true);
 
     return {
       activated: true,

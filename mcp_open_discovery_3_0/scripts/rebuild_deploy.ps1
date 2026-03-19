@@ -24,6 +24,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if ($args -contains '--help') {
+    $Help = $true
+}
+
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -Path $RepoRoot
 
@@ -83,10 +87,7 @@ function Resolve-TransportModes {
 
     $modes = @()
     if (-not [string]::IsNullOrWhiteSpace($ExplicitTransportMode)) {
-        $modes = $ExplicitTransportMode
-            .Split(',')
-            .ForEach({ $_.Trim().ToLowerInvariant() })
-            .Where({ $_ -in @('stdio', 'http', 'amqp') })
+        $modes = @($ExplicitTransportMode.Split(',').ForEach({ $_.Trim().ToLowerInvariant() }).Where({ $_ -in @('stdio', 'http', 'amqp') }))
     }
     else {
         if ($UseStdio) { $modes += 'stdio' }
@@ -109,11 +110,6 @@ function Resolve-TransportModes {
     }
 
     return (($modes | Select-Object -Unique) -join ',')
-}
-
-$composeFile = Join-Path $RepoRoot 'docker/compose.yml'
-if (-not (Test-Path -Path $composeFile)) {
-    throw "Compose file not found: $composeFile. Run this script from the repository root."
 }
 
 if ($BuildAll) {
@@ -149,6 +145,11 @@ if ($Help) {
     exit 0
 }
 
+$composeFile = Join-Path $RepoRoot 'docker/compose.yml'
+if (-not (Test-Path -Path $composeFile)) {
+    throw "Compose file not found: $composeFile. Run this script from the repository root."
+}
+
 if (-not [string]::IsNullOrWhiteSpace($Ssh)) {
     $env:DOCKER_HOST = "ssh://$Ssh"
     Write-Host ("Remote Docker host enabled via DOCKER_HOST={0}" -f $env:DOCKER_HOST) -ForegroundColor Cyan
@@ -169,7 +170,7 @@ $allProfiles = @('amqp', 'oauth', 'snmp', 'zabbix')
 $composeArgs = Get-ComposeArgs -ComposeFile $composeFile -ResolvedProjectName $resolvedProjectName -Profiles $profiles
 $composeArgsDown = Get-ComposeArgs -ComposeFile $composeFile -ResolvedProjectName $resolvedProjectName -Profiles $allProfiles
 $resolvedServices = if ($Services -and $Services.Count -gt 0) {
-    $Services.ForEach({ $_.Split(',') }).ForEach({ $_.Trim() }).Where({ -not [string]::IsNullOrWhiteSpace($_) })
+    @($Services.ForEach({ $_.Split(',') }).ForEach({ $_.Trim() }).Where({ -not [string]::IsNullOrWhiteSpace($_) }))
 }
 else {
     @('mcp-server')

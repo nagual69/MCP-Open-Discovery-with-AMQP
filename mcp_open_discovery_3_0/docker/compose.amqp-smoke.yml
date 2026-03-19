@@ -1,0 +1,82 @@
+services:
+  mcp-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: mcp-open-discovery-3:typed
+    ports:
+      - "6270:6270"
+    environment:
+      NODE_ENV: development
+      DOCKER_CONTAINER: "true"
+      TRANSPORT_MODE: http,amqp
+      HTTP_PORT: 6270
+      HTTP_HOST: 0.0.0.0
+      LOG_LEVEL: info
+      DATA_DIR: /home/mcpuser/app/data
+      PLUGINS_ROOT: /home/mcpuser/plugins
+      AMQP_ENABLED: "true"
+      AMQP_URL: amqp://mcp:discovery@rabbitmq:5672
+      AMQP_EXCHANGE: mcp-open-discovery-3.notifications
+      AMQP_QUEUE_PREFIX: mcp-open-discovery-3.discovery
+      AMQP_PREFETCH_COUNT: "1"
+      AMQP_RECONNECT_DELAY: "10000"
+      AMQP_MAX_RETRY_ATTEMPTS: "50"
+      AMQP_MESSAGE_TTL: "3600000"
+      AMQP_QUEUE_TTL: "7200000"
+      OAUTH_ENABLED: "false"
+    volumes:
+      - ../data:/home/mcpuser/app/data
+      - ../logs:/home/mcpuser/app/logs
+      - mcp_plugins:/home/mcpuser/plugins
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+      - NET_BIND_SERVICE
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:6270/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      amqp-smoke-network:
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: mcp
+      RABBITMQ_DEFAULT_PASS: discovery
+      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_MANAGEMENT_PATH_PREFIX: /rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      amqp-smoke-network:
+        ipv4_address: 172.16.250.30
+
+networks:
+  amqp-smoke-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.250.0/24
+          gateway: 172.16.250.1
+
+volumes:
+  mcp_plugins:
+  rabbitmq_data:

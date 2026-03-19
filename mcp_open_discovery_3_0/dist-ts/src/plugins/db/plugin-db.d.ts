@@ -27,6 +27,7 @@ export declare function getDb(): Database.Database;
 export declare function closeDb(): void;
 export declare function insertPlugin(pluginData: InsertPluginInput): void;
 export declare function setPluginLifecycleState(pluginId: string, state: PluginLifecycleState, detail?: string | null): void;
+export declare function setPluginCapabilityActiveState(pluginId: string, isActive: boolean): void;
 export declare function getPlugin(pluginId: string): PluginRecord | undefined;
 export declare function getPluginByName(name: string): PluginRecord | undefined;
 export declare function getActivePlugins(): ActivePluginRecord[];

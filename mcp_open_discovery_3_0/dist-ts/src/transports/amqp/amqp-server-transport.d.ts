@@ -27,14 +27,17 @@ export declare class AmqpServerTransport {
     private channel;
     private readonly routingInfoStore;
     private cleanupTimer;
+    private reconnectTimer;
     private readonly maxMessageSize;
     private closing;
+    private closeNotified;
     private readonly connectionState;
     private protocolVersion?;
     readonly sessionId: string;
     onclose?: () => void;
     onerror?: (error: Error) => void;
     onmessage?: (message: JsonRpcMessage) => void;
+    ontransportclosed?: (error?: Error) => void;
     _connectFn?: (url: string) => Promise<AmqpConnection>;
     constructor(options: AmqpServerTransportOptions);
     setProtocolVersion(version: string): void;
@@ -52,9 +55,27 @@ export declare class AmqpServerTransport {
     private handleConnectionClosed;
     private scheduleReconnect;
     private startRoutingCleanup;
+    private notifyClosed;
 }
 export declare class NativeAmqpRuntimeAdapter {
     private transport;
+    private server;
+    private config;
+    private recoveryTimer;
+    private recoveryAttempt;
+    private recoveryDelay;
+    private stopping;
+    private starting;
+    private recoveryStatus;
+    _transportFactory?: (options: AmqpServerTransportOptions) => AmqpServerTransport;
+    private getRecoveryConfig;
+    private clearRecoveryTimer;
+    private createTransport;
+    private updateRecoveryStatus;
+    private resetRecoveryState;
+    private attachTransport;
+    private attemptRecovery;
+    private scheduleRecovery;
     start(server: McpServer, config: AmqpTransportConfig): Promise<{
         mode: 'amqp';
         started: boolean;

@@ -14,7 +14,7 @@
     "start:http": "npm run build:ts && node -e \"process.env.TRANSPORT_MODE='http'; process.env.HTTP_PORT=process.env.HTTP_PORT || '6270'; require('./dist-ts/src/main.js')\"",
     "start:amqp": "npm run build:ts && node -e \"process.env.TRANSPORT_MODE='http,amqp'; process.env.HTTP_PORT=process.env.HTTP_PORT || '6270'; require('./dist-ts/src/main.js')\"",
     "test": "npm run build:ts && npm run test:smoke && npm run test:policy",
-    "test:smoke": "node testing/test_health_func.js && node testing/test_transport_manager.js && node testing/test_transport_integration.js",
+    "test:smoke": "node testing/test_health_func.js && node testing/test_transport_manager.js && node testing/test_transport_integration.js && node testing/test_amqp_transport.js && node testing/test_amqp_health_recovery.js",
     "test:sdk": "node testing/test_sdk_server.js",
     "test:policy": "npm run build:ts && node testing/test_typed_policy_enforcements.js",
     "validate:typed-plugin-manager": "npm run build:ts && node dist-ts/src/validate-typed-plugin-manager.js",

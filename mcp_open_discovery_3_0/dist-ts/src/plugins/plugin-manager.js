@@ -302,6 +302,7 @@ async function activate(pluginIdValue, options = {}) {
             const loadResult = await (0, plugin_loader_1.loadAndRegisterPlugin)(mcpServerRef, rootDir, manifest);
             activeRegistrations.set(pluginIdValue, loadResult.captured);
         }
+        (0, plugin_db_1.setPluginCapabilityActiveState)(pluginIdValue, true);
         return {
             activated: true,
             pluginId: pluginIdValue,

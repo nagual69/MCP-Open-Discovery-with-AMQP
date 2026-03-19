@@ -24,6 +24,11 @@ export interface AmqpTransportConfig extends BaseTransportConfig {
     maxReconnectAttempts?: number;
     messageTTL?: number;
     queueTTL?: number;
+    autoRecoveryEnabled?: boolean;
+    recoveryRetryInterval?: number;
+    recoveryMaxRetries?: number;
+    recoveryBackoffMultiplier?: number;
+    recoveryMaxRetryInterval?: number;
 }
 export type TransportConfig = StdioTransportConfig | HttpTransportConfig | AmqpTransportConfig;
 export interface TransportStartResult {

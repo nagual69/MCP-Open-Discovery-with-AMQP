@@ -74,6 +74,11 @@ function createAmqpConfig(config) {
         maxReconnectAttempts: config.amqp.maxReconnectAttempts,
         messageTTL: config.amqp.messageTTL,
         queueTTL: config.amqp.queueTTL,
+        autoRecoveryEnabled: config.amqp.autoRecoveryEnabled,
+        recoveryRetryInterval: config.amqp.recoveryRetryInterval,
+        recoveryMaxRetries: config.amqp.recoveryMaxRetries,
+        recoveryBackoffMultiplier: config.amqp.recoveryBackoffMultiplier,
+        recoveryMaxRetryInterval: config.amqp.recoveryMaxRetryInterval,
     };
 }
 async function startConfiguredTransports(server, config, options = {}) {

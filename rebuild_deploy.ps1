@@ -21,6 +21,10 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if ($args -contains '--help') {
+    $Help = $true
+}
+
 Set-Location -Path $PSScriptRoot
 
 function Invoke-Compose {
@@ -70,10 +74,7 @@ function Resolve-TransportModes {
 
     $modes = @()
     if (-not [string]::IsNullOrWhiteSpace($ExplicitTransportMode)) {
-        $modes = $ExplicitTransportMode
-            .Split(',')
-            .ForEach({ $_.Trim().ToLowerInvariant() })
-            .Where({ $_ -in @('stdio', 'http', 'amqp') })
+        $modes = @($ExplicitTransportMode.Split(',').ForEach({ $_.Trim().ToLowerInvariant() }).Where({ $_ -in @('stdio', 'http', 'amqp') }))
     }
     else {
         if ($UseStdio) { $modes += 'stdio' }
@@ -96,11 +97,6 @@ function Resolve-TransportModes {
     }
 
     return (($modes | Select-Object -Unique) -join ',')
-}
-
-$composeFile = Join-Path $PSScriptRoot 'src/docker/compose.yml'
-if (-not (Test-Path -Path $composeFile)) {
-    throw "Compose file not found: $composeFile. Run this script from the repository root."
 }
 
 if ($BuildAll) {
@@ -141,6 +137,11 @@ if ($Help) {
     exit 0
 }
 
+$composeFile = Join-Path $PSScriptRoot 'docker/compose.yml'
+if (-not (Test-Path -Path $composeFile)) {
+    throw "Compose file not found: $composeFile. Run this script from the repository root."
+}
+
 if (-not [string]::IsNullOrWhiteSpace($Ssh)) {
     $env:DOCKER_HOST = "ssh://$Ssh"
     Write-Host ("Remote Docker host enabled via DOCKER_HOST={0}" -f $env:DOCKER_HOST) -ForegroundColor Cyan
@@ -171,7 +172,7 @@ if ($LASTEXITCODE -ne 0) {
     throw 'TypeScript typecheck failed. Aborting deploy.'
 }
 
-Write-Host 'Deploying typed runtime from src/docker/compose.yml' -ForegroundColor Cyan
+Write-Host 'Deploying typed runtime from docker/compose.yml' -ForegroundColor Cyan
 Write-Host ("TRANSPORT_MODE = {0}" -f $env:TRANSPORT_MODE) -ForegroundColor Cyan
 if ($profiles.Count -gt 0) {
     Write-Host ("Profiles = {0}" -f ($profiles -join ', ')) -ForegroundColor Cyan
@@ -202,7 +203,7 @@ try {
     Invoke-Compose -ComposeArgs ($composeArgs + @('ps'))
 
     Write-Host 'Deploy complete.' -ForegroundColor Cyan
-    Write-Host 'Compose file: src/docker/compose.yml' -ForegroundColor Gray
+    Write-Host 'Compose file: docker/compose.yml' -ForegroundColor Gray
 }
 catch {
     Write-Error $_

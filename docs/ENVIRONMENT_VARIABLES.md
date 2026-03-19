@@ -68,11 +68,44 @@ Note: Booleans accept 1/true/yes/on (case-insensitive). Strings are used as-is.
 
 - AMQP_QUEUE_PREFIX
   - What: Queue prefix for server/client routing.
-  - Default: `mcp.discovery`.
+  - Default: `mcp-open-discovery-3.discovery`.
 
 - AMQP_EXCHANGE
   - What: Exchange base for notifications/routing.
-  - Default: `mcp.notifications`.
+  - Default: `mcp-open-discovery-3.notifications`.
+
+- AMQP_RECONNECT_DELAY
+  - What: Delay in milliseconds between transport-level reconnect attempts after an established AMQP connection drops.
+  - Default: `5000`.
+
+- AMQP_MAX_RETRY_ATTEMPTS
+  - What: Maximum number of transport-level reconnect attempts before the AMQP transport reports a permanent closure.
+  - Default: `10`.
+
+- AMQP_AUTO_RECOVERY
+  - What: Enable runtime-level AMQP recovery supervision for initial-start failures and permanent transport closures.
+  - Default: `true`.
+  - Notes: This is separate from transport-level reconnect. It restores the AMQP runtime in the background when startup fails or when reconnect limits are exhausted.
+
+- AMQP_RECOVERY_RETRY_INTERVAL
+  - What: Initial delay in milliseconds before the first background AMQP recovery retry.
+  - Default: `30000`.
+  - Compatibility: `AMQP_RETRY_INTERVAL` is still accepted as a fallback.
+
+- AMQP_RECOVERY_MAX_RETRIES
+  - What: Maximum number of background recovery retries.
+  - Default: `-1`.
+  - Notes: `-1` means unlimited retries.
+
+- AMQP_RECOVERY_BACKOFF_MULTIPLIER
+  - What: Multiplier applied to the recovery retry delay after each failed background recovery attempt.
+  - Default: `1.5`.
+  - Compatibility: Setting `AMQP_EXPONENTIAL_BACKOFF=false` forces a multiplier of `1`.
+
+- AMQP_RECOVERY_MAX_RETRY_INTERVAL
+  - What: Maximum delay in milliseconds between background recovery attempts.
+  - Default: `300000`.
+  - Compatibility: `AMQP_MAX_RETRY_INTERVAL` is still accepted as a fallback.
 
 - DEBUG_AMQP
   - What: Enable detailed AMQP transport debug logging (for development/troubleshooting).

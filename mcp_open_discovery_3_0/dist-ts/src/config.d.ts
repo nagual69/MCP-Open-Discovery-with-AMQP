@@ -22,6 +22,11 @@ export interface AmqpRuntimeConfig {
     maxReconnectAttempts: number;
     messageTTL: number;
     queueTTL: number;
+    autoRecoveryEnabled: boolean;
+    recoveryRetryInterval: number;
+    recoveryMaxRetries: number;
+    recoveryBackoffMultiplier: number;
+    recoveryMaxRetryInterval: number;
 }
 export interface AppConfig {
     nodeEnv: string;

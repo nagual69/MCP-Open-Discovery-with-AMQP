@@ -1,0 +1,12 @@
+services:
+  rabbitmq:
+    networks:
+      mcp-network:
+        ipv4_address: 10.254.0.30
+
+networks:
+  mcp-network:
+    ipam:
+      config:
+        - subnet: 10.254.0.0/24
+          gateway: 10.254.0.1

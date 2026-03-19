@@ -22,6 +22,19 @@ Remaining cleanup is mostly curation rather than extraction:
 - trim generated artifacts that should not be checked in long term
 - continue reducing compatibility shims where typed-only paths are already authoritative
 
+## Core Docs
+
+The standalone 3.0 source-of-truth docs now live in this folder:
+
+- `docs/LEGACY_ASSET_CURATION.md` for keep, rewrite, defer, and leave-behind decisions from the legacy root
+- `docs/ENVIRONMENT_VARIABLES.md` for active 3.0 runtime and plugin-policy settings
+- `docs/BACKWARD_COMPATIBILITY.md` for the current extracted HTTP client compatibility surface
+- `docs/QUICK_REFERENCE.md` for fast operator commands and runtime defaults
+- `docs/TRANSPORT_ARCHITECTURE.md` for the typed multi-transport runtime shape
+- `docs/PLUGIN_AUTHORING.md` for typed plugin packaging and validation guidance
+- `docs/REPO_EXTRACTION_CHECKLIST.md` for the extraction plan
+- `docs/TESTING_MIGRATION_DECISION.md` for the default test-surface boundary
+
 ## Extraction Rules
 
 The 3.0 repository should follow these rules during migration:
@@ -145,4 +158,4 @@ Manual rerun of the Zabbix lab host bootstrap:
 
 ## Immediate Next Step
 
-Use [docs/REPO_EXTRACTION_CHECKLIST.md](docs/REPO_EXTRACTION_CHECKLIST.md) as the source-of-truth migration plan for what to copy, what to rewrite, and what to leave behind.
+Use [docs/REPO_EXTRACTION_CHECKLIST.md](docs/REPO_EXTRACTION_CHECKLIST.md) together with [docs/LEGACY_ASSET_CURATION.md](docs/LEGACY_ASSET_CURATION.md) as the source-of-truth plan for what to copy, what to rewrite, what to defer, and what to leave behind.

@@ -47,8 +47,10 @@ export class AmqpServerTransport {
   private channel: Channel | null = null;
   private readonly routingInfoStore = new Map<JsonRpcId, RoutingInfo>();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly maxMessageSize: number;
   private closing = false;
+  private closeNotified = false;
   private readonly connectionState: { connected: boolean; reconnectAttempts: number; lastError?: Error } = {
     connected: false,
     reconnectAttempts: 0,
@@ -59,6 +61,7 @@ export class AmqpServerTransport {
   onclose?: () => void;
   onerror?: (error: Error) => void;
   onmessage?: (message: JsonRpcMessage) => void;
+  ontransportclosed?: (error?: Error) => void;
   _connectFn?: (url: string) => Promise<AmqpConnection>;
 
   constructor(private readonly options: AmqpServerTransportOptions) {
@@ -90,10 +93,12 @@ export class AmqpServerTransport {
     }
 
     this.closing = false;
+    this.closeNotified = false;
     try {
       await this.connect();
       this.connectionState.connected = true;
       this.connectionState.reconnectAttempts = 0;
+      this.connectionState.lastError = undefined;
       this.startRoutingCleanup();
     } catch (error) {
       const resolved = error instanceof Error ? error : new Error(String(error));
@@ -131,6 +136,11 @@ export class AmqpServerTransport {
     this.closing = true;
     this.connectionState.connected = false;
 
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     if (this.cleanupTimer) {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
@@ -146,7 +156,7 @@ export class AmqpServerTransport {
         this.connection = null;
       }
     } finally {
-      this.onclose?.();
+      this.notifyClosed();
     }
   }
 
@@ -277,7 +287,6 @@ export class AmqpServerTransport {
       this.scheduleReconnect();
       return;
     }
-    this.onclose?.();
   }
 
   private scheduleReconnect(): void {
@@ -286,24 +295,31 @@ export class AmqpServerTransport {
     if (this.closing) {
       return;
     }
+    if (this.reconnectTimer) {
+      return;
+    }
     if (this.connectionState.reconnectAttempts >= maxReconnectAttempts) {
-      this.onclose?.();
+      this.connectionState.lastError ??= new Error('Maximum reconnection attempts exceeded');
+      this.notifyClosed();
       return;
     }
 
     this.connectionState.reconnectAttempts += 1;
-    setTimeout(() => {
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
       if (this.closing) {
         return;
       }
       void this.connect().then(() => {
         this.connectionState.connected = true;
         this.connectionState.reconnectAttempts = 0;
+        this.connectionState.lastError = undefined;
       }).catch((error) => {
         this.connectionState.lastError = error instanceof Error ? error : new Error(String(error));
         this.scheduleReconnect();
       });
     }, reconnectDelay);
+    this.reconnectTimer.unref?.();
   }
 
   private startRoutingCleanup(): void {
@@ -319,43 +335,237 @@ export class AmqpServerTransport {
         }
       }
     }, 60000);
-    this.cleanupTimer.unref();
+    this.cleanupTimer.unref?.();
+  }
+
+  private notifyClosed(): void {
+    if (this.closeNotified) {
+      return;
+    }
+    this.closeNotified = true;
+    this.ontransportclosed?.(this.connectionState.lastError);
+    this.onclose?.();
   }
 }
 
 export class NativeAmqpRuntimeAdapter {
   private transport: AmqpServerTransport | null = null;
+  private server: McpServer | null = null;
+  private config: AmqpTransportConfig | null = null;
+  private recoveryTimer: ReturnType<typeof setTimeout> | null = null;
+  private recoveryAttempt = 0;
+  private recoveryDelay = 0;
+  private stopping = false;
+  private starting = false;
+  private recoveryStatus: AmqpStatus['recovery'] = {
+    enabled: false,
+    state: 'disabled',
+    retryCount: 0,
+  };
+  _transportFactory?: (options: AmqpServerTransportOptions) => AmqpServerTransport;
+
+  private getRecoveryConfig(): {
+    enabled: boolean;
+    retryInterval: number;
+    maxRetries: number;
+    backoffMultiplier: number;
+    maxRetryInterval: number;
+  } {
+    return {
+      enabled: this.config?.autoRecoveryEnabled !== false,
+      retryInterval: this.config?.recoveryRetryInterval ?? 30000,
+      maxRetries: this.config?.recoveryMaxRetries ?? -1,
+      backoffMultiplier: this.config?.recoveryBackoffMultiplier ?? 1.5,
+      maxRetryInterval: this.config?.recoveryMaxRetryInterval ?? 300000,
+    };
+  }
+
+  private clearRecoveryTimer(): void {
+    if (!this.recoveryTimer) {
+      return;
+    }
+
+    clearTimeout(this.recoveryTimer);
+    this.recoveryTimer = null;
+  }
+
+  private createTransport(config: AmqpTransportConfig): AmqpServerTransport {
+    const transportFactory = this._transportFactory ?? ((options: AmqpServerTransportOptions) => new AmqpServerTransport(options));
+    const transport = transportFactory({
+      amqpUrl: config.url,
+      exchangeName: config.exchange,
+      queuePrefix: config.queuePrefix,
+      prefetchCount: config.prefetch,
+      reconnectDelay: config.reconnectDelay,
+      maxReconnectAttempts: config.maxReconnectAttempts,
+      messageTTL: config.messageTTL,
+      queueTTL: config.queueTTL,
+    });
+
+    transport.ontransportclosed = (error) => {
+      if (this.transport === transport) {
+        this.transport = null;
+      }
+      if (this.stopping) {
+        return;
+      }
+      void this.scheduleRecovery(error);
+    };
+
+    return transport;
+  }
+
+  private updateRecoveryStatus(overrides: Partial<NonNullable<AmqpStatus['recovery']>>): void {
+    const recoveryConfig = this.getRecoveryConfig();
+    this.recoveryStatus = {
+      ...this.recoveryStatus,
+      enabled: recoveryConfig.enabled,
+      state: recoveryConfig.enabled ? 'idle' : 'disabled',
+      retryCount: this.recoveryAttempt,
+      maxRetries: recoveryConfig.maxRetries,
+      retryIntervalMs: recoveryConfig.retryInterval,
+      maxRetryIntervalMs: recoveryConfig.maxRetryInterval,
+      backoffMultiplier: recoveryConfig.backoffMultiplier,
+      ...overrides,
+    };
+  }
+
+  private resetRecoveryState(): void {
+    this.recoveryAttempt = 0;
+    this.recoveryDelay = this.getRecoveryConfig().retryInterval;
+    this.clearRecoveryTimer();
+    this.updateRecoveryStatus({
+      state: this.getRecoveryConfig().enabled ? 'idle' : 'disabled',
+      retryCount: 0,
+      nextRetryAt: undefined,
+      lastAttemptAt: undefined,
+      lastError: undefined,
+    });
+  }
+
+  private async attachTransport(server: McpServer, config: AmqpTransportConfig): Promise<void> {
+    this.starting = true;
+    const transport = this.createTransport(config);
+
+    try {
+      await server.connect(transport as never);
+      this.transport = transport;
+      this.resetRecoveryState();
+    } catch (error) {
+      this.transport = null;
+      await transport.close().catch(() => undefined);
+      throw error;
+    } finally {
+      this.starting = false;
+    }
+  }
+
+  private async attemptRecovery(): Promise<void> {
+    if (this.stopping || this.starting || !this.server || !this.config) {
+      return;
+    }
+
+    const recoveryConfig = this.getRecoveryConfig();
+    if (recoveryConfig.maxRetries >= 0 && this.recoveryAttempt >= recoveryConfig.maxRetries) {
+      this.updateRecoveryStatus({
+        state: 'stopped',
+        nextRetryAt: undefined,
+      });
+      return;
+    }
+
+    this.recoveryAttempt += 1;
+    this.updateRecoveryStatus({
+      state: 'attempting',
+      retryCount: this.recoveryAttempt,
+      lastAttemptAt: new Date().toISOString(),
+      nextRetryAt: undefined,
+    });
+
+    try {
+      await this.attachTransport(this.server, this.config);
+    } catch (error) {
+      const resolved = error instanceof Error ? error : new Error(String(error));
+      this.updateRecoveryStatus({ lastError: resolved.message });
+
+      if (recoveryConfig.maxRetries >= 0 && this.recoveryAttempt >= recoveryConfig.maxRetries) {
+        this.updateRecoveryStatus({
+          state: 'stopped',
+          nextRetryAt: undefined,
+        });
+        return;
+      }
+
+      this.recoveryDelay = Math.min(
+        Math.max(this.recoveryDelay, recoveryConfig.retryInterval) * recoveryConfig.backoffMultiplier,
+        recoveryConfig.maxRetryInterval,
+      );
+      await this.scheduleRecovery(resolved);
+    }
+  }
+
+  private async scheduleRecovery(error?: Error): Promise<void> {
+    const recoveryConfig = this.getRecoveryConfig();
+    if (!recoveryConfig.enabled || this.stopping || this.recoveryTimer) {
+      if (!recoveryConfig.enabled) {
+        this.updateRecoveryStatus({ state: 'disabled' });
+      }
+      return;
+    }
+
+    const nextRetryAt = new Date(Date.now() + this.recoveryDelay).toISOString();
+    this.updateRecoveryStatus({
+      state: 'waiting',
+      nextRetryAt,
+      lastError: error?.message ?? this.recoveryStatus?.lastError,
+    });
+
+    this.recoveryTimer = setTimeout(() => {
+      this.recoveryTimer = null;
+      void this.attemptRecovery();
+    }, this.recoveryDelay);
+    this.recoveryTimer.unref?.();
+  }
 
   async start(server: McpServer, config: AmqpTransportConfig): Promise<{ mode: 'amqp'; started: boolean; details?: string; error?: string }> {
+    this.server = server;
+    this.config = config;
+    this.stopping = false;
+    this.recoveryDelay = this.getRecoveryConfig().retryInterval;
+    this.updateRecoveryStatus({});
+
     try {
-      this.transport = new AmqpServerTransport({
-        amqpUrl: config.url,
-        exchangeName: config.exchange,
-        queuePrefix: config.queuePrefix,
-        prefetchCount: config.prefetch,
-        reconnectDelay: config.reconnectDelay,
-        maxReconnectAttempts: config.maxReconnectAttempts,
-        messageTTL: config.messageTTL,
-        queueTTL: config.queueTTL,
-      });
-      await server.connect(this.transport as never);
+      await this.attachTransport(server, config);
       return { mode: 'amqp', started: true, details: 'AMQP transport started via typed AMQP server transport' };
     } catch (error) {
+      const resolved = error instanceof Error ? error : new Error(String(error));
+      await this.scheduleRecovery(resolved);
       return {
         mode: 'amqp',
         started: false,
-        error: error instanceof Error ? error.message : String(error),
+        details: this.getRecoveryConfig().enabled ? 'AMQP transport start failed; background recovery scheduled' : undefined,
+        error: resolved.message,
       };
     }
   }
 
   async stop(): Promise<void> {
+    this.stopping = true;
+    this.clearRecoveryTimer();
+    this.updateRecoveryStatus({
+      state: this.getRecoveryConfig().enabled ? 'stopped' : 'disabled',
+      nextRetryAt: undefined,
+    });
     await this.transport?.close();
     this.transport = null;
   }
 
   getStatus(): AmqpStatus {
-    return this.transport?.getStatus() ?? { enabled: false, connected: false };
+    const transportStatus = this.transport?.getStatus() ?? { enabled: Boolean(this.config?.enabled), connected: false };
+    return {
+      ...transportStatus,
+      recovery: this.recoveryStatus ?? undefined,
+    };
   }
 
   async send(message: JsonRpcNotification, options?: { relatedRequestId?: string | number | null }): Promise<void> {

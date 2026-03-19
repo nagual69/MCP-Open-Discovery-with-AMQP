@@ -175,7 +175,7 @@ export function setPluginLifecycleState(
 ): void {
   const database = getDb();
   const now = new Date().toISOString();
-  const isActive = state === 'active' ? 1 : 0;
+  const isActive = state === 'active';
 
   const transaction = database.transaction(() => {
     database
@@ -192,9 +192,20 @@ export function setPluginLifecycleState(
       )
       .run(state, state, now, state, now, state, detail, state, pluginId);
 
-    database.prepare('UPDATE plugin_tools SET is_active = ? WHERE plugin_id = ?').run(isActive, pluginId);
-    database.prepare('UPDATE plugin_resources SET is_active = ? WHERE plugin_id = ?').run(isActive, pluginId);
-    database.prepare('UPDATE plugin_prompts SET is_active = ? WHERE plugin_id = ?').run(isActive, pluginId);
+    setPluginCapabilityActiveState(pluginId, isActive);
+  });
+
+  transaction();
+}
+
+export function setPluginCapabilityActiveState(pluginId: string, isActive: boolean): void {
+  const database = getDb();
+  const activeValue = isActive ? 1 : 0;
+
+  const transaction = database.transaction(() => {
+    database.prepare('UPDATE plugin_tools SET is_active = ? WHERE plugin_id = ?').run(activeValue, pluginId);
+    database.prepare('UPDATE plugin_resources SET is_active = ? WHERE plugin_id = ?').run(activeValue, pluginId);
+    database.prepare('UPDATE plugin_prompts SET is_active = ? WHERE plugin_id = ?').run(activeValue, pluginId);
   });
 
   transaction();

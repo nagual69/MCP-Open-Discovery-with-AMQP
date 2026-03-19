@@ -95,6 +95,13 @@ function createAppConfig() {
             maxReconnectAttempts: Number.parseInt(process.env.AMQP_MAX_RETRY_ATTEMPTS || '10', 10),
             messageTTL: Number.parseInt(process.env.AMQP_MESSAGE_TTL || '3600000', 10),
             queueTTL: Number.parseInt(process.env.AMQP_QUEUE_TTL || '7200000', 10),
+            autoRecoveryEnabled: process.env.AMQP_AUTO_RECOVERY !== 'false',
+            recoveryRetryInterval: Number.parseInt(process.env.AMQP_RECOVERY_RETRY_INTERVAL || process.env.AMQP_RETRY_INTERVAL || '30000', 10),
+            recoveryMaxRetries: Number.parseInt(process.env.AMQP_RECOVERY_MAX_RETRIES || '-1', 10),
+            recoveryBackoffMultiplier: process.env.AMQP_EXPONENTIAL_BACKOFF === 'false'
+                ? 1
+                : Number.parseFloat(process.env.AMQP_RECOVERY_BACKOFF_MULTIPLIER || '1.5'),
+            recoveryMaxRetryInterval: Number.parseInt(process.env.AMQP_RECOVERY_MAX_RETRY_INTERVAL || process.env.AMQP_MAX_RETRY_INTERVAL || '300000', 10),
         },
     };
 }
